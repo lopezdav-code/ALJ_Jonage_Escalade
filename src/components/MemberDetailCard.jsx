@@ -4,7 +4,7 @@ import { useMemberDetail } from '@/contexts/MemberDetailContext';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Mail, Phone, Award, Star, Heart, Briefcase, Edit, Users, Trophy } from 'lucide-react';
+import { Loader2, Mail, Phone, Award, Star, Heart, Briefcase, Edit, Users, Trophy, CreditCard } from 'lucide-react';
 import { formatName } from '@/lib/utils';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { Button } from '@/components/ui/button';
@@ -90,6 +90,12 @@ const MemberDetailCard = () => {
                     <div className="flex items-center gap-3 text-sm">
                       <Phone className="w-4 h-4 text-muted-foreground" />
                       <a href={`tel:${selectedMember.phone}`} className="hover:underline">{selectedMember.phone}</a>
+                    </div>
+                  )}
+                  {selectedMember.licence && (
+                    <div className="flex items-center gap-3 text-sm">
+                      <CreditCard className="w-4 h-4 text-muted-foreground" />
+                      <span>Licence FFME: {selectedMember.licence}</span>
                     </div>
                   )}
                 </div>
