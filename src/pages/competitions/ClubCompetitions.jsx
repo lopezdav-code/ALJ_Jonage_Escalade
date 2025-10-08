@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Loader2, Users, Trophy, UserCheck, Calendar, MapPin, ExternalLink, Info, Medal, Phone, Mail, CreditCard, Award, Euro, ChevronLeft, ChevronRight, X, ZoomIn } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Loader2, Users, Trophy, UserCheck, Calendar, MapPin, ExternalLink, Info, Medal, Phone, Mail, CreditCard, Award, Euro, ChevronLeft, ChevronRight, X, ZoomIn, Plus, Edit, Settings } from 'lucide-react';
 import { supabase } from '@/lib/customSupabaseClient';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -9,14 +10,18 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { useToast } from '@/components/ui/use-toast';
 import { formatName } from '@/lib/utils';
 import { useMemberDetail } from '@/contexts/MemberDetailContext';
+import RankingForm from './components/RankingForm';
 
 const ClubCompetitions = () => {
   const [competitions, setCompetitions] = useState([]);
   const [participants, setParticipants] = useState({});
   const [loading, setLoading] = useState(true);
   const [photoGallery, setPhotoGallery] = useState({ isOpen: false, photos: [], currentIndex: 0, competitionName: '' });
+  const [editingParticipant, setEditingParticipant] = useState(null);
+  const [savingRanking, setSavingRanking] = useState(false);
   const { toast } = useToast();
   const { showMemberDetails } = useMemberDetail();
+  const navigate = useNavigate();
 
   const fetchCompetitions = useCallback(async () => {
     setLoading(true);
@@ -78,6 +83,59 @@ const ClubCompetitions = () => {
   useEffect(() => {
     fetchCompetitions();
   }, [fetchCompetitions]);
+
+  // Fonctions pour gérer l'édition des classements
+  const handleEditRanking = (participant) => {
+    setEditingParticipant(participant);
+  };
+
+  const handleSaveRanking = async (participantId, ranking, nbCompetitor) => {
+    setSavingRanking(true);
+    try {
+      const { error } = await supabase
+        .from('competition_participants')
+        .update({ 
+          ranking: ranking || null, 
+          nb_competitor: nbCompetitor || null 
+        })
+        .eq('id', participantId);
+
+      if (error) throw error;
+
+      // Mettre à jour l'état local
+      setParticipants(prev => {
+        const updated = { ...prev };
+        Object.keys(updated).forEach(compId => {
+          updated[compId] = updated[compId].map(p => 
+            p.id === participantId 
+              ? { ...p, ranking: ranking || null, nb_competitor: nbCompetitor || null }
+              : p
+          );
+        });
+        return updated;
+      });
+
+      toast({ 
+        title: "Succès", 
+        description: "Classement mis à jour avec succès." 
+      });
+      
+      setEditingParticipant(null);
+    } catch (error) {
+      console.error('Error updating ranking:', error);
+      toast({ 
+        title: "Erreur", 
+        description: "Impossible de mettre à jour le classement.", 
+        variant: "destructive" 
+      });
+    } finally {
+      setSavingRanking(false);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingParticipant(null);
+  };
 
   // Fonction pour trier les compétiteurs par genre puis par âge
   const sortCompetitors = (participants) => {
@@ -322,68 +380,87 @@ const ClubCompetitions = () => {
           )}
         </div>
       </div>
+      
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={(e) => {
+          e.stopPropagation();
+          navigate(`/competitions/edit/${comp.id}`);
+        }}
+        className="ml-2 opacity-0 group-hover:opacity-100 transition-opacity"
+      >
+        <Edit className="w-4 h-4 mr-1" />
+        Modifier
+      </Button>
     </div>
   );
 
   // Composant pour afficher une carte de compétiteur compacte
   const CompetitorCard = ({ participant }) => (
-    <div 
-      className="flex items-center justify-between p-2 rounded-md bg-muted/50 hover:bg-muted/70 transition-colors border border-muted cursor-pointer group"
-      onClick={() => showMemberDetails(participant.members.id)}
-    >
-      <div className="flex items-center gap-3 flex-1">
-        {/* Photo du membre (plus petite) */}
-        {participant.members.photo_url && (
-          <img 
-            src={participant.members.photo_url} 
-            alt={formatName(participant.members.first_name, participant.members.last_name)}
-            className="w-8 h-8 rounded-full object-cover border border-primary/20"
-          />
-        )}
+    <div className="flex items-center justify-between py-1 px-2 hover:bg-muted/30 transition-colors group border-b border-muted/30 last:border-b-0">
+      <div 
+        className="flex items-center gap-2 flex-1 cursor-pointer"
+        onClick={() => showMemberDetails(participant.members.id)}
+      >
+        {/* Nom avec catégorie et genre */}
+        <span className="text-sm">
+          {formatName(participant.members.first_name, participant.members.last_name, false)}
+        </span>
         
-        <div className="flex items-center gap-2 flex-1">
-          {/* Nom et prénom */}
-          <span className="font-medium text-sm group-hover:text-primary transition-colors">
-            {formatName(participant.members.first_name, participant.members.last_name, false)}
+        {/* Badges compacts pour genre et catégorie */}
+        <div className="flex items-center gap-1">
+          <span className="text-xs px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 font-medium">
+            {participant.members.sexe}, {participant.members.category}
           </span>
         </div>
       </div>
 
-      {/* Classement pour les compétiteurs */}
-      {participant.ranking && (
-        <div className="flex items-center gap-1">
-          <Medal className="w-3 h-3 text-yellow-600" />
-          <span className="text-xs font-medium text-yellow-700">#{participant.ranking}</span>
-        </div>
-      )}
+      <div className="flex items-center gap-2">
+        {/* Classement avec trophy icon */}
+        {participant.ranking && (
+          <div className="flex items-center gap-1">
+            <Trophy className="w-3 h-3 text-orange-500" />
+            <span className="text-sm font-bold text-orange-600">
+              {participant.ranking}
+            </span>
+            {participant.nb_competitor && (
+              <span className="text-xs text-muted-foreground">/{participant.nb_competitor}</span>
+            )}
+          </div>
+        )}
+        
+        {/* Bouton d'édition du classement - plus discret */}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={(e) => {
+            e.stopPropagation();
+            handleEditRanking(participant);
+          }}
+          className="opacity-0 group-hover:opacity-60 hover:opacity-100 transition-opacity h-5 w-5 p-0"
+          title="Éditer le classement"
+        >
+          <Settings className="w-3 h-3" />
+        </Button>
+      </div>
     </div>
   );
 
   // Composant pour afficher une carte de staff compacte (juges, coachs)
   const StaffCard = ({ participant }) => (
     <div 
-      className="flex items-center justify-between p-2 rounded-md bg-blue-50 border border-blue-200 cursor-pointer group hover:bg-blue-100 transition-colors"
+      className="flex items-center justify-between py-1 px-2 hover:bg-blue-50 transition-colors cursor-pointer group border-b border-blue-100 last:border-b-0"
       onClick={() => showMemberDetails(participant.members.id)}
     >
-      <div className="flex items-center gap-3 flex-1">
-        {participant.members.photo_url && (
-          <img 
-            src={participant.members.photo_url} 
-            alt={formatName(participant.members.first_name, participant.members.last_name)}
-            className="w-8 h-8 rounded-full object-cover border border-blue-300"
-          />
-        )}
-        
-        <div className="flex items-center gap-2 flex-1">
-          <span className="font-medium text-sm text-blue-900 group-hover:text-blue-700 transition-colors">
-            {formatName(participant.members.first_name, participant.members.last_name, false)}
-          </span>
-        </div>
+      <div className="flex items-center gap-2 flex-1">
+        <span className="text-sm text-blue-900 group-hover:text-blue-700 transition-colors">
+          {formatName(participant.members.first_name, participant.members.last_name, false)}
+        </span>
       </div>
 
       <div className="flex items-center gap-1">
-        <UserCheck className="w-3 h-3 text-blue-600" />
-        <span className="text-xs font-medium text-blue-700 capitalize">
+        <span className="text-xs px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 font-medium">
           {participant.role === 'Arbitre' ? 'Juge' : participant.role}
         </span>
       </div>
@@ -420,18 +497,18 @@ const ClubCompetitions = () => {
               Compétiteurs ({competitors.length})
             </h5>
             
-            <div className="space-y-4">
+            <div className="space-y-3">
               {/* Femmes */}
               {Object.keys(groupedCompetitors.femmes).length > 0 && (
-                <div>
-                  <h6 className="text-sm font-medium text-pink-700 mb-2 flex items-center gap-1">
+                <div className="border rounded-lg p-3">
+                  <h6 className="text-sm font-semibold text-pink-700 mb-2 flex items-center gap-1">
                     👩 Femmes
                   </h6>
                   <div className="space-y-2">
                     {Object.entries(groupedCompetitors.femmes).map(([category, categoryParticipants]) => (
-                      <div key={`f-${category}`}>
-                        <span className="text-xs text-muted-foreground font-medium">{category}:</span>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-1 mt-1">
+                      <div key={`f-${category}`} className="border-l-2 border-pink-200 pl-2">
+                        <div className="text-xs font-medium text-pink-600 mb-1">{category} ({categoryParticipants.length})</div>
+                        <div className="space-y-0">
                           {categoryParticipants.map(participant => (
                             <CompetitorCard key={participant.id} participant={participant} />
                           ))}
@@ -444,15 +521,15 @@ const ClubCompetitions = () => {
 
               {/* Hommes */}
               {Object.keys(groupedCompetitors.hommes).length > 0 && (
-                <div>
-                  <h6 className="text-sm font-medium text-blue-700 mb-2 flex items-center gap-1">
+                <div className="border rounded-lg p-3">
+                  <h6 className="text-sm font-semibold text-blue-700 mb-2 flex items-center gap-1">
                     👨 Hommes
                   </h6>
                   <div className="space-y-2">
                     {Object.entries(groupedCompetitors.hommes).map(([category, categoryParticipants]) => (
-                      <div key={`h-${category}`}>
-                        <span className="text-xs text-muted-foreground font-medium">{category}:</span>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-1 mt-1">
+                      <div key={`h-${category}`} className="border-l-2 border-blue-200 pl-2">
+                        <div className="text-xs font-medium text-blue-600 mb-1">{category} ({categoryParticipants.length})</div>
+                        <div className="space-y-0">
                           {categoryParticipants.map(participant => (
                             <CompetitorCard key={participant.id} participant={participant} />
                           ))}
@@ -468,12 +545,12 @@ const ClubCompetitions = () => {
 
         {/* Staff (juges, coachs) */}
         {staff.length > 0 && (
-          <div>
-            <h5 className="font-medium mb-3 text-blue-700 flex items-center gap-2">
+          <div className="border rounded-lg p-3">
+            <h5 className="font-semibold mb-2 text-blue-700 flex items-center gap-2">
               <UserCheck className="w-4 h-4" />
               Encadrement ({staff.length})
             </h5>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+            <div className="space-y-0">
               {staff.map(participant => (
                 <StaffCard key={participant.id} participant={participant} />
               ))}
@@ -494,7 +571,16 @@ const ClubCompetitions = () => {
 
   return (
     <div className="space-y-8">
-      <h1 className="text-3xl font-bold">Compétitions du Club</h1>
+      <div className="flex justify-between items-center">
+        <h1 className="text-3xl font-bold">Compétitions du Club</h1>
+        <Button 
+          onClick={() => navigate('/competitions/new')}
+          className="flex items-center gap-2"
+        >
+          <Plus className="w-4 h-4" />
+          Créer une compétition
+        </Button>
+      </div>
       
       {competitions.length === 0 ? (
         <p className="text-center text-muted-foreground py-16">Aucune compétition pour le moment.</p>
@@ -506,7 +592,7 @@ const ClubCompetitions = () => {
           className="w-full space-y-4"
         >
           {competitions.map((comp) => (
-            <AccordionItem key={comp.id} value={comp.id.toString()} className="border rounded-lg">
+            <AccordionItem key={comp.id} value={comp.id.toString()} className="border rounded-lg group">
               <AccordionTrigger className="hover:no-underline px-4 py-3">
                 <CompetitionHeader comp={comp} />
               </AccordionTrigger>
@@ -672,6 +758,16 @@ const ClubCompetitions = () => {
         onNext={nextPhoto}
         onPrev={prevPhoto}
       />
+
+      {/* Formulaire d'édition des classements */}
+      {editingParticipant && (
+        <RankingForm
+          participant={editingParticipant}
+          onSave={handleSaveRanking}
+          onCancel={handleCancelEdit}
+          isSaving={savingRanking}
+        />
+      )}
     </div>
   );
 };

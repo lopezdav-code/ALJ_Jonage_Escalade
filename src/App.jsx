@@ -25,6 +25,7 @@ import Setup from '@/pages/Setup';
 import CompetitorSummary from '@/pages/CompetitorSummary';
 import InscriptionsSummary from '@/pages/InscriptionsSummary';
 import CompetitionsSummary from '@/pages/CompetitionsSummary';
+import CompetitionEditor from '@/pages/CompetitionEditor';
 import { AuthProvider } from '@/contexts/SupabaseAuthContext';
 import { ConfigProvider } from '@/contexts/ConfigContext';
 import { MemberDetailProvider } from '@/contexts/MemberDetailContext';
@@ -52,6 +53,8 @@ function App() {
                   <Route path="/news" element={<News />} />
                   <Route path="/news/:id" element={<NewsDetail />} />
                   <Route path="/competitions" element={<Competitions />} />
+                  <Route path="/competitions/new" element={<CompetitionEditor />} />
+                  <Route path="/competitions/edit/:id" element={<CompetitionEditor />} />
                   <Route path="/competitions-summary" element={<CompetitionsSummary />} />
                   <Route path="/inscriptions-summary" element={<InscriptionsSummary />} />
                   <Route path="/competitors" element={<Competitors />} />
