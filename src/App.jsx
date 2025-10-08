@@ -36,7 +36,7 @@ function App() {
   console.log('🔧 React Router configuré pour GitHub Pages');
   
   return (
-    <Router>
+    <Router basename="/ALJ_Jonage_Escalade">
       <AuthProvider>
         <ConfigProvider>
           <MemberDetailProvider>
