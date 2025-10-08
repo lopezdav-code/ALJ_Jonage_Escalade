@@ -355,16 +355,7 @@ const ClubCompetitions = () => {
     }
 
     if (competitions.length === 0) {
-      return (
-        <div className="text-center py-16">
-            <p className="text-muted-foreground mb-4">Aucune compétition pour le moment.</p>
-            {showAdminFeatures && (
-                <Button onClick={() => { setEditingCompetition(null); setIsFormVisible(true); }}>
-                    <PlusCircle className="w-4 h-4 mr-2" /> Ajouter une compétition
-                </Button>
-            )}
-        </div>
-      );
+      return <p className="text-center text-muted-foreground py-16">Aucune compétition pour le moment.</p>;
     }
 
     return (
@@ -487,6 +478,15 @@ const ClubCompetitions = () => {
                   <ChevronRight className="h-8 w-8" />
                 </Button>
               </>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+};
+
+export default ClubCompetitions;
             )}
           </div>
         </DialogContent>
