@@ -19,5 +19,6 @@ export default defineConfig({
         assetFileNames: `assets/[name]-${Date.now()}.[ext]`
       }
     }
-  }
+  },
+  publicDir: 'public'
 })
