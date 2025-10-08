@@ -578,7 +578,7 @@ const Pedagogy = () => {
         </div>
       ) : (
         <Tabs defaultValue="educational_game" className="w-full">
-          <TabsList className="grid grid-cols-3 lg:grid-cols-6 w-full">
+          <TabsList className="grid grid-cols-3 lg:grid-cols-6 w-full h-auto p-1">
             {Object.entries(TAB_CONFIG).map(([type, config]) => {
               const count = type === 'educational_game' 
                 ? Object.values(sheetsByType[type] || {}).flat().length
@@ -588,9 +588,13 @@ const Pedagogy = () => {
               
               const Icon = config.icon;
               return (
-                <TabsTrigger key={type} value={type} className="flex flex-col gap-1 h-auto py-3">
-                  <Icon className="w-4 h-4" />
-                  <span className="text-xs">{config.label}</span>
+                <TabsTrigger 
+                  key={type} 
+                  value={type} 
+                  className="flex flex-col items-center gap-1 h-auto py-3 px-2 text-center min-h-[4rem]"
+                >
+                  <Icon className="w-4 h-4 shrink-0" />
+                  <span className="text-xs leading-tight">{config.label}</span>
                   <Badge variant="secondary" className="text-xs">{count}</Badge>
                 </TabsTrigger>
               );
