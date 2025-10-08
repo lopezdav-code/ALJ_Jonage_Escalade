@@ -1,20 +1,17 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { AnimatePresence } from 'framer-motion';
-import { PlusCircle, Loader2, Edit, Trash2, Users, Calendar, MapPin, ExternalLink, Info, ChevronsUpDown, Award, UserPlus, ImagePlus, X, ChevronLeft, ChevronRight, Trophy } from 'lucide-react';
+import { PlusCircle, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { supabase } from '@/lib/customSupabaseClient';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
-import { formatName } from '@/lib/utils';
-import { Separator } from '@/components/ui/separator';
 
-import DisciplineBadge from './components/DisciplineBadge';
 import CompetitionForm from './components/CompetitionForm';
 import AddParticipantForm from './components/AddParticipantForm';
 import RankingForm from './components/RankingForm';
 import PhotoUploadForm from './components/PhotoUploadForm';
+import CompetitionCard from './components/CompetitionCard';
 
 const ClubCompetitions = () => {
   const [competitions, setCompetitions] = useState([]);
@@ -40,24 +37,12 @@ const ClubCompetitions = () => {
     try {
       const { data: participantsData, error: participantsError } = await supabase
         .from('competition_participants')
-        .select('*')
+        .select('*, members(id, first_name, last_name, sexe, category)')
         .in('competition_id', competitionIds);
 
       if (participantsError) throw participantsError;
-
-      const memberIds = [...new Set(participantsData.map(p => p.member_id).filter(Boolean))];
-      let membersMap = {};
-      if (memberIds.length > 0) {
-        const { data: membersData, error: membersError } = await supabase
-          .from('members')
-          .select('id, first_name, last_name, sexe, category')
-          .in('id', memberIds);
-        if (membersError) throw membersError;
-        membersMap = Object.fromEntries(membersData.map(m => [m.id, m]));
-      }
-
-      const merged = participantsData.map(p => ({ ...p, members: membersMap[p.member_id] || null }));
-      const participantsByCompetition = merged.reduce((acc, p) => {
+      
+      const participantsByCompetition = participantsData.reduce((acc, p) => {
         if (!acc[p.competition_id]) acc[p.competition_id] = [];
         acc[p.competition_id].push(p);
         return acc;
@@ -232,86 +217,103 @@ const ClubCompetitions = () => {
 
   const showAdminFeatures = !authLoading && isAdmin;
 
-  const renderParticipantList = (competitionId) => {
-    const currentParticipants = participants[competitionId] || [];
-    if (currentParticipants.length === 0) return null;
+  const handleImageView = (url, gallery) => {
+    const index = gallery.indexOf(url);
+    setViewingImage({ url, index, gallery });
+  };
 
-    const roleOrder = { 'belayer': 1, 'judge': 2, 'competitor': 3 };
-    const sortedParticipants = [...currentParticipants].sort((a, b) => {
-      const roleDiff = (roleOrder[a.role] || 4) - (roleOrder[b.role] || 4);
-      if (roleDiff !== 0) return roleDiff;
-      if (a.role === 'competitor') {
-        const categoryA = a.members?.category || '';
-        const categoryB = b.members?.category || '';
-        const categoryDiff = categoryA.localeCompare(categoryB);
-        if (categoryDiff !== 0) return categoryDiff;
-        const sexeA = a.members?.sexe || '';
-        const sexeB = b.members?.sexe || '';
-        return sexeA.localeCompare(sexeB);
-      }
-      return (a.members?.last_name || '').localeCompare(b.members?.last_name || '');
+  const showNextImage = () => {
+    setViewingImage(prev => {
+      const nextIndex = (prev.index + 1) % prev.gallery.length;
+      return { ...prev, url: prev.gallery[nextIndex], index: nextIndex };
     });
+  };
 
-    const groupedByRole = sortedParticipants.reduce((acc, p) => {
-      if (!p.members) return acc;
-      const role = p.role;
-      if (!acc[role]) acc[role] = [];
-      acc[role].push(p);
-      return acc;
-    }, {});
-    
-    const roleNames = { belayer: 'Coaches', judge: 'Arbitres', competitor: 'Compétiteurs' };
+  const showPrevImage = () => {
+    setViewingImage(prev => {
+      const prevIndex = (prev.index - 1 + prev.gallery.length) % prev.gallery.length;
+      return { ...prev, url: prev.gallery[prevIndex], index: prevIndex };
+    });
+  };
 
-    return ['belayer', 'judge', 'competitor'].map(role => {
-      const group = groupedByRole[role];
-      if (!group || group.length === 0) return null;
+  if (loading || authLoading) {
+    return (
+      <div className="flex justify-center items-center py-16">
+        <Loader2 className="w-12 h-12 animate-spin text-primary" />
+      </div>
+    );
+  }
 
-      if (role === 'competitor') {
-        const groupedCompetitors = group.reduce((acc, p) => {
-          const key = `${p.members.category || 'N/A'} ${p.members.sexe || 'N/A'}`;
-          if (!acc[key]) acc[key] = [];
-          acc[key].push(p);
-          return acc;
-        }, {});
+  return (
+    <>
+      <div className="space-y-8">
+        <div className="flex justify-end">
+            {showAdminFeatures && (
+                <Button onClick={() => { setEditingCompetition(null); setIsFormVisible(true); }}>
+                    <PlusCircle className="w-4 h-4 mr-2" /> Ajouter une compétition
+                </Button>
+            )}
+        </div>
+        
+        {competitions.length === 0 ? (
+          <p className="text-center text-muted-foreground py-16">Aucune compétition pour le moment.</p>
+        ) : (
+          competitions.map((comp) => (
+            <CompetitionCard
+              key={comp.id}
+              comp={comp}
+              participants={participants[comp.id] || []}
+              showAdminFeatures={showAdminFeatures}
+              onEdit={() => { setEditingCompetition(comp); setIsFormVisible(true); }}
+              onDelete={handleDelete}
+              onAddParticipant={() => { setCompetitionForParticipant(comp); setIsAddParticipantFormVisible(true); }}
+              onRanking={(p) => { setParticipantForRanking(p); setIsRankingFormVisible(true); }}
+              onDeleteParticipant={handleDeleteParticipant}
+              onAddPhotos={() => { setCompetitionForPhotos(comp); setIsPhotoUploadFormVisible(true); }}
+              onDeletePhoto={handleDeletePhoto}
+              onImageView={handleImageView}
+            />
+          ))
+        )}
+      </div>
 
-        return (
-          <div key={role} className="mt-4">
-            <h4 className="font-semibold text-lg mb-2">{roleNames[role]}</h4>
-            {Object.entries(groupedCompetitors).map(([groupKey, competitors]) => (
-              <div key={groupKey} className="mb-3">
-                <p className="font-medium text-md text-muted-foreground">{groupKey}</p>
-                <ul className="space-y-1 pl-4">
-                  {competitors.map(p => (
-                    <li key={p.id} className="flex items-center justify-between p-1 rounded-md">
-                      <div className="flex items-center gap-2">
-                        <span>{formatName(p.members.first_name, p.members.last_name, false)}</span>
-                        {p.ranking && (
-                          <span className="text-sm font-bold text-primary">
-                            – {p.ranking}ème{p.nb_competitor ? ` / ${p.nb_competitor}` : ''}
-                          </span>
-                        )}
-                      </div>
-                      {showAdminFeatures && (
-                        <div className="flex items-center gap-1">
-                          <Button variant="ghost" size="sm" onClick={() => { setParticipantForRanking(p); setIsRankingFormVisible(true); }}><Award className="w-4 h-4" /></Button>
-                          <Button variant="ghost" size="sm" className="text-destructive" onClick={() => handleDeleteParticipant(p.id, competitionId)}><Trash2 className="w-4 h-4" /></Button>
-                        </div>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
+      <AnimatePresence>
+        {isFormVisible && showAdminFeatures && (
+          <CompetitionForm key={editingCompetition?.id || 'new'} competition={editingCompetition} onSave={handleSave} onCancel={() => { setIsFormVisible(false); setEditingCompetition(null); }} isSaving={isSaving} />
+        )}
+        {isAddParticipantFormVisible && showAdminFeatures && (
+          <AddParticipantForm onSave={handleAddParticipant} onCancel={() => { setIsAddParticipantFormVisible(false); setCompetitionForParticipant(null); }} isSaving={isSaving} members={members} competition={competitionForParticipant} />
+        )}
+        {isRankingFormVisible && showAdminFeatures && (
+          <RankingForm participant={participantForRanking} onSave={handleSaveRanking} onCancel={() => { setIsRankingFormVisible(false); setParticipantForRanking(null); }} isSaving={isSaving} />
+        )}
+        {isPhotoUploadFormVisible && showAdminFeatures && (
+          <PhotoUploadForm competition={competitionForPhotos} onSave={handleSavePhotos} onCancel={() => { setIsPhotoUploadFormVisible(false); setCompetitionForPhotos(null); }} isSaving={isSaving} />
+        )}
+      </AnimatePresence>
+
+      <Dialog open={!!viewingImage.url} onOpenChange={() => setViewingImage({ url: null, index: -1, gallery: [] })}>
+        <DialogContent className="max-w-4xl p-0 border-0 bg-transparent shadow-none">
+          <div className="relative">
+            <img src={viewingImage.url} alt="Aperçu de la photo" className="w-full h-auto max-h-[90vh] object-contain rounded-md" />
+            {viewingImage.gallery.length > 1 && (
+              <>
+                <Button variant="ghost" size="icon" className="absolute left-2 top-1/2 -translate-y-1/2 h-12 w-12 rounded-full bg-black/50 hover:bg-black/75 text-white" onClick={showPrevImage}>
+                  <ChevronLeft className="h-8 w-8" />
+                </Button>
+                <Button variant="ghost" size="icon" className="absolute right-2 top-1/2 -translate-y-1/2 h-12 w-12 rounded-full bg-black/50 hover:bg-black/75 text-white" onClick={showNextImage}>
+                  <ChevronRight className="h-8 w-8" />
+                </Button>
+              </>
+            )}
           </div>
-        );
-      }
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+};
 
-      return (
-        <div key={role} className="mt-4">
-          <h4 className="font-semibold text-lg mb-2">{roleNames[role]}</h4>
-          <ul className="space-y-2">
-            {group.map(p => (
-              <li key={p.id} className="flex items-center justify-between p-2 rounded-md bg-muted/50">
+export default ClubCompetitions;
                 <span className="font-medium">{formatName(p.members.first_name, p.members.last_name, true)}</span>
                 {showAdminFeatures && (
                   <Button variant="ghost" size="sm" className="text-destructive" onClick={() => handleDeleteParticipant(p.id, competitionId)}>
@@ -453,16 +455,38 @@ const ClubCompetitions = () => {
       {renderContent()}
       <AnimatePresence>
         {isFormVisible && showAdminFeatures && (
-          <CompetitionForm key={editingCompetition?.id || 'new'} competition={editingCompetition} onSave={handleSave} onCancel={() => { setIsFormVisible(false); setEditingCompetition(null); }} isSaving={isSaving} />
+          <CompetitionForm 
+            key={editingCompetition?.id || 'new'} 
+            competition={editingCompetition} 
+            onSave={handleSave} 
+            onCancel={() => { setIsFormVisible(false); setEditingCompetition(null); }} 
+            isSaving={isSaving} 
+          />
         )}
         {isAddParticipantFormVisible && showAdminFeatures && (
-          <AddParticipantForm onSave={handleAddParticipant} onCancel={() => { setIsAddParticipantFormVisible(false); setCompetitionForParticipant(null); }} isSaving={isSaving} members={members} competition={competitionForParticipant} />
+          <AddParticipantForm 
+            onSave={handleAddParticipant} 
+            onCancel={() => { setIsAddParticipantFormVisible(false); setCompetitionForParticipant(null); }} 
+            isSaving={isSaving} 
+            members={members} 
+            competition={competitionForParticipant} 
+          />
         )}
         {isRankingFormVisible && showAdminFeatures && (
-          <RankingForm participant={participantForRanking} onSave={handleSaveRanking} onCancel={() => { setIsRankingFormVisible(false); setParticipantForRanking(null); }} isSaving={isSaving} />
+          <RankingForm 
+            participant={participantForRanking} 
+            onSave={handleSaveRanking} 
+            onCancel={() => { setIsRankingFormVisible(false); setParticipantForRanking(null); }} 
+            isSaving={isSaving} 
+          />
         )}
         {isPhotoUploadFormVisible && showAdminFeatures && (
-          <PhotoUploadForm competition={competitionForPhotos} onSave={handleSavePhotos} onCancel={() => { setIsPhotoUploadFormVisible(false); setCompetitionForPhotos(null); }} isSaving={isSaving} />
+          <PhotoUploadForm 
+            competition={competitionForPhotos} 
+            onSave={handleSavePhotos} 
+            onCancel={() => { setIsPhotoUploadFormVisible(false); setCompetitionForPhotos(null); }} 
+            isSaving={isSaving} 
+          />
         )}
       </AnimatePresence>
       <Dialog open={!!viewingImage.url} onOpenChange={() => setViewingImage({ url: null, index: -1, gallery: [] })}>
@@ -487,30 +511,6 @@ const ClubCompetitions = () => {
 };
 
 export default ClubCompetitions;
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
-    </>
-  );
-};
-
-export default ClubCompetitions;
-    }
-  };
-
-  const handleSaveRanking = async (participantId, ranking, nbCompetitor) => {
-    setIsSaving(true);
-    try {
-      const { error } = await supabase.from('competition_participants').update({ ranking: ranking || null, nb_competitor: nbCompetitor || null }).eq('id', participantId);
-      if (error) throw error;
-      toast({ title: "Succès", description: "Classement sauvegardé." });
-      fetchAllParticipants([participantForRanking.competition_id]);
-      setIsRankingFormVisible(false);
-      setParticipantForRanking(null);
-    } catch (error) {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
-    } finally {
       setIsSaving(false);
     }
   };
