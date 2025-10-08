@@ -1,17 +1,17 @@
-import path from 'node:path';
-import react from '@vitejs/plugin-react';
-import { createLogger, defineConfig } from 'vite';
-import inlineEditPlugin from './plugins/visual-editor/vite-plugin-react-inline-editor.js';
-import editModeDevPlugin from './plugins/visual-editor/vite-plugin-edit-mode.js';
-import iframeRouteRestorationPlugin from './plugins/vite-plugin-iframe-route-restoration.js';
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+import path from 'path'
 
-const isDev = process.env.NODE_ENV !== 'production';
-
-const configHorizonsViteErrorHandler = `
-const observer = new MutationObserver((mutations) => {
-	for (const mutation of mutations) {
-		for (const addedNode of mutation.addedNodes) {
-			if (
+// https://vitejs.dev/config/
+export default defineConfig({
+  plugins: [react()],
+  base: '/ALJ_Jonage_Escalade/', // Le nom de votre dépôt GitHub
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+    },
+  },
+})
 				addedNode.nodeType === Node.ELEMENT_NODE &&
 				(
 					addedNode.tagName?.toLowerCase() === 'vite-error-overlay' ||
