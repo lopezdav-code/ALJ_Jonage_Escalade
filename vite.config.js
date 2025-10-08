@@ -230,5 +230,6 @@ export default defineConfig({
 				'@babel/types'
 			]
 		}
-	}
+	},
+	base: '/ALJ_Jonage_Escalade/', // Remplacez par le nom de votre dépôt GitHub
 });
