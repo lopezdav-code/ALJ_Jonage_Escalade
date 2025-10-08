@@ -31,6 +31,10 @@ import { MemberDetailProvider } from '@/contexts/MemberDetailContext';
 import MemberDetailCard from '@/components/MemberDetailCard';
 
 function App() {
+  // Log de débogage pour vérifier que React fonctionne
+  console.log('⚛️ Composant App monté avec succès');
+  console.log('🔧 React Router configuré pour GitHub Pages');
+  
   return (
     <Router>
       <AuthProvider>
