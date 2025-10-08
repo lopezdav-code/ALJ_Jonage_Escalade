@@ -536,6 +536,37 @@ const Competitions = () => {
   const { toast } = useToast();
   const { isAdmin, loading: authLoading } = useAuth();
 
+  // --- DEBUT DU CODE DE TEST ---
+  useEffect(() => {
+    const testSupabaseConnection = async () => {
+      console.log("--- Lancement du test de connexion Supabase ---");
+      try {
+        const { data, error } = await supabase
+          .from('competitions') // Tente de lire la table 'competitions'
+          .select('id')
+          .limit(1);
+
+        if (error) {
+          console.error("❌ Erreur de connexion ou de lecture:", error.message);
+          console.log("Pistes de débogage :");
+          console.log("1. Vérifiez que les variables d'environnement REACT_APP_SUPABASE_URL et REACT_APP_SUPABASE_ANON_KEY sont correctes dans votre fichier .env.");
+          console.log("2. Assurez-vous que le serveur de développement a été redémarré après avoir modifié le fichier .env.");
+          console.log("3. Vérifiez que la table 'competitions' existe bien dans votre base de données Supabase.");
+          console.log("4. Vérifiez que les politiques de sécurité (RLS) sur la table 'competitions' autorisent la lecture (SELECT) pour les utilisateurs anonymes (anon).");
+        } else {
+          console.log("✅ Connexion à Supabase réussie !");
+          console.log("Donnée test récupérée :", data);
+        }
+      } catch (e) {
+        console.error("❌ Erreur critique lors du test de connexion :", e);
+      }
+      console.log("--- Fin du test de connexion Supabase ---");
+    };
+
+    testSupabaseConnection();
+  }, []);
+  // --- FIN DU CODE DE TEST ---
+
   const fetchAllParticipants = useCallback(async (competitionIds) => {
     // two-step fetch: participants then members, merge into `members` property expected by UI
     if (!competitionIds || competitionIds.length === 0) return;
