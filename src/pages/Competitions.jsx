@@ -214,7 +214,7 @@ const AddParticipantForm = ({ onSave, onCancel, isSaving, members, competition }
                 <SelectContent>
                   <SelectItem value="competitor">Compétiteur</SelectItem>
                   <SelectItem value="judge">Arbitre</SelectItem>
-                  <SelectItem value="belayer">Coach</SelectItem>
+                  <SelectItem value="belayer">Coachs</SelectItem>
                 </SelectContent>
               </Select>
             </div>
