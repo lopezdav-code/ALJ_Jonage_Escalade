@@ -10,7 +10,7 @@
     "build": "vite build",
     "preview": "vite preview --host :: --port 3000",
     "predeploy": "npm run build",
-    "deploy": "gh-pages -d dist --cache .gh-pages-cache"
+    "deploy": "gh-pages -d dist --no-history"
   },
   "dependencies": {
     "@emailjs/browser": "^4.3.3",

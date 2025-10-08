@@ -37,7 +37,7 @@ const MemberForm = ({ member, onSave, onCancel, isSaving }) => {
   const [formData, setFormData] = useState({
     first_name: '', last_name: '', title: '', sub_group: '', category: '',
     phone: '', photo_url: '',
-    sexe: '', licence: '', email: '', passeport: '', brevet_federaux: [],
+    sexe: '', licence: '', email: '', passeport: '',
     emergency_contact_1_id: null, emergency_contact_2_id: null,
     ...member,
     brevet_federaux: member?.brevet_federaux || [],

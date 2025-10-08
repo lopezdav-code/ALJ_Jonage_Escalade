@@ -44,8 +44,10 @@ export const ProfileIndicator = ({ profile }) => {
   };
 
   const details = roleDetails[profile.role] || roleDetails.user;
+  const IconComponent = details.Icon;
 
-  return (
-    <details.Icon className={`h-4 w-4 ml-2 flex-shrink-0 ${details.color}`} title={details.title} />
-  );
+  return React.createElement(IconComponent, {
+    className: `h-4 w-4 ml-2 flex-shrink-0 ${details.color}`,
+    title: details.title
+  });
 };
