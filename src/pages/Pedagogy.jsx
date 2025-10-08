@@ -14,6 +14,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useNavigate } from 'react-router-dom';
 
 const BUCKET_NAME = 'pedagogy_files';
@@ -22,7 +23,42 @@ const SHEET_TYPES = {
   'educational_game': 'Jeu éducatif',
   'warm_up_exercise': 'Exercice d\'échauffement',
   'strength_exercise': 'Exercice de renfo',
-  'review_sheet': 'Fiche de révision'
+  'review_sheet': 'Fiche de révision',
+  'technical_sheet': 'Fiche technique',
+  'safety_sheet': 'Fiche sécurité'
+};
+
+const TAB_CONFIG = {
+  'educational_game': {
+    icon: Gamepad2,
+    label: 'Jeux Éducatifs',
+    description: 'Jeux et activités ludiques pour l\'apprentissage'
+  },
+  'review_sheet': {
+    icon: FileText,
+    label: 'Fiches de Révision',
+    description: 'Supports de révision et mémo techniques'
+  },
+  'strength_exercise': {
+    icon: Dumbbell,
+    label: 'Exercices de Renfo',
+    description: 'Exercices de renforcement musculaire'
+  },
+  'warm_up_exercise': {
+    icon: BrainCircuit,
+    label: 'Exercices d\'Échauffement',
+    description: 'Préparation physique et mentale'
+  },
+  'technical_sheet': {
+    icon: FileQuestion,
+    label: 'Fiches Techniques',
+    description: 'Techniques et méthodes d\'escalade'
+  },
+  'safety_sheet': {
+    icon: Puzzle,
+    label: 'Fiches Sécurité',
+    description: 'Procédures et consignes de sécurité'
+  }
 };
 
 const SheetForm = ({ sheet, onSave, onCancel, isSaving, existingThemes }) => {
@@ -482,22 +518,32 @@ const Pedagogy = () => {
     }
   };
 
-  const { groupedGameSheets, otherSheets, hasGameSheets, existingThemes } = useMemo(() => {
-    const gameSheets = sheets.filter(s => s.sheet_type === 'educational_game');
-    const otherSheets = sheets.filter(s => s.sheet_type !== 'educational_game');
+  const { sheetsByType, existingThemes } = useMemo(() => {
+    const grouped = sheets.reduce((acc, sheet) => {
+      const type = sheet.sheet_type || 'other';
+      if (!acc[type]) {
+        acc[type] = [];
+      }
+      acc[type].push(sheet);
+      return acc;
+    }, {});
 
-    const grouped = gameSheets.reduce((acc, sheet) => {
+    // Pour les jeux éducatifs, grouper aussi par thème
+    if (grouped.educational_game) {
+      const gamesByTheme = grouped.educational_game.reduce((acc, sheet) => {
         const theme = sheet.theme || 'Sans thème';
         if (!acc[theme]) {
-            acc[theme] = [];
+          acc[theme] = [];
         }
         acc[theme].push(sheet);
         return acc;
-    }, {});
+      }, {});
+      grouped.educational_game = gamesByTheme;
+    }
     
-    const themes = [...new Set(gameSheets.map(s => s.theme).filter(Boolean))];
+    const themes = [...new Set(sheets.filter(s => s.sheet_type === 'educational_game').map(s => s.theme).filter(Boolean))];
 
-    return { groupedGameSheets: grouped, otherSheets, hasGameSheets: gameSheets.length > 0, existingThemes: themes };
+    return { sheetsByType: grouped, existingThemes: themes };
   }, [sheets]);
 
   return (
@@ -522,55 +568,109 @@ const Pedagogy = () => {
       </motion.div>
       
       {loading ? (
-        <div className="flex justify-center items-center py-16"><Loader2 className="w-12 h-12 animate-spin text-primary" /></div>
-      ) : (
-        <>
-          {hasGameSheets && (
-            <section>
-              <h2 className="text-2xl font-bold headline flex items-center gap-3 mb-4">
-                <Gamepad2 className="w-8 h-8 text-primary" />
-                Jeux Éducatifs
-              </h2>
-              <AnimatePresence>
-                <div className="space-y-8">
-                  {Object.entries(groupedGameSheets).map(([theme, themeSheets]) => (
-                    <div key={theme}>
-                      <h3 className="text-xl font-semibold mb-4 border-b pb-2">{theme}</h3>
-                      <motion.div className="grid sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {themeSheets.map(sheet => (
-                          <SheetCard key={sheet.id} sheet={sheet} onEdit={handleEdit} onDelete={handleDelete} isAdmin={isAdmin} />
-                        ))}
-                      </motion.div>
-                    </div>
-                  ))}
-                </div>
-              </AnimatePresence>
-            </section>
-          )}
-
-          {otherSheets.length > 0 && (
-            <section>
-              <h2 className="text-2xl font-bold headline flex items-center gap-3 mb-4">
-                <FileText className="w-8 h-8 text-primary" />
-                Autres Fiches
-              </h2>
-              <AnimatePresence>
-                <motion.div className="grid sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {otherSheets.map(sheet => (
-                    <SheetCard key={sheet.id} sheet={sheet} onEdit={handleEdit} onDelete={handleDelete} isAdmin={isAdmin} />
-                  ))}
-                </motion.div>
-              </AnimatePresence>
-            </section>
-          )}
-        </>
-      )}
-
-      {!loading && sheets.length === 0 && (
+        <div className="flex justify-center items-center py-16">
+          <Loader2 className="w-12 h-12 animate-spin text-primary" />
+        </div>
+      ) : sheets.length === 0 ? (
         <div className="text-center py-16 bg-muted/30 rounded-lg">
           <p className="text-lg font-semibold">Aucune fiche pédagogique pour le moment.</p>
           <p className="text-muted-foreground mt-2">Cliquez sur "Ajouter une fiche" pour commencer à créer votre bibliothèque.</p>
         </div>
+      ) : (
+        <Tabs defaultValue="educational_game" className="w-full">
+          <TabsList className="grid grid-cols-3 lg:grid-cols-6 w-full">
+            {Object.entries(TAB_CONFIG).map(([type, config]) => {
+              const count = type === 'educational_game' 
+                ? Object.values(sheetsByType[type] || {}).flat().length
+                : (sheetsByType[type] || []).length;
+              
+              if (count === 0) return null;
+              
+              const Icon = config.icon;
+              return (
+                <TabsTrigger key={type} value={type} className="flex flex-col gap-1 h-auto py-3">
+                  <Icon className="w-4 h-4" />
+                  <span className="text-xs">{config.label}</span>
+                  <Badge variant="secondary" className="text-xs">{count}</Badge>
+                </TabsTrigger>
+              );
+            })}
+          </TabsList>
+
+          {Object.entries(TAB_CONFIG).map(([type, config]) => {
+            const typeSheets = sheetsByType[type];
+            if (!typeSheets || (Array.isArray(typeSheets) && typeSheets.length === 0) || 
+                (!Array.isArray(typeSheets) && Object.keys(typeSheets).length === 0)) {
+              return null;
+            }
+
+            const Icon = config.icon;
+
+            return (
+              <TabsContent key={type} value={type} className="mt-6">
+                <div className="space-y-6">
+                  <div className="flex items-center gap-3">
+                    <Icon className="w-8 h-8 text-primary" />
+                    <div>
+                      <h2 className="text-2xl font-bold">{config.label}</h2>
+                      <p className="text-muted-foreground">{config.description}</p>
+                    </div>
+                  </div>
+
+                  {type === 'educational_game' ? (
+                    // Affichage spécial pour les jeux éducatifs avec sous-onglets par thème
+                    <Tabs defaultValue={Object.keys(typeSheets)[0]} className="w-full">
+                      <TabsList className="w-full justify-start flex-wrap h-auto gap-2 p-2">
+                        {Object.entries(typeSheets).map(([theme, themeSheets]) => (
+                          <TabsTrigger key={theme} value={theme} className="flex items-center gap-2">
+                            <span>{theme}</span>
+                            <Badge variant="outline" className="text-xs">{themeSheets.length}</Badge>
+                          </TabsTrigger>
+                        ))}
+                      </TabsList>
+
+                      {Object.entries(typeSheets).map(([theme, themeSheets]) => (
+                        <TabsContent key={theme} value={theme} className="mt-6">
+                          <div className="space-y-4">
+                            <h3 className="text-xl font-semibold border-b pb-2">{theme}</h3>
+                            <AnimatePresence>
+                              <motion.div className="grid sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {themeSheets.map(sheet => (
+                                  <SheetCard 
+                                    key={sheet.id} 
+                                    sheet={sheet} 
+                                    onEdit={handleEdit} 
+                                    onDelete={handleDelete} 
+                                    isAdmin={isAdmin} 
+                                  />
+                                ))}
+                              </motion.div>
+                            </AnimatePresence>
+                          </div>
+                        </TabsContent>
+                      ))}
+                    </Tabs>
+                  ) : (
+                    // Affichage standard pour les autres types
+                    <AnimatePresence>
+                      <motion.div className="grid sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {typeSheets.map(sheet => (
+                          <SheetCard 
+                            key={sheet.id} 
+                            sheet={sheet} 
+                            onEdit={handleEdit} 
+                            onDelete={handleDelete} 
+                            isAdmin={isAdmin} 
+                          />
+                        ))}
+                      </motion.div>
+                    </AnimatePresence>
+                  )}
+                </div>
+              </TabsContent>
+            );
+          })}
+        </Tabs>
       )}
 
       <AnimatePresence>
