@@ -15,8 +15,10 @@ export const AuthProvider = ({ children }) => {
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState(null);
-  const [profileCache, setProfileCache] = useState(new Map()); // Cache pour éviter les requêtes répétées
-  const [pendingProfileRequests, setPendingProfileRequests] = useState(new Map()); // Éviter les requêtes simultanées
+  
+  // Cache pour les profils avec Map pour de meilleures performances
+  const profileCache = useMemo(() => new Map(), []);
+  const pendingProfileRequests = useMemo(() => new Map(), []);
 
   // Fonction pour récupérer le profil avec cache et éviter les requêtes simultanées
   const fetchUserProfile = useCallback(async (userId) => {
@@ -49,10 +51,10 @@ export const AuthProvider = ({ children }) => {
         }
 
         // Mettre en cache le résultat
-        setProfileCache(prev => new Map(prev.set(userId, {
+        profileCache.set(userId, {
           data,
           timestamp: Date.now()
-        })));
+        });
 
         return data;
       } catch (profileError) {
@@ -60,19 +62,15 @@ export const AuthProvider = ({ children }) => {
         return null;
       } finally {
         // Supprimer de la liste des requêtes en cours
-        setPendingProfileRequests(prev => {
-          const newMap = new Map(prev);
-          newMap.delete(userId);
-          return newMap;
-        });
+        pendingProfileRequests.delete(userId);
       }
     })();
 
     // Ajouter à la liste des requêtes en cours
-    setPendingProfileRequests(prev => new Map(prev.set(userId, profilePromise)));
+    pendingProfileRequests.set(userId, profilePromise);
 
     return profilePromise;
-  }, [profileCache]);
+  }, [profileCache, pendingProfileRequests]);
 
   const handleSession = useCallback(async (session, isNewLogin = false) => {
     try {
