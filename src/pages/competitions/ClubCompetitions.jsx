@@ -560,28 +560,29 @@ const ClubCompetitions = () => {
                     </div>
                   )}
 
-                  {/* Informations détaillées */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {comp.prix && (
-                      <div className="p-3 bg-muted/30 rounded-md">
-                        <h5 className="font-semibold mb-2 flex items-center gap-2">
+                  {/* Informations détaillées - Version compacte */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {/* Prix et Nature sur la même ligne */}
+                    <div className="flex items-center gap-4 text-sm">
+                      {comp.prix && (
+                        <div className="flex items-center gap-2">
                           <Euro className="w-4 h-4 text-primary" />
-                          Prix d'entrée
-                        </h5>
-                        <p className="text-sm text-muted-foreground">{comp.prix}€</p>
-                      </div>
-                    )}
+                          <span className="font-medium">Prix d'entrée:</span>
+                          <span className="text-muted-foreground">{comp.prix}€</span>
+                        </div>
+                      )}
+                      {comp.nature && (
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">Nature:</span>
+                          <Badge variant="secondary" className="text-xs">{comp.nature}</Badge>
+                        </div>
+                      )}
+                    </div>
 
-                    {comp.nature && (
-                      <div className="p-3 bg-muted/30 rounded-md">
-                        <h5 className="font-semibold mb-2">Nature</h5>
-                        <Badge variant="secondary">{comp.nature}</Badge>
-                      </div>
-                    )}
-
+                    {/* Disciplines */}
                     {comp.disciplines && comp.disciplines.length > 0 && (
-                      <div className="p-3 bg-muted/30 rounded-md">
-                        <h5 className="font-semibold mb-2">Disciplines</h5>
+                      <div className="flex items-center gap-2 text-sm">
+                        <span className="font-medium">Disciplines:</span>
                         <div className="flex flex-wrap gap-1">
                           {comp.disciplines.map(discipline => (
                             <Badge key={discipline} variant="outline" className="text-xs">
@@ -592,9 +593,10 @@ const ClubCompetitions = () => {
                       </div>
                     )}
 
+                    {/* Catégories */}
                     {comp.categories && comp.categories.length > 0 && (
-                      <div className="p-3 bg-muted/30 rounded-md">
-                        <h5 className="font-semibold mb-2">Catégories</h5>
+                      <div className="flex items-center gap-2 text-sm col-span-full">
+                        <span className="font-medium">Catégories:</span>
                         <div className="flex flex-wrap gap-1">
                           {comp.categories.map(category => (
                             <Badge key={category} variant="outline" className="text-xs">
