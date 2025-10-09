@@ -12,7 +12,6 @@ import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import MemberForm from '@/components/MemberForm';
-import SafeMemberAvatar from '@/components/SafeMemberAvatar';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import VolunteerQuiz from '@/components/VolunteerQuiz';
 import { useMemberDetail } from '@/contexts/MemberDetailContext';
@@ -238,11 +237,11 @@ const Volunteers = () => {
         <Card className="border-green-200 shadow-md hover:shadow-lg transition-shadow relative h-full cursor-pointer" onClick={() => showMemberDetails(member.id)}>
           {isAdmin && <Button variant="ghost" size="icon" className="absolute top-2 right-2 h-8 w-8" onClick={(e) => { e.stopPropagation(); openEditFormForMember(member); }}><Edit className="h-4 w-4" /></Button>}
           <CardContent className="p-4 flex items-center gap-4">
-            <SafeMemberAvatar 
-              member={member} 
-              size="default" 
-              alt={`Portrait de ${fullName}`} 
-            />
+            <div className="w-16 h-16 bg-gradient-to-br from-green-100 to-green-200 rounded-full flex items-center justify-center">
+              <span className="text-green-700 font-bold text-lg">
+                {member.first_name?.[0]}{member.last_name?.[0]}
+              </span>
+            </div>
             <div className="flex-1">
               <div className="flex items-center gap-2">
                 <p className="font-semibold text-lg">{fullName}</p>

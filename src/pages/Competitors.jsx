@@ -21,7 +21,6 @@ import {
 import { useNavigate } from 'react-router-dom';
 import MemberForm from '@/components/MemberForm';
 import { useMemberDetail } from '@/contexts/MemberDetailContext';
-import SafeMemberAvatar from '@/components/SafeMemberAvatar';
 
 // Composant pour afficher les statistiques de participation
 const ParticipationStats = ({ title, stats, color, loading }) => {
@@ -524,11 +523,11 @@ const CompetitorCard = ({ member, onEdit, isAdmin, stats, onStatClick }) => {
         <Card className="overflow-hidden transition-all hover:shadow-md relative group cursor-pointer" onClick={() => showMemberDetails(member.id)}>
             <CardContent className="p-3 flex flex-col gap-2">
                 <div className="flex items-center gap-3">
-                    <SafeMemberAvatar 
-                      member={member} 
-                      size="small" 
-                      alt={formatName(member.first_name, member.last_name, true)}
-                    />
+                    <div className="w-8 h-8 bg-gradient-to-br from-purple-100 to-purple-200 rounded-full flex items-center justify-center">
+                      <span className="text-purple-700 font-bold text-sm">
+                        {member.first_name?.[0]}{member.last_name?.[0]}
+                      </span>
+                    </div>
                     <div className="flex-grow">
                         <div className="flex items-center gap-2">
                             <p className="font-semibold">{formatName(member.first_name, member.last_name, isAdmin)}</p>
