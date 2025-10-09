@@ -10,6 +10,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { useToast } from '@/components/ui/use-toast';
 import { formatName } from '@/lib/utils';
 import { useMemberDetail } from '@/contexts/MemberDetailContext';
+import ParticipantsDisplay from '@/components/ParticipantsDisplay';
 import RankingForm from './components/RankingForm';
 
 const ClubCompetitions = () => {
@@ -491,93 +492,15 @@ const ClubCompetitions = () => {
   const ParticipantsList = ({ competitionId }) => {
     const competitionParticipants = participants[competitionId] || [];
     
-    if (competitionParticipants.length === 0) {
-      return (
-        <div className="text-center py-4 text-muted-foreground">
-          <Users className="w-8 h-8 mx-auto mb-2 opacity-50" />
-          <p className="text-sm">Aucun participant inscrit pour cette compétition.</p>
-        </div>
-      );
-    }
-
-    // Séparer les compétiteurs du staff
-    const competitors = competitionParticipants.filter(p => p.role === 'Competiteur');
-    const staff = competitionParticipants.filter(p => p.role !== 'Competiteur');
-
-    // Grouper les compétiteurs par genre et catégorie
-    const groupedCompetitors = groupCompetitorsByGenderAndCategory(competitors);
-
+    console.log('Debug ParticipantsList - competitionId:', competitionId);
+    console.log('Debug ParticipantsList - participants:', competitionParticipants);
+    
     return (
-      <div className="space-y-4">
-        {/* Affichage des compétiteurs par genre et catégorie */}
-        {competitors.length > 0 && (
-          <div>
-            <h5 className="font-medium mb-3 text-primary flex items-center gap-2">
-              <Trophy className="w-4 h-4" />
-              Compétiteurs ({competitors.length})
-            </h5>
-            
-            <div className="space-y-3">
-              {/* Femmes */}
-              {Object.keys(groupedCompetitors.femmes).length > 0 && (
-                <div className="border rounded-lg p-3">
-                  <h6 className="text-sm font-semibold text-pink-700 mb-2 flex items-center gap-1">
-                    👩 Femmes
-                  </h6>
-                  <div className="space-y-2">
-                    {Object.entries(groupedCompetitors.femmes).map(([category, categoryParticipants]) => (
-                      <div key={`f-${category}`} className="border-l-2 border-pink-200 pl-2">
-                        <div className="text-xs font-medium text-pink-600 mb-1">{category} ({categoryParticipants.length})</div>
-                        <div className="space-y-0">
-                          {categoryParticipants.map(participant => (
-                            <CompetitorCard key={participant.id} participant={participant} />
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Hommes */}
-              {Object.keys(groupedCompetitors.hommes).length > 0 && (
-                <div className="border rounded-lg p-3">
-                  <h6 className="text-sm font-semibold text-blue-700 mb-2 flex items-center gap-1">
-                    👨 Hommes
-                  </h6>
-                  <div className="space-y-2">
-                    {Object.entries(groupedCompetitors.hommes).map(([category, categoryParticipants]) => (
-                      <div key={`h-${category}`} className="border-l-2 border-blue-200 pl-2">
-                        <div className="text-xs font-medium text-blue-600 mb-1">{category} ({categoryParticipants.length})</div>
-                        <div className="space-y-0">
-                          {categoryParticipants.map(participant => (
-                            <CompetitorCard key={participant.id} participant={participant} />
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Staff (juges, coachs) */}
-        {staff.length > 0 && (
-          <div className="border rounded-lg p-3">
-            <h5 className="font-semibold mb-2 text-blue-700 flex items-center gap-2">
-              <UserCheck className="w-4 h-4" />
-              Encadrement ({staff.length})
-            </h5>
-            <div className="space-y-0">
-              {staff.map(participant => (
-                <StaffCard key={participant.id} participant={participant} />
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
+      <ParticipantsDisplay 
+        participants={competitionParticipants}
+        onParticipantClick={showMemberDetails}
+        compact={true}
+      />
     );
   };
 
