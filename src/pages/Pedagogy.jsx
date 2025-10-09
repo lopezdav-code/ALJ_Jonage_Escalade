@@ -18,14 +18,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useNavigate } from 'react-router-dom';
 
 const BUCKET_NAME = 'pedagogy_files';
-const CATEGORIES = ["Sécurité", "Noeud", "Secours", "Manip"];
+const CATEGORIES = ["Sécurité", "Noeud", "Secours", "Manip", "Information"];
 const SHEET_TYPES = {
   'educational_game': 'Jeu éducatif',
   'warm_up_exercise': 'Exercice d\'échauffement',
   'strength_exercise': 'Exercice de renfo',
   'review_sheet': 'Fiche de révision',
   'technical_sheet': 'Fiche technique',
-  'safety_sheet': 'Fiche sécurité'
+  'safety_sheet': 'Fiche sécurité',
+  'meeting_report': 'Compte rendu de réunion'
 };
 
 const TAB_CONFIG = {
@@ -58,6 +59,11 @@ const TAB_CONFIG = {
     icon: Puzzle,
     label: 'Fiches Sécurité',
     description: 'Procédures et consignes de sécurité'
+  },
+  'meeting_report': {
+    icon: FileText,
+    label: 'Comptes Rendus',
+    description: 'Comptes rendus de réunions et assemblées'
   }
 };
 
@@ -375,6 +381,7 @@ const SheetCard = ({ sheet, onEdit, onDelete, isAdmin }) => {
       case 'warm_up_exercise': return <Dumbbell className="w-4 h-4" />;
       case 'strength_exercise': return <BrainCircuit className="w-4 h-4" />;
       case 'review_sheet': return <FileQuestion className="w-4 h-4" />;
+      case 'meeting_report': return <FileText className="w-4 h-4" />;
       default: return null;
     }
   };

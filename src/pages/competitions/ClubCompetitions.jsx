@@ -36,11 +36,21 @@ const ClubCompetitions = () => {
       setCompetitions(competitionsData);
 
       // Récupérer les participants pour toutes les compétitions
-      const { data: participantsData, error: participantsError } = await supabase
+      const { data: rawParticipants, error: participantsError } = await supabase
         .from('competition_participants')
-        .select(`
-          *,
-          members (
+        .select('*')
+        .order('role')
+        .order('created_at');
+
+      if (participantsError) throw participantsError;
+
+      // Si on a des participants, récupérer les données des membres
+      let enrichedParticipants = [];
+      if (rawParticipants && rawParticipants.length > 0) {
+        const memberIds = [...new Set(rawParticipants.map(p => p.member_id))];
+        const { data: membersData, error: membersError } = await supabase
+          .from('members')
+          .select(`
             id,
             first_name,
             last_name,
@@ -53,16 +63,25 @@ const ClubCompetitions = () => {
             brevet_federaux,
             title,
             sub_group
-          )
-        `)
-        .order('role')
-        .order('last_name', { foreignTable: 'members' });
+          `)
+          .in('id', memberIds);
 
-      if (participantsError) throw participantsError;
+        if (membersError) throw membersError;
+
+        // Associer les membres aux participants
+        enrichedParticipants = rawParticipants.map(participant => ({
+          ...participant,
+          members: membersData?.find(member => member.id === participant.member_id) || null
+        }));
+
+        // Debug pour voir les données
+        console.log('Debug ClubCompetitions - Participants enrichis:', enrichedParticipants.length);
+        console.log('Debug ClubCompetitions - Exemple:', enrichedParticipants[0]);
+      }
 
       // Organiser les participants par compétition
       const participantsByCompetition = {};
-      participantsData.forEach(participant => {
+      enrichedParticipants.forEach(participant => {
         const compId = participant.competition_id;
         if (!participantsByCompetition[compId]) {
           participantsByCompetition[compId] = [];
@@ -326,15 +345,6 @@ const ClubCompetitions = () => {
   };
 
   // Fonction pour déterminer la prochaine compétition
-  const getNextCompetition = () => {
-    const now = new Date();
-    const futureCompetitions = competitions.filter(comp => new Date(comp.start_date) >= now);
-    if (futureCompetitions.length > 0) {
-      return futureCompetitions.sort((a, b) => new Date(a.start_date) - new Date(b.start_date))[0];
-    }
-    return null;
-  };
-
   // Composant pour l'en-tête compact de compétition (accordéon fermé)
   const CompetitionHeader = ({ comp }) => (
     <div className="flex items-center gap-4 w-full">
@@ -381,71 +391,81 @@ const ClubCompetitions = () => {
         </div>
       </div>
       
-      <Button
-        variant="outline"
-        size="sm"
+      <div
         onClick={(e) => {
           e.stopPropagation();
           navigate(`/competitions/edit/${comp.id}`);
         }}
-        className="ml-2 opacity-0 group-hover:opacity-100 transition-opacity"
+        className="ml-2 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3"
       >
         <Edit className="w-4 h-4 mr-1" />
         Modifier
-      </Button>
+      </div>
     </div>
   );
 
   // Composant pour afficher une carte de compétiteur compacte
-  const CompetitorCard = ({ participant }) => (
-    <div className="flex items-center justify-between py-1 px-2 hover:bg-muted/30 transition-colors group border-b border-muted/30 last:border-b-0">
-      <div 
-        className="flex items-center gap-2 flex-1 cursor-pointer"
-        onClick={() => showMemberDetails(participant.members.id)}
-      >
-        {/* Nom avec catégorie et genre */}
-        <span className="text-sm">
-          {formatName(participant.members.first_name, participant.members.last_name, false)}
-        </span>
-        
-        {/* Badges compacts pour genre et catégorie */}
-        <div className="flex items-center gap-1">
-          <span className="text-xs px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 font-medium">
-            {participant.members.sexe}, {participant.members.category}
+  const CompetitorCard = ({ participant }) => {
+    if (!participant.members) {
+      return (
+        <div className="flex items-center justify-between py-1 px-2 text-muted-foreground text-sm">
+          <span>Membre non trouvé (ID: {participant.member_id})</span>
+        </div>
+      );
+    }
+
+    return (
+      <div className="flex items-center justify-between py-2 px-3 hover:bg-muted/30 transition-colors group border-b border-muted/30 last:border-b-0">
+        <div 
+          className="flex items-center gap-3 flex-1 cursor-pointer"
+          onClick={() => showMemberDetails(participant.members.id)}
+        >
+          {/* Nom formaté comme dans CompetitionParticipants */}
+          <span className="text-sm font-medium">
+            {participant.members.last_name?.toUpperCase()} {participant.members.first_name}
           </span>
+          
+          {/* Badges pour catégorie avec couleurs distinctes par sexe */}
+          <div className="flex items-center gap-1">
+            <span className={`text-xs px-2 py-1 rounded font-medium ${
+              participant.members.sexe === 'Femme' 
+                ? 'bg-pink-100 text-pink-700 border border-pink-200' 
+                : 'bg-blue-100 text-blue-700 border border-blue-200'
+            }`}>
+              {participant.members.category}
+            </span>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          {/* Classement avec trophy icon */}
+          {participant.ranking && (
+            <div className="flex items-center gap-1">
+              <Trophy className="w-3 h-3 text-orange-500" />
+              <span className="text-sm font-bold text-orange-600">
+                {participant.ranking}
+              </span>
+              {participant.nb_competitor && (
+                <span className="text-xs text-muted-foreground">/{participant.nb_competitor}</span>
+              )}
+            </div>
+          )}
+          
+          {/* Bouton d'édition du classement - plus discret */}
+          <div
+            onClick={(e) => {
+              e.stopPropagation();
+              handleEditRanking(participant);
+            }}
+            className="opacity-0 group-hover:opacity-60 hover:opacity-100 transition-opacity h-5 w-5 p-0 cursor-pointer inline-flex items-center justify-center rounded-md hover:bg-accent hover:text-accent-foreground"
+            title="Éditer le classement"
+          >
+            <Settings className="w-3 h-3" />
+          </div>
         </div>
       </div>
-
-      <div className="flex items-center gap-2">
-        {/* Classement avec trophy icon */}
-        {participant.ranking && (
-          <div className="flex items-center gap-1">
-            <Trophy className="w-3 h-3 text-orange-500" />
-            <span className="text-sm font-bold text-orange-600">
-              {participant.ranking}
-            </span>
-            {participant.nb_competitor && (
-              <span className="text-xs text-muted-foreground">/{participant.nb_competitor}</span>
-            )}
-          </div>
-        )}
-        
-        {/* Bouton d'édition du classement - plus discret */}
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={(e) => {
-            e.stopPropagation();
-            handleEditRanking(participant);
-          }}
-          className="opacity-0 group-hover:opacity-60 hover:opacity-100 transition-opacity h-5 w-5 p-0"
-          title="Éditer le classement"
-        >
-          <Settings className="w-3 h-3" />
-        </Button>
-      </div>
-    </div>
-  );
+    );
+  };
 
   // Composant pour afficher une carte de staff compacte (juges, coachs)
   const StaffCard = ({ participant }) => (
@@ -588,7 +608,6 @@ const ClubCompetitions = () => {
         <Accordion 
           type="single" 
           collapsible 
-          defaultValue={getNextCompetition()?.id?.toString()}
           className="w-full space-y-4"
         >
           {competitions.map((comp) => (
@@ -735,10 +754,21 @@ const ClubCompetitions = () => {
                   
                   {/* Section des participants */}
                   <div>
-                    <h4 className="text-lg font-semibold mb-3 flex items-center gap-2">
-                      <Users className="w-5 h-5 text-primary" />
-                      Participants
-                    </h4>
+                    <div className="flex items-center justify-between mb-3">
+                      <h4 className="text-lg font-semibold flex items-center gap-2">
+                        <Users className="w-5 h-5 text-primary" />
+                        Participants
+                      </h4>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => navigate(`/competitions/participants/${comp.id}`)}
+                        className="flex items-center gap-2"
+                      >
+                        <Plus className="w-4 h-4" />
+                        Ajouter un participant
+                      </Button>
+                    </div>
                     <ParticipantsList competitionId={comp.id} />
                   </div>
                 </div>
