@@ -3,7 +3,6 @@ import { Helmet } from 'react-helmet';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Building, FolderHeart as HandHeart, Crown, User, FileText, Wallet, Loader2, Edit, Award, Info, BrainCircuit, Shield, Siren as Whistle, Wrench, ShieldCheck } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { scheduleData } from '@/data/schedule';
 import { formatName, ProfileIndicator } from '@/lib/utils.jsx';
@@ -13,6 +12,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import MemberForm from '@/components/MemberForm';
+import SafeMemberAvatar from '@/components/SafeMemberAvatar';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import VolunteerQuiz from '@/components/VolunteerQuiz';
 import { useMemberDetail } from '@/contexts/MemberDetailContext';
@@ -219,7 +219,6 @@ const Volunteers = () => {
     'Trésorier': Wallet, 'Trésorier Adjoint': Wallet, 'Trésorière Adjointe': Wallet,
   }[role] || User);
 
-  const getInitials = (firstName, lastName) => `${firstName?.[0] || ''}${lastName?.[0] || ''}`.toUpperCase();
   const getBadgeVariant = (group) => ({ 'Compétition': 'competition', 'Perf': 'perf', 'Autonomes': 'autonomes', 'Loisir': 'loisir' }[group] || 'secondary');
 
   const dynamicRoleInfo = {
@@ -239,7 +238,11 @@ const Volunteers = () => {
         <Card className="border-green-200 shadow-md hover:shadow-lg transition-shadow relative h-full cursor-pointer" onClick={() => showMemberDetails(member.id)}>
           {isAdmin && <Button variant="ghost" size="icon" className="absolute top-2 right-2 h-8 w-8" onClick={(e) => { e.stopPropagation(); openEditFormForMember(member); }}><Edit className="h-4 w-4" /></Button>}
           <CardContent className="p-4 flex items-center gap-4">
-            <Avatar className="w-16 h-16"><AvatarImage alt={`Portrait de ${fullName}`} src={member.photo_url} /><AvatarFallback className="text-lg font-semibold">{getInitials(member.first_name, member.last_name)}</AvatarFallback></Avatar>
+            <SafeMemberAvatar 
+              member={member} 
+              size="default" 
+              alt={`Portrait de ${fullName}`} 
+            />
             <div className="flex-1">
               <div className="flex items-center gap-2">
                 <p className="font-semibold text-lg">{fullName}</p>

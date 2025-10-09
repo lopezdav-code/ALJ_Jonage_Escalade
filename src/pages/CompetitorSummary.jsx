@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { formatName } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import SafeMemberAvatar from '@/components/SafeMemberAvatar';
 
 const DISCIPLINE_COLORS = {
   'Bloc': 'bloc',
@@ -75,8 +75,6 @@ const CompetitorSummary = () => {
     return <div className="text-center">Compétiteur non trouvé.</div>;
   }
 
-  const getInitials = (firstName, lastName) => `${firstName?.[0] || ''}${lastName?.[0] || ''}`.toUpperCase();
-
   return (
     <div className="space-y-8">
       <Helmet>
@@ -88,12 +86,11 @@ const CompetitorSummary = () => {
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={() => navigate(-1)}><ArrowLeft /></Button>
           <div className="flex items-center gap-4">
-            <Avatar className="w-16 h-16">
-              <AvatarImage src={member.photo_url} alt={formatName(member.first_name, member.last_name, true)} />
-              <AvatarFallback className="text-2xl">
-                {getInitials(member.first_name, member.last_name)}
-              </AvatarFallback>
-            </Avatar>
+            <SafeMemberAvatar 
+              member={member} 
+              size="default" 
+              alt={formatName(member.first_name, member.last_name, true)}
+            />
             <div>
               <h1 className="text-4xl font-bold headline flex items-center gap-3">
                 <Trophy className="w-10 h-10 text-primary" />

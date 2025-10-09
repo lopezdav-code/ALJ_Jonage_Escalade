@@ -12,7 +12,10 @@
     "preview": "vite preview --host :: --port 3000",
     "predeploy": "npm run build",
     "deploy": "gh-pages -d dist --no-history",
-    "server:restart": "node -e \"require('child_process').exec('scripts/restart-server.bat', (err, stdout) => console.log(stdout || err))\"",
+    "server:restart": "powershell -ExecutionPolicy Bypass -File scripts/server-manager.ps1 restart",
+    "server:status": "powershell -ExecutionPolicy Bypass -File scripts/server-manager.ps1 status",
+    "server:start": "powershell -ExecutionPolicy Bypass -File scripts/server-manager.ps1 start",
+    "server:stop": "powershell -ExecutionPolicy Bypass -File scripts/server-manager.ps1 stop",
     "server:check": "node -e \"require('http').get('http://localhost:3000/ALJ_Jonage_Escalade/', (res) => console.log('✅ Serveur actif:', res.statusCode)).on('error', () => console.log('❌ Serveur inactif'))\""
   },
   "dependencies": {

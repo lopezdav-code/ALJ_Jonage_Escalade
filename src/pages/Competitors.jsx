@@ -21,7 +21,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import MemberForm from '@/components/MemberForm';
 import { useMemberDetail } from '@/contexts/MemberDetailContext';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import SafeMemberAvatar from '@/components/SafeMemberAvatar';
 
 // Composant pour afficher les statistiques de participation
 const ParticipationStats = ({ title, stats, color, loading }) => {
@@ -519,16 +519,16 @@ const CompetitorCard = ({ member, onEdit, isAdmin, stats, onStatClick }) => {
     const { showMemberDetails } = useMemberDetail();
     const showBlocStat = stats && stats.bloc > 0;
     const showDifficulteStat = stats && stats.difficulte > 0;
-    const getInitials = (firstName, lastName) => `${firstName?.[0] || ''}${lastName?.[0] || ''}`.toUpperCase();
 
     return (
         <Card className="overflow-hidden transition-all hover:shadow-md relative group cursor-pointer" onClick={() => showMemberDetails(member.id)}>
             <CardContent className="p-3 flex flex-col gap-2">
                 <div className="flex items-center gap-3">
-                    <Avatar className="h-10 w-10">
-                        <AvatarImage src={member.photo_url} alt={formatName(member.first_name, member.last_name, true)} />
-                        <AvatarFallback>{getInitials(member.first_name, member.last_name)}</AvatarFallback>
-                    </Avatar>
+                    <SafeMemberAvatar 
+                      member={member} 
+                      size="small" 
+                      alt={formatName(member.first_name, member.last_name, true)}
+                    />
                     <div className="flex-grow">
                         <div className="flex items-center gap-2">
                             <p className="font-semibold">{formatName(member.first_name, member.last_name, isAdmin)}</p>

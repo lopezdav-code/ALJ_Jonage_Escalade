@@ -2,13 +2,13 @@ import React from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useMemberDetail } from '@/contexts/MemberDetailContext';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Mail, Phone, Award, Star, Heart, Briefcase, Edit, Users, Trophy, CreditCard } from 'lucide-react';
 import { formatName } from '@/lib/utils';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
+import SafeMemberAvatar from '@/components/SafeMemberAvatar';
 
 const MemberDetailCard = () => {
   const { isDetailVisible, hideMemberDetails, selectedMember, loading, openEditFormForMember, showMemberDetails } = useMemberDetail();
@@ -63,12 +63,12 @@ const MemberDetailCard = () => {
               animate={{ opacity: 1 }}
             >
               <DialogHeader className="items-center text-center">
-                <Avatar className="w-24 h-24 mb-4">
-                  <AvatarImage src={selectedMember.photo_url} alt={formatName(selectedMember.first_name, selectedMember.last_name, isAdmin)} />
-                  <AvatarFallback className="text-3xl">
-                    {getInitials(selectedMember.first_name, selectedMember.last_name)}
-                  </AvatarFallback>
-                </Avatar>
+                <SafeMemberAvatar 
+                  member={selectedMember} 
+                  size="large" 
+                  className="mb-4"
+                  alt={formatName(selectedMember.first_name, selectedMember.last_name, isAdmin)}
+                />
                 <DialogTitle className="text-2xl">{formatName(selectedMember.first_name, selectedMember.last_name, isAdmin)}</DialogTitle>
               </DialogHeader>
               <div className="py-4 space-y-4">

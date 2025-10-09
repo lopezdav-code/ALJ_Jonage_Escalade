@@ -9,6 +9,7 @@ import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Loader2, Image as ImageIcon, Link as LinkIcon, Search } from 'lucide-react';
 import { formatName } from '@/lib/utils';
+import ImageErrorReporting from '@/components/ImageErrorReporting';
 
 const Autocomplete = ({ members, onSelect, onClear }) => {
   const [query, setQuery] = useState('');
@@ -206,6 +207,9 @@ const ImageAdmin = () => {
           Gestion des Images
         </h1>
       </motion.div>
+
+      {/* Composant de rapport des erreurs d'images */}
+      <ImageErrorReporting />
 
       {images.length === 0 ? (
         <p className="text-center text-muted-foreground py-16">Aucune image trouvée dans les buckets de stockage.</p>

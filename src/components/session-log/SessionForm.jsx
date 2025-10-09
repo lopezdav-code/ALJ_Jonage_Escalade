@@ -7,7 +7,6 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { PlusCircle, Save, BookMarked, Search } from 'lucide-react';
-import { membersCsvData, parseMembers } from '@/data/clubMembers';
 import ExerciseFormItem from './ExerciseFormItem';
 import { supabase } from '@/lib/customSupabaseClient';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
@@ -163,12 +162,29 @@ const SessionForm = ({ session, onSave, onCancel, isSaving }) => {
   );
   const [isSheetSelectorOpen, setIsSheetSelectorOpen] = useState(false);
   const [importTargetIndex, setImportTargetIndex] = useState(null);
+  const [lyceeStudents, setLyceeStudents] = useState([]);
 
-  const lyceeStudents = useMemo(() => {
-    const allMembers = parseMembers(membersCsvData);
-    return allMembers
-      .filter(m => m.title === 'Loisir lycée')
-      .map(m => `${m.firstName} ${m.lastName}`);
+  // Récupérer les étudiants du lycée depuis Supabase
+  useEffect(() => {
+    const fetchLyceeStudents = async () => {
+      try {
+        const { data: members, error } = await supabase
+          .from('members')
+          .select('first_name, last_name')
+          .eq('title', 'Loisir lycée')
+          .order('last_name');
+
+        if (error) throw error;
+
+        const studentNames = members.map(m => `${m.first_name} ${m.last_name}`);
+        setLyceeStudents(studentNames);
+      } catch (error) {
+        console.error('Erreur lors de la récupération des étudiants:', error);
+        setLyceeStudents([]);
+      }
+    };
+
+    fetchLyceeStudents();
   }, []);
 
   const instructorsList = ['David', 'Magali', 'Olivier', 'Clement'];

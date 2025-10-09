@@ -2,10 +2,10 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Progress } from '@/components/ui/progress';
 import { CheckCircle, XCircle, Clock, Award, Repeat } from 'lucide-react';
 import { formatName } from '@/lib/utils';
+import SafeMemberAvatar from '@/components/SafeMemberAvatar';
 
 const correctSound = new Audio("data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU... (truncated)");
 const incorrectSound = new Audio("data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU... (truncated)");
@@ -275,8 +275,6 @@ const VolunteerQuiz = ({ volunteers, onQuizEnd }) => {
       </div>
     );
   }
-  
-  const getInitials = (firstName, lastName) => `${firstName?.[0] || ''}${lastName?.[0] || ''}`.toUpperCase();
 
   return (
     <div className="w-full max-w-2xl mx-auto">
@@ -298,10 +296,11 @@ const VolunteerQuiz = ({ volunteers, onQuizEnd }) => {
               <CardTitle className="text-center text-2xl">{currentQuestion.text}</CardTitle>
               {(currentQuestion.type === 'photo-to-name' || currentQuestion.type === 'photo-to-role') && (
                 <div className="flex justify-center mt-4">
-                  <Avatar className="w-32 h-32">
-                    <AvatarImage src={currentQuestion.subject.photo_url} />
-                    <AvatarFallback className="text-4xl">{getInitials(currentQuestion.subject.first_name, currentQuestion.subject.last_name)}</AvatarFallback>
-                  </Avatar>
+                  <SafeMemberAvatar 
+                    member={currentQuestion.subject} 
+                    size="xl" 
+                    alt={`Photo de ${formatName(currentQuestion.subject.first_name, currentQuestion.subject.last_name)}`}
+                  />
                 </div>
               )}
             </CardHeader>
@@ -329,10 +328,11 @@ const VolunteerQuiz = ({ volunteers, onQuizEnd }) => {
                     >
                       {isPhotoOption ? (
                         <div className="flex flex-col items-center gap-2">
-                           <Avatar className="w-24 h-24">
-                            <AvatarImage src={option.photo_url} />
-                            <AvatarFallback className="text-3xl">{getInitials(option.first_name, option.last_name)}</AvatarFallback>
-                          </Avatar>
+                          <SafeMemberAvatar 
+                            member={option} 
+                            size="large" 
+                            alt={`Photo de ${formatName(option.first_name, option.last_name)}`}
+                          />
                         </div>
                       ) : (
                         <span>{option}</span>

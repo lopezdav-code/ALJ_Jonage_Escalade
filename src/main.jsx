@@ -3,6 +3,9 @@ import ReactDOM from 'react-dom/client';
 import App from '@/App';
 import '@/index.css';
 
+// Protection globale contre les boucles d'erreur d'images
+import '@/lib/globalImageProtection';
+
 // Log de débogage pour vérifier le chargement
 console.log('🚀 ALJ Jonage Escalade - Application démarrée avec succès !');
 console.log('🔢 Version: 2.4.0 - Accordéon pour compétitions ajouté ! 🎵');
