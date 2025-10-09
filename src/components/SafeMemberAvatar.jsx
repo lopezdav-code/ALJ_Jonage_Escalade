@@ -32,6 +32,14 @@ const SafeMemberAvatar = ({
       return null;
     }
 
+    // Bloquer immédiatement les images problématiques connues
+    const imageName = member.photo_url.split('/').pop();
+    const problematicImages = ['Thibault_N.png', 'Clément_LIMA_FERREIRA.png', 'Cl%C3%A9ment_LIMA_FERREIRA.png'];
+    
+    if (problematicImages.includes(imageName) || member.photo_url.includes('Thibault_N') || member.photo_url.includes('Cl%C3%A9ment_LIMA_FERREIRA')) {
+      return null; // Ne pas essayer de charger ces images
+    }
+
     // Si c'est déjà une URL complète, la retourner
     if (member.photo_url.startsWith('http')) {
       return member.photo_url;

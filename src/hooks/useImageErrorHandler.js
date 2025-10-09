@@ -5,18 +5,34 @@ const brokenImageCache = new Set();
 const imageStatusCache = new Map();
 const errorCounts = new Map(); // Compter les erreurs pour éviter les boucles
 
+// Images problématiques à bloquer immédiatement
+const PROBLEMATIC_IMAGES = [
+  'Thibault_N.png',
+  'Clément_LIMA_FERREIRA.png',
+  'Cl%C3%A9ment_LIMA_FERREIRA.png'
+];
+
 export const useImageErrorHandler = () => {
   const [errors, setErrors] = useState(new Set());
 
   const handleImageError = (imageUrl) => {
     if (!imageUrl) return;
 
+    const imageName = imageUrl.split('/').pop();
+    
+    // Bloquer immédiatement les images problématiques connues
+    if (PROBLEMATIC_IMAGES.includes(imageName) || imageUrl.includes('Thibault_N') || imageUrl.includes('Cl%C3%A9ment_LIMA_FERREIRA')) {
+      brokenImageCache.add(imageUrl);
+      return; // Ne pas logger ni traiter ces images
+    }
+
     // Compter les erreurs pour cette URL
     const currentCount = errorCounts.get(imageUrl) || 0;
     errorCounts.set(imageUrl, currentCount + 1);
 
-    // Si on a déjà plus de 3 erreurs pour cette URL, l'ignorer complètement
-    if (currentCount >= 3) {
+    // Si on a déjà plus de 1 erreur pour cette URL, l'ignorer complètement
+    if (currentCount >= 1) {
+      brokenImageCache.add(imageUrl);
       return;
     }
 

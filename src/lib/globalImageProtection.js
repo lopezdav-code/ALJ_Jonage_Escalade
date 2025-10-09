@@ -3,7 +3,14 @@
 
 const BROKEN_IMAGE_CACHE = new Set();
 const ERROR_COUNTS = new Map();
-const MAX_ERRORS_PER_URL = 3;
+const MAX_ERRORS_PER_URL = 1; // Réduit à 1 pour stopper immédiatement les boucles
+
+// URLs problématiques à bloquer immédiatement
+const BLOCKED_IMAGES = new Set([
+  'Thibault_N.png',
+  'Clément_LIMA_FERREIRA.png', 
+  'Cl%C3%A9ment_LIMA_FERREIRA.png'
+]);
 
 // Fonction pour bloquer les requêtes d'images cassées
 const blockBrokenImageRequests = () => {
@@ -13,6 +20,16 @@ const blockBrokenImageRequests = () => {
     
     if (target.tagName === 'IMG') {
       const imageUrl = target.src;
+      const imageName = imageUrl.split('/').pop();
+      
+      // Blocage immédiat pour les images problématiques connues
+      if (BLOCKED_IMAGES.has(imageName) || imageUrl.includes('Thibault_N') || imageUrl.includes('Cl%C3%A9ment_LIMA_FERREIRA')) {
+        BROKEN_IMAGE_CACHE.add(imageUrl);
+        target.style.display = 'none';
+        target.remove();
+        console.warn(`🚫 Image bloquée immédiatement: ${imageName}`);
+        return;
+      }
       
       // Compter les erreurs pour cette URL
       const currentCount = ERROR_COUNTS.get(imageUrl) || 0;
@@ -46,9 +63,17 @@ const blockBrokenImageRequests = () => {
         return originalSrc;
       },
       set(value) {
+        const imageName = value.split('/').pop();
+        
+        // Vérifier si cette URL est dans la liste des images bloquées
+        if (BLOCKED_IMAGES.has(imageName) || value.includes('Thibault_N') || value.includes('Cl%C3%A9ment_LIMA_FERREIRA')) {
+          console.warn(`🚫 Requête d'image bloquée (image interdite): ${imageName}`);
+          return; // Ne pas faire la requête
+        }
+        
         // Vérifier si cette URL est dans le cache des images cassées
         if (BROKEN_IMAGE_CACHE.has(value)) {
-          console.warn(`Requête d'image bloquée (cache): ${value}`);
+          console.warn(`🚫 Requête d'image bloquée (cache): ${value}`);
           return; // Ne pas faire la requête
         }
         
@@ -59,6 +84,19 @@ const blockBrokenImageRequests = () => {
     });
     
     return img;
+  };
+  
+  // Bloquer aussi les requêtes fetch pour les images
+  const originalFetch = window.fetch;
+  window.fetch = function(url, options) {
+    if (typeof url === 'string') {
+      const imageName = url.split('/').pop();
+      if (BLOCKED_IMAGES.has(imageName) || url.includes('Thibault_N') || url.includes('Cl%C3%A9ment_LIMA_FERREIRA')) {
+        console.warn(`🚫 Requête fetch bloquée pour image interdite: ${imageName}`);
+        return Promise.reject(new Error('Image bloquée'));
+      }
+    }
+    return originalFetch.call(this, url, options);
   };
 };
 
