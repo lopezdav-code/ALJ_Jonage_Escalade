@@ -1,6 +1,6 @@
 {
-  "version": "1.5.1",
-  "buildDate": "2024-10-09T20:50:00.000Z",
-  "description": "Optimisations de performance - cache profils + limitation requêtes concurrentes",
+  "version": "1.5.2",
+  "buildDate": "2024-10-09T21:00:00.000Z",
+  "description": "Fix: résolution des erreurs 400 Bad Request sur access_logs + optimisation gestion des erreurs",
   "commit": "main"
 }

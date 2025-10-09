@@ -28,7 +28,7 @@ const processLogQueue = async () => {
 
 // Hook pour logger les connexions
 export const useConnectionLogger = () => {
-  
+
   // Logger une connexion
   const logConnection = async (user, action = 'login', profileData = null) => {
     if (!user) return;
@@ -48,19 +48,15 @@ export const useConnectionLogger = () => {
           userName = `${profileData.members.first_name} ${profileData.members.last_name}`.trim();
         }
 
-        // Données simplifiées pour réduire la charge
+        // Données simplifiées et sécurisées pour éviter les erreurs 400
         const logData = {
           user_id: user.id,
-          user_email: user.email,
-          user_name: userName,
-          action: action,
+          user_email: user.email || 'unknown',
+          user_name: userName || user.email || 'unknown',
+          action: action || 'login',
           ip_address: 'localhost',
-          user_agent: navigator.userAgent.substring(0, 255), // Limiter la taille
-          session_id: `session_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`, // Plus court
-          metadata: {
-            browser: getBrowserInfo(navigator.userAgent),
-            platform: navigator.platform
-          },
+          user_agent: navigator.userAgent ? navigator.userAgent.substring(0, 255) : 'unknown',
+          session_id: `session_${Date.now()}`,
           log_type: 'connection'
         };
 
@@ -73,12 +69,30 @@ export const useConnectionLogger = () => {
           .from('access_logs')
           .insert(logData);
 
-        await Promise.race([insertPromise, timeoutPromise]);
-        
-        console.log(`Connexion loggée: ${logData.action} pour ${logData.user_name}`);
-        
-      } catch (error) {
-        console.error('Erreur lors du logging de la connexion:', error.message);
+        try {
+          const { data, error } = await Promise.race([insertPromise, timeoutPromise]);
+          
+          if (error) {
+            // Si l'erreur est liée à la table qui n'existe pas, on ignore silencieusement
+            if (error.code === 'PGRST106' || error.message?.includes('access_logs')) {
+              console.warn('Table access_logs non trouvée - logging désactivé');
+              return;
+            }
+            throw error;
+          }
+          
+          console.log(`Connexion loggée: ${logData.action} pour ${logData.user_name}`);
+        } catch (error) {
+          // Erreur réseau ou timeout - on ignore pour ne pas bloquer l'application
+          if (error.message === 'Timeout' || error.name === 'NetworkError') {
+            console.warn('Timeout ou erreur réseau lors du logging - ignoré');
+            return;
+          }
+          
+          console.error('Erreur lors du logging de la connexion:', error.message);
+        }
+      } catch (outerError) {
+        console.error('Erreur générale dans logRequest:', outerError.message);
       }
     };
 

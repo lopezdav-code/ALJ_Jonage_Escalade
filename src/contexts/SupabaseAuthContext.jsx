@@ -80,34 +80,57 @@ export const AuthProvider = ({ children }) => {
       setUser(currentUser);
       
       if (currentUser) {
-        try {
-          // Utiliser la fonction avec cache
-          const data = await fetchUserProfile(currentUser.id);
-          setProfile(data);
-
-          // Logger la connexion si c'est une nouvelle session et qu'il n'y avait pas d'utilisateur avant
-          if (isNewLogin || (!previousUser && currentUser)) {
-            // Passer les données du profil pour éviter une requête supplémentaire
-            await logConnection(currentUser, 'login', data);
+        // Version simplifiée : profil par défaut pour éviter les requêtes excessives
+        let profileData = { role: 'member', member_id: null };
+        
+        // Essayer de récupérer le profil seulement si c'est vraiment nécessaire
+        if (isNewLogin && !profileCache.has(currentUser.id)) {
+          try {
+            const data = await fetchUserProfile(currentUser.id);
+            if (data) {
+              profileData = data;
+            }
+          } catch (profileError) {
+            console.warn("Utilisation du profil par défaut suite à l'erreur:", profileError.message);
           }
-        } catch (profileError) {
-          console.error("Error in profile fetch:", profileError);
-          setProfile(null);
+        } else if (profileCache.has(currentUser.id)) {
+          // Utiliser le cache existant
+          const cached = profileCache.get(currentUser.id);
+          if (cached && performanceUtils.isCacheValid(cached.timestamp)) {
+            profileData = cached.data;
+          }
+        }
+
+        setProfile(profileData);
+
+        // Logger la connexion seulement pour les nouvelles sessions réelles
+        if (isNewLogin && !previousUser) {
+          try {
+            await logConnection(currentUser, 'login', profileData);
+          } catch (logError) {
+            console.warn('Logging ignoré suite à l\'erreur:', logError.message);
+          }
         }
       } else {
-        // Logger la déconnexion si il y avait un utilisateur avant
+        // Déconnexion - logging simplifiée
         if (previousUser) {
-          // Utiliser les données du profil existant si disponibles
-          await logDisconnection(previousUser, profile);
+          try {
+            await logDisconnection(previousUser, profile);
+          } catch (logError) {
+            console.warn('Logging de déconnexion ignoré:', logError.message);
+          }
         }
         setProfile(null);
       }
     } catch (error) {
       console.error("Error in handleSession:", error);
+      // En cas d'erreur, au moins définir les états de base
+      setUser(session?.user ?? null);
+      setProfile(session?.user ? { role: 'member' } : null);
     } finally {
       setLoading(false);
     }
-  }, [user, logConnection, logDisconnection, profile, fetchUserProfile]);
+  }, [user, logConnection, logDisconnection, profile, fetchUserProfile, profileCache]);
 
   useEffect(() => {
     let isMounted = true;
