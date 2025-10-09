@@ -1,6 +1,9 @@
-const { spawn } = require('child_process');
-const http = require('http');
-const path = require('path');
+import { spawn } from 'child_process';
+import http from 'http';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const SERVER_URL = 'http://localhost:3000/ALJ_Jonage_Escalade/';
 const CHECK_INTERVAL = 15000; // 15 secondes

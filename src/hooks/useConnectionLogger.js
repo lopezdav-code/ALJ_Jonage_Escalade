@@ -54,7 +54,7 @@ export const useConnectionLogger = () => {
           user_email: user.email || 'unknown',
           user_name: userName || user.email || 'unknown',
           action: action || 'login',
-          ip_address: 'localhost',
+          ip_address: '127.0.0.1', // IP valide au lieu de "localhost"
           user_agent: navigator.userAgent ? navigator.userAgent.substring(0, 255) : 'unknown',
           session_id: `session_${Date.now()}`,
           log_type: 'connection'
