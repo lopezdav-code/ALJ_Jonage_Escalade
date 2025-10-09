@@ -77,9 +77,6 @@ const MemberFormWrapper = () => {
         ...dataToSave 
       } = { ...memberData, photo_url };
 
-      console.log('Données à sauvegarder:', dataToSave);
-      console.log('Sexe dans les données:', dataToSave.sexe);
-
       // Sauvegarder en base de données
       const { error } = await supabase
         .from('members')
@@ -177,10 +174,6 @@ const AppContent = () => {
 };
 
 function App() {
-  // Log de débogage pour vérifier que React fonctionne
-  console.log('⚛️ Composant App monté avec succès');
-  console.log('🔧 React Router configuré pour GitHub Pages');
-  
   return (
     <Router basename="/ALJ_Jonage_Escalade">
       <AuthProvider>

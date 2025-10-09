@@ -239,7 +239,6 @@ const Vocabulary = () => {
       if (error) {
         if (error.code === 'PGRST205') {
           // Table n'existe pas encore
-          console.log('Table vocabulary_sheets pas encore créée');
           setSavedSheets([]);
           toast({ 
             title: "Information", 

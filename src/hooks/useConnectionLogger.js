@@ -75,17 +75,13 @@ export const useConnectionLogger = () => {
           if (error) {
             // Si l'erreur est liée à la table qui n'existe pas, on ignore silencieusement
             if (error.code === 'PGRST106' || error.message?.includes('access_logs')) {
-              console.warn('Table access_logs non trouvée - logging désactivé');
               return;
             }
             throw error;
           }
-          
-          console.log(`Connexion loggée: ${logData.action} pour ${logData.user_name}`);
         } catch (error) {
           // Erreur réseau ou timeout - on ignore pour ne pas bloquer l'application
           if (error.message === 'Timeout' || error.name === 'NetworkError') {
-            console.warn('Timeout ou erreur réseau lors du logging - ignoré');
             return;
           }
           

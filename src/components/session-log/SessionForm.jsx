@@ -179,7 +179,6 @@ const SessionForm = ({ session, onSave, onCancel, isSaving }) => {
         const studentNames = members.map(m => `${m.first_name} ${m.last_name}`);
         setLyceeStudents(studentNames);
       } catch (error) {
-        console.error('Erreur lors de la récupération des étudiants:', error);
         setLyceeStudents([]);
       }
     };

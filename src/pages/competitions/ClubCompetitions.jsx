@@ -74,22 +74,6 @@ const ClubCompetitions = () => {
           ...participant,
           members: membersData?.find(member => member.id === participant.member_id) || null
         }));
-
-        // Debug pour voir les données
-        console.log('Debug ClubCompetitions - Participants enrichis:', enrichedParticipants.length);
-        console.log('Debug ClubCompetitions - Exemple:', enrichedParticipants[0]);
-        
-        // Debug spécifique pour le sexe
-        enrichedParticipants.forEach((participant, index) => {
-          if (participant.members) {
-            console.log(`Debug Sexe ${index}:`, {
-              nom: `${participant.members.last_name} ${participant.members.first_name}`,
-              sexe: participant.members.sexe,
-              sexeType: typeof participant.members.sexe,
-              category: participant.members.category
-            });
-          }
-        });
       }
 
       // Organiser les participants par compétition
@@ -503,9 +487,6 @@ const ClubCompetitions = () => {
   // Composant principal pour afficher les participants d'une compétition
   const ParticipantsList = ({ competitionId }) => {
     const competitionParticipants = participants[competitionId] || [];
-    
-    console.log('Debug ParticipantsList - competitionId:', competitionId);
-    console.log('Debug ParticipantsList - participants:', competitionParticipants);
     
     return (
       <ParticipantsDisplay 
