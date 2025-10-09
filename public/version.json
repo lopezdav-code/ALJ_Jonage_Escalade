@@ -1,6 +1,6 @@
 {
-  "version": "1.4.0",
-  "buildDate": "2024-10-09T18:00:00.000Z",
-  "description": "Système de logs d'accès, page admin et hook de logging",
+  "version": "1.4.1",
+  "buildDate": "2024-10-09T18:30:00.000Z",
+  "description": "Système de logs d'accès, page admin et hook de logging - Fix déploiement",
   "commit": "main"
 }
