@@ -3,6 +3,7 @@ import React, { createContext, useContext, useEffect, useState, useCallback, use
 import { supabase } from '@/lib/customSupabaseClient';
 import { useToast } from '@/components/ui/use-toast';
 import { useConnectionLogger } from '@/hooks/useConnectionLogger';
+import { PERFORMANCE_CONFIG, performanceUtils } from '@/config/performance';
 
 const AuthContext = createContext(undefined);
 
@@ -14,6 +15,64 @@ export const AuthProvider = ({ children }) => {
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState(null);
+  const [profileCache, setProfileCache] = useState(new Map()); // Cache pour éviter les requêtes répétées
+  const [pendingProfileRequests, setPendingProfileRequests] = useState(new Map()); // Éviter les requêtes simultanées
+
+  // Fonction pour récupérer le profil avec cache et éviter les requêtes simultanées
+  const fetchUserProfile = useCallback(async (userId) => {
+    // Vérifier le cache d'abord
+    if (profileCache.has(userId)) {
+      const cached = profileCache.get(userId);
+      const cacheAge = Date.now() - cached.timestamp;
+      if (cacheAge < 300000) { // Cache valide pendant 5 minutes
+        return cached.data;
+      }
+    }
+
+    // Vérifier si une requête est déjà en cours pour cet utilisateur
+    if (pendingProfileRequests.has(userId)) {
+      return pendingProfileRequests.get(userId);
+    }
+
+    // Créer une nouvelle requête
+    const profilePromise = (async () => {
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('role, member_id, members(id, first_name, last_name)')
+          .eq('id', userId)
+          .single();
+
+        if (error && error.code !== 'PGRST116') {
+          console.error("Error fetching user profile:", error);
+          return null;
+        }
+
+        // Mettre en cache le résultat
+        setProfileCache(prev => new Map(prev.set(userId, {
+          data,
+          timestamp: Date.now()
+        })));
+
+        return data;
+      } catch (profileError) {
+        console.error("Error in profile fetch:", profileError);
+        return null;
+      } finally {
+        // Supprimer de la liste des requêtes en cours
+        setPendingProfileRequests(prev => {
+          const newMap = new Map(prev);
+          newMap.delete(userId);
+          return newMap;
+        });
+      }
+    })();
+
+    // Ajouter à la liste des requêtes en cours
+    setPendingProfileRequests(prev => new Map(prev.set(userId, profilePromise)));
+
+    return profilePromise;
+  }, [profileCache]);
 
   const handleSession = useCallback(async (session, isNewLogin = false) => {
     try {
@@ -24,18 +83,9 @@ export const AuthProvider = ({ children }) => {
       
       if (currentUser) {
         try {
-          const { data, error } = await supabase
-            .from('profiles')
-            .select('role, member_id, members(id, first_name, last_name)')
-            .eq('id', currentUser.id)
-            .single();
-
-          if (error && error.code !== 'PGRST116') { // Ignore "exact one row" error if profile not found yet
-            console.error("Error fetching user profile:", error);
-            setProfile(null);
-          } else {
-            setProfile(data);
-          }
+          // Utiliser la fonction avec cache
+          const data = await fetchUserProfile(currentUser.id);
+          setProfile(data);
 
           // Logger la connexion si c'est une nouvelle session et qu'il n'y avait pas d'utilisateur avant
           if (isNewLogin || (!previousUser && currentUser)) {
@@ -59,7 +109,7 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  }, [user, logConnection, logDisconnection]);
+  }, [user, logConnection, logDisconnection, profile, fetchUserProfile]);
 
   useEffect(() => {
     let isMounted = true;

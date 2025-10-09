@@ -1,6 +1,6 @@
 {
-  "version": "1.4.0",
-  "buildDate": "2024-10-09T17:30:00.000Z",
-  "description": "Système de logs d'accès, page admin et hook de logging",
+  "version": "1.5.0",
+  "buildDate": "2024-10-09T20:30:00.000Z",
+  "description": "Logging des connexions en BDD + page admin + fixes routes SPA",
   "commit": "main"
 }
