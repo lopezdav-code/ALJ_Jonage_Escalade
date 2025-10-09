@@ -83,21 +83,20 @@ export const AuthProvider = ({ children }) => {
         // Version simplifiée : profil par défaut pour éviter les requêtes excessives
         let profileData = { role: 'member', member_id: null };
         
-        // Essayer de récupérer le profil seulement si c'est vraiment nécessaire
-        if (isNewLogin && !profileCache.has(currentUser.id)) {
-          try {
-            const data = await fetchUserProfile(currentUser.id);
-            if (data) {
-              profileData = data;
-            }
-          } catch (profileError) {
-            console.warn("Utilisation du profil par défaut suite à l'erreur:", profileError.message);
+        // Toujours essayer de récupérer le profil pour s'assurer d'avoir les bonnes données
+        try {
+          const data = await fetchUserProfile(currentUser.id);
+          if (data) {
+            profileData = data;
           }
-        } else if (profileCache.has(currentUser.id)) {
-          // Utiliser le cache existant
-          const cached = profileCache.get(currentUser.id);
-          if (cached && performanceUtils.isCacheValid(cached.timestamp)) {
-            profileData = cached.data;
+        } catch (profileError) {
+          console.warn("Utilisation du profil par défaut suite à l'erreur:", profileError.message);
+          // Si on a un cache même expiré, l'utiliser plutôt que le défaut
+          if (profileCache.has(currentUser.id)) {
+            const cached = profileCache.get(currentUser.id);
+            if (cached && cached.data) {
+              profileData = cached.data;
+            }
           }
         }
 
