@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Instagram, Facebook } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { useConfig } from '@/contexts/ConfigContext';
 
 const partnersData = [
@@ -36,6 +37,15 @@ const partnersData = [
 
 const Footer = () => {
   const { config, loadingConfig } = useConfig();
+  const [versionInfo, setVersionInfo] = useState(null);
+
+  useEffect(() => {
+    // Charger les informations de version
+    fetch('/ALJ_Jonage_Escalade/version.json')
+      .then(response => response.ok ? response.json() : null)
+      .then(data => setVersionInfo(data))
+      .catch(() => setVersionInfo(null));
+  }, []);
 
   const PartnerLogo = ({ p_key, p_url, p_alt, p_className }) => {
     if (loadingConfig || !config[p_key]) {
@@ -91,7 +101,22 @@ const Footer = () => {
         <div className="border-t my-8"></div>
         
         <div className="text-center text-sm text-muted-foreground">
-          <p>&copy; {new Date().getFullYear()} ALJ Escalade Jonage. Tous droits réservés.</p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-2 mb-2">
+            <p>&copy; {new Date().getFullYear()} ALJ Escalade Jonage. Tous droits réservés.</p>
+            {versionInfo && (
+              <div className="flex items-center gap-2">
+                <span className="hidden sm:inline">•</span>
+                <Badge variant="outline" className="text-xs">
+                  v{versionInfo.version}
+                </Badge>
+                {versionInfo.buildDate && (
+                  <span className="text-xs text-muted-foreground">
+                    {new Date(versionInfo.buildDate).toLocaleDateString('fr-FR')}
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </footer>
