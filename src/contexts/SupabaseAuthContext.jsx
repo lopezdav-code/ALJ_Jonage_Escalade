@@ -39,7 +39,8 @@ export const AuthProvider = ({ children }) => {
 
           // Logger la connexion si c'est une nouvelle session et qu'il n'y avait pas d'utilisateur avant
           if (isNewLogin || (!previousUser && currentUser)) {
-            await logConnection(currentUser, 'login');
+            // Passer les données du profil pour éviter une requête supplémentaire
+            await logConnection(currentUser, 'login', data);
           }
         } catch (profileError) {
           console.error("Error in profile fetch:", profileError);
@@ -48,7 +49,8 @@ export const AuthProvider = ({ children }) => {
       } else {
         // Logger la déconnexion si il y avait un utilisateur avant
         if (previousUser) {
-          await logDisconnection(previousUser);
+          // Utiliser les données du profil existant si disponibles
+          await logDisconnection(previousUser, profile);
         }
         setProfile(null);
       }

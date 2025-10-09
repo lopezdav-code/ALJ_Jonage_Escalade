@@ -87,61 +87,65 @@ const ConnectionLogs = () => {
     }
   };
 
-  // Charger les statistiques
+  // Charger les statistiques - Version optimisée
   const fetchStats = async () => {
     try {
-      // Total des connexions
-      const { count: totalConnections } = await supabase
+      // Récupérer toutes les données de connexion d'un coup
+      const { data: allLogins, error } = await supabase
         .from('access_logs')
-        .select('*', { count: 'exact', head: true })
-        .eq('log_type', 'connection')
-        .eq('action', 'login');
-
-      // Utilisateurs uniques
-      const { data: uniqueUsersData } = await supabase
-        .from('access_logs')
-        .select('user_id')
-        .eq('log_type', 'connection')
-        .eq('action', 'login');
-
-      const uniqueUsers = new Set(uniqueUsersData?.map(log => log.user_id)).size;
-
-      // Connexions d'aujourd'hui
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const { count: todayConnections } = await supabase
-        .from('access_logs')
-        .select('*', { count: 'exact', head: true })
+        .select('user_id, created_at')
         .eq('log_type', 'connection')
         .eq('action', 'login')
-        .gte('created_at', today.toISOString());
+        .order('created_at', { ascending: false })
+        .limit(1000); // Limite raisonnable
 
-      // Utilisateurs actifs (connectés dans les 24h)
-      const yesterday = subDays(new Date(), 1);
-      const { data: activeUsersData } = await supabase
-        .from('access_logs')
-        .select('user_id')
-        .eq('log_type', 'connection')
-        .eq('action', 'login')
-        .gte('created_at', yesterday.toISOString());
+      if (error) throw error;
 
-      const activeUsers = new Set(activeUsersData?.map(log => log.user_id)).size;
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const yesterday = subDays(now, 1);
+
+      // Calculer toutes les stats en une fois
+      const totalConnections = allLogins?.length || 0;
+      const uniqueUsers = new Set(allLogins?.map(log => log.user_id)).size;
+      
+      const todayConnections = allLogins?.filter(log => 
+        new Date(log.created_at) >= today
+      ).length || 0;
+      
+      const activeUsers = new Set(
+        allLogins?.filter(log => 
+          new Date(log.created_at) >= yesterday
+        ).map(log => log.user_id)
+      ).size;
 
       setStats({
-        totalConnections: totalConnections || 0,
+        totalConnections,
         uniqueUsers,
-        todayConnections: todayConnections || 0,
+        todayConnections,
         activeUsers
       });
     } catch (error) {
       console.error('Erreur lors du chargement des statistiques:', error);
+      // Valeurs par défaut en cas d'erreur
+      setStats({
+        totalConnections: 0,
+        uniqueUsers: 0,
+        todayConnections: 0,
+        activeUsers: 0
+      });
     }
   };
 
   useEffect(() => {
     if (isAdmin) {
-      fetchConnectionLogs();
-      fetchStats();
+      // Debouncing pour éviter trop d'appels lors des changements de filtres
+      const timeoutId = setTimeout(() => {
+        fetchConnectionLogs();
+        fetchStats();
+      }, 300); // 300ms de délai
+
+      return () => clearTimeout(timeoutId);
     }
   }, [isAdmin, filter]);
 
