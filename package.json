@@ -7,10 +7,13 @@
   "scripts": {
     "start": "vite --host :: --port 3000",
     "dev": "vite --host :: --port 3000",
+    "dev:auto": "node scripts/auto-restart.js",
     "build": "vite build",
     "preview": "vite preview --host :: --port 3000",
     "predeploy": "npm run build",
-    "deploy": "gh-pages -d dist --no-history"
+    "deploy": "gh-pages -d dist --no-history",
+    "server:restart": "node -e \"require('child_process').exec('scripts/restart-server.bat', (err, stdout) => console.log(stdout || err))\"",
+    "server:check": "node -e \"require('http').get('http://localhost:3000/ALJ_Jonage_Escalade/', (res) => console.log('✅ Serveur actif:', res.statusCode)).on('error', () => console.log('❌ Serveur inactif'))\""
   },
   "dependencies": {
     "@emailjs/browser": "^4.3.3",
