@@ -2,19 +2,22 @@ import React, { createContext, useContext, useEffect, useState, useCallback, use
 
 import { supabase } from '@/lib/customSupabaseClient';
 import { useToast } from '@/components/ui/use-toast';
+import { useConnectionLogger } from '@/hooks/useConnectionLogger';
 
 const AuthContext = createContext(undefined);
 
 export const AuthProvider = ({ children }) => {
   const { toast } = useToast();
+  const { logConnection, logDisconnection } = useConnectionLogger();
 
   const [user, setUser] = useState(null);
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState(null);
 
-  const handleSession = useCallback(async (session) => {
+  const handleSession = useCallback(async (session, isNewLogin = false) => {
     try {
+      const previousUser = user;
       setSession(session);
       const currentUser = session?.user ?? null;
       setUser(currentUser);
@@ -33,11 +36,20 @@ export const AuthProvider = ({ children }) => {
           } else {
             setProfile(data);
           }
+
+          // Logger la connexion si c'est une nouvelle session et qu'il n'y avait pas d'utilisateur avant
+          if (isNewLogin || (!previousUser && currentUser)) {
+            await logConnection(currentUser, 'login');
+          }
         } catch (profileError) {
           console.error("Error in profile fetch:", profileError);
           setProfile(null);
         }
       } else {
+        // Logger la déconnexion si il y avait un utilisateur avant
+        if (previousUser) {
+          await logDisconnection(previousUser);
+        }
         setProfile(null);
       }
     } catch (error) {
@@ -45,7 +57,7 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [user, logConnection, logDisconnection]);
 
   useEffect(() => {
     let isMounted = true;
@@ -80,7 +92,9 @@ export const AuthProvider = ({ children }) => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (isMounted) {
-          await handleSession(session);
+          // Déterminer si c'est une nouvelle connexion
+          const isNewLogin = event === 'SIGNED_IN';
+          await handleSession(session, isNewLogin);
         }
       }
     );

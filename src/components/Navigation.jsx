@@ -76,7 +76,7 @@ const Navigation = () => {
   const navigate = useNavigate();
 
   const navLinksOrder = [
-    '/news', '/schedule', '/inscriptions', '/contact', '/volunteers', '/members', '/competitors', '/competitions', '/agenda', '/session-log', '/pedagogy'
+    '/news', '/schedule', '/inscriptions', '/contact', '/volunteers', '/members', '/competitors', '/competitions', '/agenda', '/session-log', '/pedagogy', '/connection-logs'
   ];
 
   const defaultNavLinks = [
@@ -91,6 +91,7 @@ const Navigation = () => {
     { to: '/agenda', text: 'Agenda', roles: ['public', 'user', 'adherent', 'admin'] },
     { to: '/session-log', text: 'Séances', roles: ['adherent', 'admin'] },
     { to: '/pedagogy', text: 'Fiches Pédagogiques', roles: ['adherent', 'admin'] },
+    { to: '/connection-logs', text: 'Logs Connexion', roles: ['admin'] },
   ];
   
   const [navLinks, setNavLinks] = useState(defaultNavLinks);

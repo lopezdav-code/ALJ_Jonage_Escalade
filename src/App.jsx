@@ -28,6 +28,8 @@ import CompetitorSummary from '@/pages/CompetitorSummary';
 import InscriptionsSummary from '@/pages/InscriptionsSummary';
 import CompetitionsSummary from '@/pages/CompetitionsSummary';
 import CompetitionEditor from '@/pages/CompetitionEditor';
+import ConnectionLogs from '@/pages/ConnectionLogs';
+import AccessLogs from '@/pages/AccessLogs';
 import CompetitionParticipants from '@/pages/CompetitionParticipants';
 import { AuthProvider, useAuth } from '@/contexts/SupabaseAuthContext';
 import { ConfigProvider } from '@/contexts/ConfigContext';
@@ -162,6 +164,8 @@ const AppContent = () => {
           <Route path="/image-admin" element={<ImageAdmin />} />
           <Route path="/setup" element={<Setup />} />
           <Route path="/competitor-summary/:memberId" element={<CompetitorSummary />} />
+          <Route path="/connection-logs" element={<ConnectionLogs />} />
+          <Route path="/access-logs" element={<AccessLogs />} />
         </Routes>
       </main>
       <Footer />

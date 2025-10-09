@@ -2,11 +2,14 @@
 CREATE TABLE IF NOT EXISTS access_logs (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+    user_email TEXT,
+    user_name TEXT,
     action TEXT NOT NULL CHECK (action IN ('login', 'logout', 'page_view', 'error')),
     page TEXT,
     ip_address INET,
     user_agent TEXT,
     session_id TEXT,
+    log_type TEXT DEFAULT 'page_view' CHECK (log_type IN ('connection', 'page_view', 'error')),
     metadata JSONB DEFAULT '{}',
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
