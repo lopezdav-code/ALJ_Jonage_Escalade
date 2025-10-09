@@ -1,8 +1,9 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Helmet } from '@/components/ui/helmet';
 import { Toaster } from '@/components/ui/toaster';
+import { useToast } from '@/components/ui/use-toast';
 import { Loader2 } from 'lucide-react';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
@@ -30,8 +31,10 @@ import CompetitionEditor from '@/pages/CompetitionEditor';
 import CompetitionParticipants from '@/pages/CompetitionParticipants';
 import { AuthProvider, useAuth } from '@/contexts/SupabaseAuthContext';
 import { ConfigProvider } from '@/contexts/ConfigContext';
-import { MemberDetailProvider } from '@/contexts/MemberDetailContext';
+import { MemberDetailProvider, useMemberDetail } from '@/contexts/MemberDetailContext';
+import { supabase } from '@/lib/customSupabaseClient';
 import MemberDetailCard from '@/components/MemberDetailCard';
+import MemberForm from '@/components/MemberForm';
 
 // Composant pour afficher le loading initial
 const LoadingScreen = () => (
@@ -43,6 +46,81 @@ const LoadingScreen = () => (
   </div>
 );
 
+// Composant wrapper pour MemberForm avec contexte
+const MemberFormWrapper = () => {
+  const { isFormVisible, editingMember, closeEditForm } = useMemberDetail();
+  const { toast } = useToast();
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleSave = async (memberData, newImageFile) => {
+    setIsSaving(true);
+    try {
+      let photo_url = memberData.photo_url;
+      
+      // Gestion de l'upload d'image si nécessaire
+      if (newImageFile) {
+        // TODO: Implémenter uploadImage si nécessaire
+        // photo_url = await uploadImage(newImageFile);
+      } else if (memberData.photo_url === null) {
+        photo_url = null;
+      }
+      
+      // Préparer les données à sauvegarder en excluant les propriétés qui ne sont pas dans la table members
+      const { 
+        profiles, 
+        dynamic_roles, 
+        isEmergencyContactFor, 
+        emergency_contact_1, 
+        emergency_contact_2, 
+        ...dataToSave 
+      } = { ...memberData, photo_url };
+
+      console.log('Données à sauvegarder:', dataToSave);
+      console.log('Sexe dans les données:', dataToSave.sexe);
+
+      // Sauvegarder en base de données
+      const { error } = await supabase
+        .from('members')
+        .update(dataToSave)
+        .eq('id', editingMember.id);
+        
+      if (error) throw error;
+
+      toast({
+        title: "Succès",
+        description: "Membre modifié avec succès",
+      });
+      
+      closeEditForm();
+      
+      // Recharger les données si on est sur une page qui en a besoin
+      window.location.reload(); // Solution simple pour rafraîchir les données
+      
+    } catch (error) {
+      console.error('Erreur lors de la sauvegarde:', error);
+      toast({
+        title: "Erreur",
+        description: "Erreur lors de la modification du membre",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  if (!isFormVisible || !editingMember) {
+    return null;
+  }
+
+  return (
+    <MemberForm
+      member={editingMember}
+      onSave={handleSave}
+      onCancel={closeEditForm}
+      isSaving={isSaving}
+    />
+  );
+};
 // Composant principal de l'application (après authentification)
 const AppContent = () => {
   const { loading } = useAuth();
@@ -89,6 +167,7 @@ const AppContent = () => {
       <Footer />
       <Toaster />
       <MemberDetailCard />
+      <MemberFormWrapper />
     </div>
   );
 };

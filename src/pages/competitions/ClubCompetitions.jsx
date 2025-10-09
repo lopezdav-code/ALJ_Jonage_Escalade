@@ -78,6 +78,18 @@ const ClubCompetitions = () => {
         // Debug pour voir les données
         console.log('Debug ClubCompetitions - Participants enrichis:', enrichedParticipants.length);
         console.log('Debug ClubCompetitions - Exemple:', enrichedParticipants[0]);
+        
+        // Debug spécifique pour le sexe
+        enrichedParticipants.forEach((participant, index) => {
+          if (participant.members) {
+            console.log(`Debug Sexe ${index}:`, {
+              nom: `${participant.members.last_name} ${participant.members.first_name}`,
+              sexe: participant.members.sexe,
+              sexeType: typeof participant.members.sexe,
+              category: participant.members.category
+            });
+          }
+        });
       }
 
       // Organiser les participants par compétition

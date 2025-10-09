@@ -3,6 +3,7 @@ import { Trophy, UserCheck, Users, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { formatName } from '@/lib/utils';
+import { useAuth } from '@/contexts/SupabaseAuthContext';
 
 const ParticipantsDisplay = ({ 
   participants = [], 
@@ -11,6 +12,8 @@ const ParticipantsDisplay = ({
   onParticipantClick = null,
   compact = false 
 }) => {
+  const { isAdmin } = useAuth();
+  
   if (participants.length === 0) {
     return (
       <div className="text-center py-4 text-muted-foreground">
@@ -22,24 +25,36 @@ const ParticipantsDisplay = ({
 
   // Séparer par rôle
   const competitors = participants.filter(p => p.role === 'Competiteur');
-  const staff = participants.filter(p => p.role !== 'Competiteur');
+  const arbitres = participants.filter(p => p.role === 'Arbitre');
+  const coaches = participants.filter(p => p.role === 'Coach');
+  const autreStaff = participants.filter(p => p.role !== 'Competiteur' && p.role !== 'Arbitre' && p.role !== 'Coach');
 
   // Grouper les compétiteurs par sexe et catégorie
   const groupCompetitorsByGenderAndCategory = (competitors) => {
     const grouped = {
       femmes: {},
-      hommes: {}
+      hommes: {},
+      inconnu: {}
     };
 
     competitors.forEach(competitor => {
       if (!competitor.members) return;
       
-      const gender = competitor.members.sexe === 'Femme' ? 'femmes' : 'hommes';
-      const category = competitor.members.category || 'Non définie';
+      let gender;
+      if (competitor.members.sexe === 'F') {
+        gender = 'femmes';
+      } else if (competitor.members.sexe === 'H') {
+        gender = 'hommes';
+      } else {
+        gender = 'inconnu';
+      }
+      
+      const category = competitor.members.category || 'Sans catégorie';
       
       if (!grouped[gender][category]) {
         grouped[gender][category] = [];
       }
+      
       grouped[gender][category].push(competitor);
     });
 
@@ -48,81 +63,64 @@ const ParticipantsDisplay = ({
 
   const groupedCompetitors = groupCompetitorsByGenderAndCategory(competitors);
 
-  const ParticipantCard = ({ participant, showRemove = false }) => {
+  // Composant pour afficher une carte de participant
+  const ParticipantCard = ({ participant, showRemove }) => {
     if (!participant.members) {
       return (
-        <div className="flex items-center justify-between py-1 px-2 text-muted-foreground text-sm">
-          <span>Membre non trouvé (ID: {participant.member_id})</span>
+        <div className="text-sm text-muted-foreground py-1">
+          Membre introuvable
         </div>
       );
     }
 
-    const handleClick = () => {
-      if (onParticipantClick) {
-        onParticipantClick(participant.members.id);
-      }
-    };
-
     return (
-      <div className={`flex items-center justify-between ${compact ? 'py-1 px-2' : 'py-2 px-3'} hover:bg-muted/30 transition-colors group border-b border-muted/30 last:border-b-0`}>
+      <div className="flex items-center justify-between py-2 px-3 hover:bg-muted/30 transition-colors group border-b border-muted/30 last:border-b-0">
         <div 
-          className={`flex items-center gap-2 flex-1 ${onParticipantClick ? 'cursor-pointer' : ''}`}
-          onClick={handleClick}
+          className="flex items-center justify-between flex-1 cursor-pointer"
+          onClick={() => onParticipantClick && onParticipantClick(participant.members.id)}
         >
-          <span className={`${compact ? 'text-xs' : 'text-sm'} font-medium`}>
-            {participant.members.last_name?.toUpperCase()} {participant.members.first_name}
-          </span>
-          
-          <div className="flex items-center gap-1">
-            <Badge 
-              variant="outline" 
-              className={`${compact ? 'text-xs px-1 py-0' : 'text-xs px-2 py-1'} ${
-                participant.members.sexe === 'Femme' 
-                  ? 'bg-pink-100 text-pink-700 border-pink-200' 
-                  : 'bg-blue-100 text-blue-700 border-blue-200'
-              }`}
-            >
-              {participant.members.category}
-            </Badge>
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-medium">
+              {formatName(participant.members.first_name, participant.members.last_name, isAdmin)}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {participant.members.licence && (
+              <Badge variant="secondary" className="text-xs">
+                Licence: {participant.members.licence}
+              </Badge>
+            )}
+
+            {participant.ranking && (
+              <Badge variant="secondary" className="text-xs">
+                #{participant.ranking}
+                {participant.nb_competitor && ` / ${participant.nb_competitor}`}
+              </Badge>
+            )}
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          {/* Classement */}
-          {participant.ranking && (
-            <div className="flex items-center gap-1">
-              <Trophy className="w-3 h-3 text-orange-500" />
-              <span className="text-sm font-bold text-orange-600">
-                {participant.ranking}
-              </span>
-              {participant.nb_competitor && (
-                <span className="text-xs text-muted-foreground">/{participant.nb_competitor}</span>
-              )}
-            </div>
-          )}
-
-          {/* Bouton de suppression */}
-          {showRemove && onRemoveParticipant && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                onRemoveParticipant(participant.id);
-              }}
-              className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
-            >
-              <Trash2 className="w-3 h-3" />
-            </Button>
-          )}
-        </div>
+        {showRemove && onRemoveParticipant && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              onRemoveParticipant(participant.id);
+            }}
+            className="opacity-0 group-hover:opacity-100 transition-opacity"
+          >
+            <Trash2 className="w-4 h-4 text-destructive" />
+          </Button>
+        )}
       </div>
     );
   };
 
   return (
     <div className="space-y-4">
-      {/* Compétiteurs par genre et catégorie */}
+      {/* Compétiteurs par genre - Affichage en deux colonnes */}
       {competitors.length > 0 && (
         <div>
           <h5 className={`font-medium mb-3 text-primary flex items-center gap-2 ${compact ? 'text-sm' : ''}`}>
@@ -130,16 +128,16 @@ const ParticipantsDisplay = ({
             Compétiteurs ({competitors.length})
           </h5>
           
-          <div className="space-y-3">
-            {/* Femmes */}
-            {Object.keys(groupedCompetitors.femmes).length > 0 && (
-              <div className="border rounded-lg p-3">
-                <h6 className="text-sm font-semibold text-pink-700 mb-2 flex items-center gap-1">
-                  👩 Femmes
-                </h6>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Colonne Filles */}
+            <div>
+              <h6 className="text-sm font-semibold text-pink-700 mb-2 flex items-center gap-1 border-b border-pink-200 pb-1">
+                👩 Filles ({Object.values(groupedCompetitors.femmes).flat().length})
+              </h6>
+              {Object.keys(groupedCompetitors.femmes).length > 0 ? (
                 <div className="space-y-2">
                   {Object.entries(groupedCompetitors.femmes).map(([category, categoryParticipants]) => (
-                    <div key={`f-${category}`} className="border-l-2 border-pink-200 pl-2">
+                    <div key={`f-${category}`} className="border rounded-lg p-2 bg-pink-50">
                       <div className="text-xs font-medium text-pink-600 mb-1">{category} ({categoryParticipants.length})</div>
                       <div className="space-y-0">
                         {categoryParticipants.map(participant => (
@@ -153,18 +151,20 @@ const ParticipantsDisplay = ({
                     </div>
                   ))}
                 </div>
-              </div>
-            )}
+              ) : (
+                <div className="text-sm text-muted-foreground italic">Aucune fille inscrite</div>
+              )}
+            </div>
 
-            {/* Hommes */}
-            {Object.keys(groupedCompetitors.hommes).length > 0 && (
-              <div className="border rounded-lg p-3">
-                <h6 className="text-sm font-semibold text-blue-700 mb-2 flex items-center gap-1">
-                  👨 Hommes
-                </h6>
+            {/* Colonne Garçons */}
+            <div>
+              <h6 className="text-sm font-semibold text-blue-700 mb-2 flex items-center gap-1 border-b border-blue-200 pb-1">
+                👨 Garçons ({Object.values(groupedCompetitors.hommes).flat().length})
+              </h6>
+              {Object.keys(groupedCompetitors.hommes).length > 0 ? (
                 <div className="space-y-2">
                   {Object.entries(groupedCompetitors.hommes).map(([category, categoryParticipants]) => (
-                    <div key={`h-${category}`} className="border-l-2 border-blue-200 pl-2">
+                    <div key={`h-${category}`} className="border rounded-lg p-2 bg-blue-50">
                       <div className="text-xs font-medium text-blue-600 mb-1">{category} ({categoryParticipants.length})</div>
                       <div className="space-y-0">
                         {categoryParticipants.map(participant => (
@@ -178,22 +178,76 @@ const ParticipantsDisplay = ({
                     </div>
                   ))}
                 </div>
-              </div>
-            )}
+              ) : (
+                <div className="text-sm text-muted-foreground italic">Aucun garçon inscrit</div>
+              )}
+            </div>
           </div>
         </div>
       )}
 
-      {/* Staff / Encadrement */}
-      {staff.length > 0 && (
+      {/* Encadrement - Coaches et Arbitres en deux colonnes */}
+      {(arbitres.length > 0 || coaches.length > 0) && (
         <div>
           <h5 className={`font-medium mb-3 text-green-700 flex items-center gap-2 ${compact ? 'text-sm' : ''}`}>
             <UserCheck className="w-4 h-4" />
-            Encadrement ({staff.length})
+            Encadrement ({arbitres.length + coaches.length})
+          </h5>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Colonne Coaches */}
+            <div>
+              <h6 className="text-sm font-semibold text-purple-700 mb-2 flex items-center gap-1 border-b border-purple-200 pb-1">
+                🏃‍♀️ Coaches ({coaches.length})
+              </h6>
+              {coaches.length > 0 ? (
+                <div className="border rounded-lg bg-purple-50">
+                  {coaches.map(participant => (
+                    <ParticipantCard 
+                      key={participant.id} 
+                      participant={participant} 
+                      showRemove={showRemoveButton}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-sm text-muted-foreground italic">Aucun coach inscrit</div>
+              )}
+            </div>
+
+            {/* Colonne Arbitres */}
+            <div>
+              <h6 className="text-sm font-semibold text-blue-700 mb-2 flex items-center gap-1 border-b border-blue-200 pb-1">
+                ⚖️ Arbitres ({arbitres.length})
+              </h6>
+              {arbitres.length > 0 ? (
+                <div className="border rounded-lg bg-blue-50">
+                  {arbitres.map(participant => (
+                    <ParticipantCard 
+                      key={participant.id} 
+                      participant={participant} 
+                      showRemove={showRemoveButton}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-sm text-muted-foreground italic">Aucun arbitre inscrit</div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Autre Encadrement */}
+      {autreStaff.length > 0 && (
+        <div>
+          <h5 className={`font-medium mb-3 text-green-700 flex items-center gap-2 ${compact ? 'text-sm' : ''}`}>
+            <UserCheck className="w-4 h-4" />
+            Autre Encadrement ({autreStaff.length})
           </h5>
           
           <div className="border rounded-lg">
-            {staff.map(participant => (
+            {autreStaff.map(participant => (
               <ParticipantCard 
                 key={participant.id} 
                 participant={participant} 

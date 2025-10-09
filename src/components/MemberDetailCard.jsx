@@ -79,6 +79,19 @@ const MemberDetailCard = () => {
                   {selectedMember.passeport && <Badge variant="outline"><Star className="w-3 h-3 mr-1.5" />Passeport {selectedMember.passeport}</Badge>}
                 </div>
 
+                {selectedMember.sexe && (
+                  <div className="flex justify-center">
+                    <span className={`text-sm px-3 py-1.5 rounded-lg font-medium flex items-center gap-2 ${
+                      selectedMember.sexe === 'F' 
+                        ? 'bg-pink-100 text-pink-700 border border-pink-200' 
+                        : 'bg-blue-100 text-blue-700 border border-blue-200'
+                    }`}>
+                      {selectedMember.sexe === 'F' ? '👩' : '👨'} 
+                      {selectedMember.sexe === 'F' ? 'Femme' : 'Homme'}
+                    </span>
+                  </div>
+                )}
+
                 <div className="space-y-2">
                   {selectedMember.email && (
                     <div className="flex items-center gap-3 text-sm">

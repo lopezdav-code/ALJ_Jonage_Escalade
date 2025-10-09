@@ -41,9 +41,9 @@ const CompetitionsSummary = () => {
 
       const summary = competitions.map(comp => {
         const compParticipants = participants.filter(p => p.competition_id === comp.id);
-        const coaches = compParticipants.filter(p => p.role === 'belayer').length;
-        const arbitres = compParticipants.filter(p => p.role === 'judge').length;
-        const competiteurs = compParticipants.filter(p => p.role === 'competitor').length;
+        const coaches = compParticipants.filter(p => p.role === 'Coach').length;
+        const arbitres = compParticipants.filter(p => p.role === 'Arbitre').length;
+        const competiteurs = compParticipants.filter(p => p.role === 'Competiteur').length;
         
         return {
           ...comp,

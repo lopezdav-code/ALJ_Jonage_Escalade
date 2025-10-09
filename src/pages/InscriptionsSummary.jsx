@@ -34,7 +34,7 @@ const InscriptionsSummary = () => {
       const { data: parts, error: partsError } = await supabase
         .from('competition_participants')
         .select('competition_id, role, members(id, first_name, last_name, category)')
-        .eq('role', 'competitor');
+        .eq('role', 'Competiteur');
 
       if (partsError) {
         toast({ title: "Erreur", description: "Impossible de charger les participants.", variant: "destructive" });
