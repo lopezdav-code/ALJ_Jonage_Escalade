@@ -40,6 +40,16 @@ const TAB_CONFIG = {
     label: 'Fiches de Révision',
     description: 'Supports de révision et mémo techniques'
   },
+  'technical_sheet': {
+    icon: FileQuestion,
+    label: 'Fiches Techniques',
+    description: 'Techniques et méthodes d\'escalade'
+  },
+  'passeports': {
+    icon: Award,
+    label: 'Passeports',
+    description: 'Systèmes de validation des compétences FFME'
+  },
   'strength_exercise': {
     icon: Dumbbell,
     label: 'Exercices de Renfo',
@@ -49,11 +59,6 @@ const TAB_CONFIG = {
     icon: BrainCircuit,
     label: 'Exercices d\'Échauffement',
     description: 'Préparation physique et mentale'
-  },
-  'technical_sheet': {
-    icon: FileQuestion,
-    label: 'Fiches Techniques',
-    description: 'Techniques et méthodes d\'escalade'
   },
   'safety_sheet': {
     icon: Puzzle,
@@ -585,47 +590,25 @@ const Pedagogy = () => {
         </div>
       ) : (
         <>
-          {/* Carte Passeports */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            <Card 
-              className="cursor-pointer hover:shadow-lg transition-all duration-300 border-2 hover:border-primary/50 bg-gradient-to-br from-blue-50 to-orange-50"
-              onClick={() => navigate('/passeport-guide')}
-            >
-              <CardHeader>
-                <CardTitle className="flex items-center gap-3 text-2xl">
-                  <Award className="w-8 h-8 text-primary" />
-                  Passeports
-                </CardTitle>
-                <CardDescription className="text-base">
-                  Consultez les compétences à valider pour chaque niveau de passeport
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-wrap gap-2">
-                  <Badge className="bg-white border-2 border-gray-400 text-gray-800 text-lg px-3 py-1">
-                    ⚪ Blanc
-                  </Badge>
-                  <Badge className="bg-yellow-400 text-gray-900 text-lg px-3 py-1">
-                    🟡 Jaune
-                  </Badge>
-                  <Badge className="bg-orange-500 text-white text-lg px-3 py-1">
-                    🟠 Orange
-                  </Badge>
-                  <Badge className="bg-red-500 text-white text-lg px-3 py-1">
-                    🔴 Rouge
-                  </Badge>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-
         <Tabs defaultValue="educational_game" className="w-full">
-          <TabsList className="grid grid-cols-3 lg:grid-cols-6 w-full h-auto p-1">
+          <TabsList className="grid grid-cols-2 md:grid-cols-4 w-full h-auto p-1">
             {Object.entries(TAB_CONFIG).map(([type, config]) => {
+              // Pour l'onglet passeports, toujours l'afficher
+              if (type === 'passeports') {
+                const Icon = config.icon;
+                return (
+                  <TabsTrigger 
+                    key={type} 
+                    value={type} 
+                    className="flex flex-col items-center gap-1 h-auto py-3 px-2 text-center min-h-[4rem]"
+                  >
+                    <Icon className="w-4 h-4 shrink-0" />
+                    <span className="text-xs leading-tight">{config.label}</span>
+                    <Badge variant="secondary" className="text-xs">3</Badge>
+                  </TabsTrigger>
+                );
+              }
+              
               const count = type === 'educational_game' 
                 ? Object.values(sheetsByType[type] || {}).flat().length
                 : (sheetsByType[type] || []).length;
@@ -646,6 +629,133 @@ const Pedagogy = () => {
               );
             })}
           </TabsList>
+
+          {/* Onglet Passeports */}
+          <TabsContent value="passeports" className="mt-6">
+            <div className="space-y-6">
+              <div className="flex items-center gap-3">
+                <Award className="w-8 h-8 text-primary" />
+                <div>
+                  <h2 className="text-2xl font-bold">Passeports</h2>
+                  <p className="text-muted-foreground">Systèmes de validation des compétences FFME</p>
+                </div>
+              </div>
+
+              <motion.div 
+                className="grid sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+              >
+                {/* Passeport Blanc */}
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <Card 
+                    className="h-full cursor-pointer hover:shadow-xl transition-all duration-300 border-2 hover:border-blue-500 bg-gradient-to-br from-blue-50 to-white group"
+                    onClick={() => navigate('/passeport-guide')}
+                  >
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-xl">
+                        <span className="text-3xl">⚪</span>
+                        <span className="group-hover:text-blue-600 transition-colors">Passeport Blanc</span>
+                      </CardTitle>
+                      <CardDescription>Je grimpe en moulinette en autonomie sur SAE</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="text-sm">39 compétences</Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Validation en salle de bloc et voies en moulinette. Test de prise en charge et assurage.
+                      </p>
+                      <div className="pt-2 border-t">
+                        <p className="text-xs font-semibold text-primary">Modules :</p>
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          <Badge variant="secondary" className="text-xs">Éco-responsabilité</Badge>
+                          <Badge variant="secondary" className="text-xs">Bloc</Badge>
+                          <Badge variant="secondary" className="text-xs">Difficulté</Badge>
+                          <Badge variant="secondary" className="text-xs">Sécurité</Badge>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+
+                {/* Passeport Jaune */}
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <Card 
+                    className="h-full cursor-pointer hover:shadow-xl transition-all duration-300 border-2 hover:border-yellow-500 bg-gradient-to-br from-yellow-50 to-white group"
+                    onClick={() => navigate('/passeport-guide')}
+                  >
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-xl">
+                        <span className="text-3xl">🟡</span>
+                        <span className="group-hover:text-yellow-600 transition-colors">Passeport Jaune</span>
+                      </CardTitle>
+                      <CardDescription>Je grimpe en tête sur SAE</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="text-sm">38 compétences</Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Validation en salle de bloc (niveau 4a) et voies en tête (niveau 5b). Test de prise en charge.
+                      </p>
+                      <div className="pt-2 border-t">
+                        <p className="text-xs font-semibold text-primary">Modules :</p>
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          <Badge variant="secondary" className="text-xs">Éco-responsabilité</Badge>
+                          <Badge variant="secondary" className="text-xs">Bloc</Badge>
+                          <Badge variant="secondary" className="text-xs">Difficulté</Badge>
+                          <Badge variant="secondary" className="text-xs">Sécurité</Badge>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+
+                {/* Passeport Orange */}
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <Card 
+                    className="h-full cursor-pointer hover:shadow-xl transition-all duration-300 border-2 hover:border-orange-500 bg-gradient-to-br from-orange-50 to-white group"
+                    onClick={() => navigate('/passeport-guide')}
+                  >
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-xl">
+                        <span className="text-3xl">🟠</span>
+                        <span className="group-hover:text-orange-600 transition-colors">Passeport Orange</span>
+                      </CardTitle>
+                      <CardDescription>Je grimpe en autonomie sur SAE</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="text-sm">30 compétences</Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Maîtrise complète de l'autonomie sur SAE incluant la gestion des relais et des techniques avancées.
+                      </p>
+                      <div className="pt-2 border-t">
+                        <p className="text-xs font-semibold text-primary">Compétences :</p>
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          <Badge variant="secondary" className="text-xs">Relais</Badge>
+                          <Badge variant="secondary" className="text-xs">Assurage</Badge>
+                          <Badge variant="secondary" className="text-xs">Autonomie</Badge>
+                          <Badge variant="secondary" className="text-xs">Sécurité</Badge>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              </motion.div>
+            </div>
+          </TabsContent>
 
           {Object.entries(TAB_CONFIG).map(([type, config]) => {
             const typeSheets = sheetsByType[type];
