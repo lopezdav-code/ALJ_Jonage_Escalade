@@ -15,6 +15,7 @@ import MemberForm from '@/components/MemberForm';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import VolunteerQuiz from '@/components/VolunteerQuiz';
 import { useMemberDetail } from '@/contexts/MemberDetailContext';
+import SafeMemberAvatar from '@/components/SafeMemberAvatar';
 
 const brevetColors = {
   'Initiateur SAE': 'bg-blue-500',
@@ -233,15 +234,15 @@ const Volunteers = () => {
     const Icon = member.title === 'Bureau' ? getRoleIcon(member.sub_group) : null;
 
     return (
-      <motion.div layout initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.3 }}>
+      <div>
         <Card className="border-green-200 shadow-md hover:shadow-lg transition-shadow relative h-full cursor-pointer" onClick={() => showMemberDetails(member.id)}>
           {isAdmin && <Button variant="ghost" size="icon" className="absolute top-2 right-2 h-8 w-8" onClick={(e) => { e.stopPropagation(); openEditFormForMember(member); }}><Edit className="h-4 w-4" /></Button>}
           <CardContent className="p-4 flex items-center gap-4">
-            <div className="w-16 h-16 bg-gradient-to-br from-green-100 to-green-200 rounded-full flex items-center justify-center">
-              <span className="text-green-700 font-bold text-lg">
-                {member.first_name?.[0]}{member.last_name?.[0]}
-              </span>
-            </div>
+            <SafeMemberAvatar 
+              member={member} 
+              size="default"
+              className="w-16 h-16"
+            />
             <div className="flex-1">
               <div className="flex items-center gap-2">
                 <p className="font-semibold text-lg">{fullName}</p>
@@ -266,7 +267,7 @@ const Volunteers = () => {
             </div>
           </CardContent>
         </Card>
-      </motion.div>
+      </div>
     );
   };
 
@@ -314,25 +315,25 @@ const Volunteers = () => {
           Lancer le Quiz "Qui est-ce ?"
         </Button>
       </motion.div>
-      <motion.section initial="hidden" animate="visible" variants={{ visible: { transition: { staggerChildren: 0.1 } } }} className="space-y-6">
+      <section className="space-y-6">
         <h2 className="text-3xl font-bold headline flex items-center gap-3"><Building className="w-8 h-8 text-primary" />Le Bureau</h2>
         <div className="grid md:grid-cols-2 gap-6">
           <div className="space-y-6">
-            <AnimatePresence>{bureauPrincipaux.map((m) => <VolunteerCard key={m.id} member={m} />)}</AnimatePresence>
+            {bureauPrincipaux.map((m) => <VolunteerCard key={m.id} member={m} />)}
           </div>
           <div className="space-y-6">
-            <AnimatePresence>{bureauAdjoints.map((m) => <VolunteerCard key={m.id} member={m} />)}</AnimatePresence>
+            {bureauAdjoints.map((m) => <VolunteerCard key={m.id} member={m} />)}
           </div>
         </div>
-      </motion.section>
-      <motion.section className="space-y-6">
+      </section>
+      <section className="space-y-6">
         <div>
           <h2 className="text-3xl font-bold headline flex items-center gap-3"><HandHeart className="w-8 h-8 text-primary" />Les Encadrants Bénévoles</h2>
           <p className="text-muted-foreground mt-2">Nos incroyables bénévoles qui rendent tout cela possible.</p>
         </div>
         <div className="max-w-sm"><Select value={selectedCourse} onValueChange={setSelectedCourse}><SelectTrigger><SelectValue placeholder="Filtrer par cours..." /></SelectTrigger><SelectContent>{allCourses.map(c => <SelectItem key={c} value={c}>{c === 'all' ? 'Tous les cours' : c}</SelectItem>)}</SelectContent></Select></div>
-        <div className="grid md:grid-cols-1 lg:grid-cols-2 gap-6"><AnimatePresence>{volunteersData.map((m) => <VolunteerCard key={m.id} member={m} />)}</AnimatePresence></div>
-      </motion.section>
+        <div className="grid md:grid-cols-1 lg:grid-cols-2 gap-6">{volunteersData.map((m) => <VolunteerCard key={m.id} member={m} />)}</div>
+      </section>
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2"><Info className="w-5 h-5" /> Légende</CardTitle>

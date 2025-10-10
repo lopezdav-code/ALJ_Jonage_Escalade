@@ -114,7 +114,7 @@ const MemberForm = ({ member, onSave, onCancel, isSaving }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const { isEmergencyContactFor, ...dataToSave } = formData;
+    const { isEmergencyContactFor, is_emergency_contact_for_others, ...dataToSave } = formData;
     onSave({ ...dataToSave }, newImageFile);
   };
 

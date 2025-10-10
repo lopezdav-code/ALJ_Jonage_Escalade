@@ -348,12 +348,94 @@ const Vocabulary = () => {
         Vocabulaire & Ressources
       </h2>
 
+      {/* Section des disciplines d'escalade */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-2xl flex items-center gap-2">
+            🧗‍♀️ Les Disciplines d'Escalade
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Le Bloc */}
+          <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
+            <h3 className="text-xl font-bold text-orange-800 mb-3 flex items-center gap-2">
+              🧱 Le Bloc (Bouldering)
+            </h3>
+            <div className="space-y-3 text-gray-700">
+              <div>
+                <strong className="text-orange-700">Le concept :</strong> C'est le "sprint" de l'escalade. Les grimpeurs doivent escalader des murs de faible hauteur (environ 4,5 mètres) sans corde, mais avec d'épais tapis de réception en dessous.
+              </div>
+              <div>
+                <strong className="text-orange-700">L'objectif :</strong> Résoudre plusieurs "problèmes" (des voies très courtes et intenses) en un minimum d'essais. Il faut atteindre la dernière prise ("le top") et la tenir à deux mains.
+              </div>
+              <div>
+                <strong className="text-orange-700">En résumé :</strong> C'est une épreuve de force explosive, de technique et de résolution de casse-tête physique.
+              </div>
+            </div>
+          </div>
+
+          {/* La Difficulté */}
+          <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <h3 className="text-xl font-bold text-blue-800 mb-3 flex items-center gap-2">
+              🧗 La Difficulté (Lead)
+            </h3>
+            <div className="space-y-3 text-gray-700">
+              <div>
+                <strong className="text-blue-700">Le concept :</strong> C'est le "marathon" de l'escalade. Les grimpeurs montent le plus haut possible sur un mur de plus de 15 mètres, assurés par une corde. Ils n'ont qu'un seul essai et ne connaissent pas la voie à l'avance.
+              </div>
+              <div>
+                <strong className="text-blue-700">L'objectif :</strong> Atteindre la prise la plus haute possible dans le temps imparti (généralement 6 minutes). Grimper jusqu'en haut ("le top") est le but ultime.
+              </div>
+              <div>
+                <strong className="text-blue-700">En résumé :</strong> C'est une épreuve d'endurance, de stratégie et de gestion de l'effort.
+              </div>
+            </div>
+          </div>
+
+          {/* La Vitesse */}
+          <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+            <h3 className="text-xl font-bold text-green-800 mb-3 flex items-center gap-2">
+              ⚡️ La Vitesse (Speed)
+            </h3>
+            <div className="space-y-3 text-gray-700">
+              <div>
+                <strong className="text-green-700">Le concept :</strong> C'est le "100 mètres" de l'escalade. Deux grimpeurs s'affrontent en duel sur deux voies identiques, sur un mur de 15 mètres.
+              </div>
+              <div>
+                <strong className="text-green-700">L'objectif :</strong> Appuyer sur le buzzer au sommet le plus rapidement possible. La voie est standardisée et est exactement la même partout dans le monde.
+              </div>
+              <div>
+                <strong className="text-green-700">En résumé :</strong> C'est une épreuve de vitesse pure, d'explosivité et de mémoire musculaire.
+              </div>
+            </div>
+          </div>
+
+          {/* Le Combiné */}
+          <div className="p-4 bg-purple-50 border border-purple-200 rounded-lg">
+            <h3 className="text-xl font-bold text-purple-800 mb-3 flex items-center gap-2">
+              🏅 Le Combiné
+            </h3>
+            <div className="space-y-3 text-gray-700">
+              <div>
+                <strong className="text-purple-700">Le concept :</strong> C'est le format olympique qui teste la polyvalence des athlètes en combinant les épreuves de Bloc et de Difficulté en un seul classement.
+              </div>
+              <div>
+                <strong className="text-purple-700">Important :</strong> La Vitesse est désormais une épreuve à part avec sa propre médaille aux Jeux Olympiques.
+              </div>
+              <div>
+                <strong className="text-purple-700">En résumé :</strong> C'est une épreuve de polyvalence qui récompense les grimpeurs complets maîtrisant plusieurs aspects de l'escalade.
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Section Vocabulaire classique */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <BookOpen className="w-5 h-5" />
-            Vocabulaire des Compétitions
+            Liste des Compétitions
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -368,10 +450,34 @@ const Vocabulary = () => {
           <div>
             <h3 className="font-semibold text-lg">Coupe</h3>
             <p className="text-muted-foreground">Ensemble de compétitions ouvert aux compétiteurs concernés avec ou sans critère de sélection.</p>
+            <div className="mt-2 p-3 bg-blue-50 rounded-md border border-blue-200">
+              <p className="text-sm font-medium text-blue-900">Notre club participe à la coupe régionale d'AuRA</p>
+              <a 
+                href="https://www.ffmeaura.fr/competition/coupes-regionales-escalade/" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-sm text-blue-600 hover:text-blue-800 underline flex items-center gap-1 mt-1"
+              >
+                <LinkIcon className="w-3 h-3" />
+                Plus d'informations
+              </a>
+            </div>
           </div>
           <div>
             <h3 className="font-semibold text-lg">Championnat</h3>
             <p className="text-muted-foreground">Une compétition avec généralement un critère de sélection.</p>
+            <div className="mt-2 p-3 bg-blue-50 rounded-md border border-blue-200">
+              <p className="text-sm font-medium text-blue-900">Notre club participe au championnat AuRA</p>
+              <a 
+                href="https://www.ffmeaura.fr/competition/championnats-regionaux-escalade/" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-sm text-blue-600 hover:text-blue-800 underline flex items-center gap-1 mt-1"
+              >
+                <LinkIcon className="w-3 h-3" />
+                Plus d'informations
+              </a>
+            </div>
           </div>
         </CardContent>
       </Card>

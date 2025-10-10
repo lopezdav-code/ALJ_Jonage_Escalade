@@ -10,6 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { formatName } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import SafeMemberAvatar from '@/components/SafeMemberAvatar';
 
 const DISCIPLINE_COLORS = {
   'Bloc': 'bloc',
@@ -85,11 +86,11 @@ const CompetitorSummary = () => {
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={() => navigate(-1)}><ArrowLeft /></Button>
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-blue-200 rounded-full flex items-center justify-center">
-              <span className="text-blue-700 font-bold text-lg">
-                {member.first_name?.[0]}{member.last_name?.[0]}
-              </span>
-            </div>
+            <SafeMemberAvatar 
+              member={member} 
+              size="default"
+              className="w-16 h-16"
+            />
             <div>
               <h1 className="text-4xl font-bold headline flex items-center gap-3">
                 <Trophy className="w-10 h-10 text-primary" />

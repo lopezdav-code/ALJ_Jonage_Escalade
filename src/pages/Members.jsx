@@ -20,9 +20,9 @@ const MemberCard = ({ member, onEdit, onDelete, isAdmin }) => {
 
   return (
     <Card className="overflow-hidden transition-all hover:shadow-md">
-      <CardContent className="p-4 flex flex-col items-start relative">
+      <CardContent className="p-4 flex flex-col items-start">
         {isAdmin && (
-          <div className="absolute top-2 right-2 flex gap-1">
+          <div className="w-full flex justify-end gap-1 mb-1">
             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); onEdit(member); }}><Edit className="h-4 w-4" /></Button>
             <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={(e) => { e.stopPropagation(); onDelete(member); }}><Trash2 className="h-4 w-4" /></Button>
           </div>
@@ -31,13 +31,13 @@ const MemberCard = ({ member, onEdit, onDelete, isAdmin }) => {
           <p className="font-semibold truncate flex-grow" title={formatName(member.first_name, member.last_name, true)}>
             {formatName(member.first_name, member.last_name, isAdmin)}
           </p>
-          <div className="flex-shrink-0 flex items-center ml-2">
+          <div className="flex-shrink-0 flex items-center gap-1 ml-2">
             <ProfileIndicator profile={member.profiles} />
-            {member.is_emergency_contact_for_others && <Heart className="h-4 w-4 ml-1 text-red-500" title="Contact d'urgence pour un autre membre" />}
-            {!member.emergency_contact_1_id && !member.emergency_contact_2_id && <AlertTriangle className="h-4 w-4 ml-1 text-yellow-500" title="Aucun contact d'urgence défini" />}
+            {member.is_emergency_contact_for_others && <Heart className="h-4 w-4 text-red-500" title="Contact d'urgence pour un autre membre" />}
+            {!member.emergency_contact_1_id && !member.emergency_contact_2_id && <AlertTriangle className="h-4 w-4 text-yellow-500" title="Aucun contact d'urgence défini" />}
           </div>
         </div>
-        {isAdmin && member.phone && <p className="text-sm text-muted-foreground">{member.phone}</p>}
+        {isAdmin && member.phone && <p className="text-sm text-muted-foreground mt-1">{member.phone}</p>}
       </CardContent>
     </Card>
   );

@@ -54,9 +54,12 @@ const SafeMemberAvatar = ({
     return getMemberImageUrl(member.photo_url);
   };
 
-  // Vérifier si l'image est déjà connue comme cassée
+  // Vérifier l'image - approche simplifiée
   const imageUrl = getImageUrl();
   const isKnownBroken = isImageBroken(imageUrl);
+
+  // Afficher l'image si elle existe et n'est pas connue comme cassée
+  const shouldShowImage = imageUrl && !hasImageError && !isKnownBroken;
 
   const handleLocalImageError = () => {
     setHasImageError(true);
@@ -69,7 +72,7 @@ const SafeMemberAvatar = ({
 
   return (
     <Avatar className={`${sizeClasses[size]} ${className}`}>
-      {imageUrl && !hasImageError && !isKnownBroken && (
+      {shouldShowImage && (
         <AvatarImage 
           src={imageUrl}
           alt={displayName}

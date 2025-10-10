@@ -17,11 +17,25 @@ const CompetitionEditor = () => {
   const { toast } = useToast();
   const isEdit = Boolean(id);
 
+  // Définitions pour les info-bulles
+  const natureDefinitions = {
+    'Contest': 'Compétition locale ou régionale, souvent organisée par les clubs',
+    'Open': 'Compétition ouverte à tous les niveaux, généralement moins formelle',
+    'Coupe': 'Compétition officielle faisant partie d\'un circuit ou d\'une série',
+    'Championnat': 'Compétition de haut niveau (départemental, régional, national)'
+  };
+
+  const disciplineDefinitions = {
+    'Bloc': 'Escalade sur murs de 4,5m sans corde, résolution de problèmes courts et intenses',
+    'Difficulté': 'Escalade en hauteur (15m+) avec corde, un seul essai pour monter le plus haut possible',
+    'Vitesse': 'Duel sur voie standardisée de 15m, objectif: temps le plus rapide',
+    'Combiné': 'Format olympique combinant Bloc et Difficulté en un seul classement'
+  };
+
   // État du formulaire
   const [formData, setFormData] = useState({
     name: '',
     short_title: '',
-    description: '',
     start_date: '',
     end_date: '',
     location: '',
@@ -30,10 +44,10 @@ const CompetitionEditor = () => {
     nature: '',
     disciplines: [],
     categories: [],
-    url_registration: '',
-    url_details: '',
-    details_pratiques: '',
+    more_info_link: '',
+    details_description: '',
     details_format: '',
+    details_schedule: '',
     image_url: '',
     photo_gallery: []
   });
@@ -42,9 +56,9 @@ const CompetitionEditor = () => {
   const [saving, setSaving] = useState(false);
 
   // Options pour les sélecteurs
-  const niveauOptions = ['national', 'Coupe', 'Bloc', 'régional', 'départemental'];
-  const natureOptions = ['Compétition', 'Stage', 'Formation', 'Événement'];
-  const disciplineOptions = ['Voie', 'Bloc', 'Vitesse', 'Combiné'];
+  const niveauOptions = ['Départemental', 'Régional', 'Inter-régional', 'National', 'International'];
+  const natureOptions = ['Contest', 'Open', 'Coupe', 'Championnat'];
+  const disciplineOptions = ['Bloc', 'Difficulté', 'Vitesse', 'Combiné'];
   const categoryOptions = ['U11', 'U13', 'U15', 'U17', 'U19', 'Sénior', 'Vétéran'];
 
   // Charger les données de la compétition si en mode édition
@@ -66,9 +80,21 @@ const CompetitionEditor = () => {
       if (error) throw error;
 
       setFormData({
-        ...data,
+        name: data.name || '',
+        short_title: data.short_title || '',
+        start_date: data.start_date || '',
+        end_date: data.end_date || '',
+        location: data.location || '',
+        prix: data.prix || '',
+        niveau: data.niveau || '',
+        nature: data.nature || '',
         disciplines: data.disciplines || [],
         categories: data.categories || [],
+        more_info_link: data.more_info_link || '',
+        details_description: data.details_description || '',
+        details_format: data.details_format || '',
+        details_schedule: data.details_schedule || '',
+        image_url: data.image_url || '',
         photo_gallery: data.photo_gallery || []
       });
     } catch (error) {
@@ -278,18 +304,6 @@ const CompetitionEditor = () => {
             </div>
           </div>
 
-          {/* Description */}
-          <div>
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              value={formData.description}
-              onChange={(e) => handleChange('description', e.target.value)}
-              placeholder="Description détaillée de la compétition..."
-              rows={4}
-            />
-          </div>
-
           {/* Dates */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -352,7 +366,13 @@ const CompetitionEditor = () => {
               </Select>
             </div>
             <div>
-              <Label htmlFor="nature">Nature</Label>
+              <div className="flex items-center gap-2 mb-2">
+                <Label htmlFor="nature">Nature</Label>
+                <Info 
+                  className="w-4 h-4 text-muted-foreground cursor-help" 
+                  title="Contest: Compétition locale ou régionale | Open: Compétition ouverte à tous | Coupe: Compétition officielle d'un circuit | Championnat: Compétition de haut niveau"
+                />
+              </div>
               <Select value={formData.nature} onValueChange={(value) => handleChange('nature', value)}>
                 <SelectTrigger>
                   <SelectValue placeholder="Sélectionner une nature" />
@@ -376,7 +396,13 @@ const CompetitionEditor = () => {
         <CardContent className="space-y-4">
           {/* Disciplines */}
           <div>
-            <Label>Disciplines</Label>
+            <div className="flex items-center gap-2 mb-2">
+              <Label>Disciplines</Label>
+              <Info 
+                className="w-4 h-4 text-muted-foreground cursor-help" 
+                title="Bloc: Sprint sur 4,5m, résolution de problèmes | Difficulté: Marathon en hauteur, un essai | Vitesse: Duel rapide sur voie standardisée | Combiné: Format olympique bloc + difficulté"
+              />
+            </div>
             <div className="flex flex-wrap gap-2 mt-2">
               {disciplineOptions.map(discipline => (
                 <Button
@@ -384,6 +410,7 @@ const CompetitionEditor = () => {
                   variant={formData.disciplines.includes(discipline) ? "default" : "outline"}
                   size="sm"
                   onClick={() => toggleDiscipline(discipline)}
+                  title={disciplineDefinitions[discipline]}
                 >
                   {discipline}
                 </Button>
@@ -420,36 +447,24 @@ const CompetitionEditor = () => {
         </CardHeader>
         <CardContent className="space-y-4">
           {/* URLs */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="url_registration">URL d'inscription</Label>
-              <Input
-                id="url_registration"
-                type="url"
-                value={formData.url_registration}
-                onChange={(e) => handleChange('url_registration', e.target.value)}
-                placeholder="https://..."
-              />
-            </div>
-            <div>
-              <Label htmlFor="url_details">URL de détails</Label>
-              <Input
-                id="url_details"
-                type="url"
-                value={formData.url_details}
-                onChange={(e) => handleChange('url_details', e.target.value)}
-                placeholder="https://..."
-              />
-            </div>
+          <div>
+            <Label htmlFor="more_info_link">Lien pour plus d'informations</Label>
+            <Input
+              id="more_info_link"
+              type="url"
+              value={formData.more_info_link}
+              onChange={(e) => handleChange('more_info_link', e.target.value)}
+              placeholder="https://..."
+            />
           </div>
 
           {/* Détails pratiques */}
           <div>
-            <Label htmlFor="details_pratiques">Informations pratiques</Label>
+            <Label htmlFor="details_description">Informations pratiques</Label>
             <Textarea
-              id="details_pratiques"
-              value={formData.details_pratiques}
-              onChange={(e) => handleChange('details_pratiques', e.target.value)}
+              id="details_description"
+              value={formData.details_description}
+              onChange={(e) => handleChange('details_description', e.target.value)}
               placeholder="Horaires, matériel requis, consignes..."
               rows={3}
             />

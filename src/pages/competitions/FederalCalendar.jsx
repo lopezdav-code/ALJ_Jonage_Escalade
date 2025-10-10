@@ -15,6 +15,18 @@ const DisciplineBadge = ({ discipline }) => {
   return <Badge variant={variant}>{discipline}</Badge>;
 };
 
+const TypeBadge = ({ type }) => {
+  const isChampionnat = type === 'Championnats';
+  return (
+    <Badge 
+      variant={isChampionnat ? 'destructive' : 'secondary'}
+      className={isChampionnat ? 'bg-red-100 text-red-700 border-red-200' : 'bg-yellow-100 text-yellow-700 border-yellow-200'}
+    >
+      {type}
+    </Badge>
+  );
+};
+
 const RegionalCupsSection = () => {
   const u13u15 = [
     { type: 'Coupes Régionales', location: 'Ambérieu en Bugey', date: 'samedi 11 octobre 2025', discipline: 'Bloc', note: '' },
@@ -43,8 +55,8 @@ const RegionalCupsSection = () => {
         <Button asChild variant="link"><a href="https://www.ffmeaura.fr/competition/championnats-regionaux-escalade/" target="_blank" rel="noreferrer">Plus d'infos sur les Championnats Régionaux <ExternalLink className="w-4 h-4 ml-2" /></a></Button>
       </div>
       <div className="space-y-8">
-        <Card><CardHeader><CardTitle>U13 / U15</CardTitle></CardHeader><CardContent><Table><TableHeader><TableRow><TableHead>Lieu</TableHead><TableHead>Date</TableHead><TableHead>Discipline</TableHead><TableHead>Note</TableHead></TableRow></TableHeader><TableBody>{u13u15.map((c, i) => <TableRow key={i}><TableCell>{c.location}</TableCell><TableCell>{c.date}</TableCell><TableCell><DisciplineBadge discipline={c.discipline} /></TableCell><TableCell>{c.note}</TableCell></TableRow>)}</TableBody></Table></CardContent></Card>
-        <Card><CardHeader><CardTitle>U17 / U19 / Senior / Vétéran</CardTitle></CardHeader><CardContent><Table><TableHeader><TableRow><TableHead>Lieu</TableHead><TableHead>Date</TableHead><TableHead>Discipline</TableHead><TableHead>Note</TableHead></TableRow></TableHeader><TableBody>{u17plus.map((c, i) => <TableRow key={i}><TableCell>{c.location}</TableCell><TableCell>{c.date}</TableCell><TableCell><DisciplineBadge discipline={c.discipline} /></TableCell><TableCell>{c.note}</TableCell></TableRow>)}</TableBody></Table></CardContent></Card>
+        <Card><CardHeader><CardTitle>U13 / U15</CardTitle></CardHeader><CardContent><Table><TableHeader><TableRow><TableHead>Type</TableHead><TableHead>Lieu</TableHead><TableHead>Date</TableHead><TableHead>Discipline</TableHead><TableHead>Note</TableHead></TableRow></TableHeader><TableBody>{u13u15.map((c, i) => <TableRow key={i}><TableCell><TypeBadge type={c.type} /></TableCell><TableCell>{c.location}</TableCell><TableCell>{c.date}</TableCell><TableCell><DisciplineBadge discipline={c.discipline} /></TableCell><TableCell>{c.note}</TableCell></TableRow>)}</TableBody></Table></CardContent></Card>
+        <Card><CardHeader><CardTitle>U17 / U19 / Senior / Vétéran</CardTitle></CardHeader><CardContent><Table><TableHeader><TableRow><TableHead>Type</TableHead><TableHead>Lieu</TableHead><TableHead>Date</TableHead><TableHead>Discipline</TableHead><TableHead>Note</TableHead></TableRow></TableHeader><TableBody>{u17plus.map((c, i) => <TableRow key={i}><TableCell><TypeBadge type={c.type} /></TableCell><TableCell>{c.location}</TableCell><TableCell>{c.date}</TableCell><TableCell><DisciplineBadge discipline={c.discipline} /></TableCell><TableCell>{c.note}</TableCell></TableRow>)}</TableBody></Table></CardContent></Card>
       </div>
     </motion.section>
   );

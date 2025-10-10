@@ -343,63 +343,118 @@ const ClubCompetitions = () => {
 
   // Fonction pour déterminer la prochaine compétition
   // Composant pour l'en-tête compact de compétition (accordéon fermé)
-  const CompetitionHeader = ({ comp }) => (
-    <div className="flex items-center gap-4 w-full">
-      {comp.image_url && (
-        <img 
-          src={comp.image_url} 
-          alt={comp.name} 
-          className="w-16 h-16 object-cover rounded-md border border-muted"
-        />
-      )}
-      <div className="flex-1 space-y-2">
-        <div>
-          <h3 className="text-lg font-semibold">{comp.name}</h3>
-          {comp.short_title && (
-            <p className="text-sm text-primary font-medium">{comp.short_title}</p>
-          )}
-        </div>
-        
-        <div className="flex items-center gap-4 text-sm text-muted-foreground">
-          <div className="flex items-center gap-1">
-            <Calendar className="w-3 h-3" />
-            <span>
-              {new Date(comp.start_date).toLocaleDateString('fr-FR', { 
-                year: 'numeric', month: 'long', day: 'numeric' 
-              })}
-              {comp.end_date && comp.end_date !== comp.start_date && (
-                <> au {new Date(comp.end_date).toLocaleDateString('fr-FR', { 
-                  year: 'numeric', month: 'long', day: 'numeric' 
-                })}</>
-              )}
-            </span>
+  const CompetitionHeader = ({ comp }) => {
+    // Compter le nombre de compétiteurs inscrits
+    const competitionParticipants = participants[comp.id] || [];
+    const competitorsCount = competitionParticipants.filter(p => p.role === 'Compétiteur').length;
+    
+    // Fonction pour obtenir la couleur de la pastille selon la discipline
+    const getDisciplineColor = (discipline) => {
+      const colors = {
+        'Bloc': 'bg-purple-100 text-purple-700 border-purple-200',
+        'Difficulté': 'bg-red-100 text-red-700 border-red-200',
+        'Vitesse': 'bg-blue-100 text-blue-700 border-blue-200',
+        'Combiné': 'bg-orange-100 text-orange-700 border-orange-200'
+      };
+      return colors[discipline] || 'bg-gray-100 text-gray-700 border-gray-200';
+    };
+
+    // Fonction pour obtenir la couleur de la pastille selon la nature
+    const getNatureColor = (nature) => {
+      const colors = {
+        'Contest': 'bg-green-100 text-green-700 border-green-200',
+        'Open': 'bg-blue-100 text-blue-700 border-blue-200',
+        'Coupe': 'bg-yellow-100 text-yellow-700 border-yellow-200',
+        'Championnat': 'bg-red-100 text-red-700 border-red-200'
+      };
+      return colors[nature] || 'bg-gray-100 text-gray-700 border-gray-200';
+    };
+
+    // Fonction pour obtenir la couleur de la pastille selon le niveau
+    const getNiveauColor = (niveau) => {
+      const colors = {
+        'Départemental': 'bg-green-100 text-green-700 border-green-200',
+        'Régional': 'bg-blue-100 text-blue-700 border-blue-200',
+        'Inter-régional': 'bg-purple-100 text-purple-700 border-purple-200',
+        'National': 'bg-red-100 text-red-700 border-red-200',
+        'International': 'bg-orange-100 text-orange-700 border-orange-200'
+      };
+      return colors[niveau] || 'bg-gray-100 text-gray-700 border-gray-200';
+    };
+
+    return (
+      <div className="flex items-start gap-4 w-full">
+        {comp.image_url && (
+          <img 
+            src={comp.image_url} 
+            alt={comp.name} 
+            className="w-16 h-16 object-cover rounded-md border border-muted flex-shrink-0"
+          />
+        )}
+        <div className="flex-1 space-y-2">
+          <div>
+            <h3 className="text-lg font-semibold">{comp.name}</h3>
+            {comp.short_title && (
+              <p className="text-sm text-primary font-medium">{comp.short_title}</p>
+            )}
           </div>
           
-          <div className="flex items-center gap-1">
-            <MapPin className="w-3 h-3" />
-            <span>{comp.location}</span>
+          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+            <div className="flex items-center gap-1">
+              <Calendar className="w-3 h-3" />
+              <span>
+                {new Date(comp.start_date).toLocaleDateString('fr-FR', { 
+                  year: 'numeric', month: 'long', day: 'numeric' 
+                })}
+                {comp.end_date && comp.end_date !== comp.start_date && (
+                  <> au {new Date(comp.end_date).toLocaleDateString('fr-FR', { 
+                    year: 'numeric', month: 'long', day: 'numeric' 
+                  })}</>
+                )}
+              </span>
+            </div>
+            
+            <div className="flex items-center gap-1">
+              <MapPin className="w-3 h-3" />
+              <span>{comp.location}</span>
+            </div>
           </div>
 
-          {comp.niveau && (
-            <Badge variant="destructive" className="text-xs">
-              {comp.niveau}
-            </Badge>
-          )}
+          {/* Pastilles pour disciplines, nature, niveau et nombre de compétiteurs */}
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Disciplines */}
+            {comp.disciplines && comp.disciplines.length > 0 && comp.disciplines.map(discipline => (
+              <span key={discipline} className={`text-xs px-2 py-1 rounded-full border font-medium ${getDisciplineColor(discipline)}`}>
+                {discipline}
+              </span>
+            ))}
+
+            {/* Nature */}
+            {comp.nature && (
+              <span className={`text-xs px-2 py-1 rounded-full border font-medium ${getNatureColor(comp.nature)}`}>
+                {comp.nature}
+              </span>
+            )}
+
+            {/* Niveau */}
+            {comp.niveau && (
+              <span className={`text-xs px-2 py-1 rounded-full border font-medium ${getNiveauColor(comp.niveau)}`}>
+                {comp.niveau}
+              </span>
+            )}
+
+            {/* Nombre de compétiteurs */}
+            {competitorsCount > 0 && (
+              <span className="text-xs px-2 py-1 rounded-full border font-medium bg-indigo-100 text-indigo-700 border-indigo-200 flex items-center gap-1">
+                <Users className="w-3 h-3" />
+                {competitorsCount} inscrit{competitorsCount > 1 ? 's' : ''}
+              </span>
+            )}
+          </div>
         </div>
       </div>
-      
-      <div
-        onClick={(e) => {
-          e.stopPropagation();
-          navigate(`/competitions/edit/${comp.id}`);
-        }}
-        className="ml-2 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3"
-      >
-        <Edit className="w-4 h-4 mr-1" />
-        Modifier
-      </div>
-    </div>
-  );
+    );
+  };
 
   // Composant pour afficher une carte de compétiteur compacte
   const CompetitorCard = ({ participant }) => {
@@ -528,16 +583,57 @@ const ClubCompetitions = () => {
         >
           {competitions.map((comp) => (
             <AccordionItem key={comp.id} value={comp.id.toString()} className="border rounded-lg group">
-              <AccordionTrigger className="hover:no-underline px-4 py-3">
+              <AccordionTrigger className="hover:no-underline px-4 py-3 [&[data-state=closed]]:hover:bg-muted/50 transition-colors cursor-pointer">
                 <CompetitionHeader comp={comp} />
               </AccordionTrigger>
               <AccordionContent className="px-4 pb-4">
                 <div className="space-y-6 pt-4">
-                  {/* Description */}
-                  {comp.description && (
-                    <div>
-                      <h5 className="font-semibold mb-2">Description</h5>
-                      <p className="text-sm text-muted-foreground leading-relaxed">{comp.description}</p>
+                  {/* Bouton de modification */}
+                  <div className="flex justify-end">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        console.log('Bouton modification cliqué pour compétition:', comp.id);
+                        navigate(`/competitions/edit/${comp.id}`);
+                      }}
+                      className="flex items-center gap-2"
+                    >
+                      <Edit className="w-4 h-4" />
+                      Modifier la compétition
+                    </Button>
+                  </div>
+
+                  {/* Informations pratiques */}
+                  {comp.details_description && (
+                    <div className="p-3 bg-blue-50 rounded-md border border-blue-200">
+                      <h5 className="font-semibold mb-2 flex items-center gap-2">
+                        <Info className="w-4 h-4 text-blue-600" />
+                        Informations pratiques
+                      </h5>
+                      <p className="text-sm text-muted-foreground leading-relaxed">{comp.details_description}</p>
+                    </div>
+                  )}
+
+                  {/* Format de la compétition */}
+                  {comp.details_format && (
+                    <div className="p-3 bg-green-50 rounded-md border border-green-200">
+                      <h5 className="font-semibold mb-2 flex items-center gap-2">
+                        <Trophy className="w-4 h-4 text-green-600" />
+                        Format de la compétition
+                      </h5>
+                      <p className="text-sm text-muted-foreground leading-relaxed">{comp.details_format}</p>
+                    </div>
+                  )}
+
+                  {/* Planning */}
+                  {comp.details_schedule && (
+                    <div className="p-3 bg-purple-50 rounded-md border border-purple-200">
+                      <h5 className="font-semibold mb-2 flex items-center gap-2">
+                        <Calendar className="w-4 h-4 text-purple-600" />
+                        Planning
+                      </h5>
+                      <p className="text-sm text-muted-foreground leading-relaxed">{comp.details_schedule}</p>
                     </div>
                   )}
 
@@ -589,47 +685,19 @@ const ClubCompetitions = () => {
                     )}
                   </div>
 
-                  {/* Liens utiles */}
-                  {(comp.url_registration || comp.url_details) && (
-                    <div>
+                  {/* Lien pour plus d'informations */}
+                  {comp.more_info_link && (
+                    <div className="p-3 bg-orange-50 rounded-md border border-orange-200">
                       <h5 className="font-semibold mb-3 flex items-center gap-2">
-                        <ExternalLink className="w-4 h-4 text-primary" />
-                        Liens utiles
+                        <ExternalLink className="w-4 h-4 text-orange-600" />
+                        Plus d'informations
                       </h5>
-                      <div className="flex flex-wrap gap-2">
-                        {comp.url_registration && (
-                          <Button variant="outline" size="sm" asChild>
-                            <a href={comp.url_registration} target="_blank" rel="noopener noreferrer">
-                              <ExternalLink className="w-3 h-3 mr-1" />
-                              Inscription
-                            </a>
-                          </Button>
-                        )}
-                        {comp.url_details && (
-                          <Button variant="outline" size="sm" asChild>
-                            <a href={comp.url_details} target="_blank" rel="noopener noreferrer">
-                              <Info className="w-3 h-3 mr-1" />
-                              Détails
-                            </a>
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Infos pratiques */}
-                  {comp.details_pratiques && (
-                    <div className="p-3 bg-muted/30 rounded-md">
-                      <h5 className="font-semibold mb-2">Infos pratiques</h5>
-                      <p className="text-sm text-muted-foreground">{comp.details_pratiques}</p>
-                    </div>
-                  )}
-
-                  {/* Format */}
-                  {comp.details_format && (
-                    <div className="p-3 bg-muted/30 rounded-md">
-                      <h5 className="font-semibold mb-2">Format</h5>
-                      <p className="text-sm text-muted-foreground">{comp.details_format}</p>
+                      <Button variant="outline" size="sm" asChild>
+                        <a href={comp.more_info_link} target="_blank" rel="noopener noreferrer">
+                          <ExternalLink className="w-3 h-3 mr-1" />
+                          Consulter le site officiel
+                        </a>
+                      </Button>
                     </div>
                   )}
 

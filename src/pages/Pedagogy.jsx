@@ -291,9 +291,9 @@ const GameSheetDetails = ({ sheet, onEdit, onDelete, isAdmin }) => (
               <Puzzle className="w-5 h-5 text-purple-500" />
               {sheet.title}
             </CardTitle>
-            <CardDescription className="mt-1">
+            <div className="mt-1">
               <Badge variant="game">{sheet.theme || 'Jeu Éducatif'}</Badge>
-            </CardDescription>
+            </div>
           </div>
           {isAdmin && (
             <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
