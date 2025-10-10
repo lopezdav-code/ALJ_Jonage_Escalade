@@ -133,6 +133,7 @@ const PasseportValidation = () => {
         date_validation: formData.dateValidation,
         validateur: formData.validateur,
         observations: formData.observations,
+        module: formData.module || null, // Ajouter le module (bloc/difficulte) s'il existe
         validated_at: new Date().toISOString(),
       };
 
@@ -142,7 +143,7 @@ const PasseportValidation = () => {
 
       if (error) throw error;
 
-      // Mettre à jour le passeport du membre
+      // Mettre à jour le passeport du membre dans la table members
       const { error: updateError } = await supabase
         .from('members')
         .update({ passeport: selectedPasseportType })
