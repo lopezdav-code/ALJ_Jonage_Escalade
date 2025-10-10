@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, LogIn, LogOut, UserPlus, Settings, ShieldCheck, User } from 'lucide-react';
+import { Menu, X, LogIn, LogOut, UserPlus, Settings, ShieldCheck, User, Database } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
@@ -76,7 +76,7 @@ const Navigation = () => {
   const navigate = useNavigate();
 
   const navLinksOrder = [
-    '/news', '/schedule', '/inscriptions', '/contact', '/volunteers', '/members', '/competitors', '/competitions', '/agenda', '/session-log', '/pedagogy', '/connection-logs'
+    '/news', '/schedule', '/inscriptions', '/contact', '/volunteers', '/members', '/competitors', '/competitions', '/agenda', '/session-log', '/pedagogy'
   ];
 
   const defaultNavLinks = [
@@ -100,7 +100,6 @@ const Navigation = () => {
       ]
     },
     { to: '/pedagogy', text: 'Fiches Pédagogiques', roles: ['adherent', 'admin'] },
-    { to: '/connection-logs', text: 'Logs Connexion', roles: ['admin'] },
   ];
   
   const [navLinks, setNavLinks] = useState(defaultNavLinks);
@@ -204,6 +203,10 @@ const Navigation = () => {
                       <DropdownMenuItem onClick={() => navigate('/admin-management')}>
                         <ShieldCheck className="mr-2 h-4 w-4" />
                         <span>Gestion des Rôles</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => navigate('/connection-logs')}>
+                        <Database className="mr-2 h-4 w-4" />
+                        <span>Logs Connexion</span>
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                     </>
