@@ -94,12 +94,11 @@ const Navigation = () => {
       text: 'Séances', 
       roles: ['adherent', 'admin'],
       subMenu: [
-        { to: '/session-log', text: 'Journal des séances', roles: ['adherent', 'admin'] },
+        { to: '/session-log', text: 'Historique des séances', roles: ['adherent', 'admin'] },
         { to: '/passeport-validation', text: 'Validation Passeports', roles: ['admin'] },
-        { to: '/passeport-viewer', text: 'Consulter Passeports', roles: ['adherent', 'admin'] },
       ]
     },
-    { to: '/pedagogy', text: 'Fiches Pédagogiques', roles: ['adherent', 'admin'] },
+    { to: '/pedagogy', text: 'Support Pédagogique', roles: ['adherent', 'admin'] },
   ];
   
   const [navLinks, setNavLinks] = useState(defaultNavLinks);

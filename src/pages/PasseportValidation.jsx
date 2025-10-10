@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Award, Users, Loader2, Search, Filter, X, UserCheck, User } from 'lucide-react';
+import { Award, Users, Loader2, Search, Filter, X, UserCheck, User, Eye } from 'lucide-react';
 import {
   Command,
   CommandEmpty,
@@ -24,6 +24,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { useNavigate } from 'react-router-dom';
 import PasseportBlancForm from '@/components/PasseportBlancForm';
 import PasseportJauneForm from '@/components/PasseportJauneForm';
 import PasseportOrangeForm from '@/components/PasseportOrangeForm';
@@ -31,6 +32,7 @@ import PasseportOrangeForm from '@/components/PasseportOrangeForm';
 const PasseportValidation = () => {
   const { isAdmin } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [members, setMembers] = useState([]);
   const [filteredMembers, setFilteredMembers] = useState([]);
   const [selectedMember, setSelectedMember] = useState(null);
@@ -211,12 +213,22 @@ const PasseportValidation = () => {
         <title>Validation des Passeports - Club d'Escalade</title>
       </Helmet>
 
-      <div className="flex items-center gap-3">
-        <Award className="w-10 h-10 text-primary" />
-        <div>
-          <h1 className="text-4xl font-bold headline">Validation des Passeports</h1>
-          <p className="text-muted-foreground">Validez les passeports d'escalade de vos grimpeurs</p>
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <Award className="w-10 h-10 text-primary" />
+          <div>
+            <h1 className="text-4xl font-bold headline">Validation des Passeports</h1>
+            <p className="text-muted-foreground">Validez les passeports d'escalade de vos grimpeurs</p>
+          </div>
         </div>
+        <Button 
+          variant="outline" 
+          className="flex items-center gap-2"
+          onClick={() => navigate('/passeport-viewer')}
+        >
+          <Eye className="w-4 h-4" />
+          Consultation des Passeports
+        </Button>
       </div>
 
       <Card>
