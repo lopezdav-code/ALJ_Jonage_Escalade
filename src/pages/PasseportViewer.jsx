@@ -6,7 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { CheckCircle2, Calendar, User as UserIcon, FileText, Loader2, Award, ArrowLeft, Search, Filter, TrendingUp, Download, X, Eye } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
+import { CheckCircle2, Calendar, User as UserIcon, FileText, Loader2, Award, ArrowLeft, Search, Filter, TrendingUp, Download, X, Eye, Edit } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { formatName } from '@/lib/utils';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
@@ -25,6 +27,8 @@ const PasseportViewer = () => {
   const [filterPasseport, setFilterPasseport] = useState('all');
   const [filterModule, setFilterModule] = useState('all');
   const [viewMode, setViewMode] = useState('cards'); // 'cards' ou 'table'
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedValidation, setEditedValidation] = useState(null);
 
   useEffect(() => {
     fetchMembersAndValidations();
@@ -97,6 +101,72 @@ const PasseportViewer = () => {
     setSelectedValidation(null);
     if (member) {
       fetchValidations(memberId);
+    }
+  };
+
+  const handleStartEdit = () => {
+    setEditedValidation({ ...selectedValidation });
+    setIsEditing(true);
+  };
+
+  const handleCancelEdit = () => {
+    setEditedValidation(null);
+    setIsEditing(false);
+  };
+
+  const handleCompetenceChange = (key) => {
+    setEditedValidation(prev => ({
+      ...prev,
+      competences: {
+        ...prev.competences,
+        [key]: !prev.competences[key],
+      },
+    }));
+  };
+
+  const handleObservationsChange = (value) => {
+    setEditedValidation(prev => ({
+      ...prev,
+      observations: value,
+    }));
+  };
+
+  const handleSaveEdit = async () => {
+    try {
+      setLoading(true);
+
+      const { error } = await supabase
+        .from('passeport_validations')
+        .update({
+          competences: editedValidation.competences,
+          observations: editedValidation.observations,
+        })
+        .eq('id', editedValidation.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Succès",
+        description: "Le passeport a été mis à jour avec succès.",
+      });
+
+      // Recharger les validations
+      await fetchValidations(selectedMember.id);
+      await fetchMembersAndValidations();
+
+      // Mettre à jour la validation sélectionnée
+      setSelectedValidation(editedValidation);
+      setIsEditing(false);
+      setEditedValidation(null);
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: "Impossible de mettre à jour le passeport.",
+        variant: "destructive",
+      });
+      console.error('Erreur de mise à jour:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -497,16 +567,50 @@ const PasseportViewer = () => {
 
   // Vue détail d'une validation
   if (selectedValidation) {
-    const competencesEntries = Object.entries(selectedValidation.competences || {});
+    const currentValidation = isEditing ? editedValidation : selectedValidation;
+    const competencesEntries = Object.entries(currentValidation.competences || {});
     const validatedCount = competencesEntries.filter(([_, value]) => value === true).length;
     const totalCount = competencesEntries.length;
 
     return (
       <div className="max-w-4xl mx-auto space-y-6">
-        <Button variant="outline" onClick={() => setSelectedValidation(null)}>
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Retour à la liste
-        </Button>
+        <div className="flex items-center justify-between">
+          <Button variant="outline" onClick={() => {
+            setSelectedValidation(null);
+            setIsEditing(false);
+            setEditedValidation(null);
+          }}>
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Retour à la liste
+          </Button>
+
+          {isAdmin && !isEditing && (
+            <Button onClick={handleStartEdit} className="bg-blue-600 hover:bg-blue-700">
+              <Edit className="w-4 h-4 mr-2" />
+              Éditer le passeport
+            </Button>
+          )}
+
+          {isEditing && (
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={handleCancelEdit}>
+                Annuler
+              </Button>
+              <Button onClick={handleSaveEdit} className="bg-green-600 hover:bg-green-700">
+                <CheckCircle2 className="w-4 h-4 mr-2" />
+                Enregistrer
+              </Button>
+            </div>
+          )}
+        </div>
+
+        {isEditing && (
+          <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded">
+            <p className="text-sm text-yellow-800">
+              ⚠️ <strong>Mode édition :</strong> Vous pouvez modifier les compétences validées et le commentaire. Les modifications seront enregistrées dans la base de données.
+            </p>
+          </div>
+        )}
 
         <Card>
           <CardHeader className={`bg-gradient-to-r ${getPasseportColor(selectedValidation.passeport_type)} text-white`}>
@@ -579,7 +683,7 @@ const PasseportViewer = () => {
             <div>
               <h3 className="font-semibold text-lg mb-4">Compétences validées ({validatedCount}/{totalCount})</h3>
               
-              {getCompetencesStructure(selectedValidation.passeport_type, selectedValidation.module).map((category, catIndex) => (
+              {getCompetencesStructure(currentValidation.passeport_type, currentValidation.module).map((category, catIndex) => (
                 <div key={catIndex} className="mb-6">
                   <h4 className="font-semibold text-md mb-3 text-primary flex items-center gap-2">
                     <Award className="w-4 h-4" />
@@ -590,14 +694,26 @@ const PasseportViewer = () => {
                   {category.items && (
                     <div className="space-y-2 ml-6">
                       {category.items.map((item) => {
-                        const isValidated = selectedValidation.competences[item.key] === true;
+                        const isValidated = currentValidation.competences[item.key] === true;
                         return (
-                          <div key={item.key} className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
-                            <div className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center mt-0.5 ${
-                              isValidated ? 'bg-green-500' : 'bg-gray-300'
-                            }`}>
-                              {isValidated && <CheckCircle2 className="w-4 h-4 text-white" />}
-                            </div>
+                          <div 
+                            key={item.key} 
+                            className={`flex items-start gap-3 p-3 bg-gray-50 rounded-lg ${isEditing ? 'cursor-pointer hover:bg-gray-100' : ''}`}
+                            onClick={() => isEditing && handleCompetenceChange(item.key)}
+                          >
+                            {isEditing ? (
+                              <Checkbox
+                                checked={isValidated}
+                                onCheckedChange={() => handleCompetenceChange(item.key)}
+                                className="mt-0.5"
+                              />
+                            ) : (
+                              <div className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center mt-0.5 ${
+                                isValidated ? 'bg-green-500' : 'bg-gray-300'
+                              }`}>
+                                {isValidated && <CheckCircle2 className="w-4 h-4 text-white" />}
+                              </div>
+                            )}
                             <span className={`flex-1 text-sm ${isValidated ? 'text-green-700 font-medium' : 'text-gray-500'}`}>
                               {item.label}
                             </span>
@@ -615,14 +731,26 @@ const PasseportViewer = () => {
                           <h5 className="text-sm font-medium text-gray-700 mb-2">{subsection.subtitle}</h5>
                           <div className="space-y-2">
                             {subsection.items.map((item) => {
-                              const isValidated = selectedValidation.competences[item.key] === true;
+                              const isValidated = currentValidation.competences[item.key] === true;
                               return (
-                                <div key={item.key} className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
-                                  <div className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center mt-0.5 ${
-                                    isValidated ? 'bg-green-500' : 'bg-gray-300'
-                                  }`}>
-                                    {isValidated && <CheckCircle2 className="w-4 h-4 text-white" />}
-                                  </div>
+                                <div 
+                                  key={item.key} 
+                                  className={`flex items-start gap-3 p-3 bg-gray-50 rounded-lg ${isEditing ? 'cursor-pointer hover:bg-gray-100' : ''}`}
+                                  onClick={() => isEditing && handleCompetenceChange(item.key)}
+                                >
+                                  {isEditing ? (
+                                    <Checkbox
+                                      checked={isValidated}
+                                      onCheckedChange={() => handleCompetenceChange(item.key)}
+                                      className="mt-0.5"
+                                    />
+                                  ) : (
+                                    <div className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center mt-0.5 ${
+                                      isValidated ? 'bg-green-500' : 'bg-gray-300'
+                                    }`}>
+                                      {isValidated && <CheckCircle2 className="w-4 h-4 text-white" />}
+                                    </div>
+                                  )}
                                   <span className={`flex-1 text-sm ${isValidated ? 'text-green-700 font-medium' : 'text-gray-500'}`}>
                                     {item.label}
                                   </span>
@@ -639,13 +767,23 @@ const PasseportViewer = () => {
             </div>
 
             {/* Commentaire */}
-            {selectedValidation.observations && (
+            {(currentValidation.observations || isEditing) && (
               <div className="bg-blue-50 p-4 rounded-lg">
                 <div className="flex items-start gap-2">
                   <FileText className="w-5 h-5 text-blue-600 mt-0.5" />
                   <div className="flex-1">
                     <h3 className="font-semibold mb-2">Commentaire</h3>
-                    <p className="text-sm text-gray-700">{selectedValidation.observations}</p>
+                    {isEditing ? (
+                      <Textarea
+                        value={currentValidation.observations || ''}
+                        onChange={(e) => handleObservationsChange(e.target.value)}
+                        placeholder="Ajoutez un commentaire sur la validation (points forts, axes d'amélioration...)"
+                        rows={4}
+                        className="bg-white"
+                      />
+                    ) : (
+                      <p className="text-sm text-gray-700">{currentValidation.observations}</p>
+                    )}
                   </div>
                 </div>
               </div>
