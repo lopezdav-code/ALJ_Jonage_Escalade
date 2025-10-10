@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
-import { CheckCircle2, Calendar, User as UserIcon, FileText, Loader2, Award, ArrowLeft, Search, Filter, TrendingUp, Download, X, Eye, Edit } from 'lucide-react';
+import { CheckCircle2, Calendar, User as UserIcon, FileText, Loader2, Award, ArrowLeft, Search, Filter, TrendingUp, Download, X, Eye, Edit, Printer } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { formatName } from '@/lib/utils';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
@@ -168,6 +168,372 @@ const PasseportViewer = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handlePrintDiploma = () => {
+    // Créer une nouvelle fenêtre pour l'impression
+    const printWindow = window.open('', '_blank');
+    
+    if (!printWindow) {
+      toast({
+        title: "Erreur",
+        description: "Impossible d'ouvrir la fenêtre d'impression. Vérifiez que les popups ne sont pas bloquées.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const validation = selectedValidation;
+    const member = selectedMember;
+    const passeportType = validation.passeport_type.charAt(0).toUpperCase() + validation.passeport_type.slice(1);
+    const moduleText = validation.module ? ` - Module ${validation.module === 'bloc' ? 'Bloc' : 'Difficulté'}` : '';
+    
+    // Calculer le nombre de compétences validées
+    const competencesEntries = Object.entries(validation.competences || {});
+    const validatedCount = competencesEntries.filter(([_, value]) => value === true).length;
+    const totalCount = competencesEntries.length;
+    
+    // Générer le contenu HTML du diplôme
+    const diplomaHTML = `
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Diplôme Passeport ${passeportType}</title>
+  <style>
+    @page {
+      size: A4 landscape;
+      margin: 0;
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Georgia', serif;
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    
+    .diploma {
+      background: white;
+      width: 297mm;
+      height: 210mm;
+      padding: 40px 60px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+      border: 20px solid ${validation.passeport_type === 'blanc' ? '#3b82f6' : 
+                             validation.passeport_type === 'jaune' ? '#eab308' : 
+                             validation.passeport_type === 'orange' ? '#f97316' : '#ef4444'};
+      border-image: linear-gradient(135deg, 
+        ${validation.passeport_type === 'blanc' ? '#3b82f6, #60a5fa' : 
+          validation.passeport_type === 'jaune' ? '#eab308, #fbbf24' : 
+          validation.passeport_type === 'orange' ? '#f97316, #fb923c' : '#ef4444, #f87171'}) 1;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    
+    .diploma::before {
+      content: '';
+      position: absolute;
+      top: 50px;
+      left: 50px;
+      right: 50px;
+      bottom: 50px;
+      border: 2px solid rgba(0,0,0,0.1);
+      pointer-events: none;
+    }
+    
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    
+    .club-name {
+      font-size: 20px;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      margin-bottom: 10px;
+    }
+    
+    .diploma-title {
+      font-size: 56px;
+      color: #1a1a1a;
+      margin: 20px 0;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+    
+    .subtitle {
+      font-size: 24px;
+      color: #666;
+      font-style: italic;
+    }
+    
+    .content {
+      text-align: center;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 20px 0;
+    }
+    
+    .awarded-to {
+      font-size: 18px;
+      color: #666;
+      margin-bottom: 15px;
+    }
+    
+    .recipient-name {
+      font-size: 48px;
+      color: #1a1a1a;
+      font-weight: bold;
+      margin: 20px 0;
+      border-bottom: 3px solid ${validation.passeport_type === 'blanc' ? '#3b82f6' : 
+                                   validation.passeport_type === 'jaune' ? '#eab308' : 
+                                   validation.passeport_type === 'orange' ? '#f97316' : '#ef4444'};
+      padding-bottom: 10px;
+      display: inline-block;
+    }
+    
+    .achievement {
+      font-size: 18px;
+      color: #444;
+      margin: 25px auto;
+      max-width: 800px;
+      line-height: 1.8;
+    }
+    
+    .details {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 10px;
+      margin: 20px auto;
+      max-width: 700px;
+      text-align: left;
+    }
+    
+    .details-title {
+      font-size: 20px;
+      font-weight: bold;
+      margin-bottom: 15px;
+      color: #1a1a1a;
+      text-align: center;
+    }
+    
+    .detail-item {
+      display: flex;
+      justify-content: space-between;
+      margin: 10px 0;
+      font-size: 16px;
+      color: #555;
+    }
+    
+    .detail-label {
+      font-weight: bold;
+      color: #333;
+    }
+    
+    .comments {
+      background: #fff9e6;
+      padding: 20px;
+      border-left: 4px solid ${validation.passeport_type === 'blanc' ? '#3b82f6' : 
+                                validation.passeport_type === 'jaune' ? '#eab308' : 
+                                validation.passeport_type === 'orange' ? '#f97316' : '#ef4444'};
+      margin: 20px auto;
+      max-width: 700px;
+      border-radius: 5px;
+      font-style: italic;
+      color: #666;
+      font-size: 15px;
+      line-height: 1.6;
+    }
+    
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-top: 40px;
+      padding-top: 20px;
+      border-top: 2px solid #e0e0e0;
+    }
+    
+    .date-section, .signature-section {
+      text-align: center;
+      flex: 1;
+    }
+    
+    .label {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 10px;
+    }
+    
+    .date, .validator-name {
+      font-size: 16px;
+      color: #1a1a1a;
+      font-weight: bold;
+    }
+    
+    .signature {
+      font-family: 'Brush Script MT', cursive;
+      font-size: 42px;
+      color: ${validation.passeport_type === 'blanc' ? '#3b82f6' : 
+               validation.passeport_type === 'jaune' ? '#eab308' : 
+               validation.passeport_type === 'orange' ? '#f97316' : '#ef4444'};
+      margin: 15px 0;
+      transform: rotate(-5deg);
+      font-weight: bold;
+      font-style: italic;
+    }
+    
+    .badge {
+      position: absolute;
+      top: 30px;
+      right: 60px;
+      width: 100px;
+      height: 100px;
+      background: ${validation.passeport_type === 'blanc' ? '#3b82f6' : 
+                    validation.passeport_type === 'jaune' ? '#eab308' : 
+                    validation.passeport_type === 'orange' ? '#f97316' : '#ef4444'};
+      border-radius: 50%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+    
+    .badge-text {
+      font-size: 12px;
+      text-transform: uppercase;
+    }
+    
+    .badge-score {
+      font-size: 24px;
+      margin: 5px 0;
+    }
+    
+    @media print {
+      body {
+        background: white;
+        padding: 0;
+      }
+      
+      .diploma {
+        box-shadow: none;
+        page-break-after: always;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="diploma">
+    <!-- Badge de réussite -->
+    <div class="badge">
+      <span class="badge-text">Réussite</span>
+      <span class="badge-score">${validatedCount}/${totalCount}</span>
+    </div>
+    
+    <!-- En-tête -->
+    <div class="header">
+      <div class="club-name">Association Lyonnaise de Jonage Escalade</div>
+      <div class="diploma-title">Diplôme</div>
+      <div class="subtitle">Passeport ${passeportType}${moduleText}</div>
+    </div>
+    
+    <!-- Contenu principal -->
+    <div class="content">
+      <div class="awarded-to">Ce diplôme est décerné à</div>
+      <div class="recipient-name">${member.first_name} ${member.last_name}</div>
+      
+      <div class="achievement">
+        En reconnaissance de sa réussite au <strong>Passeport ${passeportType}${moduleText}</strong>
+        avec succès, ayant validé <strong>${validatedCount} compétences sur ${totalCount}</strong>
+        dans le domaine de l'escalade.
+      </div>
+      
+      <!-- Détails -->
+      <div class="details">
+        <div class="details-title">Détails de la validation</div>
+        <div class="detail-item">
+          <span class="detail-label">Niveau :</span>
+          <span>Passeport ${passeportType}</span>
+        </div>
+        ${validation.module ? `
+        <div class="detail-item">
+          <span class="detail-label">Module :</span>
+          <span>${validation.module === 'bloc' ? 'Bloc' : 'Difficulté'}</span>
+        </div>
+        ` : ''}
+        <div class="detail-item">
+          <span class="detail-label">Compétences validées :</span>
+          <span>${validatedCount} / ${totalCount}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Taux de réussite :</span>
+          <span>${Math.round((validatedCount / totalCount) * 100)}%</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Date de validation :</span>
+          <span>${new Date(validation.date_validation).toLocaleDateString('fr-FR', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric'
+          })}</span>
+        </div>
+      </div>
+      
+      ${validation.observations ? `
+      <!-- Commentaires du validateur -->
+      <div class="comments">
+        <strong>Commentaire du validateur :</strong><br/>
+        ${validation.observations}
+      </div>
+      ` : ''}
+    </div>
+    
+    <!-- Pied de page avec signature -->
+    <div class="footer">
+      <div class="date-section">
+        <div class="label">Fait à Jonage, le</div>
+        <div class="date">${new Date(validation.date_validation).toLocaleDateString('fr-FR')}</div>
+      </div>
+      
+      <div class="signature-section">
+        <div class="label">Le validateur</div>
+        <div class="signature">${validation.validateur}</div>
+        <div class="validator-name">${validation.validateur}</div>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    // Lancer l'impression automatiquement
+    window.onload = function() {
+      window.print();
+    };
+  </script>
+</body>
+</html>
+    `;
+
+    printWindow.document.write(diplomaHTML);
+    printWindow.document.close();
   };
 
   const getPasseportColor = (type) => {
@@ -584,24 +950,33 @@ const PasseportViewer = () => {
             Retour à la liste
           </Button>
 
-          {isAdmin && !isEditing && (
-            <Button onClick={handleStartEdit} className="bg-blue-600 hover:bg-blue-700">
-              <Edit className="w-4 h-4 mr-2" />
-              Éditer le passeport
-            </Button>
-          )}
+          <div className="flex gap-2">
+            {!isEditing && (
+              <Button onClick={handlePrintDiploma} className="bg-purple-600 hover:bg-purple-700">
+                <Printer className="w-4 h-4 mr-2" />
+                Imprimer le diplôme
+              </Button>
+            )}
 
-          {isEditing && (
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={handleCancelEdit}>
-                Annuler
+            {isAdmin && !isEditing && (
+              <Button onClick={handleStartEdit} className="bg-blue-600 hover:bg-blue-700">
+                <Edit className="w-4 h-4 mr-2" />
+                Éditer le passeport
               </Button>
-              <Button onClick={handleSaveEdit} className="bg-green-600 hover:bg-green-700">
-                <CheckCircle2 className="w-4 h-4 mr-2" />
-                Enregistrer
-              </Button>
-            </div>
-          )}
+            )}
+
+            {isEditing && (
+              <>
+                <Button variant="outline" onClick={handleCancelEdit}>
+                  Annuler
+                </Button>
+                <Button onClick={handleSaveEdit} className="bg-green-600 hover:bg-green-700">
+                  <CheckCircle2 className="w-4 h-4 mr-2" />
+                  Enregistrer
+                </Button>
+              </>
+            )}
+          </div>
         </div>
 
         {isEditing && (
