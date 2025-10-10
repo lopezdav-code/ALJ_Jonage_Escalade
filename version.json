@@ -1,6 +1,6 @@
 {
-  "version": "1.5.2",
-  "buildDate": "2024-10-09T21:00:00.000Z",
-  "description": "Fix: résolution des erreurs 400 Bad Request sur access_logs + optimisation gestion des erreurs",
+  "version": "1.6.0",
+  "buildDate": "2025-10-10T21:00:00.000Z",
+  "description": "Feature: Diplôme passeport A4 portrait avec logo ALJ, édition passeports et améliorations UI",
   "commit": "main"
 }
