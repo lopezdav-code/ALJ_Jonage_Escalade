@@ -306,15 +306,15 @@ const PasseportOrangeForm = ({ member, onSave, onCancel }) => {
               })}
             </div>
 
-            {/* Observations */}
-            <div>
-              <Label htmlFor="observations">Observations (optionnel)</Label>
+            {/* Commentaire */}
+            <div className="bg-blue-50 p-4 rounded-lg">
+              <Label htmlFor="observations">Commentaire (optionnel)</Label>
               <Textarea
                 id="observations"
                 value={formData.observations}
                 onChange={(e) => handleInputChange('observations', e.target.value)}
-                placeholder="Points forts, axes de progression, remarques..."
-                rows={4}
+                placeholder="Ajoutez un commentaire sur la validation (points forts, axes d'amélioration...)"
+                rows={3}
               />
             </div>
 

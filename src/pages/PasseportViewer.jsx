@@ -539,15 +539,7 @@ const PasseportViewer = () => {
                   <p className="text-muted-foreground">Prénom</p>
                   <p className="font-medium">{selectedMember.first_name}</p>
                 </div>
-                <div>
-                  <p className="text-muted-foreground">Date de naissance</p>
-                  <p className="font-medium">
-                    {selectedMember.date_of_birth 
-                      ? new Date(selectedMember.date_of_birth).toLocaleDateString('fr-FR')
-                      : '-'}
-                  </p>
-                </div>
-                <div>
+                <div className="col-span-2">
                   <p className="text-muted-foreground">Club</p>
                   <p className="font-medium">Association Lyonnaise de Jonage Escalade</p>
                 </div>
@@ -646,13 +638,13 @@ const PasseportViewer = () => {
               ))}
             </div>
 
-            {/* Observations */}
+            {/* Commentaire */}
             {selectedValidation.observations && (
               <div className="bg-blue-50 p-4 rounded-lg">
                 <div className="flex items-start gap-2">
                   <FileText className="w-5 h-5 text-blue-600 mt-0.5" />
                   <div className="flex-1">
-                    <h3 className="font-semibold mb-2">Observations</h3>
+                    <h3 className="font-semibold mb-2">Commentaire</h3>
                     <p className="text-sm text-gray-700">{selectedValidation.observations}</p>
                   </div>
                 </div>

@@ -509,26 +509,41 @@ const PasseportJauneForm = ({ member, onSave, onCancel }) => {
 
             {/* Validation finale */}
             {selectedModule && (
-              <div className="bg-green-50 p-4 rounded-lg space-y-4">
-              <h3 className="font-semibold text-lg">Validation finale</h3>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="dateValidation">Date de validation *</Label>
-                  <Input
-                    id="dateValidation"
-                    type="date"
-                    value={formData.dateValidation}
-                    onChange={(e) => handleInputChange('dateValidation', e.target.value)}
-                    required
+              <>
+                {/* Commentaire */}
+                <div className="bg-blue-50 p-4 rounded-lg">
+                  <Label htmlFor="observations">Commentaire (optionnel)</Label>
+                  <Textarea
+                    id="observations"
+                    placeholder="Ajoutez un commentaire sur la validation (points forts, axes d'amélioration...)"
+                    value={formData.observations}
+                    onChange={(e) => handleInputChange('observations', e.target.value)}
+                    rows={3}
                   />
                 </div>
-                <ValidatorCombobox
-                  value={formData.validateur}
-                  onChange={(value) => handleInputChange('validateur', value)}
-                  required
-                />
-              </div>
-              </div>
+
+                {/* Informations de validation */}
+                <div className="bg-green-50 p-4 rounded-lg space-y-4">
+                  <h3 className="font-semibold text-lg">Validation finale</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="dateValidation">Date de validation *</Label>
+                      <Input
+                        id="dateValidation"
+                        type="date"
+                        value={formData.dateValidation}
+                        onChange={(e) => handleInputChange('dateValidation', e.target.value)}
+                        required
+                      />
+                    </div>
+                    <ValidatorCombobox
+                      value={formData.validateur}
+                      onChange={(value) => handleInputChange('validateur', value)}
+                      required
+                    />
+                  </div>
+                </div>
+              </>
             )}
 
             {/* Boutons d'action */}
