@@ -31,6 +31,9 @@ import CompetitionEditor from '@/pages/CompetitionEditor';
 import ConnectionLogs from '@/pages/ConnectionLogs';
 import AccessLogs from '@/pages/AccessLogs';
 import CompetitionParticipants from '@/pages/CompetitionParticipants';
+import PasseportValidation from '@/pages/PasseportValidation';
+import PasseportViewer from '@/pages/PasseportViewer';
+import PasseportGuide from '@/pages/PasseportGuide';
 import { AuthProvider, useAuth } from '@/contexts/SupabaseAuthContext';
 import { ConfigProvider } from '@/contexts/ConfigContext';
 import { MemberDetailProvider, useMemberDetail } from '@/contexts/MemberDetailContext';
@@ -54,6 +57,20 @@ const MemberFormWrapper = () => {
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
 
+  const uploadImage = async (file) => {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `members_photos/${Date.now()}.${fileExt}`;
+    
+    let { error: uploadError } = await supabase.storage
+      .from('member_photos')
+      .upload(fileName, file, { upsert: true });
+
+    if (uploadError) throw uploadError;
+
+    const { data } = supabase.storage.from('member_photos').getPublicUrl(fileName);
+    return data.publicUrl;
+  };
+
   const handleSave = async (memberData, newImageFile) => {
     setIsSaving(true);
     try {
@@ -61,8 +78,7 @@ const MemberFormWrapper = () => {
       
       // Gestion de l'upload d'image si nécessaire
       if (newImageFile) {
-        // TODO: Implémenter uploadImage si nécessaire
-        // photo_url = await uploadImage(newImageFile);
+        photo_url = await uploadImage(newImageFile);
       } else if (memberData.photo_url === null) {
         photo_url = null;
       }
@@ -163,6 +179,9 @@ const AppContent = () => {
           <Route path="/competitor-summary/:memberId" element={<CompetitorSummary />} />
           <Route path="/connection-logs" element={<ConnectionLogs />} />
           <Route path="/access-logs" element={<AccessLogs />} />
+          <Route path="/passeport-validation" element={<PasseportValidation />} />
+          <Route path="/passeport-viewer" element={<PasseportViewer />} />
+          <Route path="/passeport-guide" element={<PasseportGuide />} />
         </Routes>
       </main>
       <Footer />

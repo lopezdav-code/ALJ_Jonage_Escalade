@@ -1,7 +1,7 @@
 import React from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useMemberDetail } from '@/contexts/MemberDetailContext';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Mail, Phone, Award, Star, Heart, Briefcase, Edit, Users, Trophy, CreditCard } from 'lucide-react';
 import { formatName } from '@/lib/utils';
@@ -11,7 +11,7 @@ import { useNavigate } from 'react-router-dom';
 import SafeMemberAvatar from '@/components/SafeMemberAvatar';
 
 const MemberDetailCard = () => {
-  const { isDetailVisible, hideMemberDetails, selectedMember, loading, openEditFormForMember, showMemberDetails } = useMemberDetail();
+  const { isDetailVisible, hideMemberDetails, selectedMember, loading, openEditFormForMember, showMemberDetails, isFormVisible } = useMemberDetail();
   const { isAdmin } = useAuth();
   const navigate = useNavigate();
 
@@ -42,9 +42,20 @@ const MemberDetailCard = () => {
 
   const isCompetitor = selectedMember?.title?.startsWith('Compétition');
 
+  // Ne pas afficher si le formulaire d'édition est ouvert
+  if (isFormVisible) {
+    return null;
+  }
+
   return (
     <Dialog open={isDetailVisible} onOpenChange={hideMemberDetails}>
       <DialogContent className="sm:max-w-md">
+        <DialogTitle className="sr-only">
+          {loading ? 'Chargement...' : selectedMember ? formatName(selectedMember.first_name, selectedMember.last_name, isAdmin) : 'Détails du membre'}
+        </DialogTitle>
+        <DialogDescription className="sr-only">
+          {loading ? 'Chargement des informations du membre...' : 'Informations détaillées du membre'}
+        </DialogDescription>
         <AnimatePresence>
           {loading ? (
             <motion.div
@@ -69,7 +80,7 @@ const MemberDetailCard = () => {
                   className="mb-4"
                   alt={formatName(selectedMember.first_name, selectedMember.last_name, isAdmin)}
                 />
-                <DialogTitle className="text-2xl">{formatName(selectedMember.first_name, selectedMember.last_name, isAdmin)}</DialogTitle>
+                <h2 className="text-2xl font-semibold">{formatName(selectedMember.first_name, selectedMember.last_name, isAdmin)}</h2>
               </DialogHeader>
               <div className="py-4 space-y-4">
                 <div className="flex flex-wrap gap-2 justify-center">

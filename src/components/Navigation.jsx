@@ -89,32 +89,42 @@ const Navigation = () => {
     { to: '/competitors', text: 'Compétiteurs', roles: ['adherent', 'admin'] },
     { to: '/competitions', text: 'Compétitions', roles: ['public', 'user', 'adherent', 'admin'] },
     { to: '/agenda', text: 'Agenda', roles: ['public', 'user', 'adherent', 'admin'] },
-    { to: '/session-log', text: 'Séances', roles: ['adherent', 'admin'] },
+    { 
+      to: '/session-log', 
+      text: 'Séances', 
+      roles: ['adherent', 'admin'],
+      subMenu: [
+        { to: '/session-log', text: 'Journal des séances', roles: ['adherent', 'admin'] },
+        { to: '/passeport-validation', text: 'Validation Passeports', roles: ['admin'] },
+        { to: '/passeport-viewer', text: 'Consulter Passeports', roles: ['adherent', 'admin'] },
+      ]
+    },
     { to: '/pedagogy', text: 'Fiches Pédagogiques', roles: ['adherent', 'admin'] },
     { to: '/connection-logs', text: 'Logs Connexion', roles: ['admin'] },
   ];
   
   const [navLinks, setNavLinks] = useState(defaultNavLinks);
 
-  useEffect(() => {
-    if (!loadingConfig && config.nav_config) {
-      try {
-        const dbNavConfig = JSON.parse(config.nav_config);
-        setNavLinks(prevLinks => {
-          const newLinks = [...prevLinks];
-          dbNavConfig.forEach(dbLink => {
-            const linkIndex = newLinks.findIndex(l => l.to === dbLink.to);
-            if (linkIndex !== -1) {
-              newLinks[linkIndex].roles = dbLink.roles;
-            }
-          });
-          return newLinks;
-        });
-      } catch (e) {
-        console.error("Failed to parse nav_config:", e);
-      }
-    }
-  }, [config.nav_config, loadingConfig]);
+  // Commenté temporairement pour forcer l'utilisation de la config par défaut
+  // useEffect(() => {
+  //   if (!loadingConfig && config.nav_config) {
+  //     try {
+  //       const dbNavConfig = JSON.parse(config.nav_config);
+  //       setNavLinks(prevLinks => {
+  //         const newLinks = [...prevLinks];
+  //         dbNavConfig.forEach(dbLink => {
+  //           const linkIndex = newLinks.findIndex(l => l.to === dbLink.to);
+  //           if (linkIndex !== -1) {
+  //             newLinks[linkIndex].roles = dbLink.roles;
+  //           }
+  //         });
+  //         return newLinks;
+  //       });
+  //     } catch (e) {
+  //       console.error("Failed to parse nav_config:", e);
+  //     }
+  //   }
+  // }, [config.nav_config, loadingConfig]);
 
   const handleSignOut = async () => {
     await signOut();
@@ -142,11 +152,35 @@ const Navigation = () => {
           </NavLink>
 
           <div className="hidden md:flex items-center space-x-6">
-            {filteredNavLinks.map(link => (
-              <NavLink key={link.to} to={link.to} className={({ isActive }) => `text-sm font-medium transition-colors hover:text-primary ${isActive ? 'text-primary' : 'text-muted-foreground'}`}>
-                {link.text}
-              </NavLink>
-            ))}
+            {filteredNavLinks.map(link => {
+              if (link.subMenu) {
+                // Filtrer les sous-menus selon les rôles
+                const filteredSubMenu = link.subMenu.filter(subLink => subLink.roles.includes(userRole));
+                
+                if (filteredSubMenu.length === 0) return null;
+                
+                return (
+                  <DropdownMenu key={link.to}>
+                    <DropdownMenuTrigger className="text-sm font-medium transition-colors hover:text-primary text-muted-foreground">
+                      {link.text}
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                      {filteredSubMenu.map(subLink => (
+                        <DropdownMenuItem key={subLink.to} onClick={() => navigate(subLink.to)}>
+                          {subLink.text}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                );
+              }
+              
+              return (
+                <NavLink key={link.to} to={link.to} className={({ isActive }) => `text-sm font-medium transition-colors hover:text-primary ${isActive ? 'text-primary' : 'text-muted-foreground'}`}>
+                  {link.text}
+                </NavLink>
+              );
+            })}
           </div>
 
           <div className="flex items-center gap-2">
@@ -208,11 +242,36 @@ const Navigation = () => {
             className="md:hidden bg-background border-b"
           >
             <div className="container mx-auto px-4 py-4 flex flex-col space-y-4">
-              {filteredNavLinks.map(link => (
-                <NavLink key={link.to} to={link.to} onClick={closeMenu} className={({ isActive }) => `text-lg font-medium transition-colors hover:text-primary ${isActive ? 'text-primary' : 'text-muted-foreground'}`}>
-                  {link.text}
-                </NavLink>
-              ))}
+              {filteredNavLinks.map(link => {
+                if (link.subMenu) {
+                  const filteredSubMenu = link.subMenu.filter(subLink => subLink.roles.includes(userRole));
+                  if (filteredSubMenu.length === 0) return null;
+                  
+                  return (
+                    <div key={link.to} className="space-y-2">
+                      <p className="text-lg font-semibold text-primary">{link.text}</p>
+                      <div className="pl-4 space-y-2">
+                        {filteredSubMenu.map(subLink => (
+                          <NavLink 
+                            key={subLink.to} 
+                            to={subLink.to} 
+                            onClick={closeMenu} 
+                            className={({ isActive }) => `block text-md font-medium transition-colors hover:text-primary ${isActive ? 'text-primary' : 'text-muted-foreground'}`}
+                          >
+                            {subLink.text}
+                          </NavLink>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                }
+                
+                return (
+                  <NavLink key={link.to} to={link.to} onClick={closeMenu} className={({ isActive }) => `text-lg font-medium transition-colors hover:text-primary ${isActive ? 'text-primary' : 'text-muted-foreground'}`}>
+                    {link.text}
+                  </NavLink>
+                );
+              })}
                {!user && <Button onClick={() => { closeMenu(); setAuthMode('signIn'); setIsAuthModalOpen(true); }} variant="outline">Connexion</Button>}
             </div>
           </motion.div>

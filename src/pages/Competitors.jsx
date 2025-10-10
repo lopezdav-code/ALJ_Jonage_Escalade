@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Helmet } from 'react-helmet';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Trophy, Loader2, Edit, TrendingUp, Mountain, ListChecks, User, UserIcon, Users, UserCheck, Calendar } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -20,7 +20,6 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { useNavigate } from 'react-router-dom';
-import MemberForm from '@/components/MemberForm';
 import { useMemberDetail } from '@/contexts/MemberDetailContext';
 
 // Composant pour afficher les statistiques de participation
@@ -639,11 +638,10 @@ const Competitors = () => {
   const [allMembers, setAllMembers] = useState([]);
   const [participationStats, setParticipationStats] = useState({});
   const [loading, setLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
   const [modalInfo, setModalInfo] = useState({ isOpen: false, competitions: [], discipline: '' });
   const { isAdmin, loading: authLoading } = useAuth();
   const { toast } = useToast();
-  const { editingMember, isFormVisible, openEditFormForMember, closeEditForm } = useMemberDetail();
+  const { openEditFormForMember } = useMemberDetail();
   const navigate = useNavigate();
 
   const fetchCompetitorData = useCallback(async () => {
@@ -712,39 +710,6 @@ const Competitors = () => {
   useEffect(() => {
     fetchCompetitorData();
   }, [fetchCompetitorData]);
-  
-  const uploadImage = async (file) => {
-    const fileExt = file.name.split('.').pop();
-    const fileName = `members_photos/${Date.now()}.${fileExt}`;
-    let { error: uploadError } = await supabase.storage.from('member_photos').upload(fileName, file, { upsert: true });
-    if (uploadError) throw uploadError;
-    const { data } = supabase.storage.from('member_photos').getPublicUrl(fileName);
-    return data.publicUrl;
-  };
-
-  const handleSaveMember = async (memberData, newImageFile) => {
-    setIsSaving(true);
-    try {
-      let photo_url = memberData.photo_url;
-      if (newImageFile) {
-        photo_url = await uploadImage(newImageFile);
-      } else if (memberData.photo_url === null) {
-        photo_url = null;
-      }
-      
-      const { profiles, dynamic_roles, isEmergencyContactFor, emergency_contact_1, emergency_contact_2, ...dataToSave } = { ...memberData, photo_url };
-
-      const { error } = await supabase.from('members').update(dataToSave).eq('id', editingMember.id);
-      if (error) throw error;
-      toast({ title: "Succès", description: "Compétiteur mis à jour." });
-      closeEditForm();
-      fetchCompetitorData();
-    } catch (error) {
-      toast({ title: "Erreur", description: "Impossible de mettre à jour le compétiteur.", variant: "destructive" });
-    } finally {
-      setIsSaving(false);
-    }
-  };
 
   const handleStatClick = (member, discipline) => {
     const memberStats = participationStats[member.id];
@@ -825,17 +790,6 @@ const Competitors = () => {
         participationStats={participationStats}
         onStatClick={handleStatClick}
       />
-
-      <AnimatePresence>
-        {isFormVisible && isAdmin && (
-          <MemberForm
-            member={editingMember}
-            onSave={handleSaveMember}
-            onCancel={closeEditForm}
-            isSaving={isSaving}
-          />
-        )}
-      </AnimatePresence>
       
       {modalInfo.isOpen && (
         <CompetitionListModal

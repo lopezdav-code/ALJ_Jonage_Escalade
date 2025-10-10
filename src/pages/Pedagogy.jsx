@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Helmet } from 'react-helmet';
 import { motion, AnimatePresence } from 'framer-motion';
-import { BookMarked, PlusCircle, Loader2, Edit, Trash2, FileText, Video, Image, Link as LinkIcon, UploadCloud, Puzzle, Gamepad2, Dumbbell, BrainCircuit, FileQuestion } from 'lucide-react';
+import { BookMarked, PlusCircle, Loader2, Edit, Trash2, FileText, Video, Image, Link as LinkIcon, UploadCloud, Puzzle, Gamepad2, Dumbbell, BrainCircuit, FileQuestion, Award } from 'lucide-react';
 import { supabase } from '@/lib/customSupabaseClient';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { useToast } from '@/components/ui/use-toast';
@@ -584,6 +584,45 @@ const Pedagogy = () => {
           <p className="text-muted-foreground mt-2">Cliquez sur "Ajouter une fiche" pour commencer à créer votre bibliothèque.</p>
         </div>
       ) : (
+        <>
+          {/* Carte Passeports */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <Card 
+              className="cursor-pointer hover:shadow-lg transition-all duration-300 border-2 hover:border-primary/50 bg-gradient-to-br from-blue-50 to-orange-50"
+              onClick={() => navigate('/passeport-guide')}
+            >
+              <CardHeader>
+                <CardTitle className="flex items-center gap-3 text-2xl">
+                  <Award className="w-8 h-8 text-primary" />
+                  Passeports
+                </CardTitle>
+                <CardDescription className="text-base">
+                  Consultez les compétences à valider pour chaque niveau de passeport
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-2">
+                  <Badge className="bg-white border-2 border-gray-400 text-gray-800 text-lg px-3 py-1">
+                    ⚪ Blanc
+                  </Badge>
+                  <Badge className="bg-yellow-400 text-gray-900 text-lg px-3 py-1">
+                    🟡 Jaune
+                  </Badge>
+                  <Badge className="bg-orange-500 text-white text-lg px-3 py-1">
+                    🟠 Orange
+                  </Badge>
+                  <Badge className="bg-red-500 text-white text-lg px-3 py-1">
+                    🔴 Rouge
+                  </Badge>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+
         <Tabs defaultValue="educational_game" className="w-full">
           <TabsList className="grid grid-cols-3 lg:grid-cols-6 w-full h-auto p-1">
             {Object.entries(TAB_CONFIG).map(([type, config]) => {
@@ -682,6 +721,7 @@ const Pedagogy = () => {
             );
           })}
         </Tabs>
+        </>
       )}
 
       <AnimatePresence>

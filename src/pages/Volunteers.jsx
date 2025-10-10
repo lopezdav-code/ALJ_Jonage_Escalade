@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Helmet } from 'react-helmet';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Building, FolderHeart as HandHeart, Crown, User, FileText, Wallet, Loader2, Edit, Award, Info, BrainCircuit, Shield, Siren as Whistle, Wrench, ShieldCheck } from 'lucide-react';
+import { Building, FolderHeart as HandHeart, Crown, User, FileText, Wallet, Loader2, Edit, Eye, Award, Info, BrainCircuit, Shield, Siren as Whistle, Wrench, ShieldCheck } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { scheduleData } from '@/data/schedule';
@@ -11,7 +10,6 @@ import { supabase } from '@/lib/customSupabaseClient';
 import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import MemberForm from '@/components/MemberForm';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import VolunteerQuiz from '@/components/VolunteerQuiz';
 import { useMemberDetail } from '@/contexts/MemberDetailContext';
@@ -72,10 +70,9 @@ const Volunteers = () => {
   const [allMembers, setAllMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
-  const [isSaving, setIsSaving] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState('all');
   const [isQuizVisible, setIsQuizVisible] = useState(false);
-  const { editingMember, isFormVisible, openEditFormForMember, closeEditForm } = useMemberDetail();
+  const { showMemberDetails, openEditFormForMember } = useMemberDetail();
 
   const fetchMembers = useCallback(async () => {
     setLoading(true);
@@ -125,52 +122,6 @@ const Volunteers = () => {
       dynamic_roles: memberRoles.has(member.id) ? Array.from(memberRoles.get(member.id)) : [],
     }));
   }, [allMembers]);
-
-  const uploadImage = async (file) => {
-    const fileExt = file.name.split('.').pop();
-    const fileName = `members_photos/${Date.now()}.${fileExt}`;
-    
-    let { error: uploadError } = await supabase.storage
-      .from('member_photos')
-      .upload(fileName, file, { upsert: true });
-
-    if (uploadError) throw uploadError;
-
-    const { data } = supabase.storage.from('member_photos').getPublicUrl(fileName);
-    return data.publicUrl;
-  };
-
-  const handleSaveMember = async (memberData, newImageFile) => {
-    setIsSaving(true);
-    try {
-      let photo_url = memberData.photo_url;
-      if (newImageFile) {
-        photo_url = await uploadImage(newImageFile);
-      } else if (memberData.photo_url === null) {
-        photo_url = null;
-      }
-
-      const { profiles, dynamic_roles, member_roles, isEmergencyContactFor, ...dataToSave } = { ...memberData, photo_url };
-      
-      let error;
-      if (editingMember) {
-        ({ error } = await supabase.from('members').update(dataToSave).eq('id', editingMember.id));
-      } else {
-        const { id, ...insertData } = dataToSave;
-        ({ error } = await supabase.from('members').insert(insertData));
-      }
-
-      if (error) throw error;
-
-      toast({ title: "Succès", description: `Membre ${editingMember ? 'mis à jour' : 'ajouté'} avec succès.` });
-      closeEditForm();
-      fetchMembers();
-    } catch (error) {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
-    } finally {
-      setIsSaving(false);
-    }
-  };
 
   const { bureauPrincipaux, bureauAdjoints } = useMemo(() => {
     const bureau = membersWithDynamicRoles.filter(m => m.title === 'Bureau');
@@ -228,42 +179,83 @@ const Volunteers = () => {
   };
 
   const VolunteerCard = ({ member }) => {
-    const { showMemberDetails } = useMemberDetail();
+    const { showMemberDetails, openEditFormForMember } = useMemberDetail();
     const fullName = formatName(member.first_name, member.last_name, isAdmin);
     const sessions = findMemberSessions(member);
     const Icon = member.title === 'Bureau' ? getRoleIcon(member.sub_group) : null;
 
+    const handleViewDetails = (e) => {
+      console.log('🔍 handleViewDetails clicked', member.id);
+      e.preventDefault();
+      e.stopPropagation();
+      console.log('🔍 Calling showMemberDetails', typeof showMemberDetails);
+      showMemberDetails(member.id);
+    };
+
+    const handleEdit = (e) => {
+      console.log('✏️ handleEdit clicked', member.id);
+      e.preventDefault();
+      e.stopPropagation();
+      console.log('✏️ Calling openEditFormForMember', typeof openEditFormForMember);
+      openEditFormForMember(member);
+    };
+
     return (
       <div>
-        <Card className="border-green-200 shadow-md hover:shadow-lg transition-shadow relative h-full cursor-pointer" onClick={() => showMemberDetails(member.id)}>
-          {isAdmin && <Button variant="ghost" size="icon" className="absolute top-2 right-2 h-8 w-8" onClick={(e) => { e.stopPropagation(); openEditFormForMember(member); }}><Edit className="h-4 w-4" /></Button>}
-          <CardContent className="p-4 flex items-center gap-4">
-            <SafeMemberAvatar 
-              member={member} 
-              size="default"
-              className="w-16 h-16"
-            />
-            <div className="flex-1">
-              <div className="flex items-center gap-2">
-                <p className="font-semibold text-lg">{fullName}</p>
-                {Icon && <Icon className="w-5 h-5 text-primary" title={member.sub_group} />}
-                <ProfileIndicator profile={member.profiles} />
+        <Card 
+          className="border-green-200 shadow-md hover:shadow-lg transition-shadow relative h-full"
+        >
+          <CardContent className="p-4">
+            <div className="flex items-center gap-4 mb-3">
+              <SafeMemberAvatar 
+                member={member} 
+                size="default"
+                className="w-16 h-16"
+              />
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <p className="font-semibold text-lg">{fullName}</p>
+                  {Icon && <Icon className="w-5 h-5 text-primary" title={member.sub_group} />}
+                  <ProfileIndicator profile={member.profiles} />
+                </div>
+                {member.title === 'Bureau' && member.sub_group && <Badge variant="outline" className="mt-1">{member.sub_group}</Badge>}
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {member.dynamic_roles?.map(role => {
+                    const info = dynamicRoleInfo[role];
+                    const RoleIcon = info?.icon || User;
+                    return (
+                      <Badge key={role} className={`${info?.color || 'bg-gray-500'} flex items-center gap-1`} title={info?.title}>
+                        <RoleIcon className="h-3 w-3" />
+                        {role}
+                      </Badge>
+                    );
+                  })}
+                </div>
+                {sessions.length > 0 && <div className="flex flex-wrap gap-2 mt-2">{sessions.map(s => <Badge key={s.id} variant={getBadgeVariant(s.group)}>{s.title}</Badge>)}</div>}
+                {member.brevet_federaux?.length > 0 && <div className="flex flex-wrap gap-2 mt-2">{member.brevet_federaux.map(b => <div key={b} className={`w-4 h-4 rounded-full ${brevetColors[b] || 'bg-gray-400'}`} title={b}></div>)}</div>}
               </div>
-              {member.title === 'Bureau' && member.sub_group && <Badge variant="outline" className="mt-1">{member.sub_group}</Badge>}
-              <div className="flex flex-wrap gap-2 mt-2">
-                {member.dynamic_roles?.map(role => {
-                  const info = dynamicRoleInfo[role];
-                  const RoleIcon = info?.icon || User;
-                  return (
-                    <Badge key={role} className={`${info?.color || 'bg-gray-500'} flex items-center gap-1`} title={info?.title}>
-                      <RoleIcon className="h-3 w-3" />
-                      {role}
-                    </Badge>
-                  );
-                })}
-              </div>
-              {sessions.length > 0 && <div className="flex flex-wrap gap-2 mt-2">{sessions.map(s => <Badge key={s.id} variant={getBadgeVariant(s.group)}>{s.title}</Badge>)}</div>}
-              {member.brevet_federaux?.length > 0 && <div className="flex flex-wrap gap-2 mt-2">{member.brevet_federaux.map(b => <div key={b} className={`w-4 h-4 rounded-full ${brevetColors[b] || 'bg-gray-400'}`} title={b}></div>)}</div>}
+            </div>
+            <div className="flex gap-2 justify-end">
+              <Button 
+                variant="outline" 
+                size="sm"
+                onMouseDown={handleViewDetails}
+                className="flex items-center gap-2"
+              >
+                <Eye className="h-4 w-4" />
+                Voir le détail
+              </Button>
+              {isAdmin && (
+                <Button 
+                  variant="default" 
+                  size="sm"
+                  onMouseDown={handleEdit}
+                  className="flex items-center gap-2"
+                >
+                  <Edit className="h-4 w-4" />
+                  Modifier
+                </Button>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -307,14 +299,14 @@ const Volunteers = () => {
   return (
     <div className="space-y-12">
       <Helmet><title>Bénévoles - Club d'Escalade</title><meta name="description" content="Découvrez les membres du bureau et les bénévoles qui font vivre le club d'escalade" /></Helmet>
-      <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="text-center space-y-4">
+      <div className="text-center space-y-4">
         <h1 className="text-4xl font-bold headline">Nos Bénévoles</h1>
         <p className="text-xl text-muted-foreground max-w-2xl mx-auto">Découvrez les personnes dévouées qui font vivre notre club au quotidien.</p>
         <Button size="lg" onClick={() => setIsQuizVisible(true)}>
           <BrainCircuit className="mr-2 h-5 w-5" />
           Lancer le Quiz "Qui est-ce ?"
         </Button>
-      </motion.div>
+      </div>
       <section className="space-y-6">
         <h2 className="text-3xl font-bold headline flex items-center gap-3"><Building className="w-8 h-8 text-primary" />Le Bureau</h2>
         <div className="grid md:grid-cols-2 gap-6">
@@ -374,16 +366,6 @@ const Volunteers = () => {
           </div>
         </CardContent>
       </Card>
-      <AnimatePresence>
-        {isFormVisible && (
-          <MemberForm
-            member={editingMember}
-            onSave={handleSaveMember}
-            onCancel={closeEditForm}
-            isSaving={isSaving}
-          />
-        )}
-      </AnimatePresence>
     </div>
   );
 };

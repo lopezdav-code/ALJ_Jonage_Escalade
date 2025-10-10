@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Helmet } from 'react-helmet';
-import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/lib/customSupabaseClient';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { useMemberDetail } from '@/contexts/MemberDetailContext';
@@ -11,7 +10,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Loader2, PlusCircle, Trash2, Edit, Users, Filter, Heart, ShieldCheck, User, AlertTriangle, Info } from 'lucide-react';
 import { formatName, ProfileIndicator } from '@/lib/utils.jsx';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import MemberForm from '@/components/MemberForm';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 
@@ -44,39 +42,27 @@ const MemberCard = ({ member, onEdit, onDelete, isAdmin }) => {
 };
 
 const MemberGrid = ({ members, onEdit, onDelete, isAdmin }) => (
-  <motion.div
-    className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4"
-    initial="hidden"
-    animate="visible"
-    variants={{
-      visible: {
-        transition: {
-          staggerChildren: 0.05,
-        },
-      },
-    }}
-  >
+  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
     {members.map(member => (
-       <motion.div key={member.id} variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
+       <div key={member.id}>
           <MemberCard
             member={member}
             onEdit={onEdit}
             onDelete={onDelete}
             isAdmin={isAdmin}
           />
-       </motion.div>
+       </div>
     ))}
-  </motion.div>
+  </div>
 );
 
 const Members = () => {
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [deletingMember, setDeletingMember] = useState(null);
-  const [isSaving, setIsSaving] = useState(false);
   const { isAdmin, loading: authLoading } = useAuth();
   const { toast } = useToast();
-  const { editingMember, isFormVisible, openEditFormForMember, closeEditForm } = useMemberDetail();
+  const { openEditFormForMember } = useMemberDetail();
   const [filters, setFilters] = useState({
     hasPhone: false,
     hasLicense: false,
@@ -137,59 +123,6 @@ const Members = () => {
   useEffect(() => {
     fetchMembers();
   }, [fetchMembers]);
-
-  const uploadImage = async (file) => {
-    const fileExt = file.name.split('.').pop();
-    const fileName = `members_photos/${Date.now()}.${fileExt}`;
-    
-    let { error: uploadError } = await supabase.storage
-      .from('member_photos')
-      .upload(fileName, file, { upsert: true });
-
-    if (uploadError) throw uploadError;
-
-    const { data } = supabase.storage.from('member_photos').getPublicUrl(fileName);
-    return data.publicUrl;
-  };
-
-  const handleSaveMember = async (memberData, newImageFile) => {
-    setIsSaving(true);
-    try {
-      let photo_url = memberData.photo_url;
-      if (newImageFile) {
-        photo_url = await uploadImage(newImageFile);
-      } else if (memberData.photo_url === null) {
-        photo_url = null;
-      }
-
-      const { profiles, dynamic_roles, member_roles, is_emergency_contact_for_others, isEmergencyContactFor, emergency_contact_1, emergency_contact_2, ...dataToSave } = { ...memberData, photo_url };
-      
-      if (dataToSave.passeport === '') {
-        dataToSave.passeport = null;
-      }
-      if (dataToSave.sexe === '') {
-        dataToSave.sexe = null;
-      }
-
-      let error;
-      if (editingMember) {
-        ({ error } = await supabase.from('members').update(dataToSave).eq('id', editingMember.id));
-      } else {
-        const { id, ...insertData } = dataToSave;
-        ({ error } = await supabase.from('members').insert(insertData));
-      }
-
-      if (error) throw error;
-
-      toast({ title: "Succès", description: `Membre ${editingMember ? 'mis à jour' : 'ajouté'} avec succès.` });
-      closeEditForm();
-      fetchMembers();
-    } catch (error) {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
-    } finally {
-      setIsSaving(false);
-    }
-  };
 
   const handleDeleteMember = async () => {
     if (!deletingMember) return;
@@ -258,7 +191,7 @@ const Members = () => {
         <meta name="description" content="Liste des adhérents du club d'escalade." />
       </Helmet>
 
-      <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
+      <div>
         <div className="flex justify-between items-center">
           <h1 className="text-4xl font-bold headline flex items-center gap-3">
             <Users className="w-10 h-10 text-primary" />
@@ -272,7 +205,7 @@ const Members = () => {
             </div>
           )}
         </div>
-      </motion.div>
+      </div>
 
       <Card>
         <CardHeader>
@@ -391,17 +324,6 @@ const Members = () => {
           </div>
         </CardContent>
       </Card>
-
-      <AnimatePresence>
-        {isFormVisible && showAdminFeatures && (
-          <MemberForm
-            member={editingMember}
-            onSave={handleSaveMember}
-            onCancel={closeEditForm}
-            isSaving={isSaving}
-          />
-        )}
-      </AnimatePresence>
 
       <Dialog open={!!deletingMember} onOpenChange={() => setDeletingMember(null)}>
         <DialogContent>

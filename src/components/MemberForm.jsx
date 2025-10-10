@@ -34,6 +34,9 @@ const brevetOptions = [
 ];
 
 const MemberForm = ({ member, onSave, onCancel, isSaving }) => {
+  // Générer un ID unique pour ce formulaire pour éviter les IDs dupliqués
+  const formId = React.useMemo(() => member?.id || `new-${Date.now()}`, [member?.id]);
+  
   const [formData, setFormData] = useState({
     first_name: '', last_name: '', title: '', sub_group: '', category: '',
     phone: '', photo_url: '',
@@ -190,7 +193,7 @@ const MemberForm = ({ member, onSave, onCancel, isSaving }) => {
                 </Avatar>
                 <div className="flex gap-2">
                   <Button type="button" asChild variant="outline">
-                    <Label htmlFor="photo-upload" className="cursor-pointer">
+                    <Label htmlFor={`photo-upload-${formId}`} className="cursor-pointer">
                       <UploadCloud className="mr-2 h-4 w-4" /> Changer
                     </Label>
                   </Button>
@@ -200,7 +203,7 @@ const MemberForm = ({ member, onSave, onCancel, isSaving }) => {
                       </Button>
                   }
                 </div>
-                <Input id="photo-upload" type="file" className="hidden" onChange={handleFileChange} accept="image/*" />
+                <Input id={`photo-upload-${formId}`} type="file" className="hidden" onChange={handleFileChange} accept="image/*" />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div><Label>Prénom</Label><Input name="first_name" value={formData.first_name} onChange={handleChange} required /></div>
@@ -222,7 +225,7 @@ const MemberForm = ({ member, onSave, onCancel, isSaving }) => {
                 <div><Label>Catégorie d'âge (Compétition)</Label><Select name="category" value={formData.category || ''} onValueChange={(v) => handleSelectChange('category', v)}><SelectTrigger><SelectValue placeholder="Catégorie d'âge" /></SelectTrigger><SelectContent><SelectItem value="">Aucune</SelectItem>{ageCategoryOptions.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent></Select></div>
                 <div><Label>Passeport</Label><Select name="passeport" value={formData.passeport || ''} onValueChange={(v) => handleSelectChange('passeport', v)}><SelectTrigger><SelectValue placeholder="Passeport" /></SelectTrigger><SelectContent><SelectItem value="">Aucun</SelectItem>{passeportOptions.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent></Select></div>
               </div>
-              <div><Label>Brevets Fédéraux</Label><div className="grid grid-cols-2 gap-2 mt-2">{brevetOptions.map(b => <div key={b} className="flex items-center gap-2"><Checkbox id={`b-${b}`} checked={formData.brevet_federaux.includes(b)} onCheckedChange={() => handleCheckboxChange(b)} /> <Label htmlFor={`b-${b}`} className="font-normal">{b}</Label></div>)}</div></div>
+              <div><Label>Brevets Fédéraux</Label><div className="grid grid-cols-2 gap-2 mt-2">{brevetOptions.map(b => <div key={b} className="flex items-center gap-2"><Checkbox id={`b-${formId}-${b}`} checked={formData.brevet_federaux.includes(b)} onCheckedChange={() => handleCheckboxChange(b)} /> <Label htmlFor={`b-${formId}-${b}`} className="font-normal">{b}</Label></div>)}</div></div>
               
               <div>
                 <Label>Contact d'urgence 1</Label>
