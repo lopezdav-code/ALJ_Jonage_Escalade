@@ -193,6 +193,12 @@ const PasseportViewer = () => {
     const validatedCount = competencesEntries.filter(([_, value]) => value === true).length;
     const totalCount = competencesEntries.length;
     
+    // Logo ALJ en SVG pour garantir l'affichage lors de l'impression
+    const logoSVG = `<svg width="120" height="120" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+      <text x="100" y="120" font-family="Arial Black, sans-serif" font-size="80" font-weight="900" text-anchor="middle" fill="#1a1a1a">ALJ</text>
+      <text x="100" y="160" font-family="Arial, sans-serif" font-size="24" font-weight="bold" text-anchor="middle" fill="#666">JONAGE</text>
+    </svg>`;
+    
     // Générer le contenu HTML du diplôme
     const diplomaHTML = `
 <!DOCTYPE html>
@@ -203,7 +209,7 @@ const PasseportViewer = () => {
   <title>Diplôme Passeport ${passeportType}</title>
   <style>
     @page {
-      size: A4 landscape;
+      size: A4 portrait;
       margin: 0;
     }
     
@@ -220,16 +226,16 @@ const PasseportViewer = () => {
       justify-content: center;
       align-items: center;
       min-height: 100vh;
-      padding: 20px;
+      padding: 10px;
     }
     
     .diploma {
       background: white;
-      width: 297mm;
-      height: 210mm;
-      padding: 40px 60px;
+      width: 210mm;
+      height: 297mm;
+      padding: 30px 40px;
       box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-      border: 20px solid ${validation.passeport_type === 'blanc' ? '#3b82f6' : 
+      border: 15px solid ${validation.passeport_type === 'blanc' ? '#3b82f6' : 
                              validation.passeport_type === 'jaune' ? '#eab308' : 
                              validation.passeport_type === 'orange' ? '#f97316' : '#ef4444'};
       border-image: linear-gradient(135deg, 
@@ -245,38 +251,50 @@ const PasseportViewer = () => {
     .diploma::before {
       content: '';
       position: absolute;
-      top: 50px;
-      left: 50px;
-      right: 50px;
-      bottom: 50px;
+      top: 35px;
+      left: 35px;
+      right: 35px;
+      bottom: 35px;
       border: 2px solid rgba(0,0,0,0.1);
       pointer-events: none;
     }
     
+    .logo {
+      text-align: center;
+      margin-bottom: 15px;
+    }
+    
+    .logo img, .logo svg {
+      width: 120px;
+      height: auto;
+      display: inline-block;
+    }
+    
     .header {
       text-align: center;
-      margin-bottom: 30px;
+      margin-bottom: 20px;
     }
     
     .club-name {
-      font-size: 20px;
+      font-size: 16px;
       color: #666;
       text-transform: uppercase;
-      letter-spacing: 3px;
-      margin-bottom: 10px;
+      letter-spacing: 2px;
+      margin-bottom: 8px;
+      font-weight: 600;
     }
     
     .diploma-title {
-      font-size: 56px;
+      font-size: 42px;
       color: #1a1a1a;
-      margin: 20px 0;
+      margin: 15px 0;
       font-weight: bold;
       text-transform: uppercase;
       letter-spacing: 2px;
     }
     
     .subtitle {
-      font-size: 24px;
+      font-size: 18px;
       color: #666;
       font-style: italic;
     }
@@ -287,48 +305,48 @@ const PasseportViewer = () => {
       display: flex;
       flex-direction: column;
       justify-content: center;
-      padding: 20px 0;
+      padding: 10px 0;
     }
     
     .awarded-to {
-      font-size: 18px;
+      font-size: 14px;
       color: #666;
-      margin-bottom: 15px;
+      margin-bottom: 10px;
     }
     
     .recipient-name {
-      font-size: 48px;
+      font-size: 36px;
       color: #1a1a1a;
       font-weight: bold;
-      margin: 20px 0;
+      margin: 12px 0;
       border-bottom: 3px solid ${validation.passeport_type === 'blanc' ? '#3b82f6' : 
                                    validation.passeport_type === 'jaune' ? '#eab308' : 
                                    validation.passeport_type === 'orange' ? '#f97316' : '#ef4444'};
-      padding-bottom: 10px;
+      padding-bottom: 8px;
       display: inline-block;
     }
     
     .achievement {
-      font-size: 18px;
+      font-size: 14px;
       color: #444;
-      margin: 25px auto;
-      max-width: 800px;
-      line-height: 1.8;
+      margin: 15px auto;
+      max-width: 600px;
+      line-height: 1.6;
     }
     
     .details {
       background: #f8f9fa;
-      padding: 20px;
-      border-radius: 10px;
-      margin: 20px auto;
-      max-width: 700px;
+      padding: 15px;
+      border-radius: 8px;
+      margin: 15px auto;
+      max-width: 600px;
       text-align: left;
     }
     
     .details-title {
-      font-size: 20px;
+      font-size: 16px;
       font-weight: bold;
-      margin-bottom: 15px;
+      margin-bottom: 12px;
       color: #1a1a1a;
       text-align: center;
     }
@@ -336,8 +354,8 @@ const PasseportViewer = () => {
     .detail-item {
       display: flex;
       justify-content: space-between;
-      margin: 10px 0;
-      font-size: 16px;
+      margin: 8px 0;
+      font-size: 14px;
       color: #555;
     }
     
@@ -348,25 +366,25 @@ const PasseportViewer = () => {
     
     .comments {
       background: #fff9e6;
-      padding: 20px;
+      padding: 15px;
       border-left: 4px solid ${validation.passeport_type === 'blanc' ? '#3b82f6' : 
                                 validation.passeport_type === 'jaune' ? '#eab308' : 
                                 validation.passeport_type === 'orange' ? '#f97316' : '#ef4444'};
-      margin: 20px auto;
-      max-width: 700px;
+      margin: 15px auto;
+      max-width: 600px;
       border-radius: 5px;
       font-style: italic;
       color: #666;
-      font-size: 15px;
-      line-height: 1.6;
+      font-size: 13px;
+      line-height: 1.5;
     }
     
     .footer {
       display: flex;
       justify-content: space-between;
       align-items: flex-end;
-      margin-top: 40px;
-      padding-top: 20px;
+      margin-top: 30px;
+      padding-top: 15px;
       border-top: 2px solid #e0e0e0;
     }
     
@@ -376,24 +394,24 @@ const PasseportViewer = () => {
     }
     
     .label {
-      font-size: 14px;
+      font-size: 12px;
       color: #666;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
     }
     
     .date, .validator-name {
-      font-size: 16px;
+      font-size: 14px;
       color: #1a1a1a;
       font-weight: bold;
     }
     
     .signature {
       font-family: 'Brush Script MT', cursive;
-      font-size: 42px;
+      font-size: 32px;
       color: ${validation.passeport_type === 'blanc' ? '#3b82f6' : 
                validation.passeport_type === 'jaune' ? '#eab308' : 
                validation.passeport_type === 'orange' ? '#f97316' : '#ef4444'};
-      margin: 15px 0;
+      margin: 12px 0;
       transform: rotate(-5deg);
       font-weight: bold;
       font-style: italic;
@@ -402,9 +420,9 @@ const PasseportViewer = () => {
     .badge {
       position: absolute;
       top: 30px;
-      right: 60px;
-      width: 100px;
-      height: 100px;
+      right: 40px;
+      width: 80px;
+      height: 80px;
       background: ${validation.passeport_type === 'blanc' ? '#3b82f6' : 
                     validation.passeport_type === 'jaune' ? '#eab308' : 
                     validation.passeport_type === 'orange' ? '#f97316' : '#ef4444'};
@@ -419,13 +437,13 @@ const PasseportViewer = () => {
     }
     
     .badge-text {
-      font-size: 12px;
+      font-size: 10px;
       text-transform: uppercase;
     }
     
     .badge-score {
-      font-size: 24px;
-      margin: 5px 0;
+      font-size: 20px;
+      margin: 3px 0;
     }
     
     @media print {
@@ -449,9 +467,14 @@ const PasseportViewer = () => {
       <span class="badge-score">${validatedCount}/${totalCount}</span>
     </div>
     
+    <!-- Logo -->
+    <div class="logo">
+      ${logoSVG}
+    </div>
+    
     <!-- En-tête -->
     <div class="header">
-      <div class="club-name">Association Lyonnaise de Jonage Escalade</div>
+      <div class="club-name">ALJ Escalade Amicalelaique Jonage</div>
       <div class="diploma-title">Diplôme</div>
       <div class="subtitle">Passeport ${passeportType}${moduleText}</div>
     </div>
