@@ -251,14 +251,14 @@ const AdminManagement = () => {
         setLoading(false);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-}, [currentUser]);
+}, [currentUser?.id]);
 
   useEffect(() => {
-    if (isAdmin && currentUser) {
+    if (isAdmin && currentUser?.id) {
       fetchUsers();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAdmin, currentUser]);
+  }, [isAdmin, currentUser?.id]);
 
   const existingMemberLinks = useMemo(() => users.map(u => u.member_id).filter(Boolean), [users]);
   
