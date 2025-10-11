@@ -189,7 +189,7 @@ const CycleDetail = () => {
         <title>{cycle.name} - Cycles - ALJ Escalade</title>
       </Helmet>
 
-      <div className="container mx-auto px-4 py-8 max-w-7xl">
+      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 max-w-7xl">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -206,13 +206,13 @@ const CycleDetail = () => {
               Retour aux cycles
             </Button>
 
-            <div className="flex justify-between items-start">
-              <div>
-                <h1 className="text-4xl font-bold text-gray-900 mb-2">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
+              <div className="flex-1">
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-2">
                   {cycle.name}
                 </h1>
                 {cycle.short_description && (
-                  <p className="text-xl text-gray-600 mb-4">
+                  <p className="text-lg sm:text-xl text-gray-600 mb-4">
                     {cycle.short_description}
                   </p>
                 )}
@@ -223,7 +223,7 @@ const CycleDetail = () => {
                 )}
               </div>
               {canManageCycles && (
-                <Button onClick={() => setIsAddSessionDialogOpen(true)}>
+                <Button onClick={() => setIsAddSessionDialogOpen(true)} className="w-full sm:w-auto">
                   <PlusCircle className="w-4 h-4 mr-2" />
                   Ajouter une séance
                 </Button>
@@ -232,7 +232,7 @@ const CycleDetail = () => {
           </div>
 
           {/* Statistiques */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm font-medium text-gray-600">
@@ -247,14 +247,55 @@ const CycleDetail = () => {
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm font-medium text-gray-600">
-                  Participants total
+                  Élèves participants
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold">
-                  {sessions.reduce((sum, session) => 
-                    sum + (session.students?.length || 0), 0
-                  )}
+                <div className="space-y-1">
+                  {(() => {
+                    const allStudents = new Set();
+                    sessions.forEach(session => {
+                      session.students?.forEach(student => allStudents.add(student));
+                    });
+                    const studentsList = Array.from(allStudents).sort();
+                    return studentsList.length > 0 ? (
+                      <div className="text-sm max-h-32 overflow-y-auto">
+                        {studentsList.map((student, index) => (
+                          <div key={index} className="py-0.5">• {student}</div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-sm text-gray-400">Aucun élève</div>
+                    );
+                  })()}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium text-gray-600">
+                  Encadrants
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-1">
+                  {(() => {
+                    const allInstructors = new Set();
+                    sessions.forEach(session => {
+                      session.instructors?.forEach(instructor => allInstructors.add(instructor));
+                    });
+                    const instructorsList = Array.from(allInstructors).sort();
+                    return instructorsList.length > 0 ? (
+                      <div className="text-sm">
+                        {instructorsList.map((instructor, index) => (
+                          <div key={index} className="py-0.5">• {instructor}</div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-sm text-gray-400">Aucun encadrant</div>
+                    );
+                  })()}
                 </div>
               </CardContent>
             </Card>
@@ -266,13 +307,14 @@ const CycleDetail = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-sm">
+                <div className="text-sm break-words">
                   {sessions.length > 0 ? (
-                    <>
-                      {new Date(sessions[sessions.length - 1]?.date).toLocaleDateString('fr-FR')}
-                      {' → '}
-                      {new Date(sessions[0]?.date).toLocaleDateString('fr-FR')}
-                    </>
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-1">
+                      <span>{new Date(sessions[sessions.length - 1]?.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                      <span className="hidden sm:inline">→</span>
+                      <span className="sm:hidden">↓</span>
+                      <span>{new Date(sessions[0]?.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                    </div>
                   ) : (
                     'Aucune séance'
                   )}
@@ -314,13 +356,13 @@ const CycleDetail = () => {
                       animate={{ opacity: 1, x: 0 }}
                       className="border rounded-lg p-4 hover:shadow-md transition-shadow"
                     >
-                      <div className="flex justify-between items-start">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-2">
-                            <h3 className="font-semibold text-lg">
+                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-2">
+                            <h3 className="font-semibold text-base sm:text-lg">
                               {formatDate(session.date)}
                             </h3>
-                            <Badge variant="secondary">
+                            <Badge variant="secondary" className="w-fit">
                               <Users className="w-3 h-3 mr-1" />
                               {session.students?.length || 0} participants
                             </Badge>
@@ -329,14 +371,14 @@ const CycleDetail = () => {
                           <div className="space-y-1 text-sm text-gray-600">
                             {session.start_time && (
                               <div className="flex items-center gap-2">
-                                <Clock className="w-4 h-4" />
+                                <Clock className="w-4 h-4 flex-shrink-0" />
                                 <span>{session.start_time}</span>
                               </div>
                             )}
                             {session.instructors && session.instructors.length > 0 && (
-                              <div className="flex items-center gap-2">
-                                <Users className="w-4 h-4" />
-                                <span>
+                              <div className="flex items-start gap-2">
+                                <Users className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                                <span className="break-words">
                                   Encadrants: {session.instructors.join(', ')}
                                 </span>
                               </div>

@@ -13,7 +13,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 
-const MemberCard = ({ member, onEdit, onDelete, isAdmin }) => {
+const MemberCard = ({ member, onEdit, onDelete, isAdmin, canDelete }) => {
   const { showMemberDetails } = useMemberDetail();
 
   return (
@@ -22,7 +22,9 @@ const MemberCard = ({ member, onEdit, onDelete, isAdmin }) => {
         {isAdmin && (
           <div className="w-full flex justify-end gap-1 mb-1">
             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); onEdit(member); }}><Edit className="h-4 w-4" /></Button>
-            <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={(e) => { e.stopPropagation(); onDelete(member); }}><Trash2 className="h-4 w-4" /></Button>
+            {canDelete && (
+              <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={(e) => { e.stopPropagation(); onDelete(member); }}><Trash2 className="h-4 w-4" /></Button>
+            )}
           </div>
         )}
         <div className="flex items-center cursor-pointer w-full" onClick={() => showMemberDetails(member.id)}>
@@ -41,7 +43,7 @@ const MemberCard = ({ member, onEdit, onDelete, isAdmin }) => {
   );
 };
 
-const MemberGrid = ({ members, onEdit, onDelete, isAdmin }) => (
+const MemberGrid = ({ members, onEdit, onDelete, isAdmin, canDelete }) => (
   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
     {members.map(member => (
        <div key={member.id}>
@@ -50,6 +52,7 @@ const MemberGrid = ({ members, onEdit, onDelete, isAdmin }) => (
             onEdit={onEdit}
             onDelete={onDelete}
             isAdmin={isAdmin}
+            canDelete={canDelete}
           />
        </div>
     ))}
@@ -60,7 +63,7 @@ const Members = () => {
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [deletingMember, setDeletingMember] = useState(null);
-  const { isAdmin, loading: authLoading } = useAuth();
+  const { isAdmin, isBureau, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const { openEditFormForMember } = useMemberDetail();
   const [filters, setFilters] = useState({
@@ -174,13 +177,15 @@ const Members = () => {
     })).filter(item => item.count > 0);
   }, [memberCategories]);
 
-  const showAdminFeatures = !authLoading && isAdmin;
+  const showAdminFeatures = !authLoading && (isAdmin || isBureau);
+  const canDelete = !authLoading && isAdmin;
 
   const handleEdit = (member) => {
     openEditFormForMember(member);
   };
 
   const handleDelete = (member) => {
+    if (!canDelete) return;
     setDeletingMember(member);
   };
 
@@ -275,12 +280,12 @@ const Members = () => {
                         {subGroups.map(([subGroup, subMembers]) => (
                           <div key={subGroup}>
                             <h3 className="text-lg font-semibold mb-3">{subGroup}</h3>
-                            <MemberGrid members={subMembers} onEdit={handleEdit} onDelete={handleDelete} isAdmin={showAdminFeatures} />
+                            <MemberGrid members={subMembers} onEdit={handleEdit} onDelete={handleDelete} isAdmin={showAdminFeatures} canDelete={canDelete} />
                           </div>
                         ))}
                       </div>
                     ) : (
-                      <MemberGrid members={membersList} onEdit={handleEdit} onDelete={handleDelete} isAdmin={showAdminFeatures} />
+                      <MemberGrid members={membersList} onEdit={handleEdit} onDelete={handleDelete} isAdmin={showAdminFeatures} canDelete={canDelete} />
                     )}
                   </AccordionContent>
                 </AccordionItem>

@@ -233,6 +233,7 @@ export const AuthProvider = ({ children }) => {
   const isAdmin = useMemo(() => profile?.role === 'admin', [profile]);
   const isEncadrant = useMemo(() => ['encadrant', 'admin'].includes(profile?.role), [profile]);
   const isAdherent = useMemo(() => ['adherent', 'encadrant', 'admin'].includes(profile?.role), [profile]);
+  const isBureau = useMemo(() => ['bureau', 'admin'].includes(profile?.role), [profile]);
 
   const value = useMemo(() => ({
     user,
@@ -242,10 +243,11 @@ export const AuthProvider = ({ children }) => {
     isAdmin,
     isEncadrant,
     isAdherent,
+    isBureau,
     signUp,
     signIn,
     signOut,
-  }), [user, session, loading, profile, isAdmin, isEncadrant, isAdherent, signUp, signIn, signOut]);
+  }), [user, session, loading, profile, isAdmin, isEncadrant, isAdherent, isBureau, signUp, signIn, signOut]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

@@ -19,7 +19,7 @@ import { formatName } from '@/lib/utils.jsx';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
-const USER_ROLES = ['admin', 'encadrant', 'adherent', 'user'];
+const USER_ROLES = ['admin', 'bureau', 'encadrant', 'adherent', 'user'];
 const NAV_PAGES = [
     { to: '/news', text: 'Actualités' },
     { to: '/schedule', text: 'Planning' },
@@ -32,6 +32,7 @@ const NAV_PAGES = [
     { to: '/agenda', text: 'Agenda' },
     { to: '/session-log', text: 'Séances' },
     { to: '/cycles', text: 'Cycles' },
+    { to: '/passeport-validation', text: 'Validation Passeports' },
 ];
 
 const MemberSearchPopover = ({ onSelect, children, existingLinks }) => {
@@ -212,7 +213,7 @@ const AdminManagement = () => {
   const { toast } = useToast();
   const { config, updateConfig, loadingConfig } = useConfig();
   const [navConfig, setNavConfig] = useState(
-    NAV_PAGES.map(p => ({ to: p.to, text: p.text, roles: ['public', 'user', 'adherent', 'encadrant', 'admin'] }))
+    NAV_PAGES.map(p => ({ to: p.to, text: p.text, roles: ['public', 'user', 'adherent', 'bureau', 'encadrant', 'admin'] }))
   );
   const [isSavingNav, setIsSavingNav] = useState(false);
   const [isCreateUserFormOpen, setCreateUserFormOpen] = useState(false);
@@ -511,6 +512,7 @@ const AdminManagement = () => {
                   <TableHead className="text-center">Public</TableHead>
                   <TableHead className="text-center">Utilisateur</TableHead>
                   <TableHead className="text-center">Adhérent</TableHead>
+                  <TableHead className="text-center">Bureau</TableHead>
                   <TableHead className="text-center">Encadrant</TableHead>
                   <TableHead className="text-center">Admin</TableHead>
                 </TableRow>
@@ -519,7 +521,7 @@ const AdminManagement = () => {
                 {navConfig.map((page, pageIndex) => (
                   <TableRow key={page.to}>
                     <TableCell className="font-medium">{page.text}</TableCell>
-                    {['public', 'user', 'adherent', 'encadrant', 'admin'].map(role => (
+                    {['public', 'user', 'adherent', 'bureau', 'encadrant', 'admin'].map(role => (
                       <TableCell key={role} className="text-center">
                         <Checkbox checked={page.roles.includes(role)} onCheckedChange={(checked) => handleNavRoleChange(pageIndex, role, checked)} />
                       </TableCell>
@@ -534,6 +536,85 @@ const AdminManagement = () => {
               {isSavingNav ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
               Sauvegarder les Accès du Menu
             </Button>
+          </CardFooter>
+        </Card>
+      </motion.div>
+
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+        <Card>
+          <CardHeader>
+            <CardTitle>Permissions Spéciales</CardTitle>
+            <CardDescription>Définissez les permissions avancées pour chaque rôle.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Permission</TableHead>
+                  <TableHead className="text-center">Adhérent</TableHead>
+                  <TableHead className="text-center">Bureau</TableHead>
+                  <TableHead className="text-center">Encadrant</TableHead>
+                  <TableHead className="text-center">Admin</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRow>
+                  <TableCell className="font-medium">Voir le nom de famille en entier</TableCell>
+                  <TableCell className="text-center"><Checkbox disabled checked={false} /></TableCell>
+                  <TableCell className="text-center"><Checkbox disabled checked={true} /></TableCell>
+                  <TableCell className="text-center"><Checkbox disabled checked={true} /></TableCell>
+                  <TableCell className="text-center"><Checkbox disabled checked={true} /></TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-medium">Éditer la fiche d'un membre</TableCell>
+                  <TableCell className="text-center"><Checkbox disabled checked={false} /></TableCell>
+                  <TableCell className="text-center"><Checkbox disabled checked={true} /></TableCell>
+                  <TableCell className="text-center"><Checkbox disabled checked={false} /></TableCell>
+                  <TableCell className="text-center"><Checkbox disabled checked={true} /></TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-medium">Supprimer un membre</TableCell>
+                  <TableCell className="text-center"><Checkbox disabled checked={false} /></TableCell>
+                  <TableCell className="text-center"><Checkbox disabled checked={false} /></TableCell>
+                  <TableCell className="text-center"><Checkbox disabled checked={false} /></TableCell>
+                  <TableCell className="text-center"><Checkbox disabled checked={true} /></TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-medium">Accéder aux logs de connexion</TableCell>
+                  <TableCell className="text-center"><Checkbox disabled checked={false} /></TableCell>
+                  <TableCell className="text-center"><Checkbox disabled checked={false} /></TableCell>
+                  <TableCell className="text-center"><Checkbox disabled checked={false} /></TableCell>
+                  <TableCell className="text-center"><Checkbox disabled checked={true} /></TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-medium">Gestion des rôles & accès</TableCell>
+                  <TableCell className="text-center"><Checkbox disabled checked={false} /></TableCell>
+                  <TableCell className="text-center"><Checkbox disabled checked={false} /></TableCell>
+                  <TableCell className="text-center"><Checkbox disabled checked={false} /></TableCell>
+                  <TableCell className="text-center"><Checkbox disabled checked={true} /></TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-medium">Ajouter une fiche pédagogique</TableCell>
+                  <TableCell className="text-center"><Checkbox disabled checked={false} /></TableCell>
+                  <TableCell className="text-center"><Checkbox disabled checked={false} /></TableCell>
+                  <TableCell className="text-center"><Checkbox disabled checked={true} /></TableCell>
+                  <TableCell className="text-center"><Checkbox disabled checked={true} /></TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-medium">Créer/modifier une compétition</TableCell>
+                  <TableCell className="text-center"><Checkbox disabled checked={false} /></TableCell>
+                  <TableCell className="text-center"><Checkbox disabled checked={false} /></TableCell>
+                  <TableCell className="text-center"><Checkbox disabled checked={true} /></TableCell>
+                  <TableCell className="text-center"><Checkbox disabled checked={true} /></TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </CardContent>
+          <CardFooter>
+            <p className="text-sm text-muted-foreground">
+              <strong>Note :</strong> Ces permissions sont définies dans le code et ne peuvent pas être modifiées ici. 
+              Ce tableau sert de référence pour comprendre les droits de chaque rôle.
+            </p>
           </CardFooter>
         </Card>
       </motion.div>

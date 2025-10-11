@@ -198,24 +198,24 @@ const CycleManagement = () => {
         <title>Gestion des Cycles - ALJ Escalade</title>
       </Helmet>
 
-      <div className="container mx-auto px-4 py-8 max-w-7xl">
+      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 max-w-7xl">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
           {/* Header */}
-          <div className="flex justify-between items-center mb-8">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-8">
             <div>
-              <h1 className="text-4xl font-bold text-gray-900 mb-2">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-2">
                 Gestion des Cycles
               </h1>
-              <p className="text-gray-600">
+              <p className="text-gray-600 text-sm sm:text-base">
                 Organisez vos séances en cycles thématiques
               </p>
             </div>
             {canManageCycles && (
-              <Button onClick={() => handleOpenDialog()} size="lg">
+              <Button onClick={() => handleOpenDialog()} size="lg" className="w-full sm:w-auto">
                 <PlusCircle className="w-5 h-5 mr-2" />
                 Nouveau Cycle
               </Button>
@@ -249,42 +249,43 @@ const CycleManagement = () => {
                   >
                     <Card className="hover:shadow-lg transition-shadow h-full flex flex-col">
                       <CardHeader>
-                        <div className="flex justify-between items-start mb-2">
-                          <CardTitle className="text-xl">{cycle.name}</CardTitle>
-                          <Badge variant="secondary">
+                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 mb-2">
+                          <CardTitle className="text-lg sm:text-xl break-words">{cycle.name}</CardTitle>
+                          <Badge variant="secondary" className="w-fit">
                             <Calendar className="w-3 h-3 mr-1" />
                             {cycle.sessions?.[0]?.count || 0} séances
                           </Badge>
                         </div>
                         {cycle.short_description && (
-                          <CardDescription className="line-clamp-2">
+                          <CardDescription className="line-clamp-2 break-words">
                             {cycle.short_description}
                           </CardDescription>
                         )}
                       </CardHeader>
                       <CardContent className="flex-grow">
                         {cycle.long_description && (
-                          <p className="text-sm text-gray-600 line-clamp-3">
+                          <p className="text-sm text-gray-600 line-clamp-3 break-words">
                             {cycle.long_description}
                           </p>
                         )}
                       </CardContent>
-                      <CardFooter className="flex gap-2">
+                      <CardFooter className="flex flex-col sm:flex-row gap-2">
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => handleViewCycle(cycle.id)}
-                          className="flex-1"
+                          className="flex-1 sm:flex-initial w-full sm:w-auto"
                         >
                           <Eye className="w-4 h-4 mr-1" />
                           Voir
                         </Button>
                         {canManageCycles && (
-                          <>
+                          <div className="flex gap-2 flex-1 sm:flex-initial">
                             <Button
                               variant="outline"
                               size="sm"
                               onClick={() => handleOpenDialog(cycle)}
+                              className="flex-1 sm:flex-initial"
                             >
                               <Edit className="w-4 h-4" />
                             </Button>
@@ -293,12 +294,12 @@ const CycleManagement = () => {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => setDeletingCycle(cycle)}
-                                className="text-red-600 hover:text-red-700"
+                                className="text-red-600 hover:text-red-700 flex-1 sm:flex-initial"
                               >
                                 <Trash2 className="w-4 h-4" />
                               </Button>
                             )}
-                          </>
+                          </div>
                         )}
                       </CardFooter>
                     </Card>

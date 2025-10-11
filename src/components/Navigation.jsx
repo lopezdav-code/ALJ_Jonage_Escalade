@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, LogIn, LogOut, UserPlus, Settings, ShieldCheck, User, Database } from 'lucide-react';
+import { Menu, X, LogIn, LogOut, UserPlus, Settings, ShieldCheck, User, Database, Key } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
 import { useConfig } from '@/contexts/ConfigContext';
 import { formatName } from '@/lib/utils';
+import { supabase } from '@/lib/customSupabaseClient';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -67,11 +68,114 @@ const AuthForm = ({ mode, setMode, onAuthSuccess }) => {
   );
 };
 
+const ChangePasswordDialog = ({ isOpen, onClose }) => {
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (newPassword !== confirmPassword) {
+      toast({
+        title: "Erreur",
+        description: "Les mots de passe ne correspondent pas.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      toast({
+        title: "Erreur",
+        description: "Le mot de passe doit contenir au moins 6 caractères.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Succès",
+        description: "Votre mot de passe a été modifié avec succès.",
+      });
+      
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      onClose();
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: error.message || "Impossible de modifier le mot de passe.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Changer mon mot de passe</DialogTitle>
+          <DialogDescription>
+            Saisissez votre nouveau mot de passe (minimum 6 caractères).
+          </DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <Label htmlFor="new-password">Nouveau mot de passe</Label>
+            <Input
+              id="new-password"
+              type="password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              required
+              minLength={6}
+            />
+          </div>
+          <div>
+            <Label htmlFor="confirm-password">Confirmer le mot de passe</Label>
+            <Input
+              id="confirm-password"
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              required
+              minLength={6}
+            />
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={onClose}>
+              Annuler
+            </Button>
+            <Button type="submit" disabled={loading}>
+              {loading ? 'Modification...' : 'Modifier le mot de passe'}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
   const [authMode, setAuthMode] = useState('signIn');
-  const { user, signOut, isAdmin, isEncadrant, isAdherent, profile } = useAuth();
+  const { user, signOut, isAdmin, isEncadrant, isAdherent, isBureau, profile } = useAuth();
   const { config, loadingConfig } = useConfig();
   const navigate = useNavigate();
 
@@ -80,15 +184,15 @@ const Navigation = () => {
   ];
 
   const defaultNavLinks = [
-    { to: '/news', text: 'Actualités', roles: ['public', 'user', 'adherent', 'encadrant', 'admin'] },
-    { to: '/schedule', text: 'Planning', roles: ['public', 'user', 'adherent', 'encadrant', 'admin'] },
-    { to: '/inscriptions', text: 'Inscription', roles: ['public', 'user', 'adherent', 'encadrant', 'admin'] },
-    { to: '/contact', text: 'Contact', roles: ['public', 'user', 'adherent', 'encadrant', 'admin'] },
-    { to: '/volunteers', text: 'Bénévoles', roles: ['public', 'user', 'adherent', 'encadrant', 'admin'] },
-    { to: '/members', text: 'Adhérents', roles: ['adherent', 'encadrant', 'admin'] },
-    { to: '/competitors', text: 'Compétiteurs', roles: ['adherent', 'encadrant', 'admin'] },
-    { to: '/competitions', text: 'Compétitions', roles: ['public', 'user', 'adherent', 'encadrant', 'admin'] },
-    { to: '/agenda', text: 'Agenda', roles: ['public', 'user', 'adherent', 'encadrant', 'admin'] },
+    { to: '/news', text: 'Actualités', roles: ['public', 'user', 'adherent', 'bureau', 'encadrant', 'admin'] },
+    { to: '/schedule', text: 'Planning', roles: ['public', 'user', 'adherent', 'bureau', 'encadrant', 'admin'] },
+    { to: '/inscriptions', text: 'Inscription', roles: ['public', 'user', 'adherent', 'bureau', 'encadrant', 'admin'] },
+    { to: '/contact', text: 'Contact', roles: ['public', 'user', 'adherent', 'bureau', 'encadrant', 'admin'] },
+    { to: '/volunteers', text: 'Bénévoles', roles: ['public', 'user', 'adherent', 'bureau', 'encadrant', 'admin'] },
+    { to: '/members', text: 'Adhérents', roles: ['adherent', 'bureau', 'encadrant', 'admin'] },
+    { to: '/competitors', text: 'Compétiteurs', roles: ['adherent', 'bureau', 'encadrant', 'admin'] },
+    { to: '/competitions', text: 'Compétitions', roles: ['public', 'user', 'adherent', 'bureau', 'encadrant', 'admin'] },
+    { to: '/agenda', text: 'Agenda', roles: ['public', 'user', 'adherent', 'bureau', 'encadrant', 'admin'] },
     { 
       to: '/session-log', 
       text: 'Séances', 
@@ -132,7 +236,7 @@ const Navigation = () => {
 
   const closeMenu = () => setIsOpen(false);
 
-  const userRole = isAdmin ? 'admin' : (isEncadrant ? 'encadrant' : (isAdherent ? 'adherent' : (user ? 'user' : 'public')));
+  const userRole = isAdmin ? 'admin' : (isEncadrant ? 'encadrant' : (isBureau ? 'bureau' : (isAdherent ? 'adherent' : (user ? 'user' : 'public'))));
 
   const filteredNavLinks = navLinks
     .filter(link => link.roles.includes(userRole))
@@ -194,8 +298,13 @@ const Navigation = () => {
                 <DropdownMenuContent align="end">
                   <DropdownMenuLabel>Mon Compte</DropdownMenuLabel>
                   <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => setIsChangePasswordOpen(true)}>
+                    <Key className="mr-2 h-4 w-4" />
+                    <span>Changer mot de passe</span>
+                  </DropdownMenuItem>
                   {isAdmin && (
                     <>
+                      <DropdownMenuSeparator />
                       <DropdownMenuItem onClick={() => navigate('/site-settings')}>
                         <Settings className="mr-2 h-4 w-4" />
                         <span>Réglages du site</span>
@@ -286,6 +395,11 @@ const Navigation = () => {
           <AuthForm mode={authMode} setMode={setAuthMode} onAuthSuccess={() => setIsAuthModalOpen(false)} />
         </DialogContent>
       </Dialog>
+
+      <ChangePasswordDialog 
+        isOpen={isChangePasswordOpen} 
+        onClose={() => setIsChangePasswordOpen(false)} 
+      />
     </>
   );
 };
