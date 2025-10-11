@@ -63,10 +63,7 @@ const CycleDetail = () => {
     try {
       const { data, error } = await supabase
         .from('sessions')
-        .select(`
-          *,
-          session_participants(count)
-        `)
+        .select('*')
         .eq('cycle_id', id)
         .order('date', { ascending: false });
 
@@ -256,7 +253,7 @@ const CycleDetail = () => {
               <CardContent>
                 <div className="text-3xl font-bold">
                   {sessions.reduce((sum, session) => 
-                    sum + (session.session_participants?.[0]?.count || 0), 0
+                    sum + (session.students?.length || 0), 0
                   )}
                 </div>
               </CardContent>
@@ -325,7 +322,7 @@ const CycleDetail = () => {
                             </h3>
                             <Badge variant="secondary">
                               <Users className="w-3 h-3 mr-1" />
-                              {session.session_participants?.[0]?.count || 0} participants
+                              {session.students?.length || 0} participants
                             </Badge>
                           </div>
 
