@@ -11,7 +11,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, ArrowLeft, PlusCircle, Trash2, Calendar, Users, MapPin, Clock } from 'lucide-react';
-import { formatName } from '@/lib/utils';
 
 const CycleDetail = () => {
   const { id } = useParams();
@@ -66,11 +65,7 @@ const CycleDetail = () => {
         .from('sessions')
         .select(`
           *,
-          members!sessions_member_id_fkey(id, first_name, last_name),
-          session_participants(
-            member_id,
-            members(id, first_name, last_name)
-          )
+          session_participants(count)
         `)
         .eq('cycle_id', id)
         .order('date', { ascending: false });
@@ -92,7 +87,7 @@ const CycleDetail = () => {
     try {
       const { data, error } = await supabase
         .from('sessions')
-        .select('id, date, location, members!sessions_member_id_fkey(first_name, last_name)')
+        .select('id, date, location, instructors')
         .is('cycle_id', null)
         .order('date', { ascending: false })
         .limit(50);
@@ -261,7 +256,7 @@ const CycleDetail = () => {
               <CardContent>
                 <div className="text-3xl font-bold">
                   {sessions.reduce((sum, session) => 
-                    sum + (session.session_participants?.length || 0), 0
+                    sum + (session.session_participants?.[0]?.count || 0), 0
                   )}
                 </div>
               </CardContent>
@@ -330,7 +325,7 @@ const CycleDetail = () => {
                             </h3>
                             <Badge variant="secondary">
                               <Users className="w-3 h-3 mr-1" />
-                              {session.session_participants?.length || 0} participants
+                              {session.session_participants?.[0]?.count || 0} participants
                             </Badge>
                           </div>
 
@@ -341,11 +336,11 @@ const CycleDetail = () => {
                                 <span>{session.location}</span>
                               </div>
                             )}
-                            {session.members && (
+                            {session.instructors && session.instructors.length > 0 && (
                               <div className="flex items-center gap-2">
                                 <Users className="w-4 h-4" />
                                 <span>
-                                  Encadrant: {formatName(session.members.first_name, session.members.last_name)}
+                                  Encadrants: {session.instructors.join(', ')}
                                 </span>
                               </div>
                             )}
@@ -396,7 +391,7 @@ const CycleDetail = () => {
                   availableSessions.map((session) => (
                     <SelectItem key={session.id} value={session.id}>
                       {new Date(session.date).toLocaleDateString('fr-FR')} - {session.location}
-                      {session.members && ` (${formatName(session.members.first_name, session.members.last_name)})`}
+                      {session.instructors && session.instructors.length > 0 && ` (${session.instructors[0]})`}
                     </SelectItem>
                   ))
                 )}
