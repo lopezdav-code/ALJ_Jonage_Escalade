@@ -31,6 +31,7 @@ const NAV_PAGES = [
     { to: '/competitions', text: 'Compétitions' },
     { to: '/agenda', text: 'Agenda' },
     { to: '/session-log', text: 'Séances' },
+    { to: '/cycles', text: 'Cycles' },
 ];
 
 const MemberSearchPopover = ({ onSelect, children, existingLinks }) => {

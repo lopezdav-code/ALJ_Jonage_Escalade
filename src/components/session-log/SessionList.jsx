@@ -36,6 +36,11 @@ const SessionList = ({ sessions, onEdit, onDelete, isAdmin }) => {
               <div className="flex justify-between w-full pr-4 items-center">
                 <div className="flex items-center gap-3">
                   <span className="font-semibold">{new Date(session.date).toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' })} - {session.start_time}</span>
+                  {session.cycles && (
+                    <Badge variant="outline" className="text-xs px-2 py-1 border-blue-500 text-blue-700">
+                      Cycle: {session.cycles.name}
+                    </Badge>
+                  )}
                   {session.cycle_objective && (
                     <Badge variant="secondary" className="text-xs px-2 py-1">
                       {session.cycle_objective}
@@ -50,6 +55,14 @@ const SessionList = ({ sessions, onEdit, onDelete, isAdmin }) => {
                 <div className="flex justify-end gap-2 mb-4">
                   <Button variant="outline" size="sm" onClick={() => onEdit(session)}><Edit className="w-4 h-4 mr-2" /> Modifier</Button>
                   <Button variant="destructive" size="sm" onClick={() => onDelete(session.id)}><Trash2 className="w-4 h-4 mr-2" /> Supprimer</Button>
+                </div>
+              )}
+              {session.cycles && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+                  <p className="font-semibold text-blue-900">Cycle: {session.cycles.name}</p>
+                  {session.cycles.short_description && (
+                    <p className="text-sm text-blue-700 mt-1">{session.cycles.short_description}</p>
+                  )}
                 </div>
               )}
               <p><strong>Objectif de cycle:</strong> {session.cycle_objective}</p>

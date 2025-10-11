@@ -95,6 +95,7 @@ const Navigation = () => {
       roles: ['adherent', 'encadrant', 'admin'],
       subMenu: [
         { to: '/session-log', text: 'Historique des séances', roles: ['adherent', 'encadrant', 'admin'] },
+        { to: '/cycles', text: 'Gestion des cycles', roles: ['encadrant', 'admin'] },
         { to: '/passeport-validation', text: 'Validation Passeports', roles: ['encadrant', 'admin'] },
       ]
     },

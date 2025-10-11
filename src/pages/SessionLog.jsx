@@ -34,7 +34,15 @@ const SessionLog = () => {
     setLoading(true);
     const { data, error } = await supabase
       .from('sessions')
-      .select('*, exercises (*)')
+      .select(`
+        *, 
+        exercises (*),
+        cycles (
+          id,
+          name,
+          short_description
+        )
+      `)
       .order('date', { ascending: false })
       .order('start_time', { ascending: false })
       .order('order', { foreignTable: 'exercises', ascending: true });

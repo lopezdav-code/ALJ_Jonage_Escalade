@@ -15,6 +15,8 @@ import Agenda from '@/pages/Agenda';
 import Schedule from '@/pages/Schedule';
 import Competitors from '@/pages/Competitors';
 import SessionLog from '@/pages/SessionLog';
+import CycleManagement from '@/pages/CycleManagement';
+import CycleDetail from '@/pages/CycleDetail';
 import Pedagogy from '@/pages/Pedagogy';
 import Members from '@/pages/Members';
 import Contact from '@/pages/Contact';
@@ -167,6 +169,8 @@ const AppContent = () => {
           <Route path="/agenda" element={<Agenda />} />
           <Route path="/schedule" element={<Schedule />} />
           <Route path="/session-log" element={<SessionLog />} />
+          <Route path="/cycles" element={<CycleManagement />} />
+          <Route path="/cycles/:id" element={<CycleDetail />} />
           <Route path="/pedagogy" element={<Pedagogy />} />
           <Route path="/members" element={<Members />} />
           <Route path="/inscriptions" element={<Inscriptions />} />
