@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, ArrowLeft, PlusCircle, Trash2, Calendar, Users, MapPin, Clock } from 'lucide-react';
+import { Loader2, ArrowLeft, PlusCircle, Trash2, Calendar, Users, Clock } from 'lucide-react';
 
 const CycleDetail = () => {
   const { id } = useParams();
@@ -87,7 +87,7 @@ const CycleDetail = () => {
     try {
       const { data, error } = await supabase
         .from('sessions')
-        .select('id, date, location, instructors')
+        .select('id, date, start_time, instructors')
         .is('cycle_id', null)
         .order('date', { ascending: false })
         .limit(50);
@@ -330,10 +330,10 @@ const CycleDetail = () => {
                           </div>
 
                           <div className="space-y-1 text-sm text-gray-600">
-                            {session.location && (
+                            {session.start_time && (
                               <div className="flex items-center gap-2">
-                                <MapPin className="w-4 h-4" />
-                                <span>{session.location}</span>
+                                <Clock className="w-4 h-4" />
+                                <span>{session.start_time}</span>
                               </div>
                             )}
                             {session.instructors && session.instructors.length > 0 && (
@@ -390,7 +390,8 @@ const CycleDetail = () => {
                 ) : (
                   availableSessions.map((session) => (
                     <SelectItem key={session.id} value={session.id}>
-                      {new Date(session.date).toLocaleDateString('fr-FR')} - {session.location}
+                      {new Date(session.date).toLocaleDateString('fr-FR')}
+                      {session.start_time && ` - ${session.start_time}`}
                       {session.instructors && session.instructors.length > 0 && ` (${session.instructors[0]})`}
                     </SelectItem>
                   ))
