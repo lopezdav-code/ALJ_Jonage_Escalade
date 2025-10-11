@@ -250,13 +250,15 @@ const AdminManagement = () => {
     } finally {
         setLoading(false);
     }
-}, [toast, currentUser]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [currentUser]);
 
   useEffect(() => {
-    if (isAdmin) {
+    if (isAdmin && currentUser) {
       fetchUsers();
     }
-  }, [isAdmin, fetchUsers]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAdmin, currentUser]);
 
   const existingMemberLinks = useMemo(() => users.map(u => u.member_id).filter(Boolean), [users]);
   
