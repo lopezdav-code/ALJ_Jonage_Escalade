@@ -19,7 +19,7 @@ import { formatName } from '@/lib/utils.jsx';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
-const USER_ROLES = ['admin', 'adherent', 'user'];
+const USER_ROLES = ['admin', 'encadrant', 'adherent', 'user'];
 const NAV_PAGES = [
     { to: '/news', text: 'Actualités' },
     { to: '/schedule', text: 'Planning' },
@@ -211,7 +211,7 @@ const AdminManagement = () => {
   const { toast } = useToast();
   const { config, updateConfig, loadingConfig } = useConfig();
   const [navConfig, setNavConfig] = useState(
-    NAV_PAGES.map(p => ({ to: p.to, text: p.text, roles: ['public', 'user', 'adherent', 'admin'] }))
+    NAV_PAGES.map(p => ({ to: p.to, text: p.text, roles: ['public', 'user', 'adherent', 'encadrant', 'admin'] }))
   );
   const [isSavingNav, setIsSavingNav] = useState(false);
   const [isCreateUserFormOpen, setCreateUserFormOpen] = useState(false);
@@ -510,6 +510,7 @@ const AdminManagement = () => {
                   <TableHead className="text-center">Public</TableHead>
                   <TableHead className="text-center">Utilisateur</TableHead>
                   <TableHead className="text-center">Adhérent</TableHead>
+                  <TableHead className="text-center">Encadrant</TableHead>
                   <TableHead className="text-center">Admin</TableHead>
                 </TableRow>
               </TableHeader>
@@ -517,7 +518,7 @@ const AdminManagement = () => {
                 {navConfig.map((page, pageIndex) => (
                   <TableRow key={page.to}>
                     <TableCell className="font-medium">{page.text}</TableCell>
-                    {['public', 'user', 'adherent', 'admin'].map(role => (
+                    {['public', 'user', 'adherent', 'encadrant', 'admin'].map(role => (
                       <TableCell key={role} className="text-center">
                         <Checkbox checked={page.roles.includes(role)} onCheckedChange={(checked) => handleNavRoleChange(pageIndex, role, checked)} />
                       </TableCell>

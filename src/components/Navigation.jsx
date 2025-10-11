@@ -71,7 +71,7 @@ const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState('signIn');
-  const { user, signOut, isAdmin, isAdherent, profile } = useAuth();
+  const { user, signOut, isAdmin, isEncadrant, isAdherent, profile } = useAuth();
   const { config, loadingConfig } = useConfig();
   const navigate = useNavigate();
 
@@ -80,25 +80,25 @@ const Navigation = () => {
   ];
 
   const defaultNavLinks = [
-    { to: '/news', text: 'Actualités', roles: ['public', 'user', 'adherent', 'admin'] },
-    { to: '/schedule', text: 'Planning', roles: ['public', 'user', 'adherent', 'admin'] },
-    { to: '/inscriptions', text: 'Inscription', roles: ['public', 'user', 'adherent', 'admin'] },
-    { to: '/contact', text: 'Contact', roles: ['public', 'user', 'adherent', 'admin'] },
-    { to: '/volunteers', text: 'Bénévoles', roles: ['public', 'user', 'adherent', 'admin'] },
-    { to: '/members', text: 'Adhérents', roles: ['adherent', 'admin'] },
-    { to: '/competitors', text: 'Compétiteurs', roles: ['adherent', 'admin'] },
-    { to: '/competitions', text: 'Compétitions', roles: ['public', 'user', 'adherent', 'admin'] },
-    { to: '/agenda', text: 'Agenda', roles: ['public', 'user', 'adherent', 'admin'] },
+    { to: '/news', text: 'Actualités', roles: ['public', 'user', 'adherent', 'encadrant', 'admin'] },
+    { to: '/schedule', text: 'Planning', roles: ['public', 'user', 'adherent', 'encadrant', 'admin'] },
+    { to: '/inscriptions', text: 'Inscription', roles: ['public', 'user', 'adherent', 'encadrant', 'admin'] },
+    { to: '/contact', text: 'Contact', roles: ['public', 'user', 'adherent', 'encadrant', 'admin'] },
+    { to: '/volunteers', text: 'Bénévoles', roles: ['public', 'user', 'adherent', 'encadrant', 'admin'] },
+    { to: '/members', text: 'Adhérents', roles: ['adherent', 'encadrant', 'admin'] },
+    { to: '/competitors', text: 'Compétiteurs', roles: ['adherent', 'encadrant', 'admin'] },
+    { to: '/competitions', text: 'Compétitions', roles: ['public', 'user', 'adherent', 'encadrant', 'admin'] },
+    { to: '/agenda', text: 'Agenda', roles: ['public', 'user', 'adherent', 'encadrant', 'admin'] },
     { 
       to: '/session-log', 
       text: 'Séances', 
-      roles: ['adherent', 'admin'],
+      roles: ['adherent', 'encadrant', 'admin'],
       subMenu: [
-        { to: '/session-log', text: 'Historique des séances', roles: ['adherent', 'admin'] },
-        { to: '/passeport-validation', text: 'Validation Passeports', roles: ['admin'] },
+        { to: '/session-log', text: 'Historique des séances', roles: ['adherent', 'encadrant', 'admin'] },
+        { to: '/passeport-validation', text: 'Validation Passeports', roles: ['encadrant', 'admin'] },
       ]
     },
-    { to: '/pedagogy', text: 'Support Pédagogique', roles: ['adherent', 'admin'] },
+    { to: '/pedagogy', text: 'Support Pédagogique', roles: ['adherent', 'encadrant', 'admin'] },
   ];
   
   const [navLinks, setNavLinks] = useState(defaultNavLinks);
@@ -131,7 +131,7 @@ const Navigation = () => {
 
   const closeMenu = () => setIsOpen(false);
 
-  const userRole = isAdmin ? 'admin' : (isAdherent ? 'adherent' : (user ? 'user' : 'public'));
+  const userRole = isAdmin ? 'admin' : (isEncadrant ? 'encadrant' : (isAdherent ? 'adherent' : (user ? 'user' : 'public')));
 
   const filteredNavLinks = navLinks
     .filter(link => link.roles.includes(userRole))

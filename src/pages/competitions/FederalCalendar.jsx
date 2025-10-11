@@ -30,6 +30,7 @@ const TypeBadge = ({ type }) => {
 const RegionalCupsSection = () => {
   const u13u15 = [
     { type: 'Coupes Régionales', location: 'Ambérieu en Bugey', date: 'samedi 11 octobre 2025', discipline: 'Bloc', note: '' },
+    { type: 'Coupes de France', location: 'Brive la Gaillarde', date: 'samedi 18 et 19 octobre 2025', discipline: 'Bloc', note: '' },
     { type: 'Coupes Régionales', location: 'Cusset Vichy Escalade', date: 'samedi 8 novembre 2025', discipline: 'Bloc', note: '' },
     { type: 'Coupes Régionales', location: 'Voiron (U13)', date: 'samedi 28 février 2026', discipline: 'Vitesse', note: '' },
     { type: 'Coupes Régionales', location: 'La Dégaine Charbonnière', date: 'samedi 28 mars 2026', discipline: 'Difficulté et Vitesse', note: '' },
