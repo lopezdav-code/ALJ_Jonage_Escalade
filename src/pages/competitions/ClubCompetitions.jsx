@@ -544,8 +544,8 @@ const ClubCompetitions = () => {
   const ParticipantsList = ({ competitionId }) => {
     const competitionParticipants = participants[competitionId] || [];
     
-    // Séparer les participants par rôle
-    const competitors = competitionParticipants.filter(p => p.role === 'Compétiteur');
+    // Séparer les participants par rôle (sans accent dans la BDD)
+    const competitors = competitionParticipants.filter(p => p.role === 'Competiteur');
     const staff = competitionParticipants.filter(p => ['Arbitre', 'Coach', 'Ouvreur'].includes(p.role));
     
     return (
