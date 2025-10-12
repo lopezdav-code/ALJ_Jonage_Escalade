@@ -188,10 +188,10 @@ const Navigation = () => {
     { to: '/schedule', text: 'Planning', roles: ['public', 'user', 'adherent', 'bureau', 'encadrant', 'admin'] },
     { to: '/inscriptions', text: 'Inscription', roles: ['public', 'user', 'adherent', 'bureau', 'encadrant', 'admin'] },
     { to: '/contact', text: 'Contact', roles: ['public', 'user', 'adherent', 'bureau', 'encadrant', 'admin'] },
-    { to: '/volunteers', text: 'Bénévoles', roles: ['public', 'user', 'adherent', 'bureau', 'encadrant', 'admin'] },
+    { to: '/volunteers', text: 'Bénévoles', roles: ['adherent', 'bureau', 'encadrant', 'admin'] },
     { to: '/members', text: 'Adhérents', roles: ['adherent', 'bureau', 'encadrant', 'admin'] },
     { to: '/competitors', text: 'Compétiteurs', roles: ['adherent', 'bureau', 'encadrant', 'admin'] },
-    { to: '/competitions', text: 'Compétitions', roles: ['public', 'user', 'adherent', 'bureau', 'encadrant', 'admin'] },
+    { to: '/competitions', text: 'Compétitions', roles: ['adherent', 'bureau', 'encadrant', 'admin'] },
     { to: '/agenda', text: 'Agenda', roles: ['public', 'user', 'adherent', 'bureau', 'encadrant', 'admin'] },
     { 
       to: '/session-log', 

@@ -212,8 +212,32 @@ const AdminManagement = () => {
   const { isAdmin, user: currentUser, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const { config, updateConfig, loadingConfig } = useConfig();
+  
+  // Configuration par défaut basée sur les permissions standards
+  const getDefaultRolesForPage = (pagePath) => {
+    switch (pagePath) {
+      case '/news':
+      case '/schedule':
+      case '/inscriptions':
+      case '/contact':
+      case '/agenda':
+        return ['public', 'user', 'adherent', 'bureau', 'encadrant', 'admin'];
+      case '/volunteers':
+      case '/members':
+      case '/competitors':
+      case '/competitions':
+      case '/session-log':
+      case '/cycles':
+        return ['adherent', 'bureau', 'encadrant', 'admin'];
+      case '/passeport-validation':
+        return ['encadrant', 'admin'];
+      default:
+        return ['adherent', 'bureau', 'encadrant', 'admin'];
+    }
+  };
+  
   const [navConfig, setNavConfig] = useState(
-    NAV_PAGES.map(p => ({ to: p.to, text: p.text, roles: ['public', 'user', 'adherent', 'bureau', 'encadrant', 'admin'] }))
+    NAV_PAGES.map(p => ({ to: p.to, text: p.text, roles: getDefaultRolesForPage(p.to) }))
   );
   const [isSavingNav, setIsSavingNav] = useState(false);
   const [isCreateUserFormOpen, setCreateUserFormOpen] = useState(false);
