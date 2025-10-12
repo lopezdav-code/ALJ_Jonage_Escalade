@@ -208,26 +208,26 @@ const Navigation = () => {
   
   const [navLinks, setNavLinks] = useState(defaultNavLinks);
 
-  // Commenté temporairement pour forcer l'utilisation de la config par défaut
-  // useEffect(() => {
-  //   if (!loadingConfig && config.nav_config) {
-  //     try {
-  //       const dbNavConfig = JSON.parse(config.nav_config);
-  //       setNavLinks(prevLinks => {
-  //         const newLinks = [...prevLinks];
-  //         dbNavConfig.forEach(dbLink => {
-  //           const linkIndex = newLinks.findIndex(l => l.to === dbLink.to);
-  //           if (linkIndex !== -1) {
-  //             newLinks[linkIndex].roles = dbLink.roles;
-  //           }
-  //         });
-  //         return newLinks;
-  //       });
-  //     } catch (e) {
-  //       console.error("Failed to parse nav_config:", e);
-  //     }
-  //   }
-  // }, [config.nav_config, loadingConfig]);
+  // Chargement de la configuration depuis la base de données
+  useEffect(() => {
+    if (!loadingConfig && config.nav_config) {
+      try {
+        const dbNavConfig = JSON.parse(config.nav_config);
+        setNavLinks(prevLinks => {
+          const newLinks = [...prevLinks];
+          dbNavConfig.forEach(dbLink => {
+            const linkIndex = newLinks.findIndex(l => l.to === dbLink.to);
+            if (linkIndex !== -1) {
+              newLinks[linkIndex].roles = dbLink.roles;
+            }
+          });
+          return newLinks;
+        });
+      } catch (e) {
+        console.error("Failed to parse nav_config:", e);
+      }
+    }
+  }, [config.nav_config, loadingConfig]);
 
   const handleSignOut = async () => {
     await signOut();
