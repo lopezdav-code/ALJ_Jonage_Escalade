@@ -1,6 +1,6 @@
 {
-  "version": "1.8.0",
-  "buildDate": "2025-10-12T10:00:00.000Z",
-  "description": "Feature: Migration images vers Supabase Storage avec RLS par rôle (adhérent+ voir, bureau+ uploader)",
+  "version": "1.9.0",
+  "buildDate": "2025-10-12T18:00:00.000Z",
+  "description": "Feature: Bouton 'Modifier les classements' avec liste groupée par sexe/catégorie",
   "commit": "main"
 }

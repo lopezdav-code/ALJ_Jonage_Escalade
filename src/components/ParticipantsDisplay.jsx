@@ -1,5 +1,5 @@
 import React from 'react';
-import { Trophy, UserCheck, Users, Trash2 } from 'lucide-react';
+import { Trophy, UserCheck, Users, Trash2, Settings } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { formatName } from '@/lib/utils';
@@ -10,6 +10,7 @@ const ParticipantsDisplay = ({
   showRemoveButton = false, 
   onRemoveParticipant = null, 
   onParticipantClick = null,
+  onEditRanking = null,
   compact = false 
 }) => {
   const { isAdmin } = useAuth();
@@ -73,47 +74,45 @@ const ParticipantsDisplay = ({
       );
     }
 
+    const isCompetitor = participant.role === 'Competiteur';
+
     return (
       <div className="flex items-center justify-between py-2 px-3 hover:bg-muted/30 transition-colors group border-b border-muted/30 last:border-b-0">
-        <div 
-          className="flex items-center justify-between flex-1 cursor-pointer"
-          onClick={() => onParticipantClick && onParticipantClick(participant.members.id)}
-        >
-          <div className="flex items-center gap-3">
-            <span className="text-sm font-medium">
-              {formatName(participant.members.first_name, participant.members.last_name, isAdmin)}
-            </span>
-          </div>
-
-          <div className="flex items-center gap-2">
-            {participant.members.licence && (
-              <Badge variant="secondary" className="text-xs">
-                Licence: {participant.members.licence}
-              </Badge>
-            )}
-
-            {participant.ranking && (
-              <Badge variant="secondary" className="text-xs">
-                #{participant.ranking}
-                {participant.nb_competitor && ` / ${participant.nb_competitor}`}
-              </Badge>
-            )}
-          </div>
+        <div className="flex items-center gap-3 flex-1">
+          <span className="text-sm font-medium">
+            {formatName(participant.members.first_name, participant.members.last_name, isAdmin)}
+          </span>
         </div>
 
-        {showRemove && onRemoveParticipant && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={(e) => {
-              e.stopPropagation();
-              onRemoveParticipant(participant.id);
-            }}
-            className="opacity-0 group-hover:opacity-100 transition-opacity"
-          >
-            <Trash2 className="w-4 h-4 text-destructive" />
-          </Button>
-        )}
+        <div className="flex items-center gap-2 pointer-events-auto">
+          {participant.members.licence && (
+            <Badge variant="secondary" className="text-xs pointer-events-none">
+              Licence: {participant.members.licence}
+            </Badge>
+          )}
+
+          {participant.ranking && (
+            <Badge variant="secondary" className="text-xs pointer-events-none">
+              #{participant.ranking}
+              {participant.nb_competitor && ` / ${participant.nb_competitor}`}
+            </Badge>
+          )}
+
+
+          {showRemove && onRemoveParticipant && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                onRemoveParticipant(participant.id);
+              }}
+              className="opacity-0 group-hover:opacity-100 transition-opacity"
+            >
+              <Trash2 className="w-4 h-4 text-destructive" />
+            </Button>
+          )}
+        </div>
       </div>
     );
   };

@@ -10,6 +10,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { useToast } from '@/components/ui/use-toast';
 import { formatName } from '@/lib/utils';
 import { useMemberDetail } from '@/contexts/MemberDetailContext';
+import ParticipantsDisplay from '@/components/ParticipantsDisplay';
 import RankingForm from './components/RankingForm';
 
 const ClubCompetitions = () => {
@@ -18,6 +19,7 @@ const ClubCompetitions = () => {
   const [loading, setLoading] = useState(true);
   const [photoGallery, setPhotoGallery] = useState({ isOpen: false, photos: [], currentIndex: 0, competitionName: '' });
   const [editingParticipant, setEditingParticipant] = useState(null);
+  const [rankingsDialog, setRankingsDialog] = useState({ isOpen: false, competitionId: null, competitionName: '' });
   const [savingRanking, setSavingRanking] = useState(false);
   const { toast } = useToast();
   const { showMemberDetails } = useMemberDetail();
@@ -101,7 +103,11 @@ const ClubCompetitions = () => {
 
   // Fonctions pour gérer l'édition des classements
   const handleEditRanking = (participant) => {
+    console.log('=== handleEditRanking appelé ===');
+    console.log('Participant reçu:', participant);
+    console.log('setEditingParticipant avec:', participant);
     setEditingParticipant(participant);
+    console.log('=== Fin handleEditRanking ===');
   };
 
   const handleSaveRanking = async (participantId, ranking, nbCompetitor) => {
@@ -455,129 +461,17 @@ const ClubCompetitions = () => {
     );
   };
 
-  // Composant pour afficher une carte de compétiteur compacte
-  const CompetitorCard = ({ participant }) => {
-    if (!participant.members) {
-      return (
-        <div className="flex items-center justify-between py-1 px-2 text-muted-foreground text-sm">
-          <span>Membre non trouvé (ID: {participant.member_id})</span>
-        </div>
-      );
-    }
-
-    return (
-      <div className="flex items-center justify-between py-2 px-3 hover:bg-muted/30 transition-colors group border-b border-muted/30 last:border-b-0">
-        <div 
-          className="flex items-center gap-3 flex-1 cursor-pointer"
-          onClick={() => showMemberDetails(participant.members.id)}
-        >
-          {/* Nom formaté comme dans CompetitionParticipants */}
-          <span className="text-sm font-medium">
-            {participant.members.last_name?.toUpperCase()} {participant.members.first_name}
-          </span>
-          
-          {/* Badges pour catégorie avec couleurs distinctes par sexe */}
-          <div className="flex items-center gap-1">
-            <span className={`text-xs px-2 py-1 rounded font-medium ${
-              participant.members.sexe === 'Femme' 
-                ? 'bg-pink-100 text-pink-700 border border-pink-200' 
-                : 'bg-blue-100 text-blue-700 border border-blue-200'
-            }`}>
-              {participant.members.category}
-            </span>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2">
-          {/* Classement avec trophy icon */}
-          {participant.ranking && (
-            <div className="flex items-center gap-1">
-              <Trophy className="w-3 h-3 text-orange-500" />
-              <span className="text-sm font-bold text-orange-600">
-                {participant.ranking}
-              </span>
-              {participant.nb_competitor && (
-                <span className="text-xs text-muted-foreground">/{participant.nb_competitor}</span>
-              )}
-            </div>
-          )}
-          
-          {/* Bouton d'édition du classement - visible en permanence */}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleEditRanking(participant);
-            }}
-            className="h-7 w-7 p-0 hover:bg-accent hover:text-accent-foreground"
-            title="Éditer le classement"
-          >
-            <Settings className="w-3.5 h-3.5" />
-          </Button>
-        </div>
-      </div>
-    );
-  };
-
-  // Composant pour afficher une carte de staff compacte (juges, coachs)
-  const StaffCard = ({ participant }) => (
-    <div 
-      className="flex items-center justify-between py-1 px-2 hover:bg-blue-50 transition-colors cursor-pointer group border-b border-blue-100 last:border-b-0"
-      onClick={() => showMemberDetails(participant.members.id)}
-    >
-      <div className="flex items-center gap-2 flex-1">
-        <span className="text-sm text-blue-900 group-hover:text-blue-700 transition-colors">
-          {formatName(participant.members.first_name, participant.members.last_name, false)}
-        </span>
-      </div>
-
-      <div className="flex items-center gap-1">
-        <span className="text-xs px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 font-medium">
-          {participant.role === 'Arbitre' ? 'Juge' : participant.role}
-        </span>
-      </div>
-    </div>
-  );
-
   // Composant principal pour afficher les participants d'une compétition
   const ParticipantsList = ({ competitionId }) => {
     const competitionParticipants = participants[competitionId] || [];
     
-    // Séparer les participants par rôle (sans accent dans la BDD)
-    const competitors = competitionParticipants.filter(p => p.role === 'Competiteur');
-    const staff = competitionParticipants.filter(p => ['Arbitre', 'Coach', 'Ouvreur'].includes(p.role));
-    
     return (
-      <div className="space-y-4">
-        {/* Section Compétiteurs */}
-        {competitors.length > 0 && (
-          <div>
-            <h3 className="text-sm font-semibold mb-2 text-muted-foreground">Compétiteurs ({competitors.length})</h3>
-            <div className="border rounded-lg overflow-hidden bg-card">
-              {competitors.map((participant) => (
-                <CompetitorCard key={participant.id} participant={participant} />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Section Staff */}
-        {staff.length > 0 && (
-          <div>
-            <h3 className="text-sm font-semibold mb-2 text-muted-foreground">Encadrement ({staff.length})</h3>
-            <div className="border rounded-lg overflow-hidden bg-blue-50">
-              {staff.map((participant) => (
-                <StaffCard key={participant.id} participant={participant} />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {competitionParticipants.length === 0 && (
-          <p className="text-sm text-muted-foreground text-center py-4">Aucun participant inscrit</p>
-        )}
-      </div>
+      <ParticipantsDisplay 
+        participants={competitionParticipants}
+        onParticipantClick={showMemberDetails}
+        onEditRanking={handleEditRanking}
+        compact={true}
+      />
     );
   };
 
@@ -774,15 +668,26 @@ const ClubCompetitions = () => {
                         <Users className="w-5 h-5 text-primary" />
                         Participants
                       </h4>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => navigate(`/competitions/participants/${comp.id}`)}
-                        className="flex items-center gap-2"
-                      >
-                        <Plus className="w-4 h-4" />
-                        Ajouter un participant
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setRankingsDialog({ isOpen: true, competitionId: comp.id, competitionName: comp.name })}
+                          className="flex items-center gap-2"
+                        >
+                          <Settings className="w-4 h-4" />
+                          Modifier les classements
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => navigate(`/competitions/participants/${comp.id}`)}
+                          className="flex items-center gap-2"
+                        >
+                          <Plus className="w-4 h-4" />
+                          Modifier les participants
+                        </Button>
+                      </div>
                     </div>
                     <ParticipantsList competitionId={comp.id} />
                   </div>
@@ -804,15 +709,120 @@ const ClubCompetitions = () => {
         onPrev={prevPhoto}
       />
 
-      {/* Formulaire d'édition des classements */}
-      {editingParticipant && (
-        <RankingForm
-          participant={editingParticipant}
-          onSave={handleSaveRanking}
-          onCancel={handleCancelEdit}
-          isSaving={savingRanking}
-        />
-      )}
+      {/* Dialog de modification des classements */}
+      <Dialog open={rankingsDialog.isOpen} onOpenChange={(isOpen) => !isOpen && setRankingsDialog({ isOpen: false, competitionId: null, competitionName: '' })}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 pb-4 border-b">
+              <Trophy className="w-6 h-6 text-primary" />
+              <div>
+                <h2 className="text-xl font-bold">Modifier les classements</h2>
+                <p className="text-sm text-muted-foreground">{rankingsDialog.competitionName}</p>
+              </div>
+            </div>
+
+            <div className="space-y-6">
+              {(() => {
+                if (!rankingsDialog.competitionId || !participants[rankingsDialog.competitionId]) {
+                  return <p className="text-muted-foreground">Aucun participant</p>;
+                }
+
+                // State local pour édition des classements
+                if (!window.rankingsEditState) window.rankingsEditState = {};
+                const competitors = participants[rankingsDialog.competitionId]
+                  .filter(p => p.role === 'Competiteur')
+                  .sort((a, b) => {
+                    if (a.members?.sexe !== b.members?.sexe) {
+                      return (a.members?.sexe || '').localeCompare(b.members?.sexe || '');
+                    }
+                    return (a.members?.category || '').localeCompare(b.members?.category || '');
+                  });
+
+                const groups = competitors.reduce((acc, participant) => {
+                  const key = `${participant.members?.sexe || 'Non défini'} - ${participant.members?.category || 'Non défini'}`;
+                  if (!acc[key]) acc[key] = [];
+                  acc[key].push(participant);
+                  return acc;
+                }, {});
+
+                return [
+                  ...Object.entries(groups).map(([groupKey, groupParticipants]) => (
+                    <div key={groupKey} className="space-y-2">
+                      <h3 className="font-semibold text-lg flex items-center gap-2">
+                        <Medal className="w-5 h-5 text-primary" />
+                        {groupKey}
+                      </h3>
+                      <div className="space-y-2 pl-4">
+                        {groupParticipants.map(participant => {
+                          const rankingKey = `ranking_${participant.id}`;
+                          const nbKey = `nb_${participant.id}`;
+                          if (window.rankingsEditState[rankingKey] === undefined) window.rankingsEditState[rankingKey] = participant.ranking || '';
+                          if (window.rankingsEditState[nbKey] === undefined) window.rankingsEditState[nbKey] = participant.nb_competitor || '';
+                          return (
+                            <div key={participant.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/30">
+                              <div className="flex items-center gap-3 flex-1">
+                                <span className="font-medium">
+                                  {formatName(participant.members.first_name, participant.members.last_name, true)}
+                                </span>
+                                <input
+                                  type="number"
+                                  min="1"
+                                  className="border rounded px-2 py-1 w-16 text-right"
+                                  value={window.rankingsEditState[rankingKey]}
+                                  onChange={e => { window.rankingsEditState[rankingKey] = e.target.value; document.dispatchEvent(new Event('rankingsEditChange')); }}
+                                  placeholder="Classement"
+                                />
+                                <input
+                                  type="number"
+                                  min="1"
+                                  className="border rounded px-2 py-1 w-16 text-right"
+                                  value={window.rankingsEditState[nbKey]}
+                                  onChange={e => { window.rankingsEditState[nbKey] = e.target.value; document.dispatchEvent(new Event('rankingsEditChange')); }}
+                                  placeholder="Nb participants"
+                                />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )),
+                  <div key="save-btn" className="pt-6 flex justify-end">
+                    <Button
+                      variant="default"
+                      onClick={async () => {
+                        // Sauvegarde tous les classements modifiés
+                        const updates = [];
+                        Object.entries(window.rankingsEditState).forEach(([key, value]) => {
+                          if (key.startsWith('ranking_')) {
+                            const id = key.replace('ranking_', '');
+                            let nb = window.rankingsEditState[`nb_${id}`];
+                            if (nb === '' || nb === undefined) nb = null;
+                            updates.push({ id, ranking: value, nb_competitor: nb });
+                          }
+                        });
+                        for (const update of updates) {
+                          await supabase
+                            .from('competition_participants')
+                            .update({ ranking: update.ranking, nb_competitor: update.nb_competitor })
+                            .eq('id', update.id);
+                        }
+                        toast({ title: 'Classements sauvegardés', variant: 'success' });
+                        setRankingsDialog({ isOpen: false, competitionId: null, competitionName: '' });
+                        window.rankingsEditState = {};
+                        fetchCompetitions();
+                      }}
+                    >
+                      Sauvegarder
+                    </Button>
+                  </div>
+                ];
+              })()}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 };
