@@ -1,4 +1,15 @@
-// Utilitaire pour gérer les images de membres avec fallbacks et encodage correct
+// ============================================
+// DEPRECATED: Ce fichier est conservé pour compatibilité temporaire
+// Utilisez memberStorageUtils.js pour les nouvelles implémentations
+// ============================================
+// 
+// Les images membres sont maintenant stockées dans Supabase Storage
+// avec gestion des permissions via RLS (Row Level Security)
+// 
+// Migration : Utilisez getMemberPhotoUrl() depuis memberStorageUtils.js
+// ============================================
+
+import { getMemberPhotoUrl } from './memberStorageUtils';
 
 // Fonction pour nettoyer et normaliser les URLs d'images
 const cleanImageUrl = (photoFileName) => {
@@ -19,13 +30,22 @@ const cleanImageUrl = (photoFileName) => {
   return cleanedUrl;
 };
 
+// DEPRECATED: Utilisez getMemberPhotoUrl() depuis memberStorageUtils.js
 export const getMemberImageUrl = (photoFileName, fallbackUrl = null) => {
+  console.warn('getMemberImageUrl est deprecated. Utilisez getMemberPhotoUrl() depuis memberStorageUtils.js');
+  
   if (!photoFileName) {
     return fallbackUrl;
   }
 
   try {
-    // Nettoyer l'URL d'abord
+    // Rediriger vers le nouvel utilitaire Supabase Storage
+    const supabaseUrl = getMemberPhotoUrl(photoFileName);
+    if (supabaseUrl) {
+      return supabaseUrl;
+    }
+
+    // Fallback pour les anciennes URLs locales (compatibilité temporaire)
     const cleanedFileName = cleanImageUrl(photoFileName);
     
     // Si c'est déjà une URL complète, la retourner telle quelle
@@ -35,11 +55,13 @@ export const getMemberImageUrl = (photoFileName, fallbackUrl = null) => {
 
     // Si le chemin commence déjà par /assets/members/, le retourner tel quel
     if (cleanedFileName.startsWith('/assets/members/')) {
+      console.warn('Image locale détectée (deprecated):', cleanedFileName);
       return cleanedFileName;
     }
 
     // Si c'est juste un nom de fichier, construire le chemin complet
     const encodedFileName = encodeURIComponent(cleanedFileName);
+    console.warn('Image locale construite (deprecated):', `/assets/members/${encodedFileName}`);
     return `/assets/members/${encodedFileName}`;
   } catch (error) {
     console.warn('Erreur lors de la construction de l\'URL d\'image:', error);

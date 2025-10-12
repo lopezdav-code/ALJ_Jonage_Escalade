@@ -1,1 +1,5 @@
 node_modules
+
+# Images locales (migration vers Supabase Storage)
+public/assets/members/
+public/assets/passeports/

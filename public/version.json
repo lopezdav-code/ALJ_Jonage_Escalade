@@ -1,6 +1,6 @@
 {
-  "version": "1.7.0",
-  "buildDate": "2025-10-11T20:00:00.000Z",
-  "description": "Feature: Rôle Bureau, changement mot de passe, optimisations mobile cycles et permissions",
+  "version": "1.8.0",
+  "buildDate": "2025-10-12T10:00:00.000Z",
+  "description": "Feature: Migration images vers Supabase Storage avec RLS par rôle (adhérent+ voir, bureau+ uploader)",
   "commit": "main"
 }

@@ -42,6 +42,7 @@ import { MemberDetailProvider, useMemberDetail } from '@/contexts/MemberDetailCo
 import { supabase } from '@/lib/customSupabaseClient';
 import MemberDetailCard from '@/components/MemberDetailCard';
 import MemberForm from '@/components/MemberForm';
+import { uploadMemberPhoto } from '@/lib/memberStorageUtils';
 
 // Composant pour afficher le loading initial
 const LoadingScreen = () => (
@@ -59,18 +60,18 @@ const MemberFormWrapper = () => {
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
 
-  const uploadImage = async (file) => {
-    const fileExt = file.name.split('.').pop();
-    const fileName = `members_photos/${Date.now()}.${fileExt}`;
-    
-    let { error: uploadError } = await supabase.storage
-      .from('member_photos')
-      .upload(fileName, file, { upsert: true });
+  const uploadImage = async (file, memberData) => {
+    // Utiliser le nouvel utilitaire Supabase Storage avec RLS
+    const result = await uploadMemberPhoto(file, {
+      first_name: memberData.first_name,
+      last_name: memberData.last_name
+    });
 
-    if (uploadError) throw uploadError;
+    if (!result.success) {
+      throw new Error(result.error || 'Erreur lors de l\'upload de l\'image');
+    }
 
-    const { data } = supabase.storage.from('member_photos').getPublicUrl(fileName);
-    return data.publicUrl;
+    return result.url;
   };
 
   const handleSave = async (memberData, newImageFile) => {
@@ -80,7 +81,7 @@ const MemberFormWrapper = () => {
       
       // Gestion de l'upload d'image si nécessaire
       if (newImageFile) {
-        photo_url = await uploadImage(newImageFile);
+        photo_url = await uploadImage(newImageFile, memberData);
       } else if (memberData.photo_url === null) {
         photo_url = null;
       }

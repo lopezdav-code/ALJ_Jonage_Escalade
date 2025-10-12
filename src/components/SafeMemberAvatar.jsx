@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { getMemberImageUrl } from '@/lib/memberImageUtils';
+import { getMemberPhotoUrl } from '@/lib/memberStorageUtils';
 import { useImageErrorHandler } from '@/hooks/useImageErrorHandler';
 
 const SafeMemberAvatar = ({ 
@@ -32,26 +32,8 @@ const SafeMemberAvatar = ({
       return null;
     }
 
-    // Bloquer immédiatement les images problématiques connues
-    const imageName = member.photo_url.split('/').pop();
-    const problematicImages = ['Thibault_N.png', 'Clément_LIMA_FERREIRA.png', 'Cl%C3%A9ment_LIMA_FERREIRA.png'];
-    
-    if (problematicImages.includes(imageName) || member.photo_url.includes('Thibault_N') || member.photo_url.includes('Cl%C3%A9ment_LIMA_FERREIRA')) {
-      return null; // Ne pas essayer de charger ces images
-    }
-
-    // Si c'est déjà une URL complète, la retourner
-    if (member.photo_url.startsWith('http')) {
-      return member.photo_url;
-    }
-
-    // Si c'est déjà un chemin relatif complet (commence par /), le retourner tel quel
-    if (member.photo_url.startsWith('/')) {
-      return member.photo_url;
-    }
-
-    // Sinon, construire l'URL avec encodage sécurisé
-    return getMemberImageUrl(member.photo_url);
+    // Utiliser l'utilitaire Supabase Storage pour obtenir l'URL
+    return getMemberPhotoUrl(member.photo_url);
   };
 
   // Vérifier l'image - approche simplifiée
