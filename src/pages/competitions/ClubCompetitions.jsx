@@ -10,7 +10,6 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { useToast } from '@/components/ui/use-toast';
 import { formatName } from '@/lib/utils';
 import { useMemberDetail } from '@/contexts/MemberDetailContext';
-import ParticipantsDisplay from '@/components/ParticipantsDisplay';
 import RankingForm from './components/RankingForm';
 
 const ClubCompetitions = () => {
@@ -503,17 +502,19 @@ const ClubCompetitions = () => {
             </div>
           )}
           
-          {/* Bouton d'édition du classement - plus discret */}
-          <div
+          {/* Bouton d'édition du classement - visible en permanence */}
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={(e) => {
               e.stopPropagation();
               handleEditRanking(participant);
             }}
-            className="opacity-0 group-hover:opacity-60 hover:opacity-100 transition-opacity h-5 w-5 p-0 cursor-pointer inline-flex items-center justify-center rounded-md hover:bg-accent hover:text-accent-foreground"
+            className="h-7 w-7 p-0 hover:bg-accent hover:text-accent-foreground"
             title="Éditer le classement"
           >
-            <Settings className="w-3 h-3" />
-          </div>
+            <Settings className="w-3.5 h-3.5" />
+          </Button>
         </div>
       </div>
     );
@@ -543,12 +544,40 @@ const ClubCompetitions = () => {
   const ParticipantsList = ({ competitionId }) => {
     const competitionParticipants = participants[competitionId] || [];
     
+    // Séparer les participants par rôle
+    const competitors = competitionParticipants.filter(p => p.role === 'Compétiteur');
+    const staff = competitionParticipants.filter(p => ['Arbitre', 'Coach', 'Ouvreur'].includes(p.role));
+    
     return (
-      <ParticipantsDisplay 
-        participants={competitionParticipants}
-        onParticipantClick={showMemberDetails}
-        compact={true}
-      />
+      <div className="space-y-4">
+        {/* Section Compétiteurs */}
+        {competitors.length > 0 && (
+          <div>
+            <h3 className="text-sm font-semibold mb-2 text-muted-foreground">Compétiteurs ({competitors.length})</h3>
+            <div className="border rounded-lg overflow-hidden bg-card">
+              {competitors.map((participant) => (
+                <CompetitorCard key={participant.id} participant={participant} />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Section Staff */}
+        {staff.length > 0 && (
+          <div>
+            <h3 className="text-sm font-semibold mb-2 text-muted-foreground">Encadrement ({staff.length})</h3>
+            <div className="border rounded-lg overflow-hidden bg-blue-50">
+              {staff.map((participant) => (
+                <StaffCard key={participant.id} participant={participant} />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {competitionParticipants.length === 0 && (
+          <p className="text-sm text-muted-foreground text-center py-4">Aucun participant inscrit</p>
+        )}
+      </div>
     );
   };
 

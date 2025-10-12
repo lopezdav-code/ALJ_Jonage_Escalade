@@ -8,7 +8,7 @@
  * - Admin : Supprimer
  */
 
-import { supabase } from '@/config/supabaseClient';
+import { supabase } from '@/lib/customSupabaseClient';
 
 // Configuration
 const BUCKET_NAME = 'members_photos';
