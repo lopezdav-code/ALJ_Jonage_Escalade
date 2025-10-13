@@ -4,6 +4,8 @@ import { Helmet } from 'react-helmet';
 import { supabase } from '@/lib/customSupabaseClient';
 import MemberImage from '@/components/MemberImage';
 import VolunteerQuiz from '@/components/VolunteerQuiz';
+import CompetitionTabs from '@/components/CompetitionTabs';
+import LeisureChildrenTabs from '@/components/LeisureChildrenTabs';
 import { Button } from '@/components/ui/button';
 import { Info, Loader2, Pencil, Shield, Star, Mail, Phone, Award, Gavel, Scale, Flag } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -187,6 +189,33 @@ const Volunteers = () => {
           ))}
         </TabsList>
         {titles.map((title) => {
+          // Special handling for competition tabs - group by category
+          if (title === 'Compétition U11-U15' || title === 'Compétition U15-U19') {
+            const competitionMembers = members.filter(m => m.title === 'Compétition U11-U15' || m.title === 'Compétition U15-U19');
+            return (
+              <TabsContent key={title} value={title}>
+                <CompetitionTabs
+                  members={competitionMembers}
+                  onEdit={(member) => navigate(`/member-edit/${member.id}`, { state: { fromTab: activeTab } })}
+                />
+              </TabsContent>
+            );
+          }
+
+          // Special handling for leisure children - group by sub-group
+          if (title === 'Loisir enfants') {
+            const leisureChildrenMembers = members.filter(m => m.title === 'Loisir enfants');
+            return (
+              <TabsContent key={title} value={title}>
+                <LeisureChildrenTabs
+                  members={leisureChildrenMembers}
+                  onEdit={(member) => navigate(`/member-edit/${member.id}`, { state: { fromTab: activeTab } })}
+                />
+              </TabsContent>
+            );
+          }
+
+          // Default handling for other tabs
           const showSubGroupColumn = membersByTitle[title].some(m => m.sub_group);
           const showCategoryColumn = shouldShowCategoryColumn(title);
           return (
@@ -205,9 +234,9 @@ const Volunteers = () => {
                 </thead>
                 <tbody>
                   {membersByTitle[title].map((member) => (
-                    <VolunteerRow 
-                      key={member.id} 
-                      member={member} 
+                    <VolunteerRow
+                      key={member.id}
+                      member={member}
                       onEdit={() => navigate(`/member-edit/${member.id}`, { state: { fromTab: activeTab } })}
                       isEmergencyContact={emergencyContactIds.has(member.id)}
                       showSubGroup={showSubGroupColumn}
