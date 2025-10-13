@@ -271,7 +271,7 @@ const VolunteerQuiz = ({ volunteers, onQuizEnd }) => {
     return (
       <div className="text-center p-8">
         <p className="text-lg">Préparation du quiz...</p>
-        <p className="text-sm text-muted-foreground mt-2">Il faut au moins 4 bénévoles avec des photos pour démarrer le quiz.</p>
+        <p className="text-sm text-muted-foreground mt-2">Il faut au moins 4 adhérents avec des photos pour démarrer le quiz.</p>
       </div>
     );
   }

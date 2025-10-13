@@ -330,7 +330,7 @@ const AnnualSummary = () => {
         <TabsList>
           <TabsTrigger value="participation">Liste des compétitions</TabsTrigger>
           <TabsTrigger value="financial">Récapitulatif Financier</TabsTrigger>
-          <TabsTrigger value="volunteers">Participation des bénévoles</TabsTrigger>
+          <TabsTrigger value="volunteers">Participation des adhérents</TabsTrigger>
         </TabsList>
         <TabsContent value="participation" className="pt-4">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="space-y-8">

@@ -25,7 +25,7 @@ const NAV_PAGES = [
     { to: '/schedule', text: 'Planning' },
     { to: '/inscriptions', text: 'Inscription' },
     { to: '/contact', text: 'Contact' },
-    { to: '/volunteers', text: 'Bénévoles' },
+    { to: '/volunteers', text: 'Adhérent' },
     { to: '/competitions', text: 'Compétitions' },
     { to: '/agenda', text: 'Agenda' },
     { to: '/session-log', text: 'Séances' },

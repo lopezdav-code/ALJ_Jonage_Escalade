@@ -124,7 +124,7 @@ const Volunteers = () => {
   const titles = useMemo(() => {
     const customOrder = [
       "Bureau",
-      "Bénévole",
+      "Adhérent",
       "Compétition U11-U15",
       "Compétition U15-U19",
       "Loisir enfants",
@@ -164,13 +164,13 @@ const Volunteers = () => {
   if (loading) return <div className="flex justify-center items-center h-64"><Loader2 className="w-12 h-12 animate-spin text-primary" /></div>;
 
   if (isQuizVisible) {
-    const quizVolunteers = members.filter(m => m.title === 'Bureau' || m.title === 'Bénévole');
+    const quizVolunteers = members.filter(m => m.title === 'Bureau' || m.title === 'Adhérent');
     return <VolunteerQuiz volunteers={quizVolunteers} onQuizEnd={() => setIsQuizVisible(false)} />;
   }
 
   const getTabTitle = (title) => {
     if (title === 'Bureau') return 'Le Bureau';
-    if (title === 'Bénévole') return 'Les Encadrants Bénévoles';
+    if (title === 'Adhérent') return 'Les Encadrants Adhérents';
     return title;
   };
 

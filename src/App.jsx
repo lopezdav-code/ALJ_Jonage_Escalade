@@ -74,7 +74,7 @@ const AppContent = () => {
     <div className="min-h-screen flex flex-col bg-background">
       <Helmet>
         <title>ALJ Escalade Jonage</title>
-        <meta name="description" content="Application web du club d'escalade ALJ Escalade Jonage - Compétitions, planning et bénévoles" />
+        <meta name="description" content="Application web du club d'escalade ALJ Escalade Jonage - Compétitions, planning et adhérents" />
       </Helmet>
       <Navigation />
       <main className="flex-grow container mx-auto px-4 py-8">

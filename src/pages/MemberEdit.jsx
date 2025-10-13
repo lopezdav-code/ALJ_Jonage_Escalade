@@ -140,7 +140,7 @@ const MemberEdit = () => {
       <div className="text-center">
         <p>Membre non trouvé</p>
         <Button onClick={() => navigateToVolunteers()} className="mt-4">
-          Retour aux bénévoles
+          Retour aux adhérents
         </Button>
       </div>
     );
@@ -159,7 +159,7 @@ const MemberEdit = () => {
           className="mb-2"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
-          Retour aux bénévoles
+          Retour aux adhérents
         </Button>
         <h1 className="text-xl font-bold">
           Modifier {member.first_name} {member.last_name}
