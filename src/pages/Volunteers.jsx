@@ -4,6 +4,8 @@ import { Helmet } from 'react-helmet';
 import { supabase } from '@/lib/customSupabaseClient';
 import MemberImage from '@/components/MemberImage';
 import VolunteerQuiz from '@/components/VolunteerQuiz';
+import CompetitionTabs from '@/components/CompetitionTabs';
+import LeisureChildrenTabs from '@/components/LeisureChildrenTabs';
 import { Button } from '@/components/ui/button';
 import { Info, Loader2, Pencil, Shield, Star, Mail, Phone, Award, Gavel, Scale, Flag } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -187,6 +189,141 @@ const Volunteers = () => {
           ))}
         </TabsList>
         {titles.map((title) => {
+          // Custom rendering for competition tabs
+          if (title.includes('Compétition')) {
+            const currentTabMembers = members.filter(m => m.title === title);
+            
+            const membersByCategory = currentTabMembers.reduce((acc, member) => {
+              const category = member.category || 'Sans catégorie'; // Default category if missing
+              if (!acc[category]) {
+                acc[category] = [];
+              }
+              acc[category].push(member);
+              return acc;
+            }, {});
+            const categories = Object.keys(membersByCategory).sort();
+
+            const showCategoryColumn = currentTabMembers.some(m => m.category && m.category.trim() !== '');
+            const showSubGroupColumn = currentTabMembers.some(m => m.sub_group && m.sub_group.trim() !== ''); // Check if subgroup is relevant
+
+            return (
+              <TabsContent key={title} value={title}>
+                <Tabs defaultValue={categories[0]} className="w-full"> {/* Nested Tabs for Categories */}
+                  <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4">
+                    {categories.map((category) => (
+                      <TabsTrigger key={category} value={category}>
+                        {category} ({membersByCategory[category].length})
+                      </TabsTrigger>
+                    ))}
+                  </TabsList>
+
+                  {categories.map((category) => (
+                    <TabsContent key={category} value={category}>
+                      <div className="overflow-x-auto mt-4"> {/* Added margin-top */}
+                        <table className="w-full border-collapse">
+                          <thead>
+                            <tr className="border-b">
+                              <th className="text-left p-2">Photo</th>
+                              <th className="text-left p-2">Prénom</th>
+                              <th className="text-left p-2">Nom</th>
+                              {showSubGroupColumn && <th className="text-left p-2">Sous-groupe</th>}
+                              {showCategoryColumn && <th className="text-left p-2">Catégorie</th>}
+                              <th className="text-left p-2">Info</th>
+                              <th className="text-left p-2">Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {membersByCategory[category].map((member) => (
+                              <VolunteerRow
+                                key={member.id}
+                                member={member}
+                                onEdit={(member) => { // Re-use the onEdit from Volunteers.jsx scope
+                                  console.log('Volunteers.jsx: Edit button clicked for member:', member);
+                                  navigate(`/member-edit/${member.id}`, { state: { fromTab: activeTab } });
+                                }}
+                                isEmergencyContact={emergencyContactIds.has(member.id)}
+                                showSubGroup={showSubGroupColumn}
+                                showCategory={showCategoryColumn}
+                              />
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </TabsContent>
+                  ))}
+                </Tabs>
+              </TabsContent>
+            );
+          }
+
+          // Special handling for leisure children - group by sub-group
+          if (title.includes('Loisir')) {
+            const currentTabMembers = members.filter(m => m.title === title);
+            
+            const membersBySubGroup = currentTabMembers.reduce((acc, member) => {
+              const subGroup = member.sub_group || 'Sans sous-groupe'; // Default sub-group if missing
+              if (!acc[subGroup]) {
+                acc[subGroup] = [];
+              }
+              acc[subGroup].push(member);
+              return acc;
+            }, {});
+            const subGroups = Object.keys(membersBySubGroup).sort();
+
+            const showCategoryColumn = currentTabMembers.some(m => m.category && m.category.trim() !== '');
+            const showSubGroupColumn = currentTabMembers.some(m => m.sub_group && m.sub_group.trim() !== '');
+
+            return (
+              <TabsContent key={title} value={title}>
+                <Tabs defaultValue={subGroups[0]} className="w-full"> {/* Nested Tabs for Sub-Groups */}
+                  <TabsList className="grid w-full grid-cols-2 lg:grid-cols-3"> {/* Adjusted grid columns */}
+                    {subGroups.map((subGroup) => (
+                      <TabsTrigger key={subGroup} value={subGroup}>
+                        {subGroup} ({membersBySubGroup[subGroup].length})
+                      </TabsTrigger>
+                    ))}
+                  </TabsList>
+
+                  {subGroups.map((subGroup) => (
+                    <TabsContent key={subGroup} value={subGroup}>
+                      <div className="overflow-x-auto mt-4"> {/* Added margin-top */}
+                        <table className="w-full border-collapse">
+                          <thead>
+                            <tr className="border-b">
+                              <th className="text-left p-2">Photo</th>
+                              <th className="text-left p-2">Prénom</th>
+                              <th className="text-left p-2">Nom</th>
+                              {showSubGroupColumn && <th className="text-left p-2">Sous-groupe</th>}
+                              {showCategoryColumn && <th className="text-left p-2">Catégorie</th>}
+                              <th className="text-left p-2">Info</th>
+                              <th className="text-left p-2">Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {membersBySubGroup[subGroup].map((member) => (
+                              <VolunteerRow
+                                key={member.id}
+                                member={member}
+                                onEdit={(member) => { // Re-use the onEdit from Volunteers.jsx scope
+                                  console.log('Volunteers.jsx: Edit button clicked for member:', member);
+                                  navigate(`/member-edit/${member.id}`, { state: { fromTab: activeTab } });
+                                }}
+                                isEmergencyContact={emergencyContactIds.has(member.id)}
+                                showSubGroup={showSubGroupColumn}
+                                showCategory={showCategoryColumn}
+                              />
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </TabsContent>
+                  ))}
+                </Tabs>
+              </TabsContent>
+            );
+          }
+
+          // Default rendering for other tabs
           const tabMembers = membersByTitle[title] || [];
           const showCategoryColumn = tabMembers.some(m => m.category && m.category.trim() !== '');
           const showSubGroupColumn = tabMembers.some(m => m.sub_group && m.sub_group.trim() !== '');
