@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Helmet } from '@/components/ui/helmet';
 import { Toaster } from '@/components/ui/toaster';
@@ -14,28 +14,32 @@ import Volunteers from '@/pages/Volunteers';
 import Agenda from '@/pages/Agenda';
 import Schedule from '@/pages/Schedule';
 import Competitors from '@/pages/Competitors';
-import SessionLog from '@/pages/SessionLog';
-import CycleManagement from '@/pages/CycleManagement';
-import CycleDetail from '@/pages/CycleDetail';
-import Pedagogy from '@/pages/Pedagogy';
 import Members from '@/pages/Members';
 import Contact from '@/pages/Contact';
-import SiteSettings from '@/pages/SiteSettings';
-import AnnualSummary from '@/pages/AnnualSummary';
-import AdminManagement from '@/pages/AdminManagement';
-import Inscriptions from '@/pages/Inscriptions';
-import ImageAdmin from '@/pages/ImageAdmin';
-import Setup from '@/pages/Setup';
-import CompetitorSummary from '@/pages/CompetitorSummary';
-import InscriptionsSummary from '@/pages/InscriptionsSummary';
-import CompetitionsSummary from '@/pages/CompetitionsSummary';
-import CompetitionEditor from '@/pages/CompetitionEditor';
-import ConnectionLogs from '@/pages/ConnectionLogs';
-import AccessLogs from '@/pages/AccessLogs';
-import CompetitionParticipants from '@/pages/CompetitionParticipants';
-import PasseportValidation from '@/pages/PasseportValidation';
-import PasseportViewer from '@/pages/PasseportViewer';
-import PasseportGuide from '@/pages/PasseportGuide';
+
+// Pages chargées paresseusement (code-splitting)
+const SessionLog = lazy(() => import('@/pages/SessionLog'));
+const CycleManagement = lazy(() => import('@/pages/CycleManagement'));
+const CycleDetail = lazy(() => import('@/pages/CycleDetail'));
+const Pedagogy = lazy(() => import('@/pages/Pedagogy'));
+const SiteSettings = lazy(() => import('@/pages/SiteSettings'));
+const AnnualSummary = lazy(() => import('@/pages/AnnualSummary'));
+const AdminManagement = lazy(() => import('@/pages/AdminManagement'));
+const Inscriptions = lazy(() => import('@/pages/Inscriptions'));
+const ImageAdmin = lazy(() => import('@/pages/ImageAdmin'));
+const Setup = lazy(() => import('@/pages/Setup'));
+const CompetitorSummary = lazy(() => import('@/pages/CompetitorSummary'));
+const InscriptionsSummary = lazy(() => import('@/pages/InscriptionsSummary'));
+const CompetitionsSummary = lazy(() => import('@/pages/CompetitionsSummary'));
+const CompetitionEditor = lazy(() => import('@/pages/CompetitionEditor'));
+const ConnectionLogs = lazy(() => import('@/pages/ConnectionLogs'));
+const AccessLogs = lazy(() => import('@/pages/AccessLogs'));
+const CompetitionParticipants = lazy(() => import('@/pages/CompetitionParticipants'));
+const PasseportValidation = lazy(() => import('@/pages/PasseportValidation'));
+const PasseportViewer = lazy(() => import('@/pages/PasseportViewer'));
+const PasseportGuide = lazy(() => import('@/pages/PasseportGuide'));
+const TestImages = lazy(() => import('@/pages/TestImages'));
+const MemberEdit = lazy(() => import('@/pages/MemberEdit'));
 import { AuthProvider, useAuth } from '@/contexts/SupabaseAuthContext';
 import { ConfigProvider } from '@/contexts/ConfigContext';
 import { MemberDetailProvider, useMemberDetail } from '@/contexts/MemberDetailContext';
@@ -54,91 +58,13 @@ const LoadingScreen = () => (
   </div>
 );
 
-// Composant wrapper pour MemberForm avec contexte
-const MemberFormWrapper = () => {
-  const { isFormVisible, editingMember, closeEditForm } = useMemberDetail();
-  const { toast } = useToast();
-  const [isSaving, setIsSaving] = useState(false);
+// Composant wrapper pour les routes lazy
+const LazyRoute = ({ children }) => (
+  <Suspense fallback={<LoadingScreen />}>
+    {children}
+  </Suspense>
+);
 
-  const uploadImage = async (file, memberData) => {
-    // Utiliser le nouvel utilitaire Supabase Storage avec RLS
-    const result = await uploadMemberPhoto(file, {
-      first_name: memberData.first_name,
-      last_name: memberData.last_name
-    });
-
-    if (!result.success) {
-      throw new Error(result.error || 'Erreur lors de l\'upload de l\'image');
-    }
-
-    return result.url;
-  };
-
-  const handleSave = async (memberData, newImageFile) => {
-    setIsSaving(true);
-    try {
-      let photo_url = memberData.photo_url;
-      
-      // Gestion de l'upload d'image si nécessaire
-      if (newImageFile) {
-        photo_url = await uploadImage(newImageFile, memberData);
-      } else if (memberData.photo_url === null) {
-        photo_url = null;
-      }
-      
-      // Préparer les données à sauvegarder en excluant les propriétés qui ne sont pas dans la table members
-      const { 
-        profiles, 
-        dynamic_roles, 
-        isEmergencyContactFor, 
-        emergency_contact_1, 
-        emergency_contact_2, 
-        ...dataToSave 
-      } = { ...memberData, photo_url };
-
-      // Sauvegarder en base de données
-      const { error } = await supabase
-        .from('members')
-        .update(dataToSave)
-        .eq('id', editingMember.id);
-        
-      if (error) throw error;
-
-      toast({
-        title: "Succès",
-        description: "Membre modifié avec succès",
-      });
-      
-      closeEditForm();
-      
-      // Recharger les données si on est sur une page qui en a besoin
-      window.location.reload(); // Solution simple pour rafraîchir les données
-      
-    } catch (error) {
-      console.error('Erreur lors de la sauvegarde:', error);
-      toast({
-        title: "Erreur",
-        description: "Erreur lors de la modification du membre",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  if (!isFormVisible || !editingMember) {
-    return null;
-  }
-
-  return (
-    <MemberForm
-      member={editingMember}
-      onSave={handleSave}
-      onCancel={closeEditForm}
-      isSaving={isSaving}
-    />
-  );
-};
 // Composant principal de l'application (après authentification)
 const AppContent = () => {
   const { loading } = useAuth();
@@ -160,39 +86,40 @@ const AppContent = () => {
           <Route path="/news" element={<News />} />
           <Route path="/news/:id" element={<NewsDetail />} />
           <Route path="/competitions" element={<Competitions />} />
-          <Route path="/competitions/new" element={<CompetitionEditor />} />
-          <Route path="/competitions/edit/:id" element={<CompetitionEditor />} />
-          <Route path="/competitions/participants/:id" element={<CompetitionParticipants />} />
-          <Route path="/competitions-summary" element={<CompetitionsSummary />} />
-          <Route path="/inscriptions-summary" element={<InscriptionsSummary />} />
+          <Route path="/competitions/new" element={<LazyRoute><CompetitionEditor /></LazyRoute>} />
+          <Route path="/competitions/edit/:id" element={<LazyRoute><CompetitionEditor /></LazyRoute>} />
+          <Route path="/competitions/participants/:id" element={<LazyRoute><CompetitionParticipants /></LazyRoute>} />
+          <Route path="/competitions-summary" element={<LazyRoute><CompetitionsSummary /></LazyRoute>} />
+          <Route path="/inscriptions-summary" element={<LazyRoute><InscriptionsSummary /></LazyRoute>} />
           <Route path="/competitors" element={<Competitors />} />
           <Route path="/volunteers" element={<Volunteers />} />
+          <Route path="/member-edit/:id" element={<LazyRoute><MemberEdit /></LazyRoute>} />
           <Route path="/agenda" element={<Agenda />} />
           <Route path="/schedule" element={<Schedule />} />
-          <Route path="/session-log" element={<SessionLog />} />
-          <Route path="/cycles" element={<CycleManagement />} />
-          <Route path="/cycles/:id" element={<CycleDetail />} />
-          <Route path="/pedagogy" element={<Pedagogy />} />
+          <Route path="/session-log" element={<LazyRoute><SessionLog /></LazyRoute>} />
+          <Route path="/cycles" element={<LazyRoute><CycleManagement /></LazyRoute>} />
+          <Route path="/cycles/:id" element={<LazyRoute><CycleDetail /></LazyRoute>} />
+          <Route path="/pedagogy" element={<LazyRoute><Pedagogy /></LazyRoute>} />
           <Route path="/members" element={<Members />} />
-          <Route path="/inscriptions" element={<Inscriptions />} />
+          <Route path="/inscriptions" element={<LazyRoute><Inscriptions /></LazyRoute>} />
           <Route path="/contact" element={<Contact />} />
-          <Route path="/site-settings" element={<SiteSettings />} />
-          <Route path="/annual-summary" element={<AnnualSummary />} />
-          <Route path="/admin-management" element={<AdminManagement />} />
-          <Route path="/image-admin" element={<ImageAdmin />} />
-          <Route path="/setup" element={<Setup />} />
-          <Route path="/competitor-summary/:memberId" element={<CompetitorSummary />} />
-          <Route path="/connection-logs" element={<ConnectionLogs />} />
-          <Route path="/access-logs" element={<AccessLogs />} />
-          <Route path="/passeport-validation" element={<PasseportValidation />} />
-          <Route path="/passeport-viewer" element={<PasseportViewer />} />
-          <Route path="/passeport-guide" element={<PasseportGuide />} />
+          <Route path="/site-settings" element={<LazyRoute><SiteSettings /></LazyRoute>} />
+          <Route path="/annual-summary" element={<LazyRoute><AnnualSummary /></LazyRoute>} />
+          <Route path="/admin-management" element={<LazyRoute><AdminManagement /></LazyRoute>} />
+          <Route path="/image-admin" element={<LazyRoute><ImageAdmin /></LazyRoute>} />
+          <Route path="/setup" element={<LazyRoute><Setup /></LazyRoute>} />
+          <Route path="/competitor-summary/:memberId" element={<LazyRoute><CompetitorSummary /></LazyRoute>} />
+          <Route path="/connection-logs" element={<LazyRoute><ConnectionLogs /></LazyRoute>} />
+          <Route path="/access-logs" element={<LazyRoute><AccessLogs /></LazyRoute>} />
+          <Route path="/passeport-validation" element={<LazyRoute><PasseportValidation /></LazyRoute>} />
+          <Route path="/passeport-viewer" element={<LazyRoute><PasseportViewer /></LazyRoute>} />
+          <Route path="/passeport-guide" element={<LazyRoute><PasseportGuide /></LazyRoute>} />
+          <Route path="/test-images" element={<LazyRoute><TestImages /></LazyRoute>} />
         </Routes>
       </main>
       <Footer />
       <Toaster />
       <MemberDetailCard />
-      <MemberFormWrapper />
     </div>
   );
 };

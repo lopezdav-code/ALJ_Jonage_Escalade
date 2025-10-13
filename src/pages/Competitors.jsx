@@ -1,3 +1,5 @@
+// Fichier supprimé
+// This file has been removed as part of the update.
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Helmet } from 'react-helmet';

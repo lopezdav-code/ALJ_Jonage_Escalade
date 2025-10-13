@@ -3,7 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useMemberDetail } from '@/contexts/MemberDetailContext';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Mail, Phone, Award, Star, Heart, Briefcase, Edit, Users, Trophy, CreditCard } from 'lucide-react';
+import { Loader2, Mail, Phone, Award, Star, Heart, Briefcase, Users, Trophy, CreditCard } from 'lucide-react';
 import { formatName } from '@/lib/utils';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { Button } from '@/components/ui/button';
@@ -11,17 +11,11 @@ import { useNavigate } from 'react-router-dom';
 import SafeMemberAvatar from '@/components/SafeMemberAvatar';
 
 const MemberDetailCard = () => {
-  const { isDetailVisible, hideMemberDetails, selectedMember, loading, openEditFormForMember, showMemberDetails, isFormVisible } = useMemberDetail();
+  const { isDetailVisible, hideMemberDetails, selectedMember, loading, showMemberDetails, isFormVisible } = useMemberDetail();
   const { isAdmin } = useAuth();
   const navigate = useNavigate();
 
   const getInitials = (firstName, lastName) => `${firstName?.[0] || ''}${lastName?.[0] || ''}`.toUpperCase();
-
-  const handleEditClick = () => {
-    if (selectedMember) {
-      openEditFormForMember(selectedMember);
-    }
-  };
 
   const handleContactClick = (memberId) => {
     if (!memberId) return;
@@ -180,11 +174,6 @@ const MemberDetailCard = () => {
                 {isCompetitor && (
                   <Button onClick={handleSummaryClick} variant="outline" className="w-full">
                     <Trophy className="mr-2 h-4 w-4" /> Voir le palmarès
-                  </Button>
-                )}
-                {isAdmin && (
-                  <Button onClick={handleEditClick} className="w-full">
-                    <Edit className="mr-2 h-4 w-4" /> Modifier le membre
                   </Button>
                 )}
               </DialogFooter>

@@ -14,6 +14,7 @@ import { supabase } from '@/lib/customSupabaseClient';
 const BUCKET_NAME = 'members_photos';
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+const SUPABASE_URL = 'https://hvugiirundpxynozxxnd.supabase.co';
 
 /**
  * Valide un fichier image avant upload
@@ -89,7 +90,8 @@ export const uploadMemberPhoto = async (file, member) => {
     // Génération du nom de fichier
     const fileExtension = file.name.split('.').pop().toLowerCase();
     const fileName = generateMemberFileName(member.first_name, member.last_name, fileExtension);
-    const filePath = `members_photos/${fileName}`;
+    // Le fichier sera uploadé à la racine du bucket (pas dans un sous-dossier)
+    const filePath = fileName;
 
     // Upload vers Supabase Storage
     const { error: uploadError } = await supabase.storage
@@ -104,15 +106,11 @@ export const uploadMemberPhoto = async (file, member) => {
       return { success: false, error: `Erreur d'upload : ${uploadError.message}` };
     }
 
-    // Récupération de l'URL publique (signée automatiquement par RLS)
-    const { data } = supabase.storage
-      .from(BUCKET_NAME)
-      .getPublicUrl(filePath);
-
-    return { 
-      success: true, 
-      url: data.publicUrl,
-      filePath 
+    // Retourner UNIQUEMENT le nom de fichier (sans préfixe) pour stockage en BDD
+    return {
+      success: true,
+      url: fileName,
+      filePath: fileName
     };
 
   } catch (error) {
@@ -165,30 +163,47 @@ export const deleteMemberPhoto = async (photoUrl) => {
  * @param {string} photoPath - Chemin ou URL de la photo
  * @returns {string|null} URL publique ou null si invalide
  */
-export const getMemberPhotoUrl = (photoPath) => {
+export const getMemberPhotoUrl = async (photoPath) => {
   try {
     if (!photoPath) return null;
 
-    // Si c'est déjà une URL complète Supabase, la retourner
-    if (photoPath.startsWith('http') && photoPath.includes(BUCKET_NAME)) {
-      return photoPath;
-    }
-
     // Si c'est un chemin local (/assets/members/), retourner null
-    // (photos locales ne sont plus supportées)
     if (photoPath.startsWith('/assets/')) {
       console.warn('Chemin local détecté (non supporté):', photoPath);
       return null;
     }
 
-    // Construire l'URL depuis Supabase
-    const cleanPath = photoPath.replace(/^\/+/, ''); // Enlever "/" initial
-    const { data } = supabase.storage
+    // Si c'est une URL complète Supabase, extraire le nom de fichier
+    let cleanPath = photoPath;
+    if (photoPath.startsWith('http') && photoPath.includes(BUCKET_NAME)) {
+      // Extraire le nom de fichier après le dernier '/'
+      const parts = photoPath.split('/');
+      cleanPath = parts[parts.length - 1].split('?')[0]; // Enlever les query params
+    }
+
+    // Supprimer tous les préfixes 'members_photos/' si présents
+    cleanPath = cleanPath.replace(/^(members_photos\/)+/, '');
+
+    // Nettoyer le chemin relatif
+    cleanPath = cleanPath.replace(/^\/+/, '');
+
+    // Générer une URL signée Supabase (valide 1h) directement avec le nom de fichier
+    // Les fichiers sont maintenant à la racine du bucket
+    const { data, error } = await supabase.storage
       .from(BUCKET_NAME)
-      .getPublicUrl(cleanPath);
+      .createSignedUrl(cleanPath, 3600);
+    if (error) {
+      console.error('Erreur createSignedUrl:', error);
+      return null;
+    }
 
-    return data.publicUrl;
+    // Construire l'URL complète si l'API retourne une URL relative
+    let finalUrl = data.signedUrl;
+    if (finalUrl && finalUrl.startsWith('/')) {
+      finalUrl = `${SUPABASE_URL}/storage/v1${finalUrl}`;
+    }
 
+    return finalUrl;
   } catch (error) {
     console.error('Erreur getMemberPhotoUrl:', error);
     return null;

@@ -22,6 +22,13 @@ const Competitions = () => {
             <Trophy className="w-10 h-10 text-primary" />
             Compétitions
           </h1>
+          <a
+            href="/ALJ_Jonage_Escalade/annual-summary?tab=participation"
+            className="ml-auto btn btn-primary px-4 py-2 rounded text-white bg-blue-600 hover:bg-blue-700 transition"
+            style={{ textDecoration: 'none' }}
+          >
+            Récap Annuel
+          </a>
         </div>
       </motion.div>
 

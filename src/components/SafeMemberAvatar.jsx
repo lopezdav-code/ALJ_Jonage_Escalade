@@ -1,22 +1,24 @@
-import React, { useState } from 'react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useState, useEffect } from 'react';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { getMemberPhotoUrl } from '@/lib/memberStorageUtils';
-import { useImageErrorHandler } from '@/hooks/useImageErrorHandler';
 
-const SafeMemberAvatar = ({ 
-  member, 
-  size = "default", 
+const SafeMemberAvatar = ({
+  member,
+  size = "default",
   showFallback = true,
   className = "",
   alt = null
 }) => {
-  const [hasImageError, setHasImageError] = useState(false);
-  const { handleImageError, isImageBroken } = useImageErrorHandler();
+  const [imageUrl, setImageUrl] = useState(null);
+  const [hasError, setHasError] = useState(false);
 
-  // Tailles prédéfinies
+  // Extraire les valeurs primitives pour éviter les re-rendus
+  const memberId = member?.id;
+  const photoUrl = member?.photo_url;
+
   const sizeClasses = {
     small: "w-8 h-8",
-    default: "w-16 h-16", 
+    default: "w-16 h-16",
     large: "w-24 h-24",
     xl: "w-32 h-32"
   };
@@ -27,41 +29,42 @@ const SafeMemberAvatar = ({
     return `${first}${last}`.toUpperCase();
   };
 
-  const getImageUrl = () => {
-    if (!member?.photo_url || hasImageError) {
-      return null;
+  useEffect(() => {
+    if (!photoUrl) {
+      setImageUrl(null);
+      return;
     }
 
-    // Utiliser l'utilitaire Supabase Storage pour obtenir l'URL
-    return getMemberPhotoUrl(member.photo_url);
-  };
+    let cancelled = false;
 
-  // Vérifier l'image - approche simplifiée
-  const imageUrl = getImageUrl();
-  const isKnownBroken = isImageBroken(imageUrl);
+    getMemberPhotoUrl(photoUrl).then(url => {
+      if (!cancelled && url) {
+        setImageUrl(url);
+      }
+    });
 
-  // Afficher l'image si elle existe et n'est pas connue comme cassée
-  const shouldShowImage = imageUrl && !hasImageError && !isKnownBroken;
-
-  const handleLocalImageError = () => {
-    setHasImageError(true);
-    if (imageUrl) {
-      handleImageError(imageUrl);
-    }
-  };
+    return () => {
+      cancelled = true;
+    };
+  }, [memberId, photoUrl]);
 
   const displayName = alt || `${member?.first_name || ''} ${member?.last_name || ''}`.trim();
 
-  return (
-    <Avatar className={`${sizeClasses[size]} ${className}`}>
-      {shouldShowImage && (
-        <AvatarImage 
+  if (imageUrl && !hasError) {
+    return (
+      <Avatar className={`${sizeClasses[size]} ${className}`}>
+        <img
           src={imageUrl}
           alt={displayName}
-          onError={handleLocalImageError}
-          onLoad={() => setHasImageError(false)}
+          onError={() => setHasError(true)}
+          className="aspect-square h-full w-full object-cover rounded-full"
         />
-      )}
+      </Avatar>
+    );
+  }
+
+  return (
+    <Avatar className={`${sizeClasses[size]} ${className}`}>
       {showFallback && (
         <AvatarFallback className={size === 'small' ? 'text-xs' : size === 'large' ? 'text-2xl' : size === 'xl' ? 'text-3xl' : 'text-sm'}>
           {getInitials(member?.first_name, member?.last_name)}

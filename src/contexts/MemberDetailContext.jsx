@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, useCallback } from 'react';
+import React, { createContext, useState, useContext, useCallback, useMemo } from 'react';
 import { supabase } from '@/lib/customSupabaseClient';
 
 const MemberDetailContext = createContext();
@@ -64,7 +64,7 @@ export const MemberDetailProvider = ({ children }) => {
     setSelectedMember(null);
   }, []);
 
-  const openEditFormForMember = useCallback((member) => {
+  const openEditForm = useCallback((member) => {
     hideMemberDetails();
     setEditingMember(member);
     setIsFormVisible(true);
@@ -75,7 +75,7 @@ export const MemberDetailProvider = ({ children }) => {
     setEditingMember(null);
   }, []);
 
-  const value = {
+  const value = useMemo(() => ({
     selectedMember,
     isDetailVisible,
     loading,
@@ -83,9 +83,19 @@ export const MemberDetailProvider = ({ children }) => {
     hideMemberDetails,
     editingMember,
     isFormVisible,
-    openEditFormForMember,
+    openEditForm,
     closeEditForm,
-  };
+  }), [
+    selectedMember,
+    isDetailVisible,
+    loading,
+    showMemberDetails,
+    hideMemberDetails,
+    editingMember,
+    isFormVisible,
+    openEditForm,
+    closeEditForm,
+  ]);
 
   return (
     <MemberDetailContext.Provider value={value}>

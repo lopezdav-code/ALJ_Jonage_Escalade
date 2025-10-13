@@ -109,48 +109,37 @@ const CreateUserForm = ({ isOpen, onClose, onUserCreated }) => {
     const [isSaving, setIsSaving] = useState(false);
     const { toast } = useToast();
     
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setIsSaving(true);
-        try {
-            const { data, error } = await supabase.auth.signUp({
-                email,
-                password,
-                options: {
-                    data: {
-                        role: role,
-                        member_id: linkedMember?.id || null,
-                    }
-                }
-            });
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsSaving(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('admin-create-user', {
+        body: {
+          email,
+          password,
+          role,
+          member_id: linkedMember?.id || null,
+        },
+      });
 
-            if (error) throw error;
-            if (!data.user) throw new Error("La création de l'utilisateur a échoué.");
+      if (error || !data || !data.user) throw new Error("La création de l'utilisateur a échoué.");
+      const newUser = data.user;
 
-            const newUser = data.user;
+      // Optionnel : confirmation ou update du profil si nécessaire
+      // const { error: confirmError } = await supabase.functions.invoke('confirm-user', {
+      //     body: { userId: newUser.id },
+      // });
+      // if (confirmError) throw new Error(`Erreur de confirmation: ${confirmError.message}`);
 
-            const { error: confirmError } = await supabase.functions.invoke('confirm-user', {
-                body: { userId: newUser.id },
-            });
-
-            if (confirmError) throw new Error(`Erreur de confirmation: ${confirmError.message}`);
-
-            const { error: profileError } = await supabase
-                .from('profiles')
-                .update({ role, member_id: linkedMember?.id })
-                .eq('id', newUser.id);
-
-            if (profileError) throw profileError;
-
-            toast({ title: "Succès", description: "Utilisateur créé et confirmé avec succès." });
-            onUserCreated();
-            onClose();
-        } catch (error) {
-            toast({ title: "Erreur", description: error.message, variant: 'destructive' });
-        } finally {
-            setIsSaving(false);
-        }
-    };
+      toast({ title: "Succès", description: "Utilisateur créé avec succès." });
+      onUserCreated();
+      onClose();
+    } catch (error) {
+      toast({ title: "Erreur", description: error.message, variant: 'destructive' });
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
