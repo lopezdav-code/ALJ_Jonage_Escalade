@@ -167,11 +167,7 @@ export const getMemberPhotoUrl = async (photoPath) => {
   try {
     if (!photoPath) return null;
 
-    // Si c'est un chemin local (/assets/members/), retourner null
-    if (photoPath.startsWith('/assets/')) {
-      console.warn('Chemin local détecté (non supporté):', photoPath);
-      return null;
-    }
+    // On ne gère que les photos stockées sur Supabase Storage
 
     // Si c'est une URL complète Supabase, extraire le nom de fichier
     let cleanPath = photoPath;

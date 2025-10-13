@@ -6,10 +6,10 @@ import { Pencil, Shield, Star, Mail, Phone, Award } from 'lucide-react';
 
 const LeisureChildrenTabs = ({ members, onEdit }) => {
   // Members are already filtered in the parent component
-  const leisureChildrenMembers = members;
+  const leisureMembers = members;
 
   // Group by sub_group
-  const membersBySubGroup = leisureChildrenMembers.reduce((acc, member) => {
+  const membersBySubGroup = leisureMembers.reduce((acc, member) => {
     const subGroup = member.sub_group || 'Sans sous-groupe';
     if (!acc[subGroup]) {
       acc[subGroup] = [];

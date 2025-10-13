@@ -90,6 +90,16 @@ const blockBrokenImageRequests = () => {
   const originalFetch = window.fetch;
   window.fetch = function(url, options) {
     if (typeof url === 'string') {
+      // Ne pas intercepter les requêtes qui ne sont pas des URLs d'images
+      const isImageUrl = url.includes('.jpg') || url.includes('.jpeg') || url.includes('.png') || 
+                        url.includes('.gif') || url.includes('.webp') || url.includes('.svg') ||
+                        url.includes('storage/v1/object');
+
+      if (!isImageUrl) {
+        // Pour les requêtes non-images, laisser passer sans interception
+        return originalFetch.call(this, url, options);
+      }
+
       const imageName = url.split('/').pop();
       if (BLOCKED_IMAGES.has(imageName) || url.includes('Thibault_N') || url.includes('Cl%C3%A9ment_LIMA_FERREIRA')) {
         console.warn(`🚫 Requête fetch bloquée pour image interdite: ${imageName}`);

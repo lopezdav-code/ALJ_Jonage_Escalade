@@ -4,8 +4,6 @@ import { Helmet } from 'react-helmet';
 import { supabase } from '@/lib/customSupabaseClient';
 import MemberImage from '@/components/MemberImage';
 import VolunteerQuiz from '@/components/VolunteerQuiz';
-import CompetitionTabs from '@/components/CompetitionTabs';
-import LeisureChildrenTabs from '@/components/LeisureChildrenTabs';
 import { Button } from '@/components/ui/button';
 import { Info, Loader2, Pencil, Shield, Star, Mail, Phone, Award, Gavel, Scale, Flag } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -189,62 +187,42 @@ const Volunteers = () => {
           ))}
         </TabsList>
         {titles.map((title) => {
-          // Special handling for competition tabs - group by category
-          if (title === 'Compétition U11-U15' || title === 'Compétition U15-U19') {
-            const competitionMembers = members.filter(m => m.title === 'Compétition U11-U15' || m.title === 'Compétition U15-U19');
-            return (
-              <TabsContent key={title} value={title}>
-                <CompetitionTabs
-                  members={competitionMembers}
-                  onEdit={(member) => navigate(`/member-edit/${member.id}`, { state: { fromTab: activeTab } })}
-                />
-              </TabsContent>
-            );
-          }
+          const tabMembers = membersByTitle[title] || [];
+          const showCategoryColumn = tabMembers.some(m => m.category && m.category.trim() !== '');
+          const showSubGroupColumn = tabMembers.some(m => m.sub_group && m.sub_group.trim() !== '');
 
-          // Special handling for leisure children - group by sub-group
-          if (title === 'Loisir enfants') {
-            const leisureChildrenMembers = members.filter(m => m.title === 'Loisir enfants');
-            return (
-              <TabsContent key={title} value={title}>
-                <LeisureChildrenTabs
-                  members={leisureChildrenMembers}
-                  onEdit={(member) => navigate(`/member-edit/${member.id}`, { state: { fromTab: activeTab } })}
-                />
-              </TabsContent>
-            );
-          }
-
-          // Default handling for other tabs
-          const showSubGroupColumn = membersByTitle[title].some(m => m.sub_group);
-          const showCategoryColumn = shouldShowCategoryColumn(title);
           return (
             <TabsContent key={title} value={title}>
-              <table className="w-full border-collapse mt-4">
-                <thead>
-                  <tr className="border-b">
-                    <th className="p-2 text-left">Photo</th>
-                    <th className="p-2 text-left">Prénom</th>
-                    <th className="p-2 text-left">Nom</th>
-                    {showSubGroupColumn && <th className="p-2 text-left">Sous-groupe</th>}
-                    {showCategoryColumn && <th className="p-2 text-left">Catégorie</th>}
-                    <th className="p-2 text-left">Statut</th>
-                    <th className="p-2 text-left">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {membersByTitle[title].map((member) => (
-                    <VolunteerRow
-                      key={member.id}
-                      member={member}
-                      onEdit={() => navigate(`/member-edit/${member.id}`, { state: { fromTab: activeTab } })}
-                      isEmergencyContact={emergencyContactIds.has(member.id)}
-                      showSubGroup={showSubGroupColumn}
-                      showCategory={showCategoryColumn}
-                    />
-                  ))}
-                </tbody>
-              </table>
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left p-2">Photo</th>
+                      <th className="text-left p-2">Prénom</th>
+                      <th className="text-left p-2">Nom</th>
+                      {showSubGroupColumn && <th className="text-left p-2">Sous-groupe</th>}
+                      {showCategoryColumn && <th className="text-left p-2">Catégorie</th>}
+                      <th className="text-left p-2">Info</th>
+                      <th className="text-left p-2">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {tabMembers.map((member) => (
+                      <VolunteerRow
+                        key={member.id}
+                        member={member}
+                        onEdit={(member) => {
+                          console.log('Volunteers.jsx: Edit button clicked for member:', member);
+                          navigate(`/member-edit/${member.id}`, { state: { fromTab: activeTab } });
+                        }}
+                        isEmergencyContact={emergencyContactIds.has(member.id)}
+                        showSubGroup={showSubGroupColumn}
+                        showCategory={showCategoryColumn}
+                      />
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </TabsContent>
           );
         })}
