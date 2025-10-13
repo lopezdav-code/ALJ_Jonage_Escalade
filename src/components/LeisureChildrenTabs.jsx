@@ -5,8 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Pencil, Shield, Star, Mail, Phone, Award } from 'lucide-react';
 
 const LeisureChildrenTabs = ({ members, onEdit }) => {
-  // Filter leisure children members
-  const leisureChildrenMembers = members.filter(m => m.title === 'Loisir enfants');
+  // Members are already filtered in the parent component
+  const leisureChildrenMembers = members;
 
   // Group by sub_group
   const membersBySubGroup = leisureChildrenMembers.reduce((acc, member) => {
@@ -42,7 +42,10 @@ const LeisureChildrenTabs = ({ members, onEdit }) => {
           </div>
         </td>
         <td className="p-2">
-          <Button variant="ghost" size="icon" onClick={() => onEdit(member)}>
+          <Button variant="ghost" size="icon" onClick={() => {
+            console.log('Editing leisure child member:', member);
+            onEdit(member);
+          }}>
             <Pencil className="h-4 w-4" />
           </Button>
         </td>
