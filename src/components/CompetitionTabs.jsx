@@ -42,10 +42,7 @@ const CompetitionTabs = ({ members, onEdit }) => {
           </div>
         </td>
         <td className="p-2">
-          <Button variant="ghost" size="icon" onClick={() => {
-            console.log('Editing competition member:', member);
-            onEdit(member);
-          }}>
+          <Button variant="ghost" size="icon" onClick={() => onEdit(member)}>
             <Pencil className="h-4 w-4" />
           </Button>
         </td>
