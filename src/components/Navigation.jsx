@@ -180,7 +180,7 @@ const Navigation = () => {
   const navigate = useNavigate();
 
   const navLinksOrder = [
-    '/news', '/schedule', '/inscriptions', '/contact', '/volunteers', '/members', '/competitors', '/competitions', '/agenda', '/session-log', '/pedagogy'
+    '/news', '/schedule', '/inscriptions', '/contact', '/volunteers', '/competitions', '/agenda', '/session-log', '/pedagogy'
   ];
 
   const defaultNavLinks = [
@@ -189,8 +189,6 @@ const Navigation = () => {
     { to: '/inscriptions', text: 'Inscription', roles: ['public', 'user', 'adherent', 'bureau', 'encadrant', 'admin'] },
     { to: '/contact', text: 'Contact', roles: ['public', 'user', 'adherent', 'bureau', 'encadrant', 'admin'] },
     { to: '/volunteers', text: 'Bénévoles', roles: ['adherent', 'bureau', 'encadrant', 'admin'] },
-    { to: '/members', text: 'Adhérents', roles: ['adherent', 'bureau', 'encadrant', 'admin'] },
-    { to: '/competitors', text: 'Compétiteurs', roles: ['adherent', 'bureau', 'encadrant', 'admin'] },
     { to: '/competitions', text: 'Compétitions', roles: ['adherent', 'bureau', 'encadrant', 'admin'] },
     { to: '/agenda', text: 'Agenda', roles: ['public', 'user', 'adherent', 'bureau', 'encadrant', 'admin'] },
     { 

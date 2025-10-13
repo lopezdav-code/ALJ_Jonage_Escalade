@@ -26,8 +26,6 @@ const NAV_PAGES = [
     { to: '/inscriptions', text: 'Inscription' },
     { to: '/contact', text: 'Contact' },
     { to: '/volunteers', text: 'Bénévoles' },
-    { to: '/members', text: 'Adhérents' },
-    { to: '/competitors', text: 'Compétiteurs' },
     { to: '/competitions', text: 'Compétitions' },
     { to: '/agenda', text: 'Agenda' },
     { to: '/session-log', text: 'Séances' },
@@ -212,8 +210,6 @@ const AdminManagement = () => {
       case '/agenda':
         return ['public', 'user', 'adherent', 'bureau', 'encadrant', 'admin'];
       case '/volunteers':
-      case '/members':
-      case '/competitors':
       case '/competitions':
       case '/session-log':
       case '/cycles':

@@ -13,8 +13,6 @@ import Competitions from '@/pages/Competitions';
 import Volunteers from '@/pages/Volunteers';
 import Agenda from '@/pages/Agenda';
 import Schedule from '@/pages/Schedule';
-import Competitors from '@/pages/Competitors';
-import Members from '@/pages/Members';
 import Contact from '@/pages/Contact';
 
 // Pages chargées paresseusement (code-splitting)
@@ -28,7 +26,6 @@ const AdminManagement = lazy(() => import('@/pages/AdminManagement'));
 const Inscriptions = lazy(() => import('@/pages/Inscriptions'));
 const ImageAdmin = lazy(() => import('@/pages/ImageAdmin'));
 const Setup = lazy(() => import('@/pages/Setup'));
-const CompetitorSummary = lazy(() => import('@/pages/CompetitorSummary'));
 const InscriptionsSummary = lazy(() => import('@/pages/InscriptionsSummary'));
 const CompetitionsSummary = lazy(() => import('@/pages/CompetitionsSummary'));
 const CompetitionEditor = lazy(() => import('@/pages/CompetitionEditor'));
@@ -91,7 +88,6 @@ const AppContent = () => {
           <Route path="/competitions/participants/:id" element={<LazyRoute><CompetitionParticipants /></LazyRoute>} />
           <Route path="/competitions-summary" element={<LazyRoute><CompetitionsSummary /></LazyRoute>} />
           <Route path="/inscriptions-summary" element={<LazyRoute><InscriptionsSummary /></LazyRoute>} />
-          <Route path="/competitors" element={<Competitors />} />
           <Route path="/volunteers" element={<Volunteers />} />
           <Route path="/member-edit/:id" element={<LazyRoute><MemberEdit /></LazyRoute>} />
           <Route path="/agenda" element={<Agenda />} />
@@ -100,7 +96,6 @@ const AppContent = () => {
           <Route path="/cycles" element={<LazyRoute><CycleManagement /></LazyRoute>} />
           <Route path="/cycles/:id" element={<LazyRoute><CycleDetail /></LazyRoute>} />
           <Route path="/pedagogy" element={<LazyRoute><Pedagogy /></LazyRoute>} />
-          <Route path="/members" element={<Members />} />
           <Route path="/inscriptions" element={<LazyRoute><Inscriptions /></LazyRoute>} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/site-settings" element={<LazyRoute><SiteSettings /></LazyRoute>} />
@@ -108,7 +103,6 @@ const AppContent = () => {
           <Route path="/admin-management" element={<LazyRoute><AdminManagement /></LazyRoute>} />
           <Route path="/image-admin" element={<LazyRoute><ImageAdmin /></LazyRoute>} />
           <Route path="/setup" element={<LazyRoute><Setup /></LazyRoute>} />
-          <Route path="/competitor-summary/:memberId" element={<LazyRoute><CompetitorSummary /></LazyRoute>} />
           <Route path="/connection-logs" element={<LazyRoute><ConnectionLogs /></LazyRoute>} />
           <Route path="/access-logs" element={<LazyRoute><AccessLogs /></LazyRoute>} />
           <Route path="/passeport-validation" element={<LazyRoute><PasseportValidation /></LazyRoute>} />
