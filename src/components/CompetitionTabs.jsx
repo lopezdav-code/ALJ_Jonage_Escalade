@@ -5,8 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Pencil, Shield, Star, Mail, Phone, Award } from 'lucide-react';
 
 const CompetitionTabs = ({ members, onEdit }) => {
-  console.log('CompetitionTabs rendered with members:', members);
-
   // Members are already filtered in the parent component
   const competitionMembers = members;
 
@@ -44,10 +42,7 @@ const CompetitionTabs = ({ members, onEdit }) => {
           </div>
         </td>
         <td className="p-2">
-          <Button variant="ghost" size="icon" onClick={() => {
-            console.log('Editing member:', member);
-            onEdit(member);
-          }}>
+          <Button variant="ghost" size="icon" onClick={() => onEdit(member)}>
             <Pencil className="h-4 w-4" />
           </Button>
         </td>
