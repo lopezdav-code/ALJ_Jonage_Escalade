@@ -66,6 +66,52 @@ const MultiSelectCheckbox = ({ title, options, selected, onChange }) => {
   );
 };
 
+const MemberMultiSelect = ({ title, members, selectedIds, onChange }) => {
+  const safeSelectedIds = selectedIds || [];
+  const safeMembers = members || [];
+
+  const handleSelectAll = () => {
+    if (safeSelectedIds.length === safeMembers.length) {
+      onChange([]);
+    } else {
+      onChange(safeMembers.map(m => m.id));
+    }
+  };
+
+  return (
+    <div className="space-y-2">
+      <div className="flex justify-between items-center">
+        <Label>{title}</Label>
+        <Button type="button" variant="link" size="sm" onClick={handleSelectAll} className="p-0 h-auto">
+          {safeSelectedIds.length === safeMembers.length ? 'Tout désélectionner' : 'Tout sélectionner'}
+        </Button>
+      </div>
+      <div className="max-h-40 overflow-y-auto rounded-md border p-2 space-y-2">
+        {safeMembers.map(member => (
+          <div key={member.id} className="flex items-center space-x-2">
+            <Checkbox
+              id={`${title}-${member.id}`}
+              checked={safeSelectedIds.includes(member.id)}
+              onCheckedChange={(checked) => {
+                const newSelected = checked
+                  ? [...safeSelectedIds, member.id]
+                  : safeSelectedIds.filter(id => id !== member.id);
+                onChange(newSelected);
+              }}
+            />
+            <label
+              htmlFor={`${title}-${member.id}`}
+              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+            >
+              {member.first_name} {member.last_name}
+            </label>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 const PedagogySheetSelector = ({ onSelect, onCancel }) => {
   const [sheets, setSheets] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -158,6 +204,7 @@ const SessionForm = ({ session, onSave, onCancel, isSaving }) => {
       instructors: session.instructors || [],
       students: session.students || [],
       cycle_id: session.cycle_id || null,
+      schedule_id: session.schedule_id || null,
       session_objective: session.session_objective || '',
       equipment: session.equipment || '',
       comment: session.comment || '',
@@ -168,6 +215,7 @@ const SessionForm = ({ session, onSave, onCancel, isSaving }) => {
       instructors: [],
       students: [],
       cycle_id: null,
+      schedule_id: null,
       session_objective: '',
       equipment: '',
       comment: '',
@@ -177,46 +225,171 @@ const SessionForm = ({ session, onSave, onCancel, isSaving }) => {
   const [isSheetSelectorOpen, setIsSheetSelectorOpen] = useState(false);
   const [importTargetIndex, setImportTargetIndex] = useState(null);
   const [lyceeStudents, setLyceeStudents] = useState([]);
+  const [instructors, setInstructors] = useState([]);
+  const [allInstructors, setAllInstructors] = useState([]); // Tous les encadrants (non filtrés)
   const [cycles, setCycles] = useState([]);
+  const [schedules, setSchedules] = useState([]);
+  const [isLoadingMembers, setIsLoadingMembers] = useState(true);
+  const [studentComments, setStudentComments] = useState({}); // Commentaires par élève: { member_id: comment }
 
   // Récupérer les étudiants du lycée et les cycles depuis Supabase
   useEffect(() => {
-    const fetchLyceeStudents = async () => {
+    const fetchData = async () => {
+      setIsLoadingMembers(true);
+
       try {
-        const { data: members, error } = await supabase
+        // Récupérer les étudiants
+        const { data: studentMembers, error: studentsError } = await supabase
           .from('members')
-          .select('first_name, last_name')
+          .select('id, first_name, last_name')
           .eq('title', 'Loisir lycée')
           .order('last_name');
 
-        if (error) throw error;
+        if (studentsError) throw studentsError;
+        setLyceeStudents(studentMembers || []);
 
-        const studentNames = members.map(m => `${m.first_name} ${m.last_name}`);
-        setLyceeStudents(studentNames);
-      } catch (error) {
-        setLyceeStudents([]);
-      }
-    };
+        // Récupérer les encadrants (membres avec titre Bénévole ou Bureau)
+        // Utilise le même filtrage que ScheduleEdit pour avoir les mêmes instructeurs disponibles
+        const { data: instructorMembers, error: instructorsError } = await supabase
+          .from('members')
+          .select('id, first_name, last_name, title')
+          .in('title', ['Bénévole', 'Bureau'])
+          .order('last_name')
+          .order('first_name');
 
-    const fetchCycles = async () => {
-      try {
-        const { data, error } = await supabase
+        if (instructorsError) throw instructorsError;
+
+        console.log('Encadrants récupérés:', instructorMembers);
+        setAllInstructors(instructorMembers || []); // Stocker tous les encadrants
+        setInstructors(instructorMembers || []); // Par défaut, afficher tous
+
+        // Récupérer les créneaux du planning
+        const { data: schedulesData, error: schedulesError } = await supabase
+          .from('schedule')
+          .select(`
+            *,
+            instructor_1:instructor_1_id(id, first_name, last_name),
+            instructor_2:instructor_2_id(id, first_name, last_name),
+            instructor_3:instructor_3_id(id, first_name, last_name),
+            instructor_4:instructor_4_id(id, first_name, last_name)
+          `)
+          .order('day')
+          .order('start_time');
+
+        if (schedulesError) throw schedulesError;
+        setSchedules(schedulesData || []);
+
+        // Récupérer les cycles
+        const { data: cyclesData, error: cyclesError } = await supabase
           .from('cycles')
           .select('id, name, short_description')
           .order('name');
 
-        if (error) throw error;
-        setCycles(data || []);
+        if (cyclesError) throw cyclesError;
+        setCycles(cyclesData || []);
+
+        // Convertir les noms en IDs si nécessaire (migration des anciennes données)
+        if (session) {
+          const convertNamesToIds = (names, members) => {
+            if (!names || names.length === 0) return [];
+
+            // Vérifier si le premier élément est un UUID (format ID) ou un nom (string)
+            const firstItem = names[0];
+            const isUUID = typeof firstItem === 'string' &&
+              /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(firstItem);
+
+            if (isUUID) {
+              // Déjà des IDs, pas besoin de conversion
+              return names;
+            }
+
+            // Convertir les noms en IDs
+            return names.map(name => {
+              const member = members.find(m => `${m.first_name} ${m.last_name}` === name);
+              return member ? member.id : null;
+            }).filter(id => id !== null);
+          };
+
+          const convertedInstructors = convertNamesToIds(session.instructors || [], instructorMembers || []);
+          const convertedStudents = convertNamesToIds(session.students || [], studentMembers || []);
+
+          console.log('Session instructors avant conversion:', session.instructors);
+          console.log('Instructeurs convertis:', convertedInstructors);
+          console.log('Session students avant conversion:', session.students);
+          console.log('Étudiants convertis:', convertedStudents);
+
+          // Mettre à jour formData avec les IDs convertis
+          setFormData(prev => ({
+            ...prev,
+            instructors: convertedInstructors,
+            students: convertedStudents
+          }));
+
+          // Charger les commentaires des élèves si on édite une session
+          if (session.id) {
+            const { data: commentsData } = await supabase
+              .from('student_session_comments')
+              .select('member_id, comment')
+              .eq('session_id', session.id);
+
+            if (commentsData) {
+              const commentsMap = commentsData.reduce((acc, item) => {
+                acc[item.member_id] = item.comment;
+                return acc;
+              }, {});
+              setStudentComments(commentsMap);
+            }
+          }
+        }
       } catch (error) {
+        console.error('Erreur lors du chargement des données:', error);
+        setLyceeStudents([]);
+        setInstructors([]);
         setCycles([]);
+      } finally {
+        setIsLoadingMembers(false);
       }
     };
 
-    fetchLyceeStudents();
-    fetchCycles();
-  }, []);
+    fetchData();
+  }, [session?.id]); // Dépendance sur session.id pour éviter les boucles infinies
 
-  const instructorsList = ['David', 'Magali', 'Olivier', 'Clement'];
+  // Filtrer les encadrants et auto-remplir l'heure quand un schedule est sélectionné
+  useEffect(() => {
+    if (formData.schedule_id && schedules.length > 0) {
+      const selectedSchedule = schedules.find(s => s.id === formData.schedule_id);
+      if (selectedSchedule) {
+        // Auto-remplir l'heure de début depuis le schedule
+        const startTime = selectedSchedule.start_time.substring(0, 5);
+        setFormData(prev => ({
+          ...prev,
+          start_time: startTime
+        }));
+
+        // Récupérer les IDs des encadrants du schedule
+        const scheduleInstructorIds = [
+          selectedSchedule.instructor_1?.id,
+          selectedSchedule.instructor_2?.id,
+          selectedSchedule.instructor_3?.id,
+          selectedSchedule.instructor_4?.id,
+        ].filter(Boolean);
+
+        console.log('Encadrants du schedule sélectionné:', scheduleInstructorIds);
+        console.log('Tous les encadrants disponibles:', allInstructors.map(i => i.id));
+
+        // Filtrer allInstructors pour ne garder que ceux du schedule
+        const filteredInstructors = allInstructors.filter(instructor =>
+          scheduleInstructorIds.includes(instructor.id)
+        );
+
+        console.log('Encadrants filtrés:', filteredInstructors);
+        setInstructors(filteredInstructors);
+      }
+    } else {
+      // Pas de schedule sélectionné, afficher tous les encadrants
+      setInstructors(allInstructors);
+    }
+  }, [formData.schedule_id, schedules, allInstructors]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -298,8 +471,16 @@ const SessionForm = ({ session, onSave, onCancel, isSaving }) => {
       ...formData,
       date: formData.date || null,
       start_time: formData.start_time || null,
+      studentComments, // Ajouter les commentaires des élèves
     };
     onSave(cleanedData);
+  };
+
+  const handleStudentCommentChange = (memberId, comment) => {
+    setStudentComments(prev => ({
+      ...prev,
+      [memberId]: comment
+    }));
   };
 
   return (
@@ -310,29 +491,32 @@ const SessionForm = ({ session, onSave, onCancel, isSaving }) => {
             <CardTitle>{session ? 'Modifier la séance' : 'Ajouter une nouvelle séance'}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="date">Date du cours (optionnel)</Label>
-                <Input id="date" name="date" type="date" value={formData.date} onChange={handleChange} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="start_time">Heure de début</Label>
-                <Input id="start_time" name="start_time" type="time" value={formData.start_time} onChange={handleChange} />
-              </div>
-              <MultiSelectCheckbox
-                title="Encadrants"
-                options={instructorsList}
-                selected={formData.instructors}
-                onChange={(value) => handleMultiSelectChange('instructors', value)}
-              />
-              <MultiSelectCheckbox
-                title="Élèves présents"
-                options={lyceeStudents}
-                selected={formData.students}
-                onChange={(value) => handleMultiSelectChange('students', value)}
-              />
-            </div>
+            {/* Sélection du créneau en premier */}
             <div className="grid md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="schedule_id">Créneau du planning</Label>
+                <Select
+                  value={formData.schedule_id || ''}
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, schedule_id: value || null }))}
+                >
+                  <SelectTrigger id="schedule_id">
+                    <SelectValue placeholder="Sélectionner un créneau (optionnel)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Aucun créneau</SelectItem>
+                    {schedules.map((schedule) => (
+                      <SelectItem key={schedule.id} value={schedule.id}>
+                        {schedule.day} - {schedule.start_time.substring(0, 5)} - {schedule.age_category} ({schedule.type})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {formData.schedule_id && (
+                  <p className="text-sm text-muted-foreground mt-1">
+                    💡 Les encadrants sont filtrés selon ce créneau et l'heure est auto-remplie
+                  </p>
+                )}
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="cycle_id">Cycle associé</Label>
                 <Select
@@ -358,21 +542,78 @@ const SessionForm = ({ session, onSave, onCancel, isSaving }) => {
                   </p>
                 )}
               </div>
+            </div>
+
+            {/* Date, heure et membres */}
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="date">Date du cours (optionnel)</Label>
+                <Input id="date" name="date" type="date" value={formData.date} onChange={handleChange} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="start_time">Heure de début</Label>
+                <Input id="start_time" name="start_time" type="time" value={formData.start_time} onChange={handleChange} />
+              </div>
+              <MemberMultiSelect
+                title="Encadrants"
+                members={instructors}
+                selectedIds={formData.instructors}
+                onChange={(value) => handleMultiSelectChange('instructors', value)}
+              />
+              <MemberMultiSelect
+                title="Élèves présents"
+                members={lyceeStudents}
+                selectedIds={formData.students}
+                onChange={(value) => handleMultiSelectChange('students', value)}
+              />
+            </div>
+            <div className="grid md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="session_objective">Objectif de séance</Label>
                 <Textarea id="session_objective" name="session_objective" value={formData.session_objective} onChange={handleChange} />
               </div>
-            </div>
-            <div className="grid md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="equipment">Matériel</Label>
                 <Textarea id="equipment" name="equipment" value={formData.equipment} onChange={handleChange} />
               </div>
+            </div>
+            <div className="grid md:grid-cols-1 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="comment">Commentaire</Label>
                 <Textarea id="comment" name="comment" value={formData.comment} onChange={handleChange} />
               </div>
             </div>
+
+            {/* Commentaires individuels par élève */}
+            {formData.students && formData.students.length > 0 && (
+              <div className="space-y-2">
+                <Label className="text-base font-semibold">Commentaires par élève ({formData.students.length} élève{formData.students.length > 1 ? 's' : ''})</Label>
+                <div className="space-y-3 border rounded-lg p-4 bg-muted/30">
+                  {formData.students.map((studentId) => {
+                    const student = lyceeStudents.find(s => s.id === studentId);
+                    if (!student) return null;
+                    return (
+                      <div key={studentId} className="space-y-1">
+                        <Label htmlFor={`comment-${studentId}`} className="text-sm font-medium">
+                          {student.first_name} {student.last_name}
+                        </Label>
+                        <Textarea
+                          id={`comment-${studentId}`}
+                          placeholder="Ajouter un commentaire pour cet élève..."
+                          value={studentComments[studentId] || ''}
+                          onChange={(e) => handleStudentCommentChange(studentId, e.target.value)}
+                          rows={2}
+                          className="text-sm"
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  💡 Ces commentaires sont spécifiques à chaque élève pour cette séance
+                </p>
+              </div>
+            )}
 
             <div>
               <h3 className="text-lg font-medium mb-2">Déroulé de la séance</h3>

@@ -89,7 +89,7 @@ const SessionEdit = () => {
     if (!canEditContent) return;
     setIsSaving(true);
     try {
-      const { id: sessionId, exercises, ...sessionInfo } = sessionData;
+      const { id: sessionId, exercises, studentComments, ...sessionInfo } = sessionData;
 
       const processedExercises = await Promise.all(
         exercises.map(async (ex) => {
@@ -103,11 +103,14 @@ const SessionEdit = () => {
       );
 
       // Nettoyer les données : convertir les chaînes vides en null
-      const { cycles, ...rawSessionInfo } = sessionInfo;
+      // Exclure les champs calculés (instructorNames, studentNames, studentComments) qui ne doivent pas être sauvegardés
+      const { cycles, instructorNames, studentNames, ...rawSessionInfo } = sessionInfo;
       const filteredSessionInfo = Object.entries(rawSessionInfo).reduce((acc, [key, value]) => {
         acc[key] = value === '' ? null : value;
         return acc;
       }, {});
+
+      let finalSessionId = id;
 
       if (id) {
         // Mode édition
@@ -136,6 +139,8 @@ const SessionEdit = () => {
             throw exercisesError;
           }
         }
+
+        finalSessionId = updatedSession.id;
       } else {
         // Mode création
         const { data: newSession, error: sessionError } = await supabase
@@ -158,6 +163,38 @@ const SessionEdit = () => {
           if (exercisesError) {
             console.error('Supabase Insert Error:', exercisesError);
             throw exercisesError;
+          }
+        }
+
+        finalSessionId = newSession.id;
+      }
+
+      // Sauvegarder les commentaires des élèves
+      if (studentComments && Object.keys(studentComments).length > 0) {
+        // Supprimer les anciens commentaires pour cette session
+        await supabase
+          .from('student_session_comments')
+          .delete()
+          .eq('session_id', finalSessionId);
+
+        // Insérer les nouveaux commentaires (uniquement ceux qui ne sont pas vides)
+        const commentsToInsert = Object.entries(studentComments)
+          .filter(([_, comment]) => comment && comment.trim() !== '')
+          .map(([memberId, comment]) => ({
+            session_id: finalSessionId,
+            member_id: memberId,
+            comment: comment.trim()
+          }));
+
+        if (commentsToInsert.length > 0) {
+          const { error: commentsError } = await supabase
+            .from('student_session_comments')
+            .insert(commentsToInsert);
+
+          if (commentsError) {
+            console.error('Supabase Comments Insert Error:', commentsError);
+            // Ne pas lever d'erreur, juste log
+            console.warn('Les commentaires n\'ont pas pu être sauvegardés');
           }
         }
       }

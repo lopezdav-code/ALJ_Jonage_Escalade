@@ -51,7 +51,17 @@ const ParticipationSummaryTable = ({ title, competitors, competitions }) => {
             <TableBody>
               {competitors.map(({ member, participations }) => (
                 <TableRow key={member.id}>
-                  <TableCell className="font-medium sticky left-0 bg-background z-10">{formatName(member.first_name, member.last_name, true)}</TableCell>
+                  <TableCell className="font-medium sticky left-0 bg-background z-10">
+                    <div className="flex items-center gap-2">
+                      <User className={`w-4 h-4 ${member.sexe === 'H' ? 'text-blue-600' : 'text-pink-600'}`} />
+                      <span className={member.sexe === 'H' ? 'text-blue-600' : 'text-pink-600'}>
+                        {formatName(member.first_name, member.last_name, true)}
+                      </span>
+                      {member.category && (
+                        <span className="text-muted-foreground text-sm">({member.category})</span>
+                      )}
+                    </div>
+                  </TableCell>
                   {competitions.map(comp => (
                     <TableCell key={comp.id} className="text-center">
                       {participations[comp.id] ? (
@@ -93,18 +103,18 @@ const FinancialSummaryTable = ({ title, competitors, competitions }) => {
               <TableHead className="sticky left-0 bg-background z-10 min-w-[150px]">Compétiteur</TableHead>
               {competitions.map(comp => (
                 <TableHead key={comp.id} className="text-center min-w-[150px]">
-                  <div className="flex flex-col items-center">
-                    <span>{comp.short_title || comp.name}</span>
-                    <div className="text-xs text-muted-foreground font-normal">
-                      {new Date(comp.start_date).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })}
+                    <div className="flex flex-col items-center">
+                      <span>{comp.short_title || comp.name}</span>
+                      <div className="text-xs text-muted-foreground font-normal">
+                        {new Date(comp.start_date).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })}
+                      </div>
+                      <div className="flex gap-1 mt-1">
+                        {comp.disciplines.map(d => <Badge key={d} variant={DISCIPLINE_COLORS[d] || 'default'}>{d.slice(0,4)}</Badge>)}
+                        {comp.nature && <Badge variant="outline">{comp.nature}</Badge>}
+                      </div>
                     </div>
-                    <div className="flex gap-1 mt-1">
-                      {comp.disciplines.map(d => <Badge key={d} variant={DISCIPLINE_COLORS[d] || 'default'}>{d.slice(0,4)}</Badge>)}
-                      {comp.nature && <Badge variant="outline">{comp.nature}</Badge>}
-                    </div>
-                  </div>
-                </TableHead>
-              ))}
+                  </TableHead>
+                ))}
               <TableHead className="text-right font-bold sticky right-0 bg-background z-10 min-w-[100px]">Total</TableHead>
             </TableRow>
           </TableHeader>
@@ -121,7 +131,17 @@ const FinancialSummaryTable = ({ title, competitors, competitions }) => {
 
               return (
                 <TableRow key={member.id}>
-                  <TableCell className="font-medium sticky left-0 bg-background z-10">{formatName(member.first_name, member.last_name, true)}</TableCell>
+                  <TableCell className="font-medium sticky left-0 bg-background z-10">
+                    <div className="flex items-center gap-2">
+                      <User className={`w-4 h-4 ${member.sexe === 'H' ? 'text-blue-600' : 'text-pink-600'}`} />
+                      <span className={member.sexe === 'H' ? 'text-blue-600' : 'text-pink-600'}>
+                        {formatName(member.first_name, member.last_name, true)}
+                      </span>
+                      {member.category && (
+                        <span className="text-muted-foreground text-sm">({member.category})</span>
+                      )}
+                    </div>
+                  </TableCell>
                   {competitions.map(comp => (
                     <TableCell key={comp.id} className="text-center">
                       {participations[comp.id] && comp.prix > 0
@@ -225,7 +245,7 @@ const AnnualSummary = () => {
           member_id,
           competition_id,
           ranking,
-          members ( id, first_name, last_name, title ),
+          members ( id, first_name, last_name, title, category, sexe ),
           competitions ( id, name, short_title, start_date, disciplines, nature, prix )
         `);
 
@@ -257,7 +277,22 @@ const AnnualSummary = () => {
             }
           });
         
-        const sortedMembers = Object.values(groupMembers).sort((a,b) => a.member.first_name.localeCompare(b.member.first_name));
+        const sortedMembers = Object.values(groupMembers).sort((a, b) => {
+          // Sort by category
+          const categoryA = a.member.category || '';
+          const categoryB = b.member.category || '';
+          if (categoryA < categoryB) return -1;
+          if (categoryA > categoryB) return 1;
+
+          // Then by sex
+          const sexA = a.member.sexe || '';
+          const sexB = b.member.sexe || '';
+          if (sexA < sexB) return -1;
+          if (sexA > sexB) return 1;
+
+          // Then by first name
+          return a.member.first_name.localeCompare(b.member.first_name);
+        });
         const sortedComps = Object.values(groupComps).sort((a,b) => new Date(a.start_date) - new Date(b.start_date));
 
         return { members: sortedMembers, competitions: sortedComps };

@@ -1,27 +1,130 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Helmet } from 'react-helmet';
 import { motion } from 'framer-motion';
-import { Clock, RotateCcw, Users, Eye, EyeOff } from 'lucide-react';
+import { Clock, RotateCcw, Users, Eye, EyeOff, Loader2, Settings } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { scheduleData, timeSlots, days, ageCategories } from '@/data/schedule';
+import { timeSlots, days, ageCategories } from '@/data/schedule';
 import { formatParticipantName } from '@/lib/utils';
+import { supabase } from '@/lib/customSupabaseClient';
+import { useAuth } from '@/contexts/SupabaseAuthContext';
+import { useNavigate } from 'react-router-dom';
 
 const Schedule = () => {
+  const navigate = useNavigate();
+  const { isAdmin } = useAuth();
   const [filters, setFilters] = useState({
     group: '',
     instructor: ''
   });
   const [showInstructors, setShowInstructors] = useState(false);
+  const [scheduleData, setScheduleData] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Charger les données du planning depuis la BDD
+  useEffect(() => {
+    const fetchSchedule = async () => {
+      setLoading(true);
+      try {
+        const { data: scheduleRows, error } = await supabase
+          .from('schedule')
+          .select(`
+            *,
+            instructor_1:instructor_1_id(id, first_name, last_name),
+            instructor_2:instructor_2_id(id, first_name, last_name),
+            instructor_3:instructor_3_id(id, first_name, last_name),
+            instructor_4:instructor_4_id(id, first_name, last_name)
+          `)
+          .order('day')
+          .order('start_time');
+
+        if (error) throw error;
+
+        // Transformer les données pour le format attendu par le composant
+        const transformedData = (scheduleRows || []).map((row, index) => {
+          const startTime = row.start_time.substring(0, 5); // HH:MM
+          const endTime = row.end_time.substring(0, 5);
+
+          // Calculer l'index de début et le nombre de slots
+          const toMinutes = (hhmm) => {
+            const [h, m] = hhmm.split(':').map(Number);
+            return h * 60 + m;
+          };
+
+          const BASE_START_MINUTES = 10 * 60;
+          const SLOT_LENGTH_MIN = 30;
+
+          const startMin = toMinutes(startTime);
+          const endMin = toMinutes(endTime);
+
+          let spanSlots = Math.round((endMin - startMin) / SLOT_LENGTH_MIN);
+          if (spanSlots < 1) spanSlots = 1;
+
+          const startIndex = Math.floor((startMin - BASE_START_MINUTES) / SLOT_LENGTH_MIN);
+
+          // Construire la liste des encadrants
+          const instructors = [
+            row.instructor_1,
+            row.instructor_2,
+            row.instructor_3,
+            row.instructor_4
+          ]
+            .filter(Boolean)
+            .map(instructor => ({
+              id: instructor.id,
+              name: `${instructor.first_name} ${instructor.last_name}`
+            }));
+
+          // Déterminer la couleur selon le type
+          const getColorForGroup = (group) => {
+            switch (group) {
+              case 'Compétition':
+                return 'bg-red-200 text-red-800 border-red-300';
+              case 'Loisir':
+                return 'bg-blue-200 text-blue-800 border-blue-300';
+              case 'Perf':
+                return 'bg-green-200 text-green-800 border-green-300';
+              case 'Autonomes':
+                return 'bg-yellow-200 text-yellow-800 border-yellow-300';
+              default:
+                return 'bg-gray-200 text-gray-800 border-gray-300';
+            }
+          };
+
+          return {
+            id: row.id,
+            title: row.age_category,
+            day: row.day,
+            startTime,
+            endTime,
+            spanSlots,
+            startIndex,
+            instructors,
+            instructorNames: instructors.map(i => i.name),
+            group: row.type,
+            color: getColorForGroup(row.type),
+          };
+        }).filter(item => item.startIndex >= 0);
+
+        setScheduleData(transformedData);
+      } catch (error) {
+        console.error('Erreur lors du chargement du planning:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSchedule();
+  }, []);
 
   const filteredSchedule = scheduleData.filter(course => {
     if (!course) return false;
     return (
       (!filters.group || course.group === filters.group) &&
-      (!filters.instructor || course.instructors.includes(filters.instructor))
+      (!filters.instructor || course.instructorNames?.includes(filters.instructor))
     );
   });
 
@@ -32,7 +135,7 @@ const Schedule = () => {
 
   const getUniqueValues = (key) => {
     if (key === 'instructor') {
-      const allInstructors = scheduleData.filter(Boolean).flatMap(course => course.instructors);
+      const allInstructors = scheduleData.filter(Boolean).flatMap(course => course.instructorNames || []);
       return [...new Set(allInstructors)].sort();
     }
     return [...new Set(scheduleData.filter(Boolean).map(course => course[key]))].sort();
@@ -61,12 +164,21 @@ const Schedule = () => {
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="text-center space-y-4"
       >
-        <h1 className="text-4xl font-bold headline">Planning des cours</h1>
-        <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-          Voici le planning hebdomadaire des cours d'escalade.
-        </p>
+        <div className="flex justify-between items-center mb-4">
+          <div className="text-center flex-1">
+            <h1 className="text-4xl font-bold headline">Planning des cours</h1>
+            <p className="text-xl text-muted-foreground mt-2">
+              Voici le planning hebdomadaire des cours d'escalade.
+            </p>
+          </div>
+          {isAdmin && (
+            <Button onClick={() => navigate('/schedule/admin')} className="flex items-center gap-2">
+              <Settings className="w-4 h-4" />
+              Gérer le planning
+            </Button>
+          )}
+        </div>
       </motion.div>
 
       <motion.div
@@ -137,6 +249,12 @@ const Schedule = () => {
             <CardTitle>Grille horaire</CardTitle>
           </CardHeader>
           <CardContent>
+            {loading ? (
+              <div className="flex justify-center items-center py-12">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                <span className="ml-3 text-muted-foreground">Chargement du planning...</span>
+              </div>
+            ) : (
             <div className="relative grid gap-0" style={{
               gridTemplateColumns: `minmax(4rem, auto) repeat(${days.length}, 1fr)`,
               gridTemplateRows: `auto repeat(${timeSlots.length}, 3rem)`,
@@ -172,14 +290,14 @@ const Schedule = () => {
                       {course.startTime} - {course.endTime}
                     </div>
                   </div>
-                  {showInstructors && (
+                  {showInstructors && course.instructorNames && course.instructorNames.length > 0 && (
                     <div className="text-xs opacity-80 mt-1">
                       <div className="flex items-start gap-1">
                         <Users className="w-3 h-3 flex-shrink-0 mt-0.5" />
                         <div>
-                          {course.instructors.map(instructor => (
-                            <div key={instructor} className="truncate">
-                              {formatParticipantName(instructor)}
+                          {course.instructorNames.map((instructorName, idx) => (
+                            <div key={idx} className="truncate">
+                              {formatParticipantName(instructorName)}
                             </div>
                           ))}
                         </div>
@@ -189,6 +307,7 @@ const Schedule = () => {
                 </motion.div>
               ))}
             </div>
+            )}
           </CardContent>
         </Card>
       </motion.div>

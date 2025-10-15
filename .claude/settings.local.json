@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(npm run dev)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nfeat: Refonte complète de la gestion des compétitions (v1.1.0)\n\n## Nouvelles fonctionnalités\n\n### Page Liste des Compétitions\n- Tableau moderne avec filtres dynamiques (recherche, niveau, nature, discipline)\n- Colonnes : Image, Nom, Titre court, Date, Info (badges), Compétiteurs, Actions\n- Comptage automatique des compétiteurs inscrits\n- Navigation vers page de détail\n\n### Page Détail de Compétition\n- Vue complète avec toutes les informations\n- Mode édition in-place (sans changer de page)\n- Galerie photos avec lightbox et navigation\n- Upload d''images avec Supabase Storage\n- Gestion des participants intégrée\n\n### Upload d''Images\n- Nouveau module competitionStorageUtils.js\n- Support des uploads vers Supabase Storage\n- Validation des fichiers (type, taille max 10MB)\n- Preview des images avant sauvegarde\n\n## Modifications\n\n- Suppression de l''accordéon (remplacé par tableau)\n- Filtres optimisés (retrait saison, International, Inter-régional)\n- Comptage précis des compétiteurs (role = ''Compétiteur'')\n- Amélioration de l''UX avec badges colorés\n\n## Technique\n\n- Nouveau composant CompetitionFilters\n- Nouvelle page CompetitionDetail avec mode édition\n- Refactoring ClubCompetitions (836 → 317 lignes)\n- Route ajoutée : /competitions/detail/:id\n- Version mise à jour : 0.0.0 → 1.1.0\n\n🤖 Generated with Claude Code\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git push:*)"
     ],
     "deny": [],
     "ask": []

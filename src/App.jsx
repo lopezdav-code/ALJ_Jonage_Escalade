@@ -30,7 +30,6 @@ const Setup = lazy(() => import('@/pages/Setup'));
 const InscriptionsSummary = lazy(() => import('@/pages/InscriptionsSummary'));
 const CompetitionsSummary = lazy(() => import('@/pages/CompetitionsSummary'));
 const CompetitionEditor = lazy(() => import('@/pages/CompetitionEditor'));
-const CompetitionDetail = lazy(() => import('@/pages/CompetitionDetail'));
 const ConnectionLogs = lazy(() => import('@/pages/ConnectionLogs'));
 const AccessLogs = lazy(() => import('@/pages/AccessLogs'));
 const CompetitionParticipants = lazy(() => import('@/pages/CompetitionParticipants'));
@@ -91,7 +90,6 @@ const AppContent = () => {
           <Route path="/competitions" element={<Competitions />} />
           <Route path="/competitions/new" element={<LazyRoute><CompetitionEditor /></LazyRoute>} />
           <Route path="/competitions/edit/:id" element={<LazyRoute><CompetitionEditor /></LazyRoute>} />
-          <Route path="/competitions/detail/:id" element={<LazyRoute><CompetitionDetail /></LazyRoute>} />
           <Route path="/competitions/participants/:id" element={<LazyRoute><CompetitionParticipants /></LazyRoute>} />
           <Route path="/competitions-summary" element={<LazyRoute><CompetitionsSummary /></LazyRoute>} />
           <Route path="/inscriptions-summary" element={<LazyRoute><InscriptionsSummary /></LazyRoute>} />

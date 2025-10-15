@@ -797,6 +797,15 @@ const CompetitionDetail = () => {
               <Plus className="w-4 h-4" />
               Modifier les participants
             </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate(`/competitions/results/${id}`)}
+              className="flex items-center gap-2"
+            >
+              <Trophy className="w-4 h-4" />
+              Modifier les résultats
+            </Button>
           </div>
         </CardHeader>
         <CardContent>

@@ -196,7 +196,36 @@ const CycleDetail = () => {
       console.log('Séances du cycle récupérées :', data); // Log sessions
 
       if (error) throw error;
-      setSessions(data || []);
+
+      // Récupérer tous les IDs de membres uniques
+      const allMemberIds = new Set();
+      (data || []).forEach(session => {
+        (session.instructors || []).forEach(id => allMemberIds.add(id));
+        (session.students || []).forEach(id => allMemberIds.add(id));
+      });
+
+      // Récupérer les informations des membres
+      let membersMap = {};
+      if (allMemberIds.size > 0) {
+        const { data: members } = await supabase
+          .from('members')
+          .select('id, first_name, last_name')
+          .in('id', Array.from(allMemberIds));
+
+        membersMap = (members || []).reduce((acc, member) => {
+          acc[member.id] = `${member.first_name} ${member.last_name}`;
+          return acc;
+        }, {});
+      }
+
+      // Enrichir les sessions avec les noms des membres
+      const enrichedSessions = (data || []).map(s => ({
+        ...s,
+        instructorNames: (s.instructors || []).map(id => membersMap[id] || `ID: ${id}`),
+        studentNames: (s.students || []).map(id => membersMap[id] || `ID: ${id}`)
+      }));
+
+      setSessions(enrichedSessions);
       setLoading(false);
     } catch (error) {
       console.error('Erreur lors du chargement des séances du cycle:', error);
@@ -504,7 +533,7 @@ const CycleDetail = () => {
                   {(() => {
                     const allStudents = new Set();
                     sessions.forEach(session => {
-                      session.students?.forEach(student => allStudents.add(student));
+                      session.studentNames?.forEach(student => allStudents.add(student));
                     });
                     const studentsList = Array.from(allStudents).sort();
                     return studentsList.length > 0 ? (
@@ -532,7 +561,7 @@ const CycleDetail = () => {
                   {(() => {
                     const allInstructors = new Set();
                     sessions.forEach(session => {
-                      session.instructors?.forEach(instructor => allInstructors.add(instructor));
+                      session.instructorNames?.forEach(instructor => allInstructors.add(instructor));
                     });
                     const instructorsList = Array.from(allInstructors).sort();
                     return instructorsList.length > 0 ? (
@@ -634,11 +663,11 @@ const CycleDetail = () => {
                                 <span>{session.start_time}</span>
                               </div>
                             )}
-                            {session.instructors && session.instructors.length > 0 && (
+                            {session.instructorNames && session.instructorNames.length > 0 && (
                               <div className="flex items-start gap-2">
                                 <Users className="w-4 h-4 flex-shrink-0 mt-0.5" />
                                 <span className="break-words">
-                                  Encadrants: {session.instructors.join(', ')}
+                                  Encadrants: {session.instructorNames.join(', ')}
                                 </span>
                               </div>
                             )}

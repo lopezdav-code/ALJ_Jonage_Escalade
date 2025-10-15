@@ -32,7 +32,14 @@ const SessionList = ({ sessions, onEdit, onDelete, isAdmin }) => {
         const scheduledExercises = calculateSchedule(session.start_time, session.exercises);
         return (
           <AccordionItem value={`session-${session.id}`} key={session.id}>
-            <AccordionTrigger>
+            <AccordionTrigger onClick={(e) => {
+                // Prevent accordion from toggling when clicking on the trigger itself,
+                // but allow navigation to detail page.
+                // This might need adjustment if the accordion should still toggle.
+                // For now, clicking the trigger will navigate to detail.
+                e.stopPropagation();
+                navigate(`/session-log/${session.id}`);
+              }}>
               <div className="flex justify-between w-full pr-4 items-center">
                 <div className="flex items-center gap-3">
                   <span className="font-semibold">
@@ -65,8 +72,8 @@ const SessionList = ({ sessions, onEdit, onDelete, isAdmin }) => {
                 </div>
               )}
               <p><strong>Objectif de séance:</strong> {session.session_objective}</p>
-              <p><strong>Encadrants:</strong> {session.instructors?.join(', ')}</p>
-              <p><strong>Élèves présents:</strong> {session.students?.join(', ')}</p>
+              <p><strong>Encadrants:</strong> {session.instructorNames?.join(', ')}</p>
+              <p><strong>Élèves présents:</strong> {session.studentNames?.join(', ')}</p>
               <p><strong>Matériel:</strong> {session.equipment}</p>
               {session.comment && <p><strong>Commentaire:</strong> {session.comment}</p>}
               <h4 className="font-semibold mt-4">Déroulé :</h4>
