@@ -89,7 +89,6 @@ const CycleDetail = () => {
       .upload(fileName, file);
 
     if (uploadError) {
-      console.error('Upload error:', uploadError);
       throw new Error(`Erreur d'upload: ${uploadError.message || 'Le bucket "cycle_documents" n\'existe peut-être pas dans Supabase Storage'}`);
     }
 
@@ -154,8 +153,6 @@ const CycleDetail = () => {
         .eq('id', id)
         .single();
 
-      console.log('Détails du cycle récupérés :', data); // Log cycle details
-
       if (error) throw error;
       setCycle(data);
       setLoading(false);
@@ -192,8 +189,6 @@ const CycleDetail = () => {
         .select('*')
         .eq('cycle_id', id)
         .order('date', { ascending: false, nullsFirst: false });
-
-      console.log('Séances du cycle récupérées :', data); // Log sessions
 
       if (error) throw error;
       setSessions(data || []);

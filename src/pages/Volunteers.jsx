@@ -109,7 +109,7 @@ const Volunteers = () => {
         .select('*');
 
       if (error) {
-        console.error('Erreur chargement membres:', error);
+        // Erreur lors du chargement des membres
       } else {
         setMembers(data || []);
       }
@@ -248,7 +248,6 @@ const Volunteers = () => {
                       key={member.id}
                       value={`${member.first_name} ${member.last_name}`}
                       onSelect={() => {
-                        console.log('CommandItem clicked for member ID:', member.id);
                         handleMemberSelect(member.id);
                       }}
                     >
@@ -341,8 +340,7 @@ const Volunteers = () => {
                               <VolunteerRow
                                 key={member.id}
                                 member={member}
-                                onEdit={(member) => { // Re-use the onEdit from Volunteers.jsx scope
-                                  console.log('Volunteers.jsx: Edit button clicked for member:', member);
+                                onEdit={(member) => {
                                   navigate(`/member-edit/${member.id}`, { state: { fromTab: activeTab } });
                                 }}
                                 isEmergencyContact={emergencyContactIds.has(member.id)}
@@ -408,8 +406,7 @@ const Volunteers = () => {
                               <VolunteerRow
                                 key={member.id}
                                 member={member}
-                                onEdit={(member) => { // Re-use the onEdit from Volunteers.jsx scope
-                                  console.log('Volunteers.jsx: Edit button clicked for member:', member);
+                                onEdit={(member) => {
                                   navigate(`/member-edit/${member.id}`, { state: { fromTab: activeTab } });
                                 }}
                                 isEmergencyContact={emergencyContactIds.has(member.id)}
@@ -453,7 +450,6 @@ const Volunteers = () => {
                         key={member.id}
                         member={member}
                         onEdit={(member) => {
-                          console.log('Volunteers.jsx: Edit button clicked for member:', member);
                           navigate(`/member-edit/${member.id}`, { state: { fromTab: activeTab } });
                         }}
                         isEmergencyContact={emergencyContactIds.has(member.id)}

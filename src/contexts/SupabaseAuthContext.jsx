@@ -90,7 +90,6 @@ export const AuthProvider = ({ children }) => {
             profileData = data;
           }
         } catch (profileError) {
-          console.warn("Utilisation du profil par défaut suite à l'erreur:", profileError.message);
           // Si on a un cache même expiré, l'utiliser plutôt que le défaut
           if (profileCache.has(currentUser.id)) {
             const cached = profileCache.get(currentUser.id);
@@ -107,7 +106,7 @@ export const AuthProvider = ({ children }) => {
           try {
             await logConnection(currentUser, 'login', profileData);
           } catch (logError) {
-            console.warn('Logging ignoré suite à l\'erreur:', logError.message);
+            // Logging ignoré
           }
         }
       } else {
@@ -116,7 +115,7 @@ export const AuthProvider = ({ children }) => {
           try {
             await logDisconnection(previousUser, profile);
           } catch (logError) {
-            console.warn('Logging de déconnexion ignoré:', logError.message);
+            // Logging de déconnexion ignoré
           }
         }
         setProfile(null);
@@ -140,7 +139,6 @@ export const AuthProvider = ({ children }) => {
         // Timeout de sécurité pour éviter les chargements infinis
         loadingTimeoutId = setTimeout(() => {
           if (isMounted) {
-            console.warn('Auth loading timeout - forcing completion');
             setLoading(false);
           }
         }, 5000); // 5 secondes max

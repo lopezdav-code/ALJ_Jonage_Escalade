@@ -16,7 +16,6 @@ const SessionLogDetail = () => {
 
   useEffect(() => {
     const fetchSessionDetail = async () => {
-      console.log('Fetching session detail for sessionId:', id); // Use 'id' here
       try {
         const { data, error } = await supabase
           .from('sessions')
@@ -45,10 +44,8 @@ const SessionLogDetail = () => {
           .single();
 
         if (error) {
-          console.error('Error fetching session:', error);
           throw error;
         }
-        console.log('Session data fetched:', data);
 
         // Récupérer les informations de l'emploi du temps si schedule_id existe
         let scheduleData = null;
@@ -62,11 +59,9 @@ const SessionLogDetail = () => {
 
             if (!scheduleError && schedule) {
               scheduleData = schedule;
-            } else if (scheduleError) {
-              console.warn('Schedule not found for id:', data.schedule_id, scheduleError);
             }
           } catch (err) {
-            console.warn('Error fetching schedule:', err);
+            // Erreur lors de la récupération du schedule
           }
         }
 
@@ -75,7 +70,6 @@ const SessionLogDetail = () => {
           ...(data.instructors || []),
           ...(data.students || [])
         ];
-        console.log('All member IDs for lookup:', allMemberIds);
 
         let membersMap = {};
         if (allMemberIds.length > 0) {
@@ -85,10 +79,8 @@ const SessionLogDetail = () => {
             .in('id', allMemberIds);
 
           if (membersError) {
-            console.error('Error fetching members:', membersError);
             throw membersError;
           }
-          console.log('Members data fetched:', members);
 
           membersMap = (members || []).reduce((acc, member) => {
             acc[member.id] = {
@@ -111,10 +103,8 @@ const SessionLogDetail = () => {
             .in('member_id', data.students);
 
           if (commentsError) {
-            console.error('Error fetching student comments:', commentsError);
             throw commentsError;
           }
-          console.log('Student comments fetched:', comments);
 
           studentCommentsMap = (comments || []).reduce((acc, comment) => {
             acc[comment.member_id] = comment.comment;
@@ -126,7 +116,6 @@ const SessionLogDetail = () => {
         const pedagogySheetIds = (data.exercises || [])
           .map(ex => ex.pedagogy_sheet_id)
           .filter(Boolean);
-        console.log('Pedagogy sheet IDs for lookup:', pedagogySheetIds);
 
         let pedagogySheetsMap = {};
         if (pedagogySheetIds.length > 0) {
@@ -136,10 +125,8 @@ const SessionLogDetail = () => {
             .in('id', pedagogySheetIds);
 
           if (sheetsError) {
-            console.error('Error fetching pedagogy sheets:', sheetsError);
             throw sheetsError;
           }
-          console.log('Pedagogy sheets fetched:', sheets);
 
           pedagogySheetsMap = (sheets || []).reduce((acc, sheet) => {
             acc[sheet.id] = sheet;
@@ -162,7 +149,6 @@ const SessionLogDetail = () => {
             pedagogy_sheet: ex.pedagogy_sheet_id ? pedagogySheetsMap[ex.pedagogy_sheet_id] : null
           }))
         };
-        console.log('Enriched session:', enrichedSession);
         setSession(enrichedSession);
       } catch (err) {
         console.error('General error in fetchSessionDetail:', err);

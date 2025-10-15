@@ -76,11 +76,9 @@ const SessionEdit = () => {
 
           if (!scheduleError && schedule) {
             scheduleData = schedule;
-          } else if (scheduleError) {
-            console.warn('Schedule not found for id:', data.schedule_id, scheduleError);
           }
         } catch (err) {
-          console.warn('Error fetching schedule:', err);
+          // Erreur lors de la récupération du schedule
         }
       }
 
@@ -155,7 +153,6 @@ const SessionEdit = () => {
           .single();
 
         if (sessionError) {
-          console.error('Supabase Update Error:', sessionError);
           throw sessionError;
         }
 
@@ -168,7 +165,6 @@ const SessionEdit = () => {
         if (exercisesToInsert.length > 0) {
           const { error: exercisesError } = await supabase.from('exercises').insert(exercisesToInsert);
           if (exercisesError) {
-            console.error('Supabase Insert Error:', exercisesError);
             throw exercisesError;
           }
         }
@@ -183,7 +179,6 @@ const SessionEdit = () => {
           .single();
 
         if (sessionError) {
-          console.error('Supabase Insert Error:', sessionError);
           throw sessionError;
         }
 
@@ -194,7 +189,6 @@ const SessionEdit = () => {
         if (exercisesToInsert.length > 0) {
           const { error: exercisesError } = await supabase.from('exercises').insert(exercisesToInsert);
           if (exercisesError) {
-            console.error('Supabase Insert Error:', exercisesError);
             throw exercisesError;
           }
         }
@@ -225,9 +219,7 @@ const SessionEdit = () => {
             .insert(commentsToInsert);
 
           if (commentsError) {
-            console.error('Supabase Comments Insert Error:', commentsError);
-            // Ne pas lever d'erreur, juste log
-            console.warn('Les commentaires n\'ont pas pu être sauvegardés');
+            // Les commentaires n'ont pas pu être sauvegardés (ne pas bloquer)
           }
         }
       }

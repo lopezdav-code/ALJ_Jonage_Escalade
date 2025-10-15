@@ -212,7 +212,6 @@ const SessionForm = ({ session, onSave, onCancel, isSaving }) => {
           .order('day, start_time');
 
         if (schedulesError) {
-          console.error('Error fetching schedules:', schedulesError);
           // Try fetching without instructors as fallback
           const { data: schedulesSimple, error: schedulesSimpleError } = await supabase
             .from('schedules')
@@ -220,11 +219,9 @@ const SessionForm = ({ session, onSave, onCancel, isSaving }) => {
             .order('day, start_time');
 
           if (!schedulesSimpleError) {
-            console.log('Schedules fetched (simple):', schedulesSimple);
             setSchedules(schedulesSimple || []);
           }
         } else {
-          console.log('Schedules fetched (with instructors):', schedulesData);
           setSchedules(schedulesData || []);
         }
 
@@ -305,9 +302,6 @@ const SessionForm = ({ session, onSave, onCancel, isSaving }) => {
         })
         .filter(Boolean);
 
-      console.log('Populating instructors from session:', instructorNames);
-      console.log('Populating students from session:', studentNames);
-
       setFormData(prev => ({
         ...prev,
         instructors: instructorNames,
@@ -351,7 +345,6 @@ const SessionForm = ({ session, onSave, onCancel, isSaving }) => {
   useEffect(() => {
     if (session?.schedule_id && previousScheduleIdRef.current === null) {
       previousScheduleIdRef.current = session.schedule_id;
-      console.log('Initial load: Preserving existing instructors from session');
     }
   }, [session]);
 
@@ -364,7 +357,6 @@ const SessionForm = ({ session, onSave, onCancel, isSaving }) => {
         const selectedSchedule = schedules.find(s => s.id === formData.schedule_id);
 
         if (selectedSchedule) {
-          console.log('Schedule changed: Setting instructors', scheduleInstructors);
           // Update instructors and start_time
           setFormData(prev => ({
             ...prev,
@@ -373,7 +365,6 @@ const SessionForm = ({ session, onSave, onCancel, isSaving }) => {
           }));
         }
       } else {
-        console.log('Schedule cleared: Clearing instructors');
         // Clear instructors when no schedule is selected
         setFormData(prev => ({
           ...prev,
