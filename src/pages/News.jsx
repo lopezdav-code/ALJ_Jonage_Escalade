@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Helmet } from 'react-helmet';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Newspaper, PlusCircle, Loader2, Edit, Trash2, ExternalLink, Download, Users, Heart, MountainSnow as Ski, Share2, Eye, ArrowDownUp, Filter } from 'lucide-react';
+import { Newspaper, PlusCircle, Loader2, Edit, Trash2, ExternalLink, Download, Users, Heart, MountainSnow as Ski, Share2, Eye, ArrowDownUp } from 'lucide-react';
 import { supabase } from '@/lib/customSupabaseClient';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,7 +9,6 @@ import { useToast } from '@/components/ui/use-toast';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent } from '@/components/ui/dialog'; // Only Dialog and DialogContent needed for image viewer
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { useConfig } from '@/contexts/ConfigContext';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -294,33 +293,19 @@ const News = () => {
       <NewsBanner />
       
       <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-        <div className="flex justify-between items-center flex-wrap gap-4">
+        <div className="flex justify-between items-center flex-wrap gap-4 mb-6">
           <h1 className="text-4xl font-bold headline flex items-center gap-3">
             <Newspaper className="w-10 h-10 text-primary" />
             Actualités du Club
           </h1>
           <div className="flex items-center gap-4 flex-wrap">
             <div className="flex items-center gap-2">
-              <Label htmlFor="theme-filter">Thème:</Label>
-              <Select value={selectedTheme} onValueChange={setSelectedTheme}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Tous les thèmes" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">Tous les thèmes</SelectItem>
-                  {themes.map(theme => (
-                    <SelectItem key={theme} value={theme}>{theme}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex items-center gap-2">
               <Label htmlFor="date-filter">Date:</Label>
-              <Input 
+              <Input
                 id="date-filter"
-                type="date" 
-                value={selectedDate} 
-                onChange={(e) => setSelectedDate(e.target.value)} 
+                type="date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
                 className="w-[180px]"
               />
             </div>
@@ -330,13 +315,39 @@ const News = () => {
             </Button>
             {showAdminFeatures && (
               <Button asChild>
-                <Link to="/news/new"> {/* Link to the new creation route */}
+                <Link to="/news/new">
                   <PlusCircle className="w-4 h-4 mr-2" /> Ajouter
                 </Link>
               </Button>
             )}
           </div>
         </div>
+
+        {/* Theme filter buttons */}
+        <motion.div
+          className="flex flex-wrap gap-2 mb-6"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2, duration: 0.4 }}
+        >
+          <Button
+            variant={selectedTheme === '' ? 'default' : 'outline'}
+            onClick={() => setSelectedTheme('')}
+            className="rounded-full"
+          >
+            Tous les thèmes
+          </Button>
+          {themes.map(theme => (
+            <Button
+              key={theme}
+              variant={selectedTheme === theme ? 'default' : 'outline'}
+              onClick={() => setSelectedTheme(theme)}
+              className="rounded-full"
+            >
+              {theme}
+            </Button>
+          ))}
+        </motion.div>
       </motion.div>
 
       {/* Removed the Dialog for NewsForm as it's now handled by news_edit.jsx */}
