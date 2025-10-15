@@ -7,8 +7,11 @@ import VolunteerQuiz from '@/components/VolunteerQuiz';
 import CompetitionTabs from '@/components/CompetitionTabs';
 import LeisureChildrenTabs from '@/components/LeisureChildrenTabs';
 import { Button } from '@/components/ui/button';
-import { Info, Loader2, Pencil, Shield, Star, Mail, Phone, Award, Gavel, Scale, Flag } from 'lucide-react';
+import { Info, Loader2, Pencil, Shield, Star, Mail, Phone, Award, Gavel, Scale, Flag, Check, ChevronsUpDown } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandInput, CommandEmpty, CommandGroup, CommandItem, CommandList } from '@/components/ui/command';
+import { cn } from '@/lib/utils';
 
 // Placeholder for brevetColors - adapt if needed
 const brevetColors = {
@@ -82,6 +85,10 @@ const Volunteers = () => {
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isQuizVisible, setIsQuizVisible] = useState(false);
+  const [openMemberSearch, setOpenMemberSearch] = useState(false);
+  const [selectedMember, setSelectedMember] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showNoEmailFilter, setShowNoEmailFilter] = useState(false); // New state for the filter
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -112,8 +119,15 @@ const Volunteers = () => {
     fetchMembers();
   }, []);
 
+  const membersForDisplay = useMemo(() => {
+    if (showNoEmailFilter) {
+      return members.filter(member => !member.email || member.email.trim() === '');
+    }
+    return members;
+  }, [members, showNoEmailFilter]);
+
   const membersByTitle = useMemo(() => {
-    return members.reduce((acc, member) => {
+    return membersForDisplay.reduce((acc, member) => {
       const title = member.title || 'Sans Titre';
       if (!acc[title]) {
         acc[title] = [];
@@ -121,7 +135,7 @@ const Volunteers = () => {
       acc[title].push(member);
       return acc;
     }, {});
-  }, [members]);
+  }, [membersForDisplay]);
 
   const titles = useMemo(() => {
     const customOrder = [
@@ -163,6 +177,26 @@ const Volunteers = () => {
     return membersByTitle[title]?.some(m => m.category && m.category.trim() !== '') || false;
   };
   
+  const filteredMembers = useMemo(() => {
+    if (!searchQuery) return membersForDisplay; // Use membersForDisplay here
+    const lowerCaseQuery = searchQuery.toLowerCase();
+    return membersForDisplay.filter(member => // Use membersForDisplay here
+      member.first_name.toLowerCase().includes(lowerCaseQuery) ||
+      member.last_name.toLowerCase().includes(lowerCaseQuery)
+    );
+  }, [membersForDisplay, searchQuery]);
+
+  const handleMemberSelect = (memberId) => {
+    const member = members.find(m => m.id === memberId);
+    setSelectedMember(member);
+    setOpenMemberSearch(false);
+    setSearchQuery(''); // Clear search query after selection
+    // Optionally, navigate to member's page or filter the view
+    if (member) {
+      navigate(`/member-edit/${member.id}`);
+    }
+  };
+
   if (loading) return <div className="flex justify-center items-center h-64"><Loader2 className="w-12 h-12 animate-spin text-primary" /></div>;
 
   if (isQuizVisible) {
@@ -182,6 +216,76 @@ const Volunteers = () => {
 
       <h1 className="text-2xl font-bold mb-6">Gestion des Membres</h1>
 
+      <div className="mb-6 flex items-center space-x-4">
+        <Popover open={openMemberSearch} onOpenChange={setOpenMemberSearch}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              role="combobox"
+              aria-expanded={openMemberSearch}
+              className="w-[300px] justify-between"
+            >
+              <span className={cn(!selectedMember && "text-muted-foreground")}>
+                {selectedMember ? `${selectedMember.first_name} ${selectedMember.last_name}` : "Rechercher un membre..."}
+              </span>
+              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-[300px] p-0">
+            <Command>
+              <CommandInput
+                placeholder="Rechercher un membre..."
+                value={searchQuery}
+                onValueChange={setSearchQuery}
+              />
+              <CommandEmpty>
+                {loading ? "Chargement..." : "Aucun membre trouvé."}
+              </CommandEmpty>
+              <CommandList>
+                <CommandGroup>
+                  {filteredMembers.map((member) => (
+                    <CommandItem
+                      key={member.id}
+                      value={`${member.first_name} ${member.last_name}`}
+                      onSelect={() => {
+                        console.log('CommandItem clicked for member ID:', member.id);
+                        handleMemberSelect(member.id);
+                      }}
+                    >
+                      <Check
+                        className={cn(
+                          "mr-2 h-4 w-4",
+                          selectedMember?.id === member.id ? "opacity-100" : "opacity-0"
+                        )}
+                      />
+                      <div className="flex flex-col">
+                        <span className="font-medium">{member.first_name} {member.last_name}</span>
+                        {member.title && (
+                          <span className="text-xs text-muted-foreground">
+                            {member.title}
+                          </span>
+                        )}
+                      </div>
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
+        {selectedMember && (
+          <Button variant="ghost" onClick={() => setSelectedMember(null)}>
+            Effacer la sélection
+          </Button>
+        )}
+        <Button
+          variant={showNoEmailFilter ? "default" : "outline"}
+          onClick={() => setShowNoEmailFilter(!showNoEmailFilter)}
+        >
+          {showNoEmailFilter ? "Afficher tout" : "Sans email"}
+        </Button>
+      </div>
+
       <Tabs value={activeTab} onValueChange={handleTabChange}>
         <TabsList>
           {titles.map((title) => (
@@ -191,7 +295,7 @@ const Volunteers = () => {
         {titles.map((title) => {
           // Custom rendering for competition tabs
           if (title.includes('Compétition')) {
-            const currentTabMembers = members.filter(m => m.title === title);
+            const currentTabMembers = membersForDisplay.filter(m => m.title === title); // Use membersForDisplay
             
             const membersByCategory = currentTabMembers.reduce((acc, member) => {
               const category = member.category || 'Sans catégorie'; // Default category if missing
@@ -258,7 +362,7 @@ const Volunteers = () => {
 
           // Special handling for leisure children - group by sub-group
           if (title.includes('Loisir')) {
-            const currentTabMembers = members.filter(m => m.title === title);
+            const currentTabMembers = membersForDisplay.filter(m => m.title === title); // Use membersForDisplay
             
             const membersBySubGroup = currentTabMembers.reduce((acc, member) => {
               const subGroup = member.sub_group || 'Sans sous-groupe'; // Default sub-group if missing

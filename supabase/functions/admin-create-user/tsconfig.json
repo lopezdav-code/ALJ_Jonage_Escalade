@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "lib": ["deno.ns", "deno.window", "es2020"],
+    "moduleResolution": "bundler",
+    "target": "es2020",
+    "allowJs": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "types": [
+      "https://deno.land/x/deno_graph@0.50.0/lib.deno_graph.d.ts"
+    ]
+  },
+  "include": ["./**/*.ts"]
+}

@@ -18,31 +18,12 @@ const SessionLog = () => {
   const [schedules, setSchedules] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [scheduleFilter, setScheduleFilter] = useState('');
+  const [selectedSchedule, setSelectedSchedule] = useState('all');
   const { toast } = useToast();
   const { user, isAdmin, isAdherent, loading: authLoading } = useAuth();
 
   const canViewPage = !authLoading && (isAdmin || isAdherent);
   const canEditContent = !authLoading && isAdmin;
-
-  // Charger les créneaux du planning
-  useEffect(() => {
-    const fetchSchedules = async () => {
-      const { data, error } = await supabase
-        .from('schedule')
-        .select('id, type, age_category, day, start_time')
-        .order('day')
-        .order('start_time');
-
-      if (!error) {
-        setSchedules(data || []);
-      }
-    };
-
-    if (canViewPage) {
-      fetchSchedules();
-    }
-  }, [canViewPage]);
 
   const fetchSessions = useCallback(async () => {
     if (!canViewPage) {
@@ -50,6 +31,18 @@ const SessionLog = () => {
       return;
     }
     setLoading(true);
+
+    // Récupérer les schedules
+    const { data: schedulesData, error: schedulesError } = await supabase
+      .from('schedules')
+      .select('id, type, age_category, day, start_time, end_time')
+      .order('day, start_time');
+
+    if (!schedulesError && schedulesData) {
+      setSchedules(schedulesData);
+    }
+
+    // Récupérer les sessions
     const { data, error } = await supabase
       .from('sessions')
       .select(`
@@ -70,35 +63,20 @@ const SessionLog = () => {
     if (error) {
       toast({ title: "Erreur", description: "Impossible de charger les séances.", variant: "destructive" });
     } else {
-      // Récupérer tous les IDs de membres uniques
-      const allMemberIds = new Set();
-      data.forEach(session => {
-        (session.instructors || []).forEach(id => allMemberIds.add(id));
-        (session.students || []).forEach(id => allMemberIds.add(id));
-      });
-
-      // Récupérer les informations des membres
-      let membersMap = {};
-      if (allMemberIds.size > 0) {
-        const { data: members } = await supabase
-          .from('members')
-          .select('id, first_name, last_name')
-          .in('id', Array.from(allMemberIds));
-
-        membersMap = (members || []).reduce((acc, member) => {
-          acc[member.id] = `${member.first_name} ${member.last_name}`;
-          return acc;
-        }, {});
-      }
-
-      // Enrichir les sessions avec les noms des membres
-      const enrichedSessions = data.map(s => ({
-        ...s,
-        start_time: s.start_time ? s.start_time.substring(0, 5) : '18:30',
-        instructorNames: (s.instructors || []).map(id => membersMap[id] || `ID: ${id}`),
-        studentNames: (s.students || []).map(id => membersMap[id] || `ID: ${id}`)
-      }));
-
+      // Enrichir les sessions avec les informations de schedule
+      const enrichedSessions = await Promise.all(
+        data.map(async (s) => {
+          let scheduleData = null;
+          if (s.schedule_id && schedulesData) {
+            scheduleData = schedulesData.find(sch => sch.id === s.schedule_id);
+          }
+          return {
+            ...s,
+            schedule: scheduleData,
+            start_time: s.start_time ? s.start_time.substring(0, 5) : '18:30'
+          };
+        })
+      );
       setSessions(enrichedSessions);
     }
     setLoading(false);
@@ -132,8 +110,16 @@ const SessionLog = () => {
         // Filtrer les séances sans date
         if (!session.date) return false;
 
-        // Filtrage par créneau du planning
-        if (scheduleFilter && session.schedule_id !== scheduleFilter) return false;
+        // Filtrage par schedule
+        if (selectedSchedule !== 'all') {
+          if (selectedSchedule === 'none') {
+            // Afficher uniquement les séances SANS emploi du temps
+            if (session.schedule_id) return false;
+          } else {
+            // Filtrer par schedule_id
+            if (session.schedule_id !== selectedSchedule) return false;
+          }
+        }
 
         // Filtrage par terme de recherche
         if (!searchTerm) return true;
@@ -141,18 +127,19 @@ const SessionLog = () => {
         const searchIn = [
           session.cycles?.name || '',
           session.cycles?.short_description || '',
+          session.schedule?.type || '',
+          session.schedule?.age_category || '',
           session.session_objective,
           session.comment,
-          ...(session.instructorNames || []),
-          ...(session.studentNames || []),
+          ...(session.instructors || []),
+          ...(session.students || []),
           ...session.exercises.map(ex => Object.values(ex).join(' '))
         ].join(' ').toLowerCase();
         return searchIn.includes(lowerSearchTerm);
       });
 
-    console.log('Séances après filtrage :', result); // Log filtered sessions
     return result;
-  }, [sessions, searchTerm, scheduleFilter]);
+  }, [sessions, searchTerm, selectedSchedule]);
 
   if (authLoading) {
     return <div className="flex justify-center items-center h-64"><Loader2 className="w-12 h-12 animate-spin text-primary" /></div>;
@@ -204,15 +191,16 @@ const SessionLog = () => {
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
-              <Select value={scheduleFilter} onValueChange={setScheduleFilter}>
+              <Select value={selectedSchedule} onValueChange={setSelectedSchedule}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Filtrer par créneau du planning" />
+                  <SelectValue placeholder="Filtrer par emploi du temps" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Tous les créneaux</SelectItem>
+                  <SelectItem value="all">Tous les emplois du temps</SelectItem>
+                  <SelectItem value="none">Sans emploi du temps</SelectItem>
                   {schedules.map((schedule) => (
-                    <SelectItem key={schedule.id} value={schedule.id}>
-                      {schedule.day} - {schedule.start_time.substring(0, 5)} - {schedule.age_category} ({schedule.type})
+                    <SelectItem key={schedule.id} value={schedule.id.toString()}>
+                      {schedule.type} / {schedule.age_category} / {schedule.day} / {schedule.start_time}
                     </SelectItem>
                   ))}
                 </SelectContent>

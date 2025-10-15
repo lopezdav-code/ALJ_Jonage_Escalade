@@ -5,10 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
 import { Helmet } from '../components/ui/helmet';
-import { ExternalLink, FileText, Calendar, Clock, Users, Target, Package, MessageSquare } from 'lucide-react';
+import { ExternalLink, FileText, Calendar, Clock, Users, Target, Package, MessageSquare, ArrowLeft } from 'lucide-react';
 
 const SessionLogDetail = () => {
-  const { sessionId } = useParams();
+  const { id } = useParams(); // Correctly extract 'id' from URL parameters
   const navigate = useNavigate();
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -16,6 +16,7 @@ const SessionLogDetail = () => {
 
   useEffect(() => {
     const fetchSessionDetail = async () => {
+      console.log('Fetching session detail for sessionId:', id); // Use 'id' here
       try {
         const { data, error } = await supabase
           .from('sessions')
@@ -40,12 +41,33 @@ const SessionLogDetail = () => {
               order
             )
           `)
-          .eq('id', sessionId)
-          .order('order', { foreignTable: 'exercises', ascending: true })
+          .eq('id', id)
           .single();
 
         if (error) {
+          console.error('Error fetching session:', error);
           throw error;
+        }
+        console.log('Session data fetched:', data);
+
+        // Récupérer les informations de l'emploi du temps si schedule_id existe
+        let scheduleData = null;
+        if (data.schedule_id) {
+          try {
+            const { data: schedule, error: scheduleError } = await supabase
+              .from('schedules')
+              .select('id, type, age_category, day, start_time, end_time')
+              .eq('id', data.schedule_id)
+              .single();
+
+            if (!scheduleError && schedule) {
+              scheduleData = schedule;
+            } else if (scheduleError) {
+              console.warn('Schedule not found for id:', data.schedule_id, scheduleError);
+            }
+          } catch (err) {
+            console.warn('Error fetching schedule:', err);
+          }
         }
 
         // Récupérer les informations des membres
@@ -53,13 +75,20 @@ const SessionLogDetail = () => {
           ...(data.instructors || []),
           ...(data.students || [])
         ];
+        console.log('All member IDs for lookup:', allMemberIds);
 
         let membersMap = {};
         if (allMemberIds.length > 0) {
-          const { data: members } = await supabase
+          const { data: members, error: membersError } = await supabase
             .from('members')
             .select('id, first_name, last_name')
             .in('id', allMemberIds);
+
+          if (membersError) {
+            console.error('Error fetching members:', membersError);
+            throw membersError;
+          }
+          console.log('Members data fetched:', members);
 
           membersMap = (members || []).reduce((acc, member) => {
             acc[member.id] = {
@@ -75,11 +104,17 @@ const SessionLogDetail = () => {
         // Récupérer les commentaires par élève pour cette session
         let studentCommentsMap = {};
         if (data.students && data.students.length > 0) {
-          const { data: comments } = await supabase
+          const { data: comments, error: commentsError } = await supabase
             .from('student_session_comments')
             .select('member_id, comment')
-            .eq('session_id', sessionId)
+            .eq('session_id', id) // Use 'id' here
             .in('member_id', data.students);
+
+          if (commentsError) {
+            console.error('Error fetching student comments:', commentsError);
+            throw commentsError;
+          }
+          console.log('Student comments fetched:', comments);
 
           studentCommentsMap = (comments || []).reduce((acc, comment) => {
             acc[comment.member_id] = comment.comment;
@@ -91,13 +126,20 @@ const SessionLogDetail = () => {
         const pedagogySheetIds = (data.exercises || [])
           .map(ex => ex.pedagogy_sheet_id)
           .filter(Boolean);
+        console.log('Pedagogy sheet IDs for lookup:', pedagogySheetIds);
 
         let pedagogySheetsMap = {};
         if (pedagogySheetIds.length > 0) {
-          const { data: sheets } = await supabase
+          const { data: sheets, error: sheetsError } = await supabase
             .from('pedagogy_sheets')
             .select('id, title, sheet_type')
             .in('id', pedagogySheetIds);
+
+          if (sheetsError) {
+            console.error('Error fetching pedagogy sheets:', sheetsError);
+            throw sheetsError;
+          }
+          console.log('Pedagogy sheets fetched:', sheets);
 
           pedagogySheetsMap = (sheets || []).reduce((acc, sheet) => {
             acc[sheet.id] = sheet;
@@ -108,30 +150,35 @@ const SessionLogDetail = () => {
         // Enrichir la session avec les noms des membres et commentaires
         const enrichedSession = {
           ...data,
-          instructorNames: (data.instructors || []).map(id => membersMap[id]?.fullName || `ID: ${id}`),
-          studentNames: (data.students || []).map(id => membersMap[id]?.fullName || `ID: ${id}`),
-          studentsData: (data.students || []).map(id => ({
-            ...(membersMap[id] || { id, fullName: `ID: ${id}`, firstName: '', lastName: '' }),
-            comment: studentCommentsMap[id] || ''
+          schedule: scheduleData,
+          instructorNames: (data.instructors || []).map(memberId => membersMap[memberId]?.fullName || `ID: ${memberId}`),
+          studentNames: (data.students || []).map(memberId => membersMap[memberId]?.fullName || `ID: ${memberId}`),
+          studentsData: (data.students || []).map(memberId => ({
+            ...(membersMap[memberId] || { id: memberId, fullName: `ID: ${memberId}`, firstName: '', lastName: '' }),
+            comment: studentCommentsMap[memberId] || ''
           })),
           exercises: (data.exercises || []).map(ex => ({
             ...ex,
             pedagogy_sheet: ex.pedagogy_sheet_id ? pedagogySheetsMap[ex.pedagogy_sheet_id] : null
           }))
         };
-
+        console.log('Enriched session:', enrichedSession);
         setSession(enrichedSession);
       } catch (err) {
+        console.error('General error in fetchSessionDetail:', err);
         setError(err.message);
       } finally {
         setLoading(false);
       }
     };
 
-    if (sessionId) {
+    if (id) { // Use 'id' here
       fetchSessionDetail();
+    } else {
+      setError('Session ID is missing.');
+      setLoading(false);
     }
-  }, [sessionId]);
+  }, [id]); // Depend on 'id' here
 
   if (loading) {
     return <div className="container mx-auto p-4">Chargement des détails de la séance...</div>;
@@ -149,10 +196,16 @@ const SessionLogDetail = () => {
     <div className="container mx-auto p-4 space-y-6">
       <Helmet title={`Détail de la séance - ${session.date ? new Date(session.date).toLocaleDateString() : 'Sans date'}`} />
 
-      {/* En-tête avec bouton modifier */}
+      {/* En-tête avec boutons retour et modifier */}
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Détail de la séance</h1>
-        <Button onClick={() => navigate(`/session-log/edit/${sessionId}`)}>
+        <div className="flex items-center gap-4">
+          <Button variant="outline" onClick={() => navigate('/session-log')}>
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Retour
+          </Button>
+          <h1 className="text-3xl font-bold">Détail de la séance</h1>
+        </div>
+        <Button onClick={() => navigate(`/session-log/edit/${id}`)}> {/* Use 'id' here */}
           Modifier la séance
         </Button>
       </div>
@@ -199,6 +252,18 @@ const SessionLogDetail = () => {
                   {session.cycles.short_description}
                 </p>
               )}
+            </div>
+          )}
+
+          {/* Emploi du temps */}
+          {session.schedule && (
+            <div className="bg-purple-50 dark:bg-purple-950 border border-purple-200 dark:border-purple-800 rounded-lg p-4">
+              <p className="font-semibold text-purple-900 dark:text-purple-100">
+                Emploi du temps: {session.schedule.type} - {session.schedule.age_category}
+              </p>
+              <p className="text-sm text-purple-700 dark:text-purple-300 mt-1">
+                {session.schedule.day} de {session.schedule.start_time} à {session.schedule.end_time}
+              </p>
             </div>
           )}
 

@@ -20,7 +20,7 @@ const SHEET_TYPES = {
   'review_sheet': 'Fiche de révision'
 };
 
-const MultiSelectCheckbox = ({ title, options, selected, onChange }) => {
+const MultiSelectCheckbox = ({ title, options, selected, onChange, onToggleFilter, isFiltered, canFilter }) => {
   const safeSelected = selected || [];
   const safeOptions = options || [];
 
@@ -34,17 +34,30 @@ const MultiSelectCheckbox = ({ title, options, selected, onChange }) => {
 
   return (
     <div className="space-y-2">
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center gap-2">
         <Label>{title}</Label>
-        <Button type="button" variant="link" size="sm" onClick={handleSelectAll} className="p-0 h-auto">
-          {safeSelected.length === safeOptions.length ? 'Tout désélectionner' : 'Tout sélectionner'}
-        </Button>
+        <div className="flex items-center gap-2">
+          {canFilter && (
+            <Button
+              type="button"
+              variant={isFiltered ? "default" : "outline"}
+              size="sm"
+              onClick={onToggleFilter}
+              className="text-xs h-7 px-2"
+            >
+              {isFiltered ? 'Tous' : 'Filtrer pour ce cours'}
+            </Button>
+          )}
+          <Button type="button" variant="link" size="sm" onClick={handleSelectAll} className="p-0 h-auto text-xs">
+            {safeSelected.length === safeOptions.length ? 'Désél.' : 'Tout'}
+          </Button>
+        </div>
       </div>
       <div className="max-h-40 overflow-y-auto rounded-md border p-2 space-y-2">
-        {safeOptions.map(option => (
-          <div key={option} className="flex items-center space-x-2">
+        {safeOptions.map((option, index) => (
+          <div key={`${title}-${option}-${index}`} className="flex items-center space-x-2">
             <Checkbox
-              id={`${title}-${option}`}
+              id={`${title}-${option}-${index}`}
               checked={safeSelected.includes(option)}
               onCheckedChange={(checked) => {
                 const newSelected = checked
@@ -54,56 +67,10 @@ const MultiSelectCheckbox = ({ title, options, selected, onChange }) => {
               }}
             />
             <label
-              htmlFor={`${title}-${option}`}
+              htmlFor={`${title}-${option}-${index}`}
               className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
             >
               {option}
-            </label>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-};
-
-const MemberMultiSelect = ({ title, members, selectedIds, onChange }) => {
-  const safeSelectedIds = selectedIds || [];
-  const safeMembers = members || [];
-
-  const handleSelectAll = () => {
-    if (safeSelectedIds.length === safeMembers.length) {
-      onChange([]);
-    } else {
-      onChange(safeMembers.map(m => m.id));
-    }
-  };
-
-  return (
-    <div className="space-y-2">
-      <div className="flex justify-between items-center">
-        <Label>{title}</Label>
-        <Button type="button" variant="link" size="sm" onClick={handleSelectAll} className="p-0 h-auto">
-          {safeSelectedIds.length === safeMembers.length ? 'Tout désélectionner' : 'Tout sélectionner'}
-        </Button>
-      </div>
-      <div className="max-h-40 overflow-y-auto rounded-md border p-2 space-y-2">
-        {safeMembers.map(member => (
-          <div key={member.id} className="flex items-center space-x-2">
-            <Checkbox
-              id={`${title}-${member.id}`}
-              checked={safeSelectedIds.includes(member.id)}
-              onCheckedChange={(checked) => {
-                const newSelected = checked
-                  ? [...safeSelectedIds, member.id]
-                  : safeSelectedIds.filter(id => id !== member.id);
-                onChange(newSelected);
-              }}
-            />
-            <label
-              htmlFor={`${title}-${member.id}`}
-              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-            >
-              {member.first_name} {member.last_name}
             </label>
           </div>
         ))}
@@ -196,13 +163,111 @@ const PedagogySheetSelector = ({ onSelect, onCancel }) => {
 };
 
 const SessionForm = ({ session, onSave, onCancel, isSaving }) => {
-  const [formData, setFormData] = useState(
-    session ? {
+  const [allMembers, setAllMembers] = useState([]);
+  const [cycles, setCycles] = useState([]);
+  const [schedules, setSchedules] = useState([]); // New state for schedules
+  const [isSheetSelectorOpen, setIsSheetSelectorOpen] = useState(false);
+  const [importTargetIndex, setImportTargetIndex] = useState(null);
+  const [filterInstructorsBySchedule, setFilterInstructorsBySchedule] = useState(false);
+  const previousScheduleIdRef = React.useRef(null);
+
+  // Fetch all necessary data from Supabase
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Fetch all members
+        const { data: membersData, error: membersError } = await supabase
+          .from('members')
+          .select('id, first_name, last_name, title')
+          .order('last_name')
+          .order('first_name');
+
+        if (membersError) throw membersError;
+        setAllMembers(membersData || []);
+
+        // Fetch cycles
+        const { data: cyclesData, error: cyclesError } = await supabase
+          .from('cycles')
+          .select('id, name, short_description')
+          .order('name');
+
+        if (cyclesError) throw cyclesError;
+        setCycles(cyclesData || []);
+
+        // Fetch schedules with instructors
+        const { data: schedulesData, error: schedulesError } = await supabase
+          .from('schedules')
+          .select(`
+            id,
+            type,
+            age_category,
+            day,
+            start_time,
+            end_time,
+            instructor_1:instructor_1_id(id, first_name, last_name),
+            instructor_2:instructor_2_id(id, first_name, last_name),
+            instructor_3:instructor_3_id(id, first_name, last_name),
+            instructor_4:instructor_4_id(id, first_name, last_name)
+          `)
+          .order('day, start_time');
+
+        if (schedulesError) {
+          console.error('Error fetching schedules:', schedulesError);
+          // Try fetching without instructors as fallback
+          const { data: schedulesSimple, error: schedulesSimpleError } = await supabase
+            .from('schedules')
+            .select('id, type, age_category, day, start_time, end_time')
+            .order('day, start_time');
+
+          if (!schedulesSimpleError) {
+            console.log('Schedules fetched (simple):', schedulesSimple);
+            setSchedules(schedulesSimple || []);
+          }
+        } else {
+          console.log('Schedules fetched (with instructors):', schedulesData);
+          setSchedules(schedulesData || []);
+        }
+
+      } catch (error) {
+        console.error('Error fetching data for SessionForm:', error);
+        // Handle errors appropriately, e.g., show a toast
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const membersMap = useMemo(() => {
+    return allMembers.reduce((acc, member) => {
+      acc[member.id] = {
+        fullName: `${member.first_name} ${member.last_name}`,
+        firstName: member.first_name,
+        lastName: member.last_name,
+        title: member.title
+      };
+      return acc;
+    }, {});
+  }, [allMembers]);
+
+  // This will be computed after formData is initialized
+  const instructorsOptions = allMembers.map(m => `${m.first_name} ${m.last_name}`);
+
+  const lyceeStudentsOptions = useMemo(() => {
+    const names = allMembers
+      .filter(member => member.title === 'Loisir lycée')
+      .map(m => `${m.first_name} ${m.last_name}`);
+    // Use Set to remove duplicates
+    return Array.from(new Set(names));
+  }, [allMembers]);
+
+  // Initialize formData - instructors/students will be set by useEffect when members are loaded
+  const [formData, setFormData] = useState(() => {
+    return session ? {
       ...session,
       date: session.date || '',
       start_time: session.start_time || '18:30',
-      instructors: session.instructors || [],
-      students: session.students || [],
+      instructors: [], // Will be populated by useEffect
+      students: [], // Will be populated by useEffect
       cycle_id: session.cycle_id || null,
       schedule_id: session.schedule_id || null,
       session_objective: session.session_objective || '',
@@ -220,176 +285,103 @@ const SessionForm = ({ session, onSave, onCancel, isSaving }) => {
       equipment: '',
       comment: '',
       exercises: [],
-    }
-  );
-  const [isSheetSelectorOpen, setIsSheetSelectorOpen] = useState(false);
-  const [importTargetIndex, setImportTargetIndex] = useState(null);
-  const [lyceeStudents, setLyceeStudents] = useState([]);
-  const [instructors, setInstructors] = useState([]);
-  const [allInstructors, setAllInstructors] = useState([]); // Tous les encadrants (non filtrés)
-  const [cycles, setCycles] = useState([]);
-  const [schedules, setSchedules] = useState([]);
-  const [isLoadingMembers, setIsLoadingMembers] = useState(true);
-  const [studentComments, setStudentComments] = useState({}); // Commentaires par élève: { member_id: comment }
+    };
+  });
 
-  // Récupérer les étudiants du lycée et les cycles depuis Supabase
+  // Populate instructors/students names when members are loaded
   useEffect(() => {
-    const fetchData = async () => {
-      setIsLoadingMembers(true);
+    if (session && allMembers.length > 0 && formData.instructors.length === 0) {
+      const instructorNames = (session.instructors || [])
+        .map(id => {
+          const member = allMembers.find(m => m.id === id);
+          return member ? `${member.first_name} ${member.last_name}` : null;
+        })
+        .filter(Boolean);
 
-      try {
-        // Récupérer les étudiants
-        const { data: studentMembers, error: studentsError } = await supabase
-          .from('members')
-          .select('id, first_name, last_name')
-          .eq('title', 'Loisir lycée')
-          .order('last_name');
+      const studentNames = (session.students || [])
+        .map(id => {
+          const member = allMembers.find(m => m.id === id);
+          return member ? `${member.first_name} ${member.last_name}` : null;
+        })
+        .filter(Boolean);
 
-        if (studentsError) throw studentsError;
-        setLyceeStudents(studentMembers || []);
+      console.log('Populating instructors from session:', instructorNames);
+      console.log('Populating students from session:', studentNames);
 
-        // Récupérer les encadrants (membres avec titre Bénévole ou Bureau)
-        // Utilise le même filtrage que ScheduleEdit pour avoir les mêmes instructeurs disponibles
-        const { data: instructorMembers, error: instructorsError } = await supabase
-          .from('members')
-          .select('id, first_name, last_name, title')
-          .in('title', ['Bénévole', 'Bureau'])
-          .order('last_name')
-          .order('first_name');
+      setFormData(prev => ({
+        ...prev,
+        instructors: instructorNames,
+        students: studentNames
+      }));
+    }
+  }, [session, allMembers, formData.instructors.length]);
 
-        if (instructorsError) throw instructorsError;
+  // Instructors from selected schedule
+  const scheduleInstructors = useMemo(() => {
+    if (!formData.schedule_id || schedules.length === 0) return [];
+    const selectedSchedule = schedules.find(s => s.id === formData.schedule_id);
+    if (!selectedSchedule) return [];
 
-        console.log('Encadrants récupérés:', instructorMembers);
-        setAllInstructors(instructorMembers || []); // Stocker tous les encadrants
-        setInstructors(instructorMembers || []); // Par défaut, afficher tous
+    const instructorNames = [
+      selectedSchedule.instructor_1,
+      selectedSchedule.instructor_2,
+      selectedSchedule.instructor_3,
+      selectedSchedule.instructor_4
+    ]
+      .filter(Boolean)
+      .map(instructor => `${instructor.first_name} ${instructor.last_name}`);
 
-        // Récupérer les créneaux du planning
-        const { data: schedulesData, error: schedulesError } = await supabase
-          .from('schedule')
-          .select(`
-            *,
-            instructor_1:instructor_1_id(id, first_name, last_name),
-            instructor_2:instructor_2_id(id, first_name, last_name),
-            instructor_3:instructor_3_id(id, first_name, last_name),
-            instructor_4:instructor_4_id(id, first_name, last_name)
-          `)
-          .order('day')
-          .order('start_time');
+    // Use Set to remove duplicates
+    return Array.from(new Set(instructorNames));
+  }, [formData.schedule_id, schedules]);
 
-        if (schedulesError) throw schedulesError;
-        setSchedules(schedulesData || []);
+  // Filter instructors based on toggle state
+  const filteredInstructorsOptions = useMemo(() => {
+    if (filterInstructorsBySchedule && formData.schedule_id && scheduleInstructors.length > 0) {
+      // Show only schedule instructors + already selected ones
+      const combined = [...scheduleInstructors, ...(formData.instructors || [])];
+      return Array.from(new Set(combined));
+    }
+    // Show all instructors
+    return Array.from(new Set(instructorsOptions));
+  }, [instructorsOptions, filterInstructorsBySchedule, formData.schedule_id, scheduleInstructors, formData.instructors]);
 
-        // Récupérer les cycles
-        const { data: cyclesData, error: cyclesError } = await supabase
-          .from('cycles')
-          .select('id, name, short_description')
-          .order('name');
+  // Initial load: just set the previousScheduleIdRef without changing instructors
+  // The instructors are already set from the session data in useState initialization
+  useEffect(() => {
+    if (session?.schedule_id && previousScheduleIdRef.current === null) {
+      previousScheduleIdRef.current = session.schedule_id;
+      console.log('Initial load: Preserving existing instructors from session');
+    }
+  }, [session]);
 
-        if (cyclesError) throw cyclesError;
-        setCycles(cyclesData || []);
+  // Auto-populate instructors and start_time when schedule is selected (only on schedule change)
+  useEffect(() => {
+    if (formData.schedule_id !== previousScheduleIdRef.current) {
+      previousScheduleIdRef.current = formData.schedule_id;
 
-        // Convertir les noms en IDs si nécessaire (migration des anciennes données)
-        if (session) {
-          const convertNamesToIds = (names, members) => {
-            if (!names || names.length === 0) return [];
+      if (formData.schedule_id) {
+        const selectedSchedule = schedules.find(s => s.id === formData.schedule_id);
 
-            // Vérifier si le premier élément est un UUID (format ID) ou un nom (string)
-            const firstItem = names[0];
-            const isUUID = typeof firstItem === 'string' &&
-              /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(firstItem);
-
-            if (isUUID) {
-              // Déjà des IDs, pas besoin de conversion
-              return names;
-            }
-
-            // Convertir les noms en IDs
-            return names.map(name => {
-              const member = members.find(m => `${m.first_name} ${m.last_name}` === name);
-              return member ? member.id : null;
-            }).filter(id => id !== null);
-          };
-
-          const convertedInstructors = convertNamesToIds(session.instructors || [], instructorMembers || []);
-          const convertedStudents = convertNamesToIds(session.students || [], studentMembers || []);
-
-          console.log('Session instructors avant conversion:', session.instructors);
-          console.log('Instructeurs convertis:', convertedInstructors);
-          console.log('Session students avant conversion:', session.students);
-          console.log('Étudiants convertis:', convertedStudents);
-
-          // Mettre à jour formData avec les IDs convertis
+        if (selectedSchedule) {
+          console.log('Schedule changed: Setting instructors', scheduleInstructors);
+          // Update instructors and start_time
           setFormData(prev => ({
             ...prev,
-            instructors: convertedInstructors,
-            students: convertedStudents
+            instructors: scheduleInstructors.length > 0 ? scheduleInstructors : prev.instructors,
+            start_time: selectedSchedule.start_time || prev.start_time
           }));
-
-          // Charger les commentaires des élèves si on édite une session
-          if (session.id) {
-            const { data: commentsData } = await supabase
-              .from('student_session_comments')
-              .select('member_id, comment')
-              .eq('session_id', session.id);
-
-            if (commentsData) {
-              const commentsMap = commentsData.reduce((acc, item) => {
-                acc[item.member_id] = item.comment;
-                return acc;
-              }, {});
-              setStudentComments(commentsMap);
-            }
-          }
         }
-      } catch (error) {
-        console.error('Erreur lors du chargement des données:', error);
-        setLyceeStudents([]);
-        setInstructors([]);
-        setCycles([]);
-      } finally {
-        setIsLoadingMembers(false);
-      }
-    };
-
-    fetchData();
-  }, [session?.id]); // Dépendance sur session.id pour éviter les boucles infinies
-
-  // Filtrer les encadrants et auto-remplir l'heure quand un schedule est sélectionné
-  useEffect(() => {
-    if (formData.schedule_id && schedules.length > 0) {
-      const selectedSchedule = schedules.find(s => s.id === formData.schedule_id);
-      if (selectedSchedule) {
-        // Auto-remplir l'heure de début depuis le schedule
-        const startTime = selectedSchedule.start_time.substring(0, 5);
+      } else {
+        console.log('Schedule cleared: Clearing instructors');
+        // Clear instructors when no schedule is selected
         setFormData(prev => ({
           ...prev,
-          start_time: startTime
+          instructors: []
         }));
-
-        // Récupérer les IDs des encadrants du schedule
-        const scheduleInstructorIds = [
-          selectedSchedule.instructor_1?.id,
-          selectedSchedule.instructor_2?.id,
-          selectedSchedule.instructor_3?.id,
-          selectedSchedule.instructor_4?.id,
-        ].filter(Boolean);
-
-        console.log('Encadrants du schedule sélectionné:', scheduleInstructorIds);
-        console.log('Tous les encadrants disponibles:', allInstructors.map(i => i.id));
-
-        // Filtrer allInstructors pour ne garder que ceux du schedule
-        const filteredInstructors = allInstructors.filter(instructor =>
-          scheduleInstructorIds.includes(instructor.id)
-        );
-
-        console.log('Encadrants filtrés:', filteredInstructors);
-        setInstructors(filteredInstructors);
       }
-    } else {
-      // Pas de schedule sélectionné, afficher tous les encadrants
-      setInstructors(allInstructors);
     }
-  }, [formData.schedule_id, schedules, allInstructors]);
+  }, [formData.schedule_id, scheduleInstructors, schedules]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -466,21 +458,19 @@ const SessionForm = ({ session, onSave, onCancel, isSaving }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    // Convertir les noms complets des encadrants/élèves en leurs IDs respectifs
+    const instructorsIds = formData.instructors.map(name => allMembers.find(m => `${m.first_name} ${m.last_name}` === name)?.id).filter(Boolean);
+    const studentsIds = formData.students.map(name => allMembers.find(m => `${m.first_name} ${m.last_name}` === name)?.id).filter(Boolean);
+
     // Convertir les chaînes vides en null pour éviter les erreurs SQL
     const cleanedData = {
       ...formData,
       date: formData.date || null,
       start_time: formData.start_time || null,
-      studentComments, // Ajouter les commentaires des élèves
+      instructors: instructorsIds,
+      students: studentsIds,
     };
     onSave(cleanedData);
-  };
-
-  const handleStudentCommentChange = (memberId, comment) => {
-    setStudentComments(prev => ({
-      ...prev,
-      [memberId]: comment
-    }));
   };
 
   return (
@@ -491,32 +481,62 @@ const SessionForm = ({ session, onSave, onCancel, isSaving }) => {
             <CardTitle>{session ? 'Modifier la séance' : 'Ajouter une nouvelle séance'}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            {/* Sélection du créneau en premier */}
-            <div className="grid md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="schedule_id">Créneau du planning</Label>
-                <Select
-                  value={formData.schedule_id || ''}
-                  onValueChange={(value) => setFormData(prev => ({ ...prev, schedule_id: value || null }))}
-                >
-                  <SelectTrigger id="schedule_id">
-                    <SelectValue placeholder="Sélectionner un créneau (optionnel)" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="">Aucun créneau</SelectItem>
-                    {schedules.map((schedule) => (
-                      <SelectItem key={schedule.id} value={schedule.id}>
-                        {schedule.day} - {schedule.start_time.substring(0, 5)} - {schedule.age_category} ({schedule.type})
+            {/* Emploi du temps en premier */}
+            <div className="space-y-2">
+              <Label htmlFor="schedule_id">Emploi du temps associé</Label>
+              <Select
+                value={formData.schedule_id ? formData.schedule_id.toString() : ''}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, schedule_id: value ? parseInt(value) : null }))}
+              >
+                <SelectTrigger id="schedule_id">
+                  <SelectValue placeholder="Sélectionner un emploi du temps (optionnel)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Aucun emploi du temps</SelectItem>
+                  {schedules.length === 0 ? (
+                    <SelectItem value="none" disabled>Aucun emploi du temps disponible</SelectItem>
+                  ) : (
+                    schedules.map((schedule) => (
+                      <SelectItem key={schedule.id} value={schedule.id.toString()}>
+                        {schedule.type} / {schedule.age_category} / {schedule.day} / {schedule.start_time}
                       </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {formData.schedule_id && (
-                  <p className="text-sm text-muted-foreground mt-1">
-                    💡 Les encadrants sont filtrés selon ce créneau et l'heure est auto-remplie
-                  </p>
-                )}
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+              {formData.schedule_id && session?.schedule && (
+                <p className="text-sm text-muted-foreground mt-1">
+                  Emploi du temps actuel: {session.schedule.type} / {session.schedule.age_category} / {session.schedule.day} / {session.schedule.start_time}
+                </p>
+              )}
+            </div>
+
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="date">Date du cours (optionnel)</Label>
+                <Input id="date" name="date" type="date" value={formData.date} onChange={handleChange} />
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="start_time">Heure de début</Label>
+                <Input id="start_time" name="start_time" type="time" value={formData.start_time} onChange={handleChange} />
+              </div>
+              <MultiSelectCheckbox
+                title="Encadrants"
+                options={filteredInstructorsOptions}
+                selected={formData.instructors}
+                onChange={(value) => handleMultiSelectChange('instructors', value)}
+                onToggleFilter={() => setFilterInstructorsBySchedule(!filterInstructorsBySchedule)}
+                isFiltered={filterInstructorsBySchedule}
+                canFilter={formData.schedule_id && scheduleInstructors.length > 0}
+              />
+              <MultiSelectCheckbox
+                title="Élèves présents"
+                options={lyceeStudentsOptions}
+                selected={formData.students}
+                onChange={(value) => handleMultiSelectChange('students', value)}
+              />
+            </div>
+            <div className="grid md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="cycle_id">Cycle associé</Label>
                 <Select
@@ -543,77 +563,20 @@ const SessionForm = ({ session, onSave, onCancel, isSaving }) => {
                 )}
               </div>
             </div>
-
-            {/* Date, heure et membres */}
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="date">Date du cours (optionnel)</Label>
-                <Input id="date" name="date" type="date" value={formData.date} onChange={handleChange} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="start_time">Heure de début</Label>
-                <Input id="start_time" name="start_time" type="time" value={formData.start_time} onChange={handleChange} />
-              </div>
-              <MemberMultiSelect
-                title="Encadrants"
-                members={instructors}
-                selectedIds={formData.instructors}
-                onChange={(value) => handleMultiSelectChange('instructors', value)}
-              />
-              <MemberMultiSelect
-                title="Élèves présents"
-                members={lyceeStudents}
-                selectedIds={formData.students}
-                onChange={(value) => handleMultiSelectChange('students', value)}
-              />
+            <div className="space-y-2">
+              <Label htmlFor="session_objective">Objectif de séance</Label>
+              <Textarea id="session_objective" name="session_objective" value={formData.session_objective} onChange={handleChange} />
             </div>
             <div className="grid md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="session_objective">Objectif de séance</Label>
-                <Textarea id="session_objective" name="session_objective" value={formData.session_objective} onChange={handleChange} />
-              </div>
               <div className="space-y-2">
                 <Label htmlFor="equipment">Matériel</Label>
                 <Textarea id="equipment" name="equipment" value={formData.equipment} onChange={handleChange} />
               </div>
-            </div>
-            <div className="grid md:grid-cols-1 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="comment">Commentaire</Label>
                 <Textarea id="comment" name="comment" value={formData.comment} onChange={handleChange} />
               </div>
             </div>
-
-            {/* Commentaires individuels par élève */}
-            {formData.students && formData.students.length > 0 && (
-              <div className="space-y-2">
-                <Label className="text-base font-semibold">Commentaires par élève ({formData.students.length} élève{formData.students.length > 1 ? 's' : ''})</Label>
-                <div className="space-y-3 border rounded-lg p-4 bg-muted/30">
-                  {formData.students.map((studentId) => {
-                    const student = lyceeStudents.find(s => s.id === studentId);
-                    if (!student) return null;
-                    return (
-                      <div key={studentId} className="space-y-1">
-                        <Label htmlFor={`comment-${studentId}`} className="text-sm font-medium">
-                          {student.first_name} {student.last_name}
-                        </Label>
-                        <Textarea
-                          id={`comment-${studentId}`}
-                          placeholder="Ajouter un commentaire pour cet élève..."
-                          value={studentComments[studentId] || ''}
-                          onChange={(e) => handleStudentCommentChange(studentId, e.target.value)}
-                          rows={2}
-                          className="text-sm"
-                        />
-                      </div>
-                    );
-                  })}
-                </div>
-                <p className="text-xs text-muted-foreground mt-2">
-                  💡 Ces commentaires sont spécifiques à chaque élève pour cette séance
-                </p>
-              </div>
-            )}
 
             <div>
               <h3 className="text-lg font-medium mb-2">Déroulé de la séance</h3>

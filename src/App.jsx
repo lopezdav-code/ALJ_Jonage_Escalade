@@ -17,6 +17,7 @@ import Contact from '@/pages/Contact';
 // Pages chargées paresseusement (code-splitting)
 const SessionLog = lazy(() => import('@/pages/SessionLog'));
 const SessionEdit = lazy(() => import('@/pages/SessionEdit'));
+const SessionLogDetail = lazy(() => import('@/pages/SessionLogDetail'));
 const CycleManagement = lazy(() => import('@/pages/CycleManagement'));
 const CycleDetail = lazy(() => import('@/pages/CycleDetail'));
 const Pedagogy = lazy(() => import('@/pages/Pedagogy'));
@@ -30,6 +31,7 @@ const Setup = lazy(() => import('@/pages/Setup'));
 const InscriptionsSummary = lazy(() => import('@/pages/InscriptionsSummary'));
 const CompetitionsSummary = lazy(() => import('@/pages/CompetitionsSummary'));
 const CompetitionEditor = lazy(() => import('@/pages/CompetitionEditor'));
+const CompetitionDetail = lazy(() => import('@/pages/CompetitionDetail'));
 const ConnectionLogs = lazy(() => import('@/pages/ConnectionLogs'));
 const AccessLogs = lazy(() => import('@/pages/AccessLogs'));
 const CompetitionParticipants = lazy(() => import('@/pages/CompetitionParticipants'));
@@ -88,6 +90,7 @@ const AppContent = () => {
           <Route path="/news/new" element={<LazyRoute><NewsEdit /></LazyRoute>} /> {/* Route for creating new news */}
           <Route path="/news/edit/:id" element={<LazyRoute><NewsEdit /></LazyRoute>} /> {/* Route for editing existing news */}
           <Route path="/competitions" element={<Competitions />} />
+          <Route path="/competitions/detail/:id" element={<LazyRoute><CompetitionDetail /></LazyRoute>} />
           <Route path="/competitions/new" element={<LazyRoute><CompetitionEditor /></LazyRoute>} />
           <Route path="/competitions/edit/:id" element={<LazyRoute><CompetitionEditor /></LazyRoute>} />
           <Route path="/competitions/participants/:id" element={<LazyRoute><CompetitionParticipants /></LazyRoute>} />
@@ -98,6 +101,7 @@ const AppContent = () => {
           <Route path="/agenda" element={<Agenda />} />
           <Route path="/schedule" element={<Schedule />} />
           <Route path="/session-log" element={<LazyRoute><SessionLog /></LazyRoute>} />
+          <Route path="/session-log/:id" element={<LazyRoute><SessionLogDetail /></LazyRoute>} /> {/* Route for viewing a specific session log detail */}
           <Route path="/session-log/new" element={<LazyRoute><SessionEdit /></LazyRoute>} />
           <Route path="/session-log/edit/:id" element={<LazyRoute><SessionEdit /></LazyRoute>} />
           <Route path="/cycles" element={<LazyRoute><CycleManagement /></LazyRoute>} />

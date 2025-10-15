@@ -33,7 +33,20 @@ const SessionEdit = () => {
       .from('sessions')
       .select(`
         *,
-        exercises (*),
+        exercises (
+          id,
+          operational_objective,
+          situation,
+          organisation,
+          consigne,
+          time,
+          success_criteria,
+          regulation,
+          support_link,
+          image_url,
+          pedagogy_sheet_id,
+          order
+        ),
         cycles (
           id,
           name,
@@ -41,7 +54,6 @@ const SessionEdit = () => {
         )
       `)
       .eq('id', id)
-      .order('order', { foreignTable: 'exercises', ascending: true })
       .single();
 
     if (error) {
@@ -52,8 +64,29 @@ const SessionEdit = () => {
       });
       navigate('/session-log');
     } else {
+      // Récupérer les informations de l'emploi du temps si schedule_id existe
+      let scheduleData = null;
+      if (data.schedule_id) {
+        try {
+          const { data: schedule, error: scheduleError } = await supabase
+            .from('schedules')
+            .select('id, type, age_category, day, start_time, end_time')
+            .eq('id', data.schedule_id)
+            .single();
+
+          if (!scheduleError && schedule) {
+            scheduleData = schedule;
+          } else if (scheduleError) {
+            console.warn('Schedule not found for id:', data.schedule_id, scheduleError);
+          }
+        } catch (err) {
+          console.warn('Error fetching schedule:', err);
+        }
+      }
+
       setSession({
         ...data,
+        schedule: scheduleData,
         start_time: data.start_time ? data.start_time.substring(0, 5) : '18:30'
       });
     }
@@ -103,8 +136,8 @@ const SessionEdit = () => {
       );
 
       // Nettoyer les données : convertir les chaînes vides en null
-      // Exclure les champs calculés (instructorNames, studentNames, studentComments) qui ne doivent pas être sauvegardés
-      const { cycles, instructorNames, studentNames, ...rawSessionInfo } = sessionInfo;
+      // Exclure les champs calculés (instructorNames, studentNames, studentComments, schedule, cycles) qui ne doivent pas être sauvegardés
+      const { cycles, schedule, instructorNames, studentNames, ...rawSessionInfo } = sessionInfo;
       const filteredSessionInfo = Object.entries(rawSessionInfo).reduce((acc, [key, value]) => {
         acc[key] = value === '' ? null : value;
         return acc;

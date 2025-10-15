@@ -41,7 +41,7 @@ const SessionList = ({ sessions, onEdit, onDelete, isAdmin }) => {
                 navigate(`/session-log/${session.id}`);
               }}>
               <div className="flex justify-between w-full pr-4 items-center">
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 flex-wrap">
                   <span className="font-semibold">
                     {session.date
                       ? `${new Date(session.date).toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' })} - ${session.start_time}`
@@ -50,6 +50,11 @@ const SessionList = ({ sessions, onEdit, onDelete, isAdmin }) => {
                   {session.cycles && (
                     <Badge variant="outline" className="text-xs px-2 py-1 border-blue-500 text-blue-700">
                       Cycle: {session.cycles.name}
+                    </Badge>
+                  )}
+                  {session.schedule && (
+                    <Badge variant="outline" className="text-xs px-2 py-1 border-purple-500 text-purple-700">
+                      {session.schedule.type} - {session.schedule.age_category}
                     </Badge>
                   )}
                 </div>
@@ -69,6 +74,16 @@ const SessionList = ({ sessions, onEdit, onDelete, isAdmin }) => {
                   {session.cycles.short_description && (
                     <p className="text-sm text-blue-700 mt-1">{session.cycles.short_description}</p>
                   )}
+                </div>
+              )}
+              {session.schedule && (
+                <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 mb-4">
+                  <p className="font-semibold text-purple-900">
+                    Emploi du temps: {session.schedule.type} - {session.schedule.age_category}
+                  </p>
+                  <p className="text-sm text-purple-700 mt-1">
+                    {session.schedule.day} de {session.schedule.start_time} à {session.schedule.end_time}
+                  </p>
                 </div>
               )}
               <p><strong>Objectif de séance:</strong> {session.session_objective}</p>
