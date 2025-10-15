@@ -46,6 +46,7 @@ const CompetitionDetail = () => {
   const natureOptions = ['Contest', 'Open', 'Coupe', 'Championnat'];
   const disciplineOptions = ['Bloc', 'Difficulté', 'Vitesse', 'Combiné'];
   const categoryOptions = ['U11', 'U13', 'U15', 'U17', 'U19', 'Sénior', 'Vétéran'];
+  const statusOptions = ['À venir', 'En cours', 'Clos'];
 
   // Charger la compétition et ses participants
   const fetchCompetition = useCallback(async () => {
@@ -309,6 +310,42 @@ const CompetitionDetail = () => {
     return colors[niveau] || 'bg-gray-100 text-gray-700 border-gray-200';
   };
 
+  const getStatusColor = (status) => {
+    const colors = {
+      'À venir': 'bg-blue-100 text-blue-700 border-blue-300',
+      'En cours': 'bg-green-100 text-green-700 border-green-300',
+      'Clos': 'bg-gray-100 text-gray-700 border-gray-300'
+    };
+    return colors[status] || 'bg-gray-100 text-gray-700 border-gray-200';
+  };
+
+  const handleStatusChange = async (newStatus) => {
+    try {
+      const { error } = await supabase
+        .from('competitions')
+        .update({ status: newStatus })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      setCompetition(prev => ({ ...prev, status: newStatus }));
+      setFormData(prev => ({ ...prev, status: newStatus }));
+
+      toast({
+        title: "Statut modifié",
+        description: `Le statut de la compétition a été changé en "${newStatus}".`,
+        variant: "default"
+      });
+    } catch (error) {
+      console.error('Erreur lors de la modification du statut:', error);
+      toast({
+        title: "Erreur",
+        description: `Impossible de modifier le statut: ${error.message}`,
+        variant: "destructive"
+      });
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center py-16">
@@ -356,6 +393,40 @@ const CompetitionDetail = () => {
           )}
         </div>
       </div>
+
+      {/* Statut de la compétition */}
+      <Card className="border-2">
+        <CardContent className="pt-6">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <Settings className="w-5 h-5 text-muted-foreground" />
+              <span className="font-medium">Statut de la compétition:</span>
+              <Badge
+                variant="outline"
+                className={`text-base px-4 py-1 ${getStatusColor(dataToDisplay.status || 'À venir')}`}
+              >
+                {dataToDisplay.status || 'À venir'}
+              </Badge>
+            </div>
+            <div className="flex items-center gap-2">
+              <Label htmlFor="status-select" className="text-sm text-muted-foreground">Changer le statut:</Label>
+              <Select
+                value={dataToDisplay.status || 'À venir'}
+                onValueChange={handleStatusChange}
+              >
+                <SelectTrigger id="status-select" className="w-[160px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {statusOptions.map(status => (
+                    <SelectItem key={status} value={status}>{status}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Image et titre principal */}
       <Card>

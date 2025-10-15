@@ -9,6 +9,7 @@ const CompetitionFilters = ({ filters, onFilterChange, onClearFilters }) => {
   const niveaux = ['Tous', 'Départemental', 'Régional', 'National'];
   const natures = ['Toutes', 'Contest', 'Open', 'Coupe', 'Championnat'];
   const disciplines = ['Toutes', 'Bloc', 'Difficulté', 'Vitesse', 'Combiné'];
+  const statuts = ['Tous', 'À venir', 'En cours', 'Clos'];
 
   const handleChange = (field, value) => {
     onFilterChange({ ...filters, [field]: value === 'Tous' || value === 'Toutes' ? '' : value });
@@ -36,7 +37,7 @@ const CompetitionFilters = ({ filters, onFilterChange, onClearFilters }) => {
         )}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         {/* Recherche textuelle */}
         <div className="space-y-2">
           <Label htmlFor="search">Rechercher</Label>
@@ -51,6 +52,24 @@ const CompetitionFilters = ({ filters, onFilterChange, onClearFilters }) => {
               className="pl-9"
             />
           </div>
+        </div>
+
+        {/* Filtre par statut */}
+        <div className="space-y-2">
+          <Label htmlFor="status">Statut</Label>
+          <Select
+            value={filters.status || 'Tous'}
+            onValueChange={(value) => handleChange('status', value)}
+          >
+            <SelectTrigger id="status">
+              <SelectValue placeholder="Tous" />
+            </SelectTrigger>
+            <SelectContent>
+              {statuts.map(statut => (
+                <SelectItem key={statut} value={statut}>{statut}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Filtre par niveau */}

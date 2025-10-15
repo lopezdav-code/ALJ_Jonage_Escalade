@@ -14,6 +14,7 @@ const ClubCompetitions = () => {
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
     search: '',
+    status: '',
     niveau: '',
     nature: '',
     discipline: ''
@@ -88,6 +89,11 @@ const ClubCompetitions = () => {
       );
     }
 
+    // Filtre par statut
+    if (filters.status) {
+      filtered = filtered.filter(comp => comp.status === filters.status);
+    }
+
     // Filtre par niveau
     if (filters.niveau) {
       filtered = filtered.filter(comp => comp.niveau === filters.niveau);
@@ -142,6 +148,15 @@ const ClubCompetitions = () => {
     return colors[niveau] || 'bg-gray-100 text-gray-700 border-gray-200';
   };
 
+  const getStatusColor = (status) => {
+    const colors = {
+      'À venir': 'bg-blue-100 text-blue-700 border-blue-200',
+      'En cours': 'bg-green-100 text-green-700 border-green-200',
+      'Clos': 'bg-gray-100 text-gray-700 border-gray-200'
+    };
+    return colors[status] || 'bg-gray-100 text-gray-700 border-gray-200';
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center py-16">
@@ -173,13 +188,13 @@ const ClubCompetitions = () => {
       <CompetitionFilters
         filters={filters}
         onFilterChange={setFilters}
-        onClearFilters={() => setFilters({ search: '', niveau: '', nature: '', discipline: '' })}
+        onClearFilters={() => setFilters({ search: '', status: '', niveau: '', nature: '', discipline: '' })}
       />
 
       {/* Tableau */}
       {filteredCompetitions.length === 0 ? (
         <div className="text-center py-16 text-muted-foreground">
-          {filters.search || filters.niveau || filters.nature || filters.discipline
+          {filters.search || filters.status || filters.niveau || filters.nature || filters.discipline
             ? 'Aucune compétition ne correspond aux filtres.'
             : 'Aucune compétition pour le moment.'}
         </div>
@@ -192,6 +207,7 @@ const ClubCompetitions = () => {
                 <TableHead>Nom</TableHead>
                 <TableHead>Titre court</TableHead>
                 <TableHead>Date</TableHead>
+                <TableHead>Statut</TableHead>
                 <TableHead>Info</TableHead>
                 <TableHead className="w-32 text-center">Compétiteurs</TableHead>
                 <TableHead className="w-32 text-center">Actions</TableHead>
@@ -244,6 +260,14 @@ const ClubCompetitions = () => {
                         </>
                       )}
                     </div>
+                  </TableCell>
+
+                  <TableCell>
+                    {comp.status && (
+                      <Badge variant="outline" className={`text-xs ${getStatusColor(comp.status)}`}>
+                        {comp.status}
+                      </Badge>
+                    )}
                   </TableCell>
 
                   <TableCell>
