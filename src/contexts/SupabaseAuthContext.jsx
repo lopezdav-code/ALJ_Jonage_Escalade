@@ -133,27 +133,37 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     let isMounted = true;
-    
-    // Timeout de sécurité pour éviter les chargements infinis
-    const loadingTimeout = setTimeout(() => {
-      if (isMounted && loading) {
-        console.warn('Auth loading timeout - forcing completion');
-        setLoading(false);
-      }
-    }, 10000); // 10 secondes max
-    
+    let loadingTimeoutId = null;
+
     const getSession = async () => {
       try {
+        // Timeout de sécurité pour éviter les chargements infinis
+        loadingTimeoutId = setTimeout(() => {
+          if (isMounted) {
+            console.warn('Auth loading timeout - forcing completion');
+            setLoading(false);
+          }
+        }, 5000); // 5 secondes max
+
         const { data: { session }, error } = await supabase.auth.getSession();
         if (error) {
           console.error('Error getting session:', error);
         }
         if (isMounted) {
+          // Nettoyer le timeout si la session est récupérée avant
+          if (loadingTimeoutId) {
+            clearTimeout(loadingTimeoutId);
+            loadingTimeoutId = null;
+          }
           await handleSession(session);
         }
       } catch (error) {
         console.error('Error in getSession:', error);
         if (isMounted) {
+          if (loadingTimeoutId) {
+            clearTimeout(loadingTimeoutId);
+            loadingTimeoutId = null;
+          }
           setLoading(false);
         }
       }
@@ -173,10 +183,12 @@ export const AuthProvider = ({ children }) => {
 
     return () => {
       isMounted = false;
-      clearTimeout(loadingTimeout);
+      if (loadingTimeoutId) {
+        clearTimeout(loadingTimeoutId);
+      }
       subscription.unsubscribe();
     }
-  }, [handleSession, loading]);
+  }, [handleSession]);
 
   const signUp = useCallback(async (email, password, options) => {
     const { data, error } = await supabase.auth.signUp({
