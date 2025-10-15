@@ -30,7 +30,7 @@ const Schedule = () => {
       setLoading(true);
       try {
         const { data: scheduleRows, error } = await supabase
-          .from('schedule')
+          .from('schedules')
           .select(`
             *,
             instructor_1:instructor_1_id(id, first_name, last_name),

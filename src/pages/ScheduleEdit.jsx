@@ -98,7 +98,7 @@ const ScheduleEdit = () => {
     setLoading(true);
     try {
       const { data, error } = await supabase
-        .from('schedule')
+        .from('schedules')
         .select('*')
         .eq('id', id)
         .single();
@@ -160,7 +160,7 @@ const ScheduleEdit = () => {
       if (id) {
         // Mise à jour
         const { error } = await supabase
-          .from('schedule')
+          .from('schedules')
           .update(dataToSave)
           .eq('id', id);
 
@@ -173,7 +173,7 @@ const ScheduleEdit = () => {
       } else {
         // Création
         const { error } = await supabase
-          .from('schedule')
+          .from('schedules')
           .insert([dataToSave]);
 
         if (error) throw error;
