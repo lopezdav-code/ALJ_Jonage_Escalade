@@ -1,4 +1,3 @@
-
 import React, { useState, Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Helmet } from '@/components/ui/helmet';
@@ -17,9 +16,11 @@ import Contact from '@/pages/Contact';
 
 // Pages chargées paresseusement (code-splitting)
 const SessionLog = lazy(() => import('@/pages/SessionLog'));
+const SessionEdit = lazy(() => import('@/pages/SessionEdit'));
 const CycleManagement = lazy(() => import('@/pages/CycleManagement'));
 const CycleDetail = lazy(() => import('@/pages/CycleDetail'));
 const Pedagogy = lazy(() => import('@/pages/Pedagogy'));
+const PedagogyEditor = lazy(() => import('@/pages/PedagogyEditor'));
 const SiteSettings = lazy(() => import('@/pages/SiteSettings'));
 const AnnualSummary = lazy(() => import('@/pages/AnnualSummary'));
 const AdminManagement = lazy(() => import('@/pages/AdminManagement'));
@@ -29,6 +30,7 @@ const Setup = lazy(() => import('@/pages/Setup'));
 const InscriptionsSummary = lazy(() => import('@/pages/InscriptionsSummary'));
 const CompetitionsSummary = lazy(() => import('@/pages/CompetitionsSummary'));
 const CompetitionEditor = lazy(() => import('@/pages/CompetitionEditor'));
+const CompetitionDetail = lazy(() => import('@/pages/CompetitionDetail'));
 const ConnectionLogs = lazy(() => import('@/pages/ConnectionLogs'));
 const AccessLogs = lazy(() => import('@/pages/AccessLogs'));
 const CompetitionParticipants = lazy(() => import('@/pages/CompetitionParticipants'));
@@ -37,6 +39,8 @@ const PasseportViewer = lazy(() => import('@/pages/PasseportViewer'));
 const PasseportGuide = lazy(() => import('@/pages/PasseportGuide'));
 const TestImages = lazy(() => import('@/pages/TestImages'));
 const MemberEdit = lazy(() => import('@/pages/MemberEdit'));
+const NewsEdit = lazy(() => import('@/pages/news_edit')); // Import NewsEdit
+
 import { AuthProvider, useAuth } from '@/contexts/SupabaseAuthContext';
 import { ConfigProvider } from '@/contexts/ConfigContext';
 import { MemberDetailProvider, useMemberDetail } from '@/contexts/MemberDetailContext';
@@ -82,9 +86,12 @@ const AppContent = () => {
           <Route path="/" element={<News />} />
           <Route path="/news" element={<News />} />
           <Route path="/news/:id" element={<NewsDetail />} />
+          <Route path="/news/new" element={<LazyRoute><NewsEdit /></LazyRoute>} /> {/* Route for creating new news */}
+          <Route path="/news/edit/:id" element={<LazyRoute><NewsEdit /></LazyRoute>} /> {/* Route for editing existing news */}
           <Route path="/competitions" element={<Competitions />} />
           <Route path="/competitions/new" element={<LazyRoute><CompetitionEditor /></LazyRoute>} />
           <Route path="/competitions/edit/:id" element={<LazyRoute><CompetitionEditor /></LazyRoute>} />
+          <Route path="/competitions/detail/:id" element={<LazyRoute><CompetitionDetail /></LazyRoute>} />
           <Route path="/competitions/participants/:id" element={<LazyRoute><CompetitionParticipants /></LazyRoute>} />
           <Route path="/competitions-summary" element={<LazyRoute><CompetitionsSummary /></LazyRoute>} />
           <Route path="/inscriptions-summary" element={<LazyRoute><InscriptionsSummary /></LazyRoute>} />
@@ -93,9 +100,13 @@ const AppContent = () => {
           <Route path="/agenda" element={<Agenda />} />
           <Route path="/schedule" element={<Schedule />} />
           <Route path="/session-log" element={<LazyRoute><SessionLog /></LazyRoute>} />
+          <Route path="/session-log/new" element={<LazyRoute><SessionEdit /></LazyRoute>} />
+          <Route path="/session-log/edit/:id" element={<LazyRoute><SessionEdit /></LazyRoute>} />
           <Route path="/cycles" element={<LazyRoute><CycleManagement /></LazyRoute>} />
           <Route path="/cycles/:id" element={<LazyRoute><CycleDetail /></LazyRoute>} />
           <Route path="/pedagogy" element={<LazyRoute><Pedagogy /></LazyRoute>} />
+          <Route path="/pedagogy/new" element={<LazyRoute><PedagogyEditor /></LazyRoute>} />
+          <Route path="/pedagogy/edit/:id" element={<LazyRoute><PedagogyEditor /></LazyRoute>} />
           <Route path="/inscriptions" element={<LazyRoute><Inscriptions /></LazyRoute>} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/site-settings" element={<LazyRoute><SiteSettings /></LazyRoute>} />

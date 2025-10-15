@@ -7,7 +7,6 @@ import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -15,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 const BUCKET_NAME = 'pedagogy_files';
 const CATEGORIES = ["Sécurité", "Noeud", "Secours", "Manip", "Information"];
@@ -72,221 +71,51 @@ const TAB_CONFIG = {
   }
 };
 
-const SheetForm = ({ sheet, onSave, onCancel, isSaving, existingThemes }) => {
-  const [formData, setFormData] = useState(sheet || { title: '', description: '', type: 'video_url', url: '', structure: 'SAE', categories: [], sheet_type: 'warm_up_exercise' });
-  const [file, setFile] = useState(null);
+// Fonction pour obtenir l'URL signée d'un fichier
+const getSignedUrl = async (fileNameOrUrl) => {
+  if (!fileNameOrUrl) return null;
 
-  useEffect(() => {
-    if (sheet) {
-      setFormData({
-        ...sheet,
-        categories: sheet.categories || [],
-        sheet_type: sheet.sheet_type || 'warm_up_exercise',
-      });
+  try {
+    // Si c'est déjà une URL complète, on l'utilise directement
+    if (fileNameOrUrl.startsWith('http://') || fileNameOrUrl.startsWith('https://')) {
+      return fileNameOrUrl;
     }
-  }, [sheet]);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
+    // Sinon, générer une URL signée depuis le nom du fichier
+    const { data, error } = await supabase.storage
+      .from(BUCKET_NAME)
+      .createSignedUrl(fileNameOrUrl, 3600); // URL valide 1 heure
 
-  const handleTypeChange = (value) => {
-    setFormData(prev => ({ ...prev, type: value, url: '' }));
-    setFile(null);
-  };
-  
-  const handleStructureChange = (value) => {
-    setFormData(prev => ({ ...prev, structure: value }));
-  };
-
-  const handleSheetTypeChange = (value) => {
-    setFormData(prev => ({ ...prev, sheet_type: value }));
-  };
-
-  const handleCategoryChange = (category) => {
-    setFormData(prev => {
-      const currentCategories = prev.categories || [];
-      const newCategories = currentCategories.includes(category)
-        ? currentCategories.filter(c => c !== category)
-        : [...currentCategories, category];
-      return { ...prev, categories: newCategories };
-    });
-  };
-
-  const handleFileChange = (e) => {
-    if (e.target.files && e.target.files[0]) {
-      setFile(e.target.files[0]);
-    }
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onSave(formData, file);
-  };
-
-  const isUrlType = formData.type === 'video_url' || formData.type === 'document_url';
-  const isFileType = formData.type === 'image_file' || formData.type === 'document_file';
-  const isGameType = formData.sheet_type === 'educational_game';
-
-  return (
-    <Dialog open={true} onOpenChange={onCancel}>
-      <DialogContent className="sm:max-w-3xl">
-        <form onSubmit={handleSubmit}>
-          <DialogHeader>
-            <DialogTitle>{sheet ? 'Modifier la fiche' : 'Ajouter une fiche pédagogique'}</DialogTitle>
-            <DialogDescription>Remplissez les informations ci-dessous.</DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4 max-h-[70vh] overflow-y-auto pr-6">
-            <div className="space-y-2">
-              <Label htmlFor="title">Titre</Label>
-              <Input id="title" name="title" value={formData.title} onChange={handleChange} required />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="sheet_type">Type de Fiche</Label>
-              <Select value={formData.sheet_type} onValueChange={handleSheetTypeChange}>
-                <SelectTrigger id="sheet_type">
-                  <SelectValue placeholder="Sélectionner un type de fiche" />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(SHEET_TYPES).map(([key, value]) => (
-                    <SelectItem key={key} value={key}>{value}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="type">Type de Média</Label>
-              <Select value={formData.type} onValueChange={handleTypeChange}>
-                <SelectTrigger id="type">
-                  <SelectValue placeholder="Sélectionner un type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="video_url">Vidéo (URL)</SelectItem>
-                  <SelectItem value="image_file">Image (Fichier)</SelectItem>
-                  <SelectItem value="document_file">Document (Fichier)</SelectItem>
-                  <SelectItem value="document_url">Document (URL)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {isGameType ? (
-              <>
-                <div className="space-y-2">
-                  <Label htmlFor="theme">Thème</Label>
-                  <Input 
-                    id="theme" 
-                    name="theme" 
-                    value={formData.theme || ''} 
-                    onChange={handleChange} 
-                    list="existing-themes"
-                    placeholder="Choisir ou créer un thème"
-                  />
-                  <datalist id="existing-themes">
-                    {existingThemes.map(theme => <option key={theme} value={theme} />)}
-                  </datalist>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="starting_situation">Situation de départ</Label>
-                  <Textarea id="starting_situation" name="starting_situation" value={formData.starting_situation || ''} onChange={handleChange} />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="game_goal">But du jeu</Label>
-                  <Textarea id="game_goal" name="game_goal" value={formData.game_goal || ''} onChange={handleChange} />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="evolution">Évolution</Label>
-                  <Textarea id="evolution" name="evolution" value={formData.evolution || ''} onChange={handleChange} />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="skill_to_develop">Capacité à développer</Label>
-                  <Textarea id="skill_to_develop" name="skill_to_develop" value={formData.skill_to_develop || ''} onChange={handleChange} />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="success_criteria">Critères de réussite</Label>
-                  <Textarea id="success_criteria" name="success_criteria" value={formData.success_criteria || ''} onChange={handleChange} />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="remarks">Remarques</Label>
-                  <Textarea id="remarks" name="remarks" value={formData.remarks || ''} onChange={handleChange} />
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="space-y-2">
-                  <Label htmlFor="description">Description</Label>
-                  <Textarea id="description" name="description" value={formData.description || ''} onChange={handleChange} />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="structure">Structure</Label>
-                    <Select value={formData.structure || 'SAE'} onValueChange={handleStructureChange}>
-                      <SelectTrigger id="structure">
-                        <SelectValue placeholder="Sélectionner une structure" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="SAE">SAE</SelectItem>
-                        <SelectItem value="SNE">SNE</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label>Catégories</Label>
-                  <div className="flex flex-wrap gap-4">
-                    {CATEGORIES.map(category => (
-                      <div key={category} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={`category-${category}`}
-                          checked={(formData.categories || []).includes(category)}
-                          onCheckedChange={() => handleCategoryChange(category)}
-                        />
-                        <Label htmlFor={`category-${category}`} className="font-normal">{category}</Label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </>
-            )}
-
-            {isUrlType ? (
-              <div className="space-y-2">
-                <Label htmlFor="url">URL du média</Label>
-                <Input id="url" name="url" value={formData.url} onChange={handleChange} placeholder="https://example.com/..." required />
-              </div>
-            ) : isFileType ? (
-              <div className="space-y-2">
-                <Label htmlFor="file-upload">Fichier</Label>
-                <div className="flex items-center justify-center w-full">
-                    <Label htmlFor="file-upload" className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-muted/50 hover:bg-muted/80">
-                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                            <UploadCloud className="w-10 h-10 mb-3 text-muted-foreground" />
-                            <p className="mb-2 text-sm text-muted-foreground"><span className="font-semibold">Cliquez pour téléverser</span> ou glissez-déposez</p>
-                            <p className="text-xs text-muted-foreground">{file ? file.name : 'Image, PDF, PPT...'}</p>
-                        </div>
-                        <Input id="file-upload" type="file" className="hidden" onChange={handleFileChange} />
-                    </Label>
-                </div>
-                {sheet && !file && sheet.url && <p className="text-xs text-muted-foreground mt-1">Fichier actuel : {sheet.url.split('/').pop()}</p>}
-              </div>
-            ) : null}
-          </div>
-          <DialogFooter className="pt-4">
-            <Button type="button" variant="outline" onClick={onCancel} disabled={isSaving}>Annuler</Button>
-            <Button type="submit" disabled={isSaving}>
-              {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Enregistrer
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
-  );
+    if (error) throw error;
+    return data.signedUrl;
+  } catch (error) {
+    console.error('Erreur lors de la génération de l\'URL signée:', error);
+    return null;
+  }
 };
 
-const GameSheetDetails = ({ sheet, onEdit, onDelete, isAdmin }) => (
+const GameSheetDetails = ({ sheet, onEdit, onDelete, isAdmin }) => {
+  const [illustrationUrl, setIllustrationUrl] = useState(null);
+  const [exerciseImageUrl, setExerciseImageUrl] = useState(null);
+
+  useEffect(() => {
+    const loadImages = async () => {
+      // Charger l'image d'illustration si elle existe
+      if (sheet.illustration_image) {
+        const url = await getSignedUrl(sheet.illustration_image);
+        setIllustrationUrl(url);
+      }
+
+      // Charger l'image de l'exercice si elle existe
+      if (sheet.url && sheet.type === 'image_file') {
+        const url = await getSignedUrl(sheet.url);
+        setExerciseImageUrl(url);
+      }
+    };
+    loadImages();
+  }, [sheet.url, sheet.type, sheet.illustration_image]);
+
+  return (
   <motion.div layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
     <Card className="h-full flex flex-col group relative">
       <CardHeader>
@@ -308,13 +137,34 @@ const GameSheetDetails = ({ sheet, onEdit, onDelete, isAdmin }) => (
           )}
         </div>
       </CardHeader>
-      <CardContent className="flex-grow grid md:grid-cols-2 gap-6">
-        {sheet.url && (
-          <div className="w-full h-48 bg-muted rounded-md overflow-hidden">
-            <img src={sheet.url} alt={sheet.title} className="w-full h-full object-cover" />
+      <CardContent className="flex-grow space-y-4">
+        {/* Afficher l'image d'illustration en priorité, sinon l'image de l'exercice */}
+        {(illustrationUrl || exerciseImageUrl) && (
+          <div className="w-full">
+            <p className="text-xs font-semibold text-muted-foreground mb-2">
+              {illustrationUrl ? 'Illustration' : 'Image de l\'exercice'}
+            </p>
+            <div className="w-full h-64 bg-muted rounded-md overflow-hidden">
+              <img
+                src={illustrationUrl || exerciseImageUrl}
+                alt={sheet.title}
+                className="w-full h-full object-cover"
+              />
+            </div>
           </div>
         )}
-        <div className={`space-y-4 ${sheet.url ? '' : 'md:col-span-2'}`}>
+
+        {/* Afficher l'image de l'exercice seulement si elle existe ET qu'il y a aussi une illustration */}
+        {illustrationUrl && exerciseImageUrl && (
+          <div className="w-full">
+            <p className="text-xs font-semibold text-muted-foreground mb-2">Image de l'exercice</p>
+            <div className="w-full h-48 bg-muted rounded-md overflow-hidden">
+              <img src={exerciseImageUrl} alt={sheet.title} className="w-full h-full object-cover" />
+            </div>
+          </div>
+        )}
+
+        <div className="space-y-4">
           {sheet.starting_situation && (
             <div>
               <p className="font-semibold text-sm">Situation de départ</p>
@@ -355,7 +205,8 @@ const GameSheetDetails = ({ sheet, onEdit, onDelete, isAdmin }) => (
       </CardContent>
     </Card>
   </motion.div>
-);
+  );
+};
 
 const SheetCard = ({ sheet, onEdit, onDelete, isAdmin }) => {
   const getIcon = () => {
@@ -442,10 +293,23 @@ const Pedagogy = () => {
   const [loading, setLoading] = useState(true);
   const { isAdmin } = useAuth();
   const { toast } = useToast();
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingSheet, setEditingSheet] = useState(null);
-  const [isSaving, setIsSaving] = useState(false);
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Récupérer l'onglet actif depuis l'URL, sinon utiliser "educational_game" par défaut
+  const activeTab = searchParams.get('tab') || 'educational_game';
+  const activeTheme = searchParams.get('theme') || '';
+
+  // Fonction pour changer d'onglet et mettre à jour l'URL
+  const handleTabChange = useCallback((value) => {
+    // Réinitialiser le thème quand on change d'onglet principal
+    setSearchParams({ tab: value });
+  }, [setSearchParams]);
+
+  // Fonction pour changer de sous-onglet (thème) et mettre à jour l'URL
+  const handleThemeChange = useCallback((value) => {
+    setSearchParams({ tab: activeTab, theme: value });
+  }, [setSearchParams, activeTab]);
 
   const fetchSheets = useCallback(async () => {
     setLoading(true);
@@ -462,53 +326,8 @@ const Pedagogy = () => {
     fetchSheets();
   }, [fetchSheets]);
 
-  const handleSave = async (formData, file) => {
-    setIsSaving(true);
-    let sheetData = { ...formData };
-
-    try {
-      if (file && (sheetData.type === 'image_file' || sheetData.type === 'document_file')) {
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${Date.now()}.${fileExt}`;
-        const { error: uploadError } = await supabase.storage.from(BUCKET_NAME).upload(fileName, file, { upsert: true });
-        
-        if (uploadError) {
-            if (uploadError.message.includes('Bucket not found')) {
-                 toast({ title: "Erreur de configuration", description: "Le bucket de stockage n'a pas été trouvé. Tentative de réparation...", variant: "destructive" });
-                 navigate('/setup');
-                 return;
-            } else {
-                throw uploadError;
-            }
-        }
-        
-        const { data: publicUrlData } = supabase.storage.from(BUCKET_NAME).getPublicUrl(fileName);
-        sheetData.url = publicUrlData.publicUrl;
-      }
-
-      if (editingSheet) {
-          const { error } = await supabase.from('pedagogy_sheets').update(sheetData).eq('id', editingSheet.id);
-          if (error) throw error;
-          toast({ title: "Fiche modifiée", description: "La fiche a été mise à jour." });
-      } else {
-          const { error } = await supabase.from('pedagogy_sheets').insert(sheetData);
-          if (error) throw error;
-          toast({ title: "Fiche ajoutée", description: "La nouvelle fiche a été enregistrée." });
-      }
-
-      setIsFormOpen(false);
-      setEditingSheet(null);
-      fetchSheets();
-    } catch (error) {
-      toast({ title: "Erreur d'enregistrement", description: error.message, variant: "destructive" });
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
   const handleEdit = (sheet) => {
-    setEditingSheet(sheet);
-    setIsFormOpen(true);
+    navigate(`/pedagogy/edit/${sheet.id}`);
   };
 
   const handleDelete = async (sheet) => {
@@ -572,7 +391,7 @@ const Pedagogy = () => {
             Fiches Pédagogiques
           </h1>
           {isAdmin && (
-            <Button onClick={() => { setEditingSheet(null); setIsFormOpen(true); }}>
+            <Button onClick={() => navigate('/pedagogy/new')}>
               <PlusCircle className="w-4 h-4 mr-2" /> Ajouter une fiche
             </Button>
           )}
@@ -590,7 +409,7 @@ const Pedagogy = () => {
         </div>
       ) : (
         <>
-        <Tabs defaultValue="educational_game" className="w-full">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
           <TabsList className="grid grid-cols-2 md:grid-cols-4 w-full h-auto p-1">
             {Object.entries(TAB_CONFIG).map(([type, config]) => {
               // Pour l'onglet passeports, toujours l'afficher
@@ -779,7 +598,7 @@ const Pedagogy = () => {
 
                   {type === 'educational_game' ? (
                     // Affichage spécial pour les jeux éducatifs avec sous-onglets par thème
-                    <Tabs defaultValue={Object.keys(typeSheets)[0]} className="w-full">
+                    <Tabs value={activeTheme || Object.keys(typeSheets)[0]} onValueChange={handleThemeChange} className="w-full">
                       <TabsList className="w-full justify-start flex-wrap h-auto gap-2 p-2">
                         {Object.entries(typeSheets).map(([theme, themeSheets]) => (
                           <TabsTrigger key={theme} value={theme} className="flex items-center gap-2">
@@ -833,18 +652,6 @@ const Pedagogy = () => {
         </Tabs>
         </>
       )}
-
-      <AnimatePresence>
-        {isFormOpen && isAdmin && (
-          <SheetForm
-            sheet={editingSheet}
-            onSave={handleSave}
-            onCancel={() => { setIsFormOpen(false); setEditingSheet(null); }}
-            isSaving={isSaving}
-            existingThemes={existingThemes}
-          />
-        )}
-      </AnimatePresence>
     </div>
   );
 };

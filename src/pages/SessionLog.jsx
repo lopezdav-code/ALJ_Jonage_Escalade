@@ -1,25 +1,21 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { Helmet } from 'react-helmet';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { BookOpen, PlusCircle, Search, Loader2, Lock } from 'lucide-react';
 import { supabase } from '@/lib/customSupabaseClient';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
-import SessionForm from '@/components/session-log/SessionForm';
 import SessionList from '@/components/session-log/SessionList';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
 
-const BUCKET_NAME = 'exercise_images';
-
 const SessionLog = () => {
+  const navigate = useNavigate();
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [isFormVisible, setIsFormVisible] = useState(false);
-  const [editingSession, setEditingSession] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
   const { user, isAdmin, isAdherent, loading: authLoading } = useAuth();
 
@@ -43,9 +39,11 @@ const SessionLog = () => {
           short_description
         )
       `)
-      .order('date', { ascending: false })
-      .order('start_time', { ascending: false })
+      .order('date', { ascending: false, nullsFirst: true }) // Include null dates first
+      .order('start_time', { ascending: false, nullsFirst: true })
       .order('order', { foreignTable: 'exercises', ascending: true });
+
+    console.log('Données récupérées pour les séances :', data); // Log the fetched data
 
     if (error) {
       toast({ title: "Erreur", description: "Impossible de charger les séances.", variant: "destructive" });
@@ -59,94 +57,9 @@ const SessionLog = () => {
     fetchSessions();
   }, [fetchSessions]);
 
-  const uploadImage = async (file) => {
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${Math.random()}.${fileExt}`;
-    const filePath = `${fileName}`;
-    
-    let { error: uploadError } = await supabase.storage
-      .from(BUCKET_NAME)
-      .upload(filePath, file);
-
-    if (uploadError) {
-      throw uploadError;
-    }
-
-    const { data } = supabase.storage.from(BUCKET_NAME).getPublicUrl(filePath);
-    return data.publicUrl;
-  };
-
-  const handleSave = async (sessionData) => {
-    if (!canEditContent) return;
-    setIsSaving(true);
-    try {
-      const { id, exercises, ...sessionInfo } = sessionData;
-
-      const processedExercises = await Promise.all(
-        exercises.map(async (ex) => {
-          let imageUrl = ex.image_url;
-          if (ex.newImageFile) {
-            imageUrl = await uploadImage(ex.newImageFile);
-          }
-          const { newImageFile, ...rest } = ex;
-          return { ...rest, image_url: imageUrl };
-        })
-      );
-
-      if (editingSession) {
-        const { data: updatedSession, error: sessionError } = await supabase
-          .from('sessions')
-          .update(sessionInfo)
-          .eq('id', editingSession.id)
-          .select()
-          .single();
-
-        if (sessionError) throw sessionError;
-
-        await supabase.from('exercises').delete().eq('session_id', updatedSession.id);
-        
-        const exercisesToInsert = processedExercises.map((ex, index) => {
-          const { id: exId, ...rest } = ex;
-          return { ...rest, session_id: updatedSession.id, order: index };
-        });
-        if (exercisesToInsert.length > 0) {
-          const { error: exercisesError } = await supabase.from('exercises').insert(exercisesToInsert);
-          if (exercisesError) throw exercisesError;
-        }
-      } else {
-        const { data: newSession, error: sessionError } = await supabase
-          .from('sessions')
-          .insert(sessionInfo)
-          .select()
-          .single();
-
-        if (sessionError) throw sessionError;
-
-        const exercisesToInsert = processedExercises.map((ex, index) => {
-          const { id: exId, ...rest } = ex;
-          return { ...rest, session_id: newSession.id, order: index };
-        });
-        if (exercisesToInsert.length > 0) {
-          const { error: exercisesError } = await supabase.from('exercises').insert(exercisesToInsert);
-          if (exercisesError) throw exercisesError;
-        }
-      }
-
-      toast({ title: "Séance sauvegardée !", description: "La séance a été enregistrée avec succès." });
-      setIsFormVisible(false);
-      setEditingSession(null);
-      fetchSessions();
-    } catch (error) {
-      toast({ title: "Erreur de sauvegarde", description: error.message, variant: "destructive" });
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
   const handleEdit = (session) => {
     if (!canEditContent) return;
-    setEditingSession(session);
-    setIsFormVisible(true);
+    navigate(`/session-log/edit/${session.id}`);
   };
 
   const handleDelete = async (sessionId) => {
@@ -163,12 +76,17 @@ const SessionLog = () => {
   };
 
   const filteredSessions = useMemo(() => {
-    return sessions
+    const result = sessions
       .filter(session => {
+        // Filtrer les séances sans date
+        if (!session.date) return false;
+
+        // Filtrage par terme de recherche
         if (!searchTerm) return true;
         const lowerSearchTerm = searchTerm.toLowerCase();
         const searchIn = [
-          session.cycle_objective,
+          session.cycles?.name || '',
+          session.cycles?.short_description || '',
           session.session_objective,
           session.comment,
           ...(session.instructors || []),
@@ -176,7 +94,10 @@ const SessionLog = () => {
           ...session.exercises.map(ex => Object.values(ex).join(' '))
         ].join(' ').toLowerCase();
         return searchIn.includes(lowerSearchTerm);
-      })
+      });
+
+    console.log('Séances après filtrage :', result); // Log filtered sessions
+    return result;
   }, [sessions, searchTerm]);
 
   if (authLoading) {
@@ -207,25 +128,13 @@ const SessionLog = () => {
             <BookOpen className="w-10 h-10 text-primary" />
             Séances d'entraînement
           </h1>
-          {canEditContent && !isFormVisible && (
-            <Button onClick={() => { setIsFormVisible(true); setEditingSession(null); }}>
+          {canEditContent && (
+            <Button onClick={() => navigate('/session-log/new')}>
               <PlusCircle className="w-4 h-4 mr-2" /> Créer une séance
             </Button>
           )}
         </div>
       </motion.div>
-
-      <AnimatePresence>
-        {isFormVisible && canEditContent && (
-          <SessionForm
-            key={editingSession ? editingSession.id : 'new'}
-            session={editingSession}
-            onSave={handleSave}
-            onCancel={() => { setIsFormVisible(false); setEditingSession(null); }}
-            isSaving={isSaving}
-          />
-        )}
-      </AnimatePresence>
 
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }}>
         <Card>

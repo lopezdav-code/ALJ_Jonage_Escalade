@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Calendar, MapPin, Euro, ExternalLink, Info, Save, ArrowLeft, Plus, X, Upload } from 'lucide-react';
+import { Calendar, MapPin, Euro, ExternalLink, Info, Save, ArrowLeft, Plus, X, Upload, Loader2 } from 'lucide-react';
 import { supabase } from '@/lib/customSupabaseClient';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/components/ui/use-toast';
+import { uploadCompetitionPhoto } from '@/lib/competitionStorageUtils';
 
 const CompetitionEditor = () => {
   const navigate = useNavigate();
@@ -54,6 +55,8 @@ const CompetitionEditor = () => {
 
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [selectedPhotoFile, setSelectedPhotoFile] = useState(null);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
   // Options pour les sélecteurs
   const niveauOptions = ['Départemental', 'Régional', 'Inter-régional', 'National', 'International'];
@@ -155,6 +158,71 @@ const CompetitionEditor = () => {
     }));
   };
 
+  const handleAddPhotoFile = async (e) => {
+    console.log('handleAddPhotoFile appelé');
+    const file = e.target.files?.[0];
+
+    if (!file) {
+      console.log('Aucun fichier sélectionné');
+      return;
+    }
+
+    console.log('Fichier sélectionné:', file.name, 'Taille:', file.size, 'bytes');
+
+    // Vérifier que le nom de la compétition est renseigné
+    if (!formData.name || formData.name.trim() === '') {
+      toast({
+        title: "Erreur",
+        description: "Veuillez d'abord saisir le nom de la compétition avant d'uploader une photo.",
+        variant: "destructive"
+      });
+      e.target.value = '';
+      return;
+    }
+
+    setUploadingPhoto(true);
+
+    try {
+      console.log('Début de l\'upload...');
+
+      // Upload le fichier vers Supabase Storage
+      const result = await uploadCompetitionPhoto(file, formData.name);
+
+      if (!result.success) {
+        throw new Error(result.error);
+      }
+
+      console.log('Upload réussi, URL:', result.url);
+
+      // Ajouter l'URL de l'image uploadée à la galerie photo
+      setFormData(prev => ({
+        ...prev,
+        photo_gallery: [...prev.photo_gallery, result.url]
+      }));
+
+      toast({
+        title: "Succès",
+        description: `Photo "${file.name}" ajoutée à la galerie !`,
+        variant: "default"
+      });
+
+      // Réinitialiser l'input file
+      e.target.value = '';
+      setSelectedPhotoFile(null);
+
+    } catch (error) {
+      console.error('Erreur lors de l\'upload:', error);
+      toast({
+        title: "Erreur",
+        description: `Impossible d'uploader la photo: ${error.message}`,
+        variant: "destructive"
+      });
+      e.target.value = '';
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
+
   // Validation du formulaire
   const validateForm = () => {
     if (!formData.name.trim()) {
@@ -202,11 +270,30 @@ const CompetitionEditor = () => {
 
     setSaving(true);
     try {
+      // Nettoyer et préparer les données
       const dataToSave = {
-        ...formData,
+        name: formData.name || '',
+        short_title: formData.short_title || '',
+        start_date: formData.start_date || '',
+        end_date: formData.end_date || null,
+        location: formData.location || '',
         prix: formData.prix ? parseFloat(formData.prix) : null,
-        end_date: formData.end_date || null
+        niveau: formData.niveau || null,
+        nature: formData.nature || null,
+        disciplines: Array.isArray(formData.disciplines) && formData.disciplines.length > 0 ? formData.disciplines : [],
+        categories: Array.isArray(formData.categories) && formData.categories.length > 0 ? formData.categories : [],
+        more_info_link: formData.more_info_link || null,
+        details_description: formData.details_description || null,
+        details_format: formData.details_format || null,
+        details_schedule: formData.details_schedule || null,
+        image_url: formData.image_url || null,
+        photo_gallery: Array.isArray(formData.photo_gallery) && formData.photo_gallery.length > 0 ? formData.photo_gallery : []
       };
+
+      console.log('Sauvegarde des données:', dataToSave);
+      console.log('Type de disciplines:', typeof dataToSave.disciplines, 'Valeur:', JSON.stringify(dataToSave.disciplines));
+      console.log('Type de categories:', typeof dataToSave.categories, 'Valeur:', JSON.stringify(dataToSave.categories));
+      console.log('Type de photo_gallery:', typeof dataToSave.photo_gallery, 'Valeur:', JSON.stringify(dataToSave.photo_gallery));
 
       if (isEdit) {
         const { error } = await supabase
@@ -214,7 +301,10 @@ const CompetitionEditor = () => {
           .update(dataToSave)
           .eq('id', id);
 
-        if (error) throw error;
+        if (error) {
+          console.error('Erreur Supabase lors de la mise à jour:', error);
+          throw error;
+        }
 
         toast({
           title: "Succès",
@@ -226,7 +316,10 @@ const CompetitionEditor = () => {
           .from('competitions')
           .insert([dataToSave]);
 
-        if (error) throw error;
+        if (error) {
+          console.error('Erreur Supabase lors de l\'insertion:', error);
+          throw error;
+        }
 
         toast({
           title: "Succès",
@@ -235,15 +328,17 @@ const CompetitionEditor = () => {
         });
       }
 
+      console.log('Sauvegarde réussie, navigation vers /competitions');
       navigate('/competitions');
     } catch (error) {
       console.error('Erreur lors de la sauvegarde:', error);
       toast({
         title: "Erreur",
-        description: "Impossible de sauvegarder la compétition.",
+        description: `Impossible de sauvegarder la compétition: ${error.message || 'Erreur inconnue'}`,
         variant: "destructive"
       });
     } finally {
+      console.log('Fin de la sauvegarde, setSaving(false)');
       setSaving(false);
     }
   };
@@ -509,14 +604,40 @@ const CompetitionEditor = () => {
           <div>
             <div className="flex items-center justify-between mb-2">
               <Label>Galerie photo</Label>
-              <Button variant="outline" size="sm" onClick={addPhotoUrl}>
-                <Plus className="w-4 h-4 mr-1" />
-                Ajouter une photo
-              </Button>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={addPhotoUrl}>
+                  <Plus className="w-4 h-4 mr-1" />
+                  Ajouter URL
+                </Button>
+                <Label
+                  htmlFor="local-photo-upload"
+                  className={`flex items-center gap-1 px-3 py-2 text-sm font-medium rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground ${uploadingPhoto ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                >
+                  {uploadingPhoto ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Upload en cours...
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="w-4 h-4" />
+                      Choisir un fichier
+                    </>
+                  )}
+                  <Input
+                    id="local-photo-upload"
+                    type="file"
+                    className="sr-only"
+                    onChange={handleAddPhotoFile}
+                    accept="image/*"
+                    disabled={uploadingPhoto}
+                  />
+                </Label>
+              </div>
             </div>
-            
+
             {formData.photo_gallery.length > 0 && (
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-4">
                 {formData.photo_gallery.map((photo, index) => (
                   <div key={index} className="relative group">
                     <img

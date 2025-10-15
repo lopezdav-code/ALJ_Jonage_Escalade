@@ -35,15 +35,14 @@ const SessionList = ({ sessions, onEdit, onDelete, isAdmin }) => {
             <AccordionTrigger>
               <div className="flex justify-between w-full pr-4 items-center">
                 <div className="flex items-center gap-3">
-                  <span className="font-semibold">{new Date(session.date).toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' })} - {session.start_time}</span>
+                  <span className="font-semibold">
+                    {session.date
+                      ? `${new Date(session.date).toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' })} - ${session.start_time}`
+                      : 'Séance sans date'}
+                  </span>
                   {session.cycles && (
                     <Badge variant="outline" className="text-xs px-2 py-1 border-blue-500 text-blue-700">
                       Cycle: {session.cycles.name}
-                    </Badge>
-                  )}
-                  {session.cycle_objective && (
-                    <Badge variant="secondary" className="text-xs px-2 py-1">
-                      {session.cycle_objective}
                     </Badge>
                   )}
                 </div>
@@ -65,7 +64,6 @@ const SessionList = ({ sessions, onEdit, onDelete, isAdmin }) => {
                   )}
                 </div>
               )}
-              <p><strong>Objectif de cycle:</strong> {session.cycle_objective}</p>
               <p><strong>Objectif de séance:</strong> {session.session_objective}</p>
               <p><strong>Encadrants:</strong> {session.instructors?.join(', ')}</p>
               <p><strong>Élèves présents:</strong> {session.students?.join(', ')}</p>

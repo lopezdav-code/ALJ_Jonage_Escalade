@@ -21,11 +21,14 @@ const SHEET_TYPES = {
 };
 
 const MultiSelectCheckbox = ({ title, options, selected, onChange }) => {
+  const safeSelected = selected || [];
+  const safeOptions = options || [];
+
   const handleSelectAll = () => {
-    if (selected.length === options.length) {
+    if (safeSelected.length === safeOptions.length) {
       onChange([]);
     } else {
-      onChange(options);
+      onChange(safeOptions);
     }
   };
 
@@ -34,19 +37,19 @@ const MultiSelectCheckbox = ({ title, options, selected, onChange }) => {
       <div className="flex justify-between items-center">
         <Label>{title}</Label>
         <Button type="button" variant="link" size="sm" onClick={handleSelectAll} className="p-0 h-auto">
-          {selected.length === options.length ? 'Tout désélectionner' : 'Tout sélectionner'}
+          {safeSelected.length === safeOptions.length ? 'Tout désélectionner' : 'Tout sélectionner'}
         </Button>
       </div>
       <div className="max-h-40 overflow-y-auto rounded-md border p-2 space-y-2">
-        {options.map(option => (
+        {safeOptions.map(option => (
           <div key={option} className="flex items-center space-x-2">
             <Checkbox
               id={`${title}-${option}`}
-              checked={selected.includes(option)}
+              checked={safeSelected.includes(option)}
               onCheckedChange={(checked) => {
                 const newSelected = checked
-                  ? [...selected, option]
-                  : selected.filter(item => item !== option);
+                  ? [...safeSelected, option]
+                  : safeSelected.filter(item => item !== option);
                 onChange(newSelected);
               }}
             />
@@ -148,12 +151,23 @@ const PedagogySheetSelector = ({ onSelect, onCancel }) => {
 
 const SessionForm = ({ session, onSave, onCancel, isSaving }) => {
   const [formData, setFormData] = useState(
-    session || {
+    session ? {
+      ...session,
+      date: session.date || '',
+      start_time: session.start_time || '18:30',
+      instructors: session.instructors || [],
+      students: session.students || [],
+      cycle_id: session.cycle_id || null,
+      session_objective: session.session_objective || '',
+      equipment: session.equipment || '',
+      comment: session.comment || '',
+      exercises: session.exercises || [],
+    } : {
       date: '',
       start_time: '18:30',
       instructors: [],
       students: [],
-      cycle_objective: '',
+      cycle_id: null,
       session_objective: '',
       equipment: '',
       comment: '',
@@ -163,8 +177,9 @@ const SessionForm = ({ session, onSave, onCancel, isSaving }) => {
   const [isSheetSelectorOpen, setIsSheetSelectorOpen] = useState(false);
   const [importTargetIndex, setImportTargetIndex] = useState(null);
   const [lyceeStudents, setLyceeStudents] = useState([]);
+  const [cycles, setCycles] = useState([]);
 
-  // Récupérer les étudiants du lycée depuis Supabase
+  // Récupérer les étudiants du lycée et les cycles depuis Supabase
   useEffect(() => {
     const fetchLyceeStudents = async () => {
       try {
@@ -183,7 +198,22 @@ const SessionForm = ({ session, onSave, onCancel, isSaving }) => {
       }
     };
 
+    const fetchCycles = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('cycles')
+          .select('id, name, short_description')
+          .order('name');
+
+        if (error) throw error;
+        setCycles(data || []);
+      } catch (error) {
+        setCycles([]);
+      }
+    };
+
     fetchLyceeStudents();
+    fetchCycles();
   }, []);
 
   const instructorsList = ['David', 'Magali', 'Olivier', 'Clement'];
@@ -263,7 +293,13 @@ const SessionForm = ({ session, onSave, onCancel, isSaving }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSave(formData);
+    // Convertir les chaînes vides en null pour éviter les erreurs SQL
+    const cleanedData = {
+      ...formData,
+      date: formData.date || null,
+      start_time: formData.start_time || null,
+    };
+    onSave(cleanedData);
   };
 
   return (
@@ -276,12 +312,12 @@ const SessionForm = ({ session, onSave, onCancel, isSaving }) => {
           <CardContent className="space-y-6">
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="date">Date du cours</Label>
-                <Input id="date" name="date" type="date" value={formData.date} onChange={handleChange} required />
+                <Label htmlFor="date">Date du cours (optionnel)</Label>
+                <Input id="date" name="date" type="date" value={formData.date} onChange={handleChange} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="start_time">Heure de début</Label>
-                <Input id="start_time" name="start_time" type="time" value={formData.start_time} onChange={handleChange} required />
+                <Input id="start_time" name="start_time" type="time" value={formData.start_time} onChange={handleChange} />
               </div>
               <MultiSelectCheckbox
                 title="Encadrants"
@@ -298,8 +334,29 @@ const SessionForm = ({ session, onSave, onCancel, isSaving }) => {
             </div>
             <div className="grid md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="cycle_objective">Objectif de cycle</Label>
-                <Textarea id="cycle_objective" name="cycle_objective" value={formData.cycle_objective} onChange={handleChange} />
+                <Label htmlFor="cycle_id">Cycle associé</Label>
+                <Select
+                  value={formData.cycle_id ? formData.cycle_id.toString() : ''}
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, cycle_id: value ? parseInt(value) : null }))}
+                >
+                  <SelectTrigger id="cycle_id">
+                    <SelectValue placeholder="Sélectionner un cycle (optionnel)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Aucun cycle</SelectItem>
+                    {cycles.map((cycle) => (
+                      <SelectItem key={cycle.id} value={cycle.id.toString()}>
+                        {cycle.name}
+                        {cycle.short_description && ` - ${cycle.short_description}`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {formData.cycle_id && session?.cycles && (
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Cycle actuel: {session.cycles.name}
+                  </p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="session_objective">Objectif de séance</Label>

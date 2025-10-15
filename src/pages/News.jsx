@@ -1,21 +1,29 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Helmet } from 'react-helmet';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Newspaper, PlusCircle, Loader2, Edit, Trash2, ExternalLink, Download, Users, Heart, MountainSnow as Ski, Share2, Eye, ArrowDownUp } from 'lucide-react';
+import { Newspaper, PlusCircle, Loader2, Edit, Trash2, ExternalLink, Download, Users, Heart, MountainSnow as Ski, Share2, Eye, ArrowDownUp, Filter } from 'lucide-react';
 import { supabase } from '@/lib/customSupabaseClient';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent } from '@/components/ui/dialog'; // Only Dialog and DialogContent needed for image viewer
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { useConfig } from '@/contexts/ConfigContext';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Link } from 'react-router-dom';
 
 const SHARED_BUCKET = 'exercise_images';
+
+const themes = [
+  "Compétition",
+  "Information générale",
+  "Stage / sortie",
+  "Événement au club",
+  "Appel au bénévolat"
+];
 
 const NewsBanner = () => {
     const { config, loadingConfig } = useConfig();
@@ -76,102 +84,19 @@ const AssociationInfo = () => (
     </motion.section>
 );
 
-
-const NewsForm = ({ newsItem, onSave, onCancel, isSaving }) => {
-  const [formData, setFormData] = useState(
-    newsItem || {
-      title: '',
-      date: new Date().toISOString().split('T')[0],
-      short_description: '',
-      long_description: '',
-      external_link: '',
-      image_url: '',
-      document_url: '',
-    }
-  );
-  const [imageFile, setImageFile] = useState(null);
-  const [documentFile, setDocumentFile] = useState(null);
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleFileChange = (e, setFile) => {
-    if (e.target.files && e.target.files[0]) {
-      setFile(e.target.files[0]);
-    }
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onSave({ ...formData, imageFile, documentFile });
-  };
-
-  return (
-    <Dialog open={true} onOpenChange={onCancel}>
-      <DialogContent className="sm:max-w-[625px]">
-        <form onSubmit={handleSubmit}>
-          <DialogHeader>
-            <DialogTitle>{newsItem ? "Modifier l'actualité" : "Créer une actualité"}</DialogTitle>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="title" className="text-right">Titre</Label>
-              <Input id="title" name="title" value={formData.title} onChange={handleChange} className="col-span-3" required />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="date" className="text-right">Date</Label>
-              <Input id="date" name="date" type="date" value={formData.date} onChange={handleChange} className="col-span-3" required />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="short_description" className="text-right">Description courte</Label>
-              <Textarea id="short_description" name="short_description" value={formData.short_description} onChange={handleChange} className="col-span-3" />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="long_description" className="text-right">Description longue</Label>
-              <Textarea id="long_description" name="long_description" value={formData.long_description} onChange={handleChange} className="col-span-3" />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="external_link" className="text-right">Lien externe</Label>
-              <Input id="external_link" name="external_link" value={formData.external_link} onChange={handleChange} className="col-span-3" placeholder="https://..." />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="image" className="text-right">Image</Label>
-              <Input id="image" type="file" onChange={(e) => handleFileChange(e, setImageFile)} className="col-span-3" accept="image/*" />
-            </div>
-            {formData.image_url && !imageFile && <div className="col-start-2 col-span-3"><img src={formData.image_url} alt="Aperçu" className="h-20 rounded-md" /></div>}
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="document" className="text-right">Document</Label>
-              <Input id="document" type="file" onChange={(e) => handleFileChange(e, setDocumentFile)} className="col-span-3" />
-            </div>
-            {formData.document_url && !documentFile && <div className="col-start-2 col-span-3"><a href={formData.document_url} target="_blank" rel="noreferrer" className="text-sm text-primary hover:underline">Voir le document actuel</a></div>}
-          </div>
-          <DialogFooter>
-            <Button type="button" variant="ghost" onClick={onCancel}>Annuler</Button>
-            <Button type="submit" disabled={isSaving}>
-              {isSaving ? <Loader2 className="animate-spin" /> : 'Sauvegarder'}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
-  );
-};
-
 const News = () => {
   const [news, setNews] = useState([]);
   const [loadingNews, setLoadingNews] = useState(true);
-  const [isFormVisible, setIsFormVisible] = useState(false);
-  const [editingNews, setEditingNews] = useState(null);
-  const [isSaving, setIsSaving] = useState(false);
   const [viewingImage, setViewingImage] = useState(null);
-  const [sortOrder, setSortOrder] = useState('asc');
+  const [sortOrder, setSortOrder] = useState('desc'); // Default to descending (newest first)
+  const [selectedTheme, setSelectedTheme] = useState('');
+  const [selectedDate, setSelectedDate] = useState('');
   const { toast } = useToast();
   const { isAdmin, loading: authLoading } = useAuth();
 
   const fetchNews = useCallback(async () => {
     setLoadingNews(true);
+    // Fetch all relevant columns, including theme and is_pinned
     const { data, error } = await supabase.from('news').select('*');
     if (error) {
       toast({ title: "Erreur", description: "Impossible de charger les actualités.", variant: "destructive" });
@@ -185,52 +110,39 @@ const News = () => {
     fetchNews();
   }, [fetchNews]);
 
-  const sortedNews = useMemo(() => {
-    return [...news].sort((a, b) => {
+  const filteredAndSortedNews = useMemo(() => {
+    let processedNews = [...news];
+
+    // Apply theme filter
+    if (selectedTheme) {
+      processedNews = processedNews.filter(item => item.theme === selectedTheme);
+    }
+
+    // Apply date filter
+    if (selectedDate) {
+      processedNews = processedNews.filter(item => item.date && item.date.startsWith(selectedDate));
+    }
+
+    // Separate pinned and non-pinned news
+    const pinnedNews = processedNews.filter(item => item.is_pinned);
+    const nonPinnedNews = processedNews.filter(item => !item.is_pinned);
+
+    // Sort pinned news (e.g., by date descending)
+    pinnedNews.sort((a, b) => {
       const dateA = new Date(a.date);
       const dateB = new Date(b.date);
       return sortOrder === 'desc' ? dateB - dateA : dateA - dateB;
     });
-  }, [news, sortOrder]);
 
-  const uploadFile = async (file, bucket) => {
-    if (!file) return null;
-    const fileExt = file.name.split('.').pop();
-    const fileName = `news/${Date.now()}.${fileExt}`;
-    const { error } = await supabase.storage.from(bucket).upload(fileName, file);
-    if (error) throw error;
-    const { data } = supabase.storage.from(bucket).getPublicUrl(fileName);
-    return data.publicUrl;
-  };
+    // Sort non-pinned news by date
+    nonPinnedNews.sort((a, b) => {
+      const dateA = new Date(a.date);
+      const dateB = new Date(b.date);
+      return sortOrder === 'desc' ? dateB - dateA : dateA - dateB;
+    });
 
-  const handleSave = async (formData) => {
-    setIsSaving(true);
-    try {
-      const { id, imageFile, documentFile, ...newsData } = formData;
-      
-      const imageUrl = await uploadFile(imageFile, SHARED_BUCKET);
-      if (imageUrl) newsData.image_url = imageUrl;
-
-      const documentUrl = await uploadFile(documentFile, SHARED_BUCKET);
-      if (documentUrl) newsData.document_url = documentUrl;
-
-      if (editingNews) {
-        const { error } = await supabase.from('news').update(newsData).eq('id', editingNews.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from('news').insert(newsData);
-        if (error) throw error;
-      }
-      toast({ title: "Succès", description: "Actualité sauvegardée." });
-      setIsFormVisible(false);
-      setEditingNews(null);
-      fetchNews();
-    } catch (error) {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
-    } finally {
-      setIsSaving(false);
-    }
-  };
+    return { pinnedNews, nonPinnedNews };
+  }, [news, sortOrder, selectedTheme, selectedDate]);
 
   const handleDelete = async (newsId) => {
     if (!window.confirm("Êtes-vous sûr de vouloir supprimer cette actualité ?")) return;
@@ -262,6 +174,72 @@ const News = () => {
     }
   };
 
+  const renderNewsItems = (items) => (
+    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <AnimatePresence>
+        {items.map((item) => (
+          <motion.div 
+            key={item.id} 
+            layout
+            initial={{ opacity: 0, y: 20, scale: 0.95 }} 
+            animate={{ opacity: 1, y: 0, scale: 1 }} 
+            exit={{ opacity: 0, y: -20, scale: 0.95 }}
+            transition={{ duration: 0.3 }}
+          >
+            <Card className="flex flex-col h-full">
+              {item.image_url && (
+                <div className="cursor-pointer" onClick={() => setViewingImage(item.image_url)}>
+                  <img src={item.image_url} alt={item.title} className="w-full h-48 object-cover rounded-t-lg" />
+                </div>
+              )}
+              <CardHeader>
+                <CardTitle>{item.title}</CardTitle>
+                <CardDescription>{new Date(item.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</CardDescription>
+              </CardHeader>
+              <CardContent className="flex-grow">
+                <p className="text-sm">{item.short_description}</p>
+              </CardContent>
+              <CardFooter className="flex flex-col items-start gap-2">
+                <div className="flex gap-2 flex-wrap">
+                  <Button asChild variant="link" size="sm"><Link to={`/news/${item.id}`}><Eye className="w-4 h-4 mr-2" />Voir plus</Link></Button>
+                  {item.document_url && <Button asChild variant="link" size="sm"><a href={item.document_url} target="_blank" rel="noreferrer"><Download className="w-4 h-4 mr-2" />Télécharger</a></Button>}
+                  {item.theme === "Compétition" && item.competition_id && item.competitions && (
+                    <Button asChild variant="link" size="sm">
+                      <Link to={`/competitions/${item.competition_id}`}><ExternalLink className="w-4 h-4 mr-2" />{item.competitions.short_title}</Link>
+                    </Button>
+                  )}
+                </div>
+                <div className="flex gap-2 self-end items-center">
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="ghost" size="icon"><Share2 className="w-4 h-4" /></Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-2">
+                      <div className="flex flex-col gap-1">
+                        <Button variant="ghost" size="sm" className="justify-start" onClick={() => handleShare('facebook', item)}>Facebook</Button>
+                        <Button variant="ghost" size="sm" className="justify-start" onClick={() => handleShare('whatsapp', item)}>WhatsApp</Button>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                  {showAdminFeatures && (
+                    <>
+                      <Button asChild variant="ghost" size="icon">
+                        <Link to={`/news/edit/${item.id}`}>
+                          <Edit className="w-4 h-4" />
+                        </Link>
+                      </Button>
+                      <Button variant="ghost" size="icon" className="text-destructive" onClick={() => handleDelete(item.id)}><Trash2 className="w-4 h-4" /></Button>
+                    </>
+                  )}
+                </div>
+              </CardFooter>
+            </Card>
+          </motion.div>
+        ))}
+      </AnimatePresence>
+    </div>
+  );
+
   const renderContent = () => {
     if (loadingNews || authLoading) {
       return (
@@ -271,65 +249,37 @@ const News = () => {
       );
     }
 
-    if (sortedNews.length === 0) {
+    const { pinnedNews, nonPinnedNews } = filteredAndSortedNews;
+
+    if (pinnedNews.length === 0 && nonPinnedNews.length === 0) {
       return <p className="text-center text-muted-foreground py-16">Aucune actualité pour le moment.</p>;
     }
 
     return (
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <AnimatePresence>
-          {sortedNews.map((item) => (
-            <motion.div 
-              key={item.id} 
-              layout
-              initial={{ opacity: 0, y: 20, scale: 0.95 }} 
-              animate={{ opacity: 1, y: 0, scale: 1 }} 
-              exit={{ opacity: 0, y: -20, scale: 0.95 }}
-              transition={{ duration: 0.3 }}
-            >
-              <Card className="flex flex-col h-full">
-                {item.image_url && (
-                  <div className="cursor-pointer" onClick={() => setViewingImage(item.image_url)}>
-                    <img src={item.image_url} alt={item.title} className="w-full h-48 object-cover rounded-t-lg" />
-                  </div>
-                )}
-                <CardHeader>
-                  <CardTitle>{item.title}</CardTitle>
-                  <CardDescription>{new Date(item.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</CardDescription>
-                </CardHeader>
-                <CardContent className="flex-grow">
-                  <p className="text-sm">{item.short_description}</p>
-                </CardContent>
-                <CardFooter className="flex flex-col items-start gap-2">
-                  <div className="flex gap-2 flex-wrap">
-                    <Button asChild variant="link" size="sm"><Link to={`/news/${item.id}`}><Eye className="w-4 h-4 mr-2" />Voir plus</Link></Button>
-                    {item.document_url && <Button asChild variant="link" size="sm"><a href={item.document_url} target="_blank" rel="noreferrer"><Download className="w-4 h-4 mr-2" />Télécharger</a></Button>}
-                  </div>
-                  <div className="flex gap-2 self-end items-center">
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button variant="ghost" size="icon"><Share2 className="w-4 h-4" /></Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-2">
-                        <div className="flex flex-col gap-1">
-                          <Button variant="ghost" size="sm" className="justify-start" onClick={() => handleShare('facebook', item)}>Facebook</Button>
-                          <Button variant="ghost" size="sm" className="justify-start" onClick={() => handleShare('whatsapp', item)}>WhatsApp</Button>
-                        </div>
-                      </PopoverContent>
-                    </Popover>
-                    {showAdminFeatures && (
-                      <>
-                        <Button variant="ghost" size="icon" onClick={() => { setEditingNews(item); setIsFormVisible(true); }}><Edit className="w-4 h-4" /></Button>
-                        <Button variant="ghost" size="icon" className="text-destructive" onClick={() => handleDelete(item.id)}><Trash2 className="w-4 h-4" /></Button>
-                      </>
-                    )}
-                  </div>
-                </CardFooter>
-              </Card>
-            </motion.div>
-          ))}
-        </AnimatePresence>
-      </div>
+      <>
+        {pinnedNews.length > 0 && (
+          <motion.section 
+            initial={{ opacity: 0, y: -20 }} 
+            animate={{ opacity: 1, y: 0 }} 
+            transition={{ duration: 0.5 }}
+            className="mb-8 p-6 bg-primary/10 border-l-4 border-primary rounded-md shadow-sm"
+          >
+            <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+              <Newspaper className="w-6 h-6 text-primary" /> Informations Importantes
+            </h2>
+            {renderNewsItems(pinnedNews)}
+          </motion.section>
+        )}
+        {nonPinnedNews.length > 0 && (
+          <motion.div 
+            initial={{ opacity: 0, y: -20 }} 
+            animate={{ opacity: 1, y: 0 }} 
+            transition={{ duration: 0.5 }}
+          >
+            {renderNewsItems(nonPinnedNews)}
+          </motion.div>
+        )}
+      </>
     );
   };
 
@@ -349,31 +299,47 @@ const News = () => {
             <Newspaper className="w-10 h-10 text-primary" />
             Actualités du Club
           </h1>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-4 flex-wrap">
+            <div className="flex items-center gap-2">
+              <Label htmlFor="theme-filter">Thème:</Label>
+              <Select value={selectedTheme} onValueChange={setSelectedTheme}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Tous les thèmes" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Tous les thèmes</SelectItem>
+                  {themes.map(theme => (
+                    <SelectItem key={theme} value={theme}>{theme}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center gap-2">
+              <Label htmlFor="date-filter">Date:</Label>
+              <Input 
+                id="date-filter"
+                type="date" 
+                value={selectedDate} 
+                onChange={(e) => setSelectedDate(e.target.value)} 
+                className="w-[180px]"
+              />
+            </div>
             <Button variant="outline" onClick={() => setSortOrder(prev => prev === 'desc' ? 'asc' : 'desc')}>
               <ArrowDownUp className="w-4 h-4 mr-2" />
               Trier par date ({sortOrder === 'desc' ? 'récent' : 'ancien'})
             </Button>
             {showAdminFeatures && (
-              <Button onClick={() => { setEditingNews(null); setIsFormVisible(true); }}>
-                <PlusCircle className="w-4 h-4 mr-2" /> Ajouter
+              <Button asChild>
+                <Link to="/news/new"> {/* Link to the new creation route */}
+                  <PlusCircle className="w-4 h-4 mr-2" /> Ajouter
+                </Link>
               </Button>
             )}
           </div>
         </div>
       </motion.div>
 
-      <AnimatePresence>
-        {isFormVisible && showAdminFeatures && (
-          <NewsForm
-            key={editingNews ? editingNews.id : 'new'}
-            newsItem={editingNews}
-            onSave={handleSave}
-            onCancel={() => { setIsFormVisible(false); setEditingNews(null); }}
-            isSaving={isSaving}
-          />
-        )}
-      </AnimatePresence>
+      {/* Removed the Dialog for NewsForm as it's now handled by news_edit.jsx */}
 
       {renderContent()}
 

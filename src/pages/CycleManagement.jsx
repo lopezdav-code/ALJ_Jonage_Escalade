@@ -12,8 +12,10 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Loader2, PlusCircle, Edit, Trash2, Eye, Calendar, Users, BookOpen } from 'lucide-react';
+import { Loader2, PlusCircle, Edit, Trash2, Eye, Calendar, Users, BookOpen, Upload, FileText } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+
+const CYCLE_BUCKET_NAME = 'cycle_documents';
 
 const CycleManagement = () => {
   const [cycles, setCycles] = useState([]);
@@ -31,6 +33,11 @@ const CycleManagement = () => {
     short_description: '',
     long_description: '',
   });
+
+  const [pdfFile, setPdfFile] = useState(null);
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [imagePosition, setImagePosition] = useState('center');
 
   const canManageCycles = isAdmin || isEncadrant;
 
@@ -71,6 +78,8 @@ const CycleManagement = () => {
         short_description: cycle.short_description || '',
         long_description: cycle.long_description || '',
       });
+      setImagePreview(cycle.image_url || null);
+      setImagePosition(cycle.image_position || 'center');
     } else {
       setEditingCycle(null);
       setFormData({
@@ -78,7 +87,11 @@ const CycleManagement = () => {
         short_description: '',
         long_description: '',
       });
+      setImagePreview(null);
+      setImagePosition('center');
     }
+    setPdfFile(null);
+    setImageFile(null);
     setIsDialogOpen(true);
   };
 
@@ -90,6 +103,39 @@ const CycleManagement = () => {
       short_description: '',
       long_description: '',
     });
+    setPdfFile(null);
+    setImageFile(null);
+    setImagePreview(null);
+    setImagePosition('center');
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const uploadFile = async (file, folder) => {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${folder}/${editingCycle?.id || 'new'}_${Date.now()}.${fileExt}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from(CYCLE_BUCKET_NAME)
+      .upload(fileName, file);
+
+    if (uploadError) {
+      console.error('Upload error:', uploadError);
+      throw new Error(`Erreur d'upload: ${uploadError.message}`);
+    }
+
+    const { data } = supabase.storage.from(CYCLE_BUCKET_NAME).getPublicUrl(fileName);
+    return data.publicUrl;
   };
 
   const handleSave = async () => {
@@ -104,15 +150,30 @@ const CycleManagement = () => {
 
     setIsSaving(true);
     try {
+      const updateData = {
+        name: formData.name,
+        short_description: formData.short_description,
+        long_description: formData.long_description,
+        image_position: imagePosition,
+      };
+
+      // Upload PDF if provided
+      if (pdfFile) {
+        const pdfUrl = await uploadFile(pdfFile, 'pdfs');
+        updateData.pdf_url = pdfUrl;
+      }
+
+      // Upload image if provided
+      if (imageFile) {
+        const imageUrl = await uploadFile(imageFile, 'images');
+        updateData.image_url = imageUrl;
+      }
+
       if (editingCycle) {
         // Mise à jour
         const { error } = await supabase
           .from('cycles')
-          .update({
-            name: formData.name,
-            short_description: formData.short_description,
-            long_description: formData.long_description,
-          })
+          .update(updateData)
           .eq('id', editingCycle.id);
 
         if (error) throw error;
@@ -126,9 +187,7 @@ const CycleManagement = () => {
         const { error } = await supabase
           .from('cycles')
           .insert({
-            name: formData.name,
-            short_description: formData.short_description,
-            long_description: formData.long_description,
+            ...updateData,
             created_by: user.id,
           });
 
@@ -247,11 +306,22 @@ const CycleManagement = () => {
                     exit={{ opacity: 0, scale: 0.9 }}
                     transition={{ duration: 0.3 }}
                   >
-                    <Card className="hover:shadow-lg transition-shadow h-full flex flex-col">
+                    <Card className="hover:shadow-lg transition-shadow h-full flex flex-col overflow-hidden">
+                      {/* Image en header si disponible */}
+                      {cycle.image_url && (
+                        <div className="relative w-full h-48 overflow-hidden bg-gray-100">
+                          <img
+                            src={cycle.image_url}
+                            alt={cycle.name}
+                            className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                            style={{ objectPosition: cycle.image_position || 'center' }}
+                          />
+                        </div>
+                      )}
                       <CardHeader>
                         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 mb-2">
                           <CardTitle className="text-lg sm:text-xl break-words">{cycle.name}</CardTitle>
-                          <Badge variant="secondary" className="w-fit">
+                          <Badge variant="secondary" className="w-fit flex-shrink-0">
                             <Calendar className="w-3 h-3 mr-1" />
                             {cycle.sessions?.[0]?.count || 0} séances
                           </Badge>
@@ -313,14 +383,14 @@ const CycleManagement = () => {
 
       {/* Dialog de création/édition */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {editingCycle ? 'Modifier le cycle' : 'Créer un nouveau cycle'}
             </DialogTitle>
             <DialogDescription>
               {editingCycle
-                ? 'Modifiez les informations du cycle'
+                ? 'Modifiez les informations du cycle et ajoutez des documents'
                 : 'Créez un nouveau cycle pour regrouper vos séances'}
             </DialogDescription>
           </DialogHeader>
@@ -353,8 +423,116 @@ const CycleManagement = () => {
                 value={formData.long_description}
                 onChange={(e) => setFormData({ ...formData, long_description: e.target.value })}
                 placeholder="Décrivez les objectifs et le contenu du cycle..."
-                rows={5}
+                rows={4}
               />
+            </div>
+
+            {/* Image illustrative avec aperçu et positionnement */}
+            <div className="space-y-2">
+              <Label htmlFor="cycle-image">Image illustrative</Label>
+
+              {/* Aperçu de l'image */}
+              {imagePreview && (
+                <div className="space-y-2">
+                  <div className="relative w-full h-48 overflow-hidden bg-gray-100 rounded-lg border-2 border-gray-200">
+                    <img
+                      src={imagePreview}
+                      alt="Aperçu"
+                      className="w-full h-full object-cover"
+                      style={{ objectPosition: imagePosition }}
+                    />
+                  </div>
+
+                  {/* Contrôles de positionnement */}
+                  <div className="space-y-2">
+                    <Label className="text-sm">Position de l'image</Label>
+                    <div className="grid grid-cols-3 gap-2">
+                      <Button
+                        type="button"
+                        variant={imagePosition === 'top' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setImagePosition('top')}
+                        className="text-xs"
+                      >
+                        Haut
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={imagePosition === 'center' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setImagePosition('center')}
+                        className="text-xs"
+                      >
+                        Centre
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={imagePosition === 'bottom' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setImagePosition('bottom')}
+                        className="text-xs"
+                      >
+                        Bas
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex items-center gap-2">
+                <Input
+                  id="cycle-image"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="flex-1"
+                />
+                {imageFile && (
+                  <span className="text-sm text-green-600 flex items-center gap-1">
+                    <Upload className="w-4 h-4" />
+                    Prêt
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {imageFile ? 'Une nouvelle image sera téléchargée' : editingCycle?.image_url ? 'Laisser vide pour conserver l\'image actuelle' : 'Format recommandé: 16:9 (1200x675px)'}
+              </p>
+            </div>
+
+            {/* Document PDF */}
+            <div className="space-y-2">
+              <Label htmlFor="cycle-pdf">Document PDF</Label>
+              {editingCycle?.pdf_url && !pdfFile && (
+                <div className="flex items-center gap-2 mb-2">
+                  <FileText className="w-4 h-4 text-red-600" />
+                  <a
+                    href={editingCycle.pdf_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-blue-600 hover:underline"
+                  >
+                    Document actuel
+                  </a>
+                </div>
+              )}
+              <div className="flex items-center gap-2">
+                <Input
+                  id="cycle-pdf"
+                  type="file"
+                  accept=".pdf"
+                  onChange={(e) => setPdfFile(e.target.files?.[0] || null)}
+                  className="flex-1"
+                />
+                {pdfFile && (
+                  <span className="text-sm text-green-600 flex items-center gap-1">
+                    <Upload className="w-4 h-4" />
+                    Prêt
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {pdfFile ? 'Un nouveau PDF sera téléchargé' : editingCycle?.pdf_url ? 'Laisser vide pour conserver le PDF actuel' : 'Optionnel: ajoutez un document PDF'}
+              </p>
             </div>
           </div>
 
