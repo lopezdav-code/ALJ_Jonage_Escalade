@@ -83,15 +83,15 @@ const NewsDetail = () => {
     } else {
       setNewsItem(data);
 
-      // Générer les signed URLs pour l'image principale et la galerie
+      // Générer les URLs publiques pour l'image principale et la galerie
       if (data.image_url) {
-        const signedUrl = await getSignedUrl(data.image_url);
-        setSignedImageUrl(signedUrl);
+        const publicUrl = getSignedUrl(data.image_url);
+        setSignedImageUrl(publicUrl);
       }
 
       if (data.photo_gallery && data.photo_gallery.length > 0) {
-        const signedUrls = await getSignedUrls(data.photo_gallery);
-        setSignedGalleryUrls(signedUrls);
+        const publicUrls = getSignedUrls(data.photo_gallery);
+        setSignedGalleryUrls(publicUrls);
       }
     }
     setLoading(false);

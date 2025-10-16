@@ -1,19 +1,19 @@
 /**
  * Utilitaire pour gérer le stockage des images de news dans Supabase Storage
- * Bucket: exercise_images (privé)
+ * Bucket: exercise_images (public)
  *
  * Les images sont stockées dans les dossiers :
  * - news/ : Images principales des actualités
  * - news_gallery/{id}/ : Galerie de photos pour chaque actualité
  *
  * Permissions :
- * - Les images nécessitent un token d'authentification (signed URLs)
+ * - Le bucket est public, les URLs sont directes.
  */
 
 import { supabase } from '@/lib/customSupabaseClient';
 
 // Configuration
-const BUCKET_NAME = 'exercise_images';
+const BUCKET_NAME = 'news';
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
 const SIGNED_URL_EXPIRY = 3600; // 1 heure en secondes
@@ -133,51 +133,40 @@ export const uploadNewsGalleryImage = async (file, newsId) => {
 };
 
 /**
- * Génère une signed URL pour une image privée
+ * Génère une URL publique pour une image.
  * @param {string} path - Chemin du fichier dans le bucket
- * @param {number} expiresIn - Durée de validité en secondes (défaut: 1 heure)
- * @returns {Promise<string|null>} URL signée ou null en cas d'erreur
+ * @returns {string|null} URL publique ou null en cas d'erreur
  */
-export const getSignedUrl = async (path, expiresIn = SIGNED_URL_EXPIRY) => {
+export const getSignedUrl = (path) => {
   try {
     if (!path) return null;
 
-    // Si c'est déjà une URL complète, extraire le chemin
-    let filePath = path;
-    if (path.includes('/storage/v1/object/')) {
-      const parts = path.split(`/${BUCKET_NAME}/`);
-      filePath = parts[1]?.split('?')[0] || path;
+    // Si c'est déjà une URL complète, la retourner directement
+    if (path.startsWith('http')) {
+      return path;
     }
 
-    const { data, error } = await supabase.storage
+    const { data } = supabase.storage
       .from(BUCKET_NAME)
-      .createSignedUrl(filePath, expiresIn);
+      .getPublicUrl(path);
 
-    if (error) {
-      console.error('Erreur génération signed URL:', error);
-      return null;
-    }
-
-    return data.signedUrl;
+    return data.publicUrl;
   } catch (error) {
-    console.error('Erreur getSignedUrl:', error);
+    console.error('Erreur getPublicUrl:', error);
     return null;
   }
 };
 
 /**
- * Génère des signed URLs pour un tableau de chemins
+ * Génère des URLs publiques pour un tableau de chemins
  * @param {string[]} paths - Tableau de chemins de fichiers
- * @param {number} expiresIn - Durée de validité en secondes
- * @returns {Promise<string[]>} Tableau d'URLs signées
+ * @returns {string[]} Tableau d'URLs publiques
  */
-export const getSignedUrls = async (paths, expiresIn = SIGNED_URL_EXPIRY) => {
+export const getSignedUrls = (paths) => {
   if (!paths || !Array.isArray(paths)) return [];
 
   try {
-    const urlPromises = paths.map(path => getSignedUrl(path, expiresIn));
-    const urls = await Promise.all(urlPromises);
-    return urls.filter(url => url !== null);
+    return paths.map(path => getSignedUrl(path)).filter(url => url !== null);
   } catch (error) {
     console.error('Erreur getSignedUrls:', error);
     return [];
