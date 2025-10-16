@@ -1,11 +1,13 @@
 import React, { createContext, useState, useContext, useCallback, useMemo } from 'react';
 import { supabase } from '@/lib/customSupabaseClient';
+import { useAuth } from './SupabaseAuthContext';
 
 const MemberDetailContext = createContext();
 
 export const useMemberDetail = () => useContext(MemberDetailContext);
 
 export const MemberDetailProvider = ({ children }) => {
+  const { user } = useAuth();
   const [selectedMember, setSelectedMember] = useState(null);
   const [isDetailVisible, setIsDetailVisible] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -18,14 +20,20 @@ export const MemberDetailProvider = ({ children }) => {
     setIsDetailVisible(true);
     setSelectedMember(null);
 
-    const memberDetailsPromise = supabase
-      .from('secure_members')
-      .select(`
-        *,
-        profiles:profiles!inner(role),
+    const userRole = user?.user_metadata?.role;
+    const isAdminOrBureau = userRole === 'admin' || userRole === 'bureau';
+
+    let selectQuery = '*, profiles(role)';
+    if (isAdminOrBureau) {
+      selectQuery += `,
         emergency_contact_1:members!emergency_contact_1_id(id, first_name, last_name, phone),
         emergency_contact_2:members!emergency_contact_2_id(id, first_name, last_name, phone)
-      `)
+      `;
+    }
+
+    const memberDetailsPromise = supabase
+      .from('secure_members')
+      .select(selectQuery)
       .eq('id', memberId)
       .single();
 

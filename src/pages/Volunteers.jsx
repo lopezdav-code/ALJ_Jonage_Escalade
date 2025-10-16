@@ -13,6 +13,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Command, CommandInput, CommandEmpty, CommandGroup, CommandItem, CommandList } from '@/components/ui/command';
 import { cn } from '@/lib/utils';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
+import { useAuth } from '@/contexts/SupabaseAuthContext';
 
 // Placeholder for brevetColors - adapt if needed
 const brevetColors = {
@@ -21,7 +22,7 @@ const brevetColors = {
   'Moniteur Escalade': 'bg-red-500',
 };
 
-const VolunteerRow = React.memo(({ member, onEdit, isEmergencyContact, showSubGroup, showCategory }) => {
+const VolunteerRow = React.memo(({ member, onEdit, isEmergencyContact, showSubGroup, showCategory, canEdit }) => {
     const hasEmergencyContact = !!(member.emergency_contact_1_id || member.emergency_contact_2_id);
     return (
       <tr className="border-b">
@@ -44,9 +45,11 @@ const VolunteerRow = React.memo(({ member, onEdit, isEmergencyContact, showSubGr
           </div>
         </td>
         <td className="p-2">
-          <Button variant="ghost" size="icon" onClick={() => onEdit(member)}>
-            <Pencil className="h-4 w-4" />
-          </Button>
+          {canEdit && (
+            <Button variant="ghost" size="icon" onClick={() => onEdit(member)}>
+              <Pencil className="h-4 w-4" />
+            </Button>
+          )}
         </td>
       </tr>
     );
@@ -92,6 +95,8 @@ const Volunteers = () => {
   const [showNoEmailFilter, setShowNoEmailFilter] = useState(false); // New state for the filter
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { isAdmin, isBureau } = useAuth();
+  const canEdit = useMemo(() => isAdmin || isBureau, [isAdmin, isBureau]);
 
   const emergencyContactIds = useMemo(() => {
     const ids = new Set();
@@ -334,7 +339,7 @@ const Volunteers = () => {
                               {showSubGroupColumn && <th className="text-left p-2">Sous-groupe</th>}
                               {showCategoryColumn && <th className="text-left p-2">Catégorie</th>}
                               <th className="text-left p-2">Info</th>
-                              <th className="text-left p-2">Actions</th>
+                              {canEdit && <th className="text-left p-2">Actions</th>}
                             </tr>
                           </thead>
                           <tbody>
@@ -348,6 +353,7 @@ const Volunteers = () => {
                                 isEmergencyContact={emergencyContactIds.has(member.id)}
                                 showSubGroup={showSubGroupColumn}
                                 showCategory={showCategoryColumn}
+                                canEdit={canEdit}
                               />
                             ))}
                           </tbody>
@@ -400,7 +406,7 @@ const Volunteers = () => {
                               {showSubGroupColumn && <th className="text-left p-2">Sous-groupe</th>}
                               {showCategoryColumn && <th className="text-left p-2">Catégorie</th>}
                               <th className="text-left p-2">Info</th>
-                              <th className="text-left p-2">Actions</th>
+                              {canEdit && <th className="text-left p-2">Actions</th>}
                             </tr>
                           </thead>
                           <tbody>
@@ -414,6 +420,7 @@ const Volunteers = () => {
                                 isEmergencyContact={emergencyContactIds.has(member.id)}
                                 showSubGroup={showSubGroupColumn}
                                 showCategory={showCategoryColumn}
+                                canEdit={canEdit}
                               />
                             ))}
                           </tbody>
@@ -443,7 +450,7 @@ const Volunteers = () => {
                       {showSubGroupColumn && <th className="text-left p-2">Sous-groupe</th>}
                       {showCategoryColumn && <th className="text-left p-2">Catégorie</th>}
                       <th className="text-left p-2">Info</th>
-                      <th className="text-left p-2">Actions</th>
+                      {canEdit && <th className="text-left p-2">Actions</th>}
                     </tr>
                   </thead>
                   <tbody>
@@ -457,6 +464,7 @@ const Volunteers = () => {
                         isEmergencyContact={emergencyContactIds.has(member.id)}
                         showSubGroup={showSubGroupColumn}
                         showCategory={showCategoryColumn}
+                        canEdit={canEdit}
                       />
                     ))}
                   </tbody>

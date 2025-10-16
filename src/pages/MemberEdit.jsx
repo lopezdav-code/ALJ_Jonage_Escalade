@@ -27,17 +27,26 @@ const MemberEdit = () => {
     navigate(url);
   };
 
+  const { user } = useAuth();
+
   useEffect(() => {
     const fetchMember = async () => {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('secure_members')
-        .select(`
-          *,
-          profiles!inner(role),
+
+      const userRole = user?.user_metadata?.role;
+      const isAdminOrBureau = userRole === 'admin' || userRole === 'bureau';
+
+      let selectQuery = '*, profiles(role)';
+      if (isAdminOrBureau) {
+        selectQuery += `,
           emergency_contact_1:members!emergency_contact_1_id(id, first_name, last_name, phone),
           emergency_contact_2:members!emergency_contact_2_id(id, first_name, last_name, phone)
-        `)
+        `;
+      }
+
+      const { data, error } = await supabase
+        .from('secure_members')
+        .select(selectQuery)
         .eq('id', id)
         .single();
 
