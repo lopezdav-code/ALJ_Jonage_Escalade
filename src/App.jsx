@@ -53,6 +53,11 @@ import MemberDetailCard from '@/components/MemberDetailCard';
 import MemberForm from '@/components/MemberForm';
 import { uploadMemberPhoto } from '@/lib/memberStorageUtils';
 
+// Client-side redirect for dev environment
+if (window.location.pathname === '/ALJ_Jonage_Escalade') {
+  window.location.pathname = '/ALJ_Jonage_Escalade/';
+}
+
 // Composant pour afficher le loading initial
 const LoadingScreen = () => (
   <div className="min-h-screen flex items-center justify-center bg-background">
