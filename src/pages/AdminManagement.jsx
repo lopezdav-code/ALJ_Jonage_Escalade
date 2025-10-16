@@ -650,6 +650,8 @@ const AdminManagement = () => {
             <p className="text-sm text-muted-foreground">
               <strong>Note :</strong> Ces permissions sont définies dans le code et ne peuvent pas être modifiées ici. 
               Ce tableau sert de référence pour comprendre les droits de chaque rôle.
+              <br />
+              <strong>Protection des données :</strong> Pour protéger les données personnelles, le nom de famille des adhérents est masqué pour tous les rôles sauf 'Admin' et 'Bureau'. Cette logique est appliquée directement par la base de données via une vue sécurisée (`secure_members`).
             </p>
           </CardFooter>
         </Card>
