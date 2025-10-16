@@ -83,8 +83,8 @@ const CompetitionDetail = () => {
       // Enrichir avec les données des membres
       if (rawParticipants && rawParticipants.length > 0) {
         const memberIds = [...new Set(rawParticipants.map(p => p.member_id))];
-        const { data: membersData, error: membersError } = await supabase
-          .from('members')
+          const { data: membersData, error: membersError } = await supabase
+          .from('secure_members')
           .select('*')
           .in('id', memberIds);
 

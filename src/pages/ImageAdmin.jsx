@@ -139,7 +139,7 @@ const ImageAdmin = () => {
       const imagesByBucket = await Promise.all(imagePromises);
       const allImages = imagesByBucket.flat().sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
-      const { data: memberData, error: memberError } = await supabase.from('members').select('*');
+      const { data: memberData, error: memberError } = await supabase.from('secure_members').select('*');
       if (memberError) throw memberError;
 
       setImages(allImages);

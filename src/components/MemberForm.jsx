@@ -66,7 +66,7 @@ const MemberForm = ({ member, onSave, onCancel, isSaving }) => {
   useEffect(() => {
     // Re-fetch all members when the component mounts or when 'member' prop changes
     const fetchAllMembers = async () => {
-      const { data, error } = await supabase.from('members').select('id, first_name, last_name').order('last_name').order('first_name');
+      const { data, error } = await supabase.from('secure_members').select('id, first_name, last_name').order('last_name').order('first_name');
       if (!error) {
         setAllMembers(data);
       }
@@ -77,7 +77,7 @@ const MemberForm = ({ member, onSave, onCancel, isSaving }) => {
     if (member?.id) {
       const fetchIsEmergencyContactFor = async () => {
         const { data, error } = await supabase
-          .from('members')
+          .from('secure_members')
           .select('id, first_name, last_name')
           .or(`emergency_contact_1_id.eq.${member.id},emergency_contact_2_id.eq.${member.id}`);
         if (!error) {
@@ -161,7 +161,7 @@ const MemberForm = ({ member, onSave, onCancel, isSaving }) => {
     }
 
     const { data: targetMember, error: fetchError } = await supabase
-      .from('members')
+      .from('secure_members')
       .select('emergency_contact_1_id, emergency_contact_2_id')
       .eq('id', targetMemberId)
       .single();

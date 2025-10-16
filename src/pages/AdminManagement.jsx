@@ -47,7 +47,7 @@ const MemberSearchPopover = ({ onSelect, children, existingLinks }) => {
 
     useEffect(() => {
         const fetchAllMembers = async () => {
-            const { data } = await supabase.from('members').select('id, first_name, last_name');
+            const { data } = await supabase.from('secure_members').select('id, first_name, last_name');
             if (data) setAllMembers(data);
         };
         fetchAllMembers();

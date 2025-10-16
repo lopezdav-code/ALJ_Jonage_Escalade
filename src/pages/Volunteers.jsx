@@ -106,7 +106,7 @@ const Volunteers = () => {
     const fetchMembers = async () => {
       setLoading(true);
       const { data, error } = await supabase
-        .from('members')
+        .from('secure_members')
         .select('*');
 
       if (error) {

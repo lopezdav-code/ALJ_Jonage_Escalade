@@ -29,7 +29,7 @@ const MemberEdit = () => {
     const fetchMember = async () => {
       setLoading(true);
       const { data, error } = await supabase
-        .from('members')
+        .from('secure_members')
         .select(`
           *,
           emergency_contact_1:emergency_contact_1_id(id, first_name, last_name, phone),

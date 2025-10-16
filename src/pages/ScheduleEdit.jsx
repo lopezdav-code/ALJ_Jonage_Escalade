@@ -79,7 +79,7 @@ const ScheduleEdit = () => {
       // Récupérer uniquement les membres Bénévole ou Bureau
       // (pour éviter une liste trop longue de 280 membres)
       const { data: filteredMembers, error: membersError } = await supabase
-        .from('members')
+        .from('secure_members')
         .select('id, first_name, last_name, title')
         .in('title', ['Bénévole', 'Bureau'])
         .order('last_name')

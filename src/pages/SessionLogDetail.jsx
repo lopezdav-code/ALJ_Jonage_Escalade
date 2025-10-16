@@ -74,7 +74,7 @@ const SessionLogDetail = () => {
         let membersMap = {};
         if (allMemberIds.length > 0) {
           const { data: members, error: membersError } = await supabase
-            .from('members')
+            .from('secure_members')
             .select('id, first_name, last_name')
             .in('id', allMemberIds);
 

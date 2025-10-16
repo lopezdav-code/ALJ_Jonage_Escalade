@@ -84,7 +84,7 @@ const PasseportValidation = () => {
     setLoading(true);
     try {
       const { data, error } = await supabase
-        .from('members')
+        .from('secure_members')
         .select('*')
         .in('title', ['Loisir enfants', 'Loisir collége', 'Loisir lycée', 'Loisir adulte'])
         .order('last_name')
@@ -144,8 +144,11 @@ const PasseportValidation = () => {
       if (error) throw error;
 
       // Mettre à jour le passeport du membre dans la table members
+      // Note: This update will fail if RLS is preventing it. 
+      // It's better to handle this via a database function (e.g., update_member_passeport)
+      // For now, we assume the user has rights, but this is a potential security issue.
       const { error: updateError } = await supabase
-        .from('members')
+        .from('members') 
         .update({ passeport: selectedPasseportType })
         .eq('id', selectedMember.id);
 

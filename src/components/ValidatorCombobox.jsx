@@ -31,7 +31,7 @@ const ValidatorCombobox = ({ value, onChange, required = false }) => {
     setLoading(true);
     try {
       const { data, error } = await supabase
-        .from('members')
+        .from('secure_members')
         .select('id, first_name, last_name, title')
         .order('last_name')
         .order('first_name');

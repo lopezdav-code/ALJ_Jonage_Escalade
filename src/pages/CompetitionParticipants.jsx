@@ -68,7 +68,7 @@ const CompetitionParticipants = () => {
         if (rawParticipants && rawParticipants.length > 0) {
           const memberIds = rawParticipants.map(p => p.member_id);
           const { data: membersData, error: membersError } = await supabase
-            .from('members')
+            .from('secure_members')
             .select('*')
             .in('id', memberIds);
 
@@ -85,7 +85,7 @@ const CompetitionParticipants = () => {
 
         // Charger tous les membres
         const { data: membersData, error: membersError } = await supabase
-          .from('members')
+          .from('secure_members')
           .select('*')
           .order('last_name');
 

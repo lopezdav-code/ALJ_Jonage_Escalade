@@ -31,7 +31,7 @@ const CompetitorSummary = () => {
     setLoading(true);
     try {
       const { data: memberData, error: memberError } = await supabase
-        .from('members')
+        .from('secure_members')
         .select('*')
         .eq('id', memberId)
         .single();

@@ -9,7 +9,7 @@ const TestImages = () => {
   useEffect(() => {
     const fetchMembers = async () => {
       const { data, error } = await supabase
-        .from('members')
+        .from('secure_members')
         .select('id, first_name, last_name, photo_url')
         .not('photo_url', 'is', null)
         .limit(5);

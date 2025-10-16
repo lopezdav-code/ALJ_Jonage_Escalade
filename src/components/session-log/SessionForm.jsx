@@ -177,7 +177,7 @@ const SessionForm = ({ session, onSave, onCancel, isSaving }) => {
       try {
         // Fetch all members
         const { data: membersData, error: membersError } = await supabase
-          .from('members')
+          .from('secure_members')
           .select('id, first_name, last_name, title')
           .order('last_name')
           .order('first_name');

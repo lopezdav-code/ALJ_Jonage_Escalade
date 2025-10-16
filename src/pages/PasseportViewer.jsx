@@ -40,7 +40,7 @@ const PasseportViewer = () => {
     try {
       // Charger tous les membres avec passeport
       const { data: membersData, error: membersError } = await supabase
-        .from('members')
+        .from('secure_members')
         .select('*')
         .not('passeport', 'is', null)
         .order('last_name')

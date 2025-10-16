@@ -19,7 +19,7 @@ export const MemberDetailProvider = ({ children }) => {
     setSelectedMember(null);
 
     const memberDetailsPromise = supabase
-      .from('members')
+      .from('secure_members')
       .select(`
         *,
         profiles(role),
@@ -30,7 +30,7 @@ export const MemberDetailProvider = ({ children }) => {
       .single();
 
     const isEmergencyContactForPromise = supabase
-      .from('members')
+      .from('secure_members')
       .select('id, first_name, last_name')
       .or(`emergency_contact_1_id.eq.${memberId},emergency_contact_2_id.eq.${memberId}`);
 
