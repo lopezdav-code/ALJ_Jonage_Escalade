@@ -247,6 +247,47 @@ const AdminManagement = () => {
           </CardFooter>
         </Card>
       </motion.div>
+
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
+        <Card>
+          <CardHeader>
+            <CardTitle>Gestion des Images et de la Sécurité</CardTitle>
+            <CardDescription>
+              Récapitulatif des buckets de stockage et de leur configuration de sécurité.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="text-sm space-y-4">
+            <div>
+              <h4 className="font-semibold">Photos des Membres</h4>
+              <p className="text-muted-foreground">
+                - <strong>Bucket :</strong> `members_photos` <Badge variant="destructive">Privé</Badge><br/>
+                - <strong>Sécurité :</strong> L'accès aux photos est protégé. Le code génère des URLs sécurisées et temporaires (`signed URLs`) pour chaque image. C'est la configuration correcte et la plus sécurisée pour les données personnelles.
+              </p>
+            </div>
+            <div>
+              <h4 className="font-semibold">Images des Actualités (News)</h4>
+              <p className="text-muted-foreground">
+                - <strong>Bucket :</strong> `news` <Badge variant="secondary">Public</Badge><br/>
+                - <strong>Sécurité :</strong> Le bucket est public. Le code utilise des URLs publiques directes, ce qui est optimal pour des images non sensibles.
+              </p>
+            </div>
+            <div>
+              <h4 className="font-semibold">Images des Compétitions</h4>
+              <p className="text-muted-foreground">
+                - <strong>Bucket :</strong> `competition_photos` <Badge variant="destructive">Privé</Badge><br/>
+                - <strong>Sécurité :</strong> L'accès est restreint aux utilisateurs authentifiés via des URLs signées.
+              </p>
+            </div>
+            <div>
+              <h4 className="font-semibold">Autres Images (Pédagogie, Cycles, etc.)</h4>
+              <p className="text-muted-foreground">
+                - <strong>Buckets :</strong> `pedagogy_files`, `cycles`, etc. <Badge variant="secondary">Publics</Badge><br/>
+                - <strong>Sécurité :</strong> Ces buckets sont publics. Le code utilise des URLs publiques directes.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
     </div>
     </>
   );

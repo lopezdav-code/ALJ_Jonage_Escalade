@@ -1,19 +1,19 @@
 /**
  * Utilitaire pour gérer le stockage des photos de compétitions dans Supabase Storage
- * Bucket: competition_photos (public)
+ * Bucket: competition_photos (privé)
  *
  * Permissions par rôle :
- * - Tous : Voir les photos (public)
+ * - Authentifié : Voir les photos
  * - Bureau+ : Uploader et modifier
  * - Admin : Supprimer
  */
 
-import { supabase } from '@/lib/customSupabaseClient';
+import { supabase, supabaseUrl } from '@/lib/customSupabaseClient';
 
 // Configuration
 const BUCKET_NAME = 'competition_photos';
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
 
 /**
  * Valide un fichier image avant upload
@@ -109,16 +109,10 @@ export const uploadCompetitionPhoto = async (file, competitionName) => {
 
     console.log('Upload réussi, données:', data);
 
-    // Récupérer l'URL publique du fichier
-    const { data: urlData } = supabase.storage
-      .from(BUCKET_NAME)
-      .getPublicUrl(fileName);
-
-    console.log('URL publique:', urlData.publicUrl);
-
+    // Retourner uniquement le chemin relatif du fichier
     return {
       success: true,
-      url: urlData.publicUrl,
+      url: fileName, // Garder 'url' pour la rétrocompatibilité immédiate dans le formulaire
       filePath: fileName
     };
 
@@ -168,11 +162,41 @@ export const deleteCompetitionPhoto = async (photoUrl) => {
   }
 };
 
+/**
+ * Récupère l'URL signée d'une photo de compétition
+ * @param {string} photoPath - Chemin de la photo
+ * @returns {Promise<string|null>} URL signée ou null si invalide
+ */
+export const getCompetitionPhotoUrl = async (photoPath) => {
+  if (!photoPath) return null;
+  try {
+    const { data, error } = await supabase.storage
+      .from(BUCKET_NAME)
+      .createSignedUrl(photoPath, 3600); // Valide 1 heure
+
+    if (error) {
+      console.error('Erreur createSignedUrl (competition):', error);
+      return null;
+    }
+    
+    let finalUrl = data.signedUrl;
+    if (finalUrl && finalUrl.startsWith('/')) {
+      finalUrl = `${supabaseUrl}/storage/v1${finalUrl}`;
+    }
+
+    return finalUrl;
+  } catch (error) {
+    console.error('Erreur getCompetitionPhotoUrl:', error);
+    return null;
+  }
+};
+
 export default {
   validateImageFile,
   generateCompetitionFileName,
   uploadCompetitionPhoto,
   deleteCompetitionPhoto,
+  getCompetitionPhotoUrl,
   BUCKET_NAME,
   MAX_FILE_SIZE,
   ALLOWED_TYPES

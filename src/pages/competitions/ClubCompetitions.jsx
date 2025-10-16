@@ -8,10 +8,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useToast } from '@/components/ui/use-toast';
 import CompetitionFilters from '@/components/competitions/CompetitionFilters';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
+import { getCompetitionPhotoUrl } from '@/lib/competitionStorageUtils';
 
 const ClubCompetitions = () => {
   const [competitions, setCompetitions] = useState([]);
   const [participants, setParticipants] = useState({});
+  const [signedImageUrls, setSignedImageUrls] = useState({});
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
     search: '',
@@ -38,6 +40,15 @@ const ClubCompetitions = () => {
 
       if (competitionsError) throw competitionsError;
       setCompetitions(competitionsData);
+
+      // Generate signed URLs for competition images
+      const urls = {};
+      for (const comp of competitionsData) {
+        if (comp.image_url) {
+          urls[comp.id] = await getCompetitionPhotoUrl(comp.image_url);
+        }
+      }
+      setSignedImageUrls(urls);
 
       // Récupérer le nombre de participants par compétition
       const { data: participantsData, error: participantsError } = await supabase
@@ -222,9 +233,9 @@ const ClubCompetitions = () => {
               {filteredCompetitions.map((comp) => (
                 <TableRow key={comp.id} className="cursor-pointer hover:bg-muted/50">
                   <TableCell>
-                    {comp.image_url ? (
+                    {signedImageUrls[comp.id] ? (
                       <img
-                        src={comp.image_url}
+                        src={signedImageUrls[comp.id]}
                         alt={comp.name}
                         className="w-12 h-12 object-cover rounded border"
                       />

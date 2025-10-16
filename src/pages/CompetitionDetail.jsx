@@ -16,7 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/components/ui/use-toast';
 import { useMemberDetail } from '@/contexts/MemberDetailContext';
-import { uploadCompetitionPhoto } from '@/lib/competitionStorageUtils';
+import { uploadCompetitionPhoto, getCompetitionPhotoUrl } from '@/lib/competitionStorageUtils';
 import ParticipantsDisplay from '@/components/ParticipantsDisplay';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { formatName } from '@/lib/utils';
@@ -38,6 +38,7 @@ const CompetitionDetail = () => {
   const [competition, setCompetition] = useState(null);
   const [formData, setFormData] = useState(null);
   const [participants, setParticipants] = useState([]);
+  const [signedUrls, setSignedUrls] = useState({ main: null, gallery: [] });
 
   const [photoGallery, setPhotoGallery] = useState({
     isOpen: false,
@@ -72,6 +73,11 @@ const CompetitionDetail = () => {
         categories: compData.categories || [],
         photo_gallery: compData.photo_gallery || []
       });
+
+      // Generate signed URLs for photos
+      const mainImageUrl = compData.image_url ? await getCompetitionPhotoUrl(compData.image_url) : null;
+      const galleryUrls = compData.photo_gallery ? await Promise.all(compData.photo_gallery.map(p => getCompetitionPhotoUrl(p))) : [];
+      setSignedUrls({ main: mainImageUrl, gallery: galleryUrls.filter(Boolean) });
 
       // Charger les participants
       const { data: rawParticipants, error: participantsError } = await supabase
@@ -188,9 +194,11 @@ const CompetitionDetail = () => {
   const addPhotoUrl = () => {
     const url = prompt("URL de la photo:");
     if (url) {
+      // Extract path from URL
+      const path = new URL(url).pathname.split('/').pop();
       setFormData(prev => ({
         ...prev,
-        photo_gallery: [...prev.photo_gallery, url]
+        photo_gallery: [...prev.photo_gallery, path]
       }));
     }
   };
@@ -441,10 +449,10 @@ const CompetitionDetail = () => {
       <Card>
         <CardContent className="pt-6">
           <div className="flex flex-col md:flex-row gap-6">
-            {dataToDisplay.image_url && (
+            {signedUrls.main && (
               <div className="w-full md:w-48 h-48 flex-shrink-0">
                 <img
-                  src={dataToDisplay.image_url}
+                  src={signedUrls.main}
                   alt={dataToDisplay.name}
                   className="w-full h-full object-cover rounded-lg border"
                 />
@@ -470,12 +478,49 @@ const CompetitionDetail = () => {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="image_url">URL de l'image principale</Label>
-                    <Input
-                      id="image_url"
-                      value={formData.image_url || ''}
-                      onChange={(e) => handleChange('image_url', e.target.value)}
-                    />
+                    <Label>Image principale</Label>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        id="image_url"
+                        type="text"
+                        value={formData.image_url || ''}
+                        onChange={(e) => handleChange('image_url', e.target.value)}
+                        placeholder="Chemin de l'image"
+                      />
+                      <Label
+                        htmlFor="main-image-upload-detail"
+                        className={`flex items-center gap-1 px-3 py-2 text-sm font-medium rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground ${uploadingPhoto ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                      >
+                        {uploadingPhoto ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Upload className="w-4 h-4" />
+                        )}
+                        <span>Choisir</span>
+                        <Input
+                          id="main-image-upload-detail"
+                          type="file"
+                          className="sr-only"
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            setUploadingPhoto(true);
+                            try {
+                              const result = await uploadCompetitionPhoto(file, formData.name);
+                              if (!result.success) throw new Error(result.error);
+                              handleChange('image_url', result.filePath);
+                              toast({ title: "Succès", description: "Image principale téléversée." });
+                            } catch (error) {
+                              toast({ title: "Erreur", description: error.message, variant: "destructive" });
+                            } finally {
+                              setUploadingPhoto(false);
+                            }
+                          }}
+                          accept="image/*"
+                          disabled={uploadingPhoto}
+                        />
+                      </Label>
+                    </div>
                   </div>
                 </>
               ) : (
@@ -812,13 +857,13 @@ const CompetitionDetail = () => {
             </div>
           )}
 
-          {dataToDisplay.photo_gallery && dataToDisplay.photo_gallery.length > 0 ? (
+          {signedUrls.gallery && signedUrls.gallery.length > 0 ? (
             <>
               {!isEditMode && (
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => openPhotoGallery(dataToDisplay.photo_gallery, dataToDisplay.name, 0)}
+                  onClick={() => openPhotoGallery(signedUrls.gallery, dataToDisplay.name, 0)}
                   className="mb-4 flex items-center gap-1"
                 >
                   <ZoomIn className="w-3 h-3" />
@@ -826,14 +871,14 @@ const CompetitionDetail = () => {
                 </Button>
               )}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                {dataToDisplay.photo_gallery.map((photo, index) => (
+                {signedUrls.gallery.map((photoUrl, index) => (
                   <div
                     key={index}
                     className="relative group cursor-pointer"
-                    onClick={() => !isEditMode && openPhotoGallery(dataToDisplay.photo_gallery, dataToDisplay.name, index)}
+                    onClick={() => !isEditMode && openPhotoGallery(signedUrls.gallery, dataToDisplay.name, index)}
                   >
                     <img
-                      src={photo}
+                      src={photoUrl}
                       alt={`Photo ${index + 1}`}
                       className="w-full h-32 object-cover rounded border"
                     />

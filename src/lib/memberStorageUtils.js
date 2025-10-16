@@ -8,13 +8,12 @@
  * - Admin : Supprimer
  */
 
-import { supabase } from '@/lib/customSupabaseClient';
+import { supabase, supabaseUrl } from '@/lib/customSupabaseClient';
 
 // Configuration
 const BUCKET_NAME = 'members_photos';
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-const SUPABASE_URL = 'https://hvugiirundpxynozxxnd.supabase.co';
 
 /**
  * Valide un fichier image avant upload
@@ -196,7 +195,7 @@ export const getMemberPhotoUrl = async (photoPath) => {
     // Construire l'URL complète si l'API retourne une URL relative
     let finalUrl = data.signedUrl;
     if (finalUrl && finalUrl.startsWith('/')) {
-      finalUrl = `${SUPABASE_URL}/storage/v1${finalUrl}`;
+      finalUrl = `${supabaseUrl}/storage/v1${finalUrl}`;
     }
 
     return finalUrl;

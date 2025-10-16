@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/components/ui/use-toast';
-import { uploadCompetitionPhoto } from '@/lib/competitionStorageUtils';
+import { uploadCompetitionPhoto, getCompetitionPhotoUrl } from '@/lib/competitionStorageUtils';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
@@ -59,6 +59,7 @@ const CompetitionEditor = () => {
   const [saving, setSaving] = useState(false);
   const [selectedPhotoFile, setSelectedPhotoFile] = useState(null);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [galleryUrls, setGalleryUrls] = useState([]);
 
   // Options pour les sélecteurs
   const niveauOptions = ['Départemental', 'Régional', 'Inter-régional', 'National', 'International'];
@@ -72,6 +73,18 @@ const CompetitionEditor = () => {
       fetchCompetition();
     }
   }, [id]);
+
+  useEffect(() => {
+    const generateUrls = async () => {
+      if (formData.photo_gallery && formData.photo_gallery.length > 0) {
+        const urls = await Promise.all(formData.photo_gallery.map(p => getCompetitionPhotoUrl(p)));
+        setGalleryUrls(urls.filter(Boolean));
+      } else {
+        setGalleryUrls([]);
+      }
+    };
+    generateUrls();
+  }, [formData.photo_gallery]);
 
   const fetchCompetition = async () => {
     setLoading(true);
@@ -146,9 +159,11 @@ const CompetitionEditor = () => {
   const addPhotoUrl = () => {
     const url = prompt("URL de la photo:");
     if (url) {
+      // Extract path from URL
+      const path = new URL(url).pathname.split('/').pop();
       setFormData(prev => ({
         ...prev,
-        photo_gallery: [...prev.photo_gallery, url]
+        photo_gallery: [...prev.photo_gallery, path]
       }));
     }
   };
@@ -404,6 +419,51 @@ const CompetitionEditor = () => {
               />
             </div>
           </div>
+          <div>
+            <Label>Image principale</Label>
+            <div className="flex items-center gap-2">
+              <Input
+                id="image_url"
+                type="text"
+                value={formData.image_url || ''}
+                onChange={(e) => handleChange('image_url', e.target.value)}
+                placeholder="Chemin de l'image ou URL"
+              />
+              <Label
+                htmlFor="main-image-upload"
+                className={`flex items-center gap-1 px-3 py-2 text-sm font-medium rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground ${uploadingPhoto ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+              >
+                {uploadingPhoto ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Upload className="w-4 h-4" />
+                )}
+                <span>Choisir</span>
+                <Input
+                  id="main-image-upload"
+                  type="file"
+                  className="sr-only"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    setUploadingPhoto(true);
+                    try {
+                      const result = await uploadCompetitionPhoto(file, formData.name);
+                      if (!result.success) throw new Error(result.error);
+                      handleChange('image_url', result.filePath);
+                      toast({ title: "Succès", description: "Image principale téléversée." });
+                    } catch (error) {
+                      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+                    } finally {
+                      setUploadingPhoto(false);
+                    }
+                  }}
+                  accept="image/*"
+                  disabled={uploadingPhoto}
+                />
+              </Label>
+            </div>
+          </div>
 
           {/* Dates */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -594,18 +654,6 @@ const CompetitionEditor = () => {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Image principale */}
-          <div>
-            <Label htmlFor="image_url">Image principale (URL)</Label>
-            <Input
-              id="image_url"
-              type="url"
-              value={formData.image_url}
-              onChange={(e) => handleChange('image_url', e.target.value)}
-              placeholder="https://..."
-            />
-          </div>
-
           {/* Galerie photo */}
           <div>
             <div className="flex items-center justify-between mb-2">
@@ -642,12 +690,12 @@ const CompetitionEditor = () => {
               </div>
             </div>
 
-            {formData.photo_gallery.length > 0 && (
+            {galleryUrls.length > 0 && (
               <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-4">
-                {formData.photo_gallery.map((photo, index) => (
+                {galleryUrls.map((url, index) => (
                   <div key={index} className="relative group">
                     <img
-                      src={photo}
+                      src={url}
                       alt={`Photo ${index + 1}`}
                       className="w-full h-20 object-cover rounded border"
                     />
