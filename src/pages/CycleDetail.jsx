@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Loader2, ArrowLeft, PlusCircle, Trash2, Calendar, Users, Clock, Pencil, Settings, FileText, Upload } from 'lucide-react';
 import { Input, Textarea } from '@/components/ui/input'; // Ensure Input and Textarea are imported
 import { Label } from '@/components/ui/label';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
 const CYCLE_BUCKET_NAME = 'cycle_documents';
 
@@ -378,7 +379,11 @@ const CycleDetail = () => {
   }
 
   return (
-    <>
+    <ProtectedRoute
+      requireAdherent={true}
+      pageTitle="Détail du cycle"
+      message="Les détails des cycles sont réservés aux adhérents du club. Veuillez vous connecter avec un compte adhérent pour y accéder."
+    >
       <Helmet>
         <title>{cycle.name} - Cycles - ALJ Escalade</title>
       </Helmet>
@@ -979,7 +984,7 @@ const CycleDetail = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </>
+    </ProtectedRoute>
   );
 };
 

@@ -13,6 +13,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { formatName } from '@/lib/utils';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
 const PasseportViewer = () => {
   const { isAdmin, isAdherent } = useAuth();
@@ -938,22 +939,6 @@ const PasseportViewer = () => {
     return { totalValidations, byPasseport, byModule };
   }, [allValidations]);
 
-  if (!isAdherent && !isAdmin) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <p className="text-muted-foreground">Accès réservé aux membres du club</p>
-      </div>
-    );
-  }
-
-  if (loading && !selectedMember) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
   // Vue détail d'une validation
   if (selectedValidation) {
     const currentValidation = isEditing ? editedValidation : selectedValidation;
@@ -962,7 +947,12 @@ const PasseportViewer = () => {
     const totalCount = competencesEntries.length;
 
     return (
-      <div className="max-w-4xl mx-auto space-y-6">
+      <ProtectedRoute
+        requireAdherent={true}
+        pageTitle="Passeport d'escalade"
+        message="Le passeport d'escalade est réservé aux adhérents du club. Veuillez vous connecter avec un compte adhérent pour y accéder."
+      >
+        <div className="max-w-4xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <Button variant="outline" onClick={() => {
             setSelectedValidation(null);
@@ -1189,11 +1179,31 @@ const PasseportViewer = () => {
           </CardContent>
         </Card>
       </div>
+      </ProtectedRoute>
+    );
+  }
+
+  if (loading && !selectedMember) {
+    return (
+      <ProtectedRoute
+        requireAdherent={true}
+        pageTitle="Passeport d'escalade"
+        message="Le passeport d'escalade est réservé aux adhérents du club. Veuillez vous connecter avec un compte adhérent pour y accéder."
+      >
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </ProtectedRoute>
     );
   }
 
   // Vue principale avec recherche, filtres et liste
   return (
+    <ProtectedRoute
+      requireAdherent={true}
+      pageTitle="Passeport d'escalade"
+      message="Le passeport d'escalade est réservé aux adhérents du club. Veuillez vous connecter avec un compte adhérent pour y accéder."
+    >
     <div className="space-y-6">
       {/* En-tête */}
       <div className="flex items-center gap-3">
@@ -1464,6 +1474,7 @@ const PasseportViewer = () => {
         </Card>
       )}
     </div>
+    </ProtectedRoute>
   );
 };
 

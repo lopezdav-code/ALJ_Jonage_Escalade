@@ -35,6 +35,7 @@ const CompetitionDetail = lazy(() => import('@/pages/CompetitionDetail'));
 const ConnectionLogs = lazy(() => import('@/pages/ConnectionLogs'));
 const AccessLogs = lazy(() => import('@/pages/AccessLogs'));
 const CompetitionParticipants = lazy(() => import('@/pages/CompetitionParticipants'));
+const DatabaseSchema = lazy(() => import('@/pages/DatabaseSchema'));
 const PasseportValidation = lazy(() => import('@/pages/PasseportValidation'));
 const PasseportViewer = lazy(() => import('@/pages/PasseportViewer'));
 const PasseportGuide = lazy(() => import('@/pages/PasseportGuide'));
@@ -118,6 +119,7 @@ const AppContent = () => {
           <Route path="/setup" element={<LazyRoute><Setup /></LazyRoute>} />
           <Route path="/connection-logs" element={<LazyRoute><ConnectionLogs /></LazyRoute>} />
           <Route path="/access-logs" element={<LazyRoute><AccessLogs /></LazyRoute>} />
+          <Route path="/database-schema" element={<LazyRoute><DatabaseSchema /></LazyRoute>} />
           <Route path="/passeport-validation" element={<LazyRoute><PasseportValidation /></LazyRoute>} />
           <Route path="/passeport-viewer" element={<LazyRoute><PasseportViewer /></LazyRoute>} />
           <Route path="/passeport-guide" element={<LazyRoute><PasseportGuide /></LazyRoute>} />

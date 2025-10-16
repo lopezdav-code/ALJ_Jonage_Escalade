@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
+import { uploadNewsImage, getSignedUrl } from '@/lib/newsStorageUtils';
 
 const SHARED_BUCKET = 'exercise_images';
 
@@ -27,6 +28,7 @@ const NewsEdit = () => {
     document_url: '',
     theme: '',
     is_pinned: false,
+    is_private: false, // Initialize is_private
     competition_id: null, // Initialize competition_id
   });
   const [imageFile, setImageFile] = useState(null);
@@ -34,6 +36,7 @@ const NewsEdit = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [competitions, setCompetitions] = useState([]); // State to store competitions
+  const [signedImageUrl, setSignedImageUrl] = useState(null);
 
   const themes = [
     "Compétition",
@@ -68,6 +71,7 @@ const NewsEdit = () => {
         document_url: '',
         theme: '',
         is_pinned: false,
+        is_private: false,
         competition_id: null,
       });
       setIsLoading(false);
@@ -81,6 +85,12 @@ const NewsEdit = () => {
             ...data,
             date: data.date ? data.date.split('T')[0] : new Date().toISOString().split('T')[0],
           });
+
+          // Générer une signed URL pour l'image existante
+          if (data.image_url) {
+            const signedUrl = await getSignedUrl(data.image_url);
+            setSignedImageUrl(signedUrl);
+          }
         } catch (error) {
           toast({ title: "Erreur", description: `Impossible de charger l'actualité : ${error.message}`, variant: "destructive" });
           navigate('/news');
@@ -108,6 +118,17 @@ const NewsEdit = () => {
 
   const uploadFile = async (file, bucket) => {
     if (!file) return null;
+
+    // Pour les images dans exercise_images, utiliser la fonction utilitaire
+    if (bucket === SHARED_BUCKET) {
+      const result = await uploadNewsImage(file);
+      if (!result.success) {
+        throw new Error(result.error);
+      }
+      return result.path;
+    }
+
+    // Pour les autres buckets (documents), utiliser l'ancienne méthode
     const fileExt = file.name.split('.').pop();
     const fileName = `news/${Date.now()}.${fileExt}`;
     const { error } = await supabase.storage.from(bucket).upload(fileName, file);
@@ -121,11 +142,11 @@ const NewsEdit = () => {
     setIsSaving(true);
     try {
       let updatedFormData = { ...formData };
-      
+
       // Upload image if a new one is selected
       if (imageFile) {
-        const imageUrl = await uploadFile(imageFile, SHARED_BUCKET);
-        updatedFormData.image_url = imageUrl;
+        const imagePath = await uploadFile(imageFile, SHARED_BUCKET);
+        updatedFormData.image_url = imagePath;
       }
       // Upload document if a new one is selected
       if (documentFile) {
@@ -205,9 +226,9 @@ const NewsEdit = () => {
         <div>
           <Label htmlFor="image">Image</Label>
           <Input id="image" type="file" onChange={(e) => handleFileChange(e, setImageFile)} className="mt-1" accept="image/*" />
-          {formData.image_url && !imageFile && (
+          {signedImageUrl && !imageFile && (
             <div className="mt-2">
-              <img src={formData.image_url} alt="Aperçu actuel" className="h-20 rounded-md" />
+              <img src={signedImageUrl} alt="Aperçu actuel" className="h-20 rounded-md" />
               <p className="text-sm text-muted-foreground">Image actuelle. Téléchargez une nouvelle image pour la remplacer.</p>
             </div>
           )}
@@ -261,15 +282,28 @@ const NewsEdit = () => {
 
         {/* Pinned Field */}
         <div className="flex items-center space-x-2">
-          <input 
-            type="checkbox" 
-            id="is_pinned" 
-            name="is_pinned" 
-            checked={formData.is_pinned} 
-            onChange={handleChange} 
+          <input
+            type="checkbox"
+            id="is_pinned"
+            name="is_pinned"
+            checked={formData.is_pinned}
+            onChange={handleChange}
             className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
           />
           <Label htmlFor="is_pinned">Épingler cette actualité (affichée en haut)</Label>
+        </div>
+
+        {/* Private Field */}
+        <div className="flex items-center space-x-2">
+          <input
+            type="checkbox"
+            id="is_private"
+            name="is_private"
+            checked={formData.is_private}
+            onChange={handleChange}
+            className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+          />
+          <Label htmlFor="is_private">Actualité privée (réservée aux adhérents du club)</Label>
         </div>
 
         <div className="flex justify-end gap-4">

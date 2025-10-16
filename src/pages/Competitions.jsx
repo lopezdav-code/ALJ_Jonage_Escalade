@@ -3,6 +3,7 @@ import { Helmet } from 'react-helmet';
 import { motion } from 'framer-motion';
 import { Trophy } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import ClubCompetitions from './competitions/ClubCompetitions';
 import FederalCalendar from './competitions/FederalCalendar';
 import Palmares from './competitions/Palmares';
@@ -10,6 +11,8 @@ import Vocabulary from './competitions/Vocabulary';
 
 const Competitions = () => {
   return (
+    <ProtectedRoute pageTitle="Compétitions">
+
     <div className="space-y-8">
       <Helmet>
         <title>Compétitions - ALJ Escalade Jonage</title>
@@ -53,6 +56,7 @@ const Competitions = () => {
         </TabsContent>
       </Tabs>
     </div>
+    </ProtectedRoute>
   );
 };
 

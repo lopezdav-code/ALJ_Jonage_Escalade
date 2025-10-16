@@ -11,6 +11,7 @@ import { formatName } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
 const DISCIPLINE_COLORS = {
   'Bloc': 'bloc',
@@ -345,48 +346,54 @@ const AnnualSummary = () => {
   }
 
   return (
-    <div className="space-y-8">
-      <Helmet>
-        <title>Récapitulatif Annuel et Financier - ALJ Escalade Jonage</title>
-        <meta name="description" content="Récapitulatif annuel des participations aux compétitions et suivi financier." />
-      </Helmet>
+    <ProtectedRoute
+      requireAdherent={true}
+      pageTitle="Récapitulatif annuel"
+      message="Le récapitulatif annuel est réservé aux adhérents du club. Veuillez vous connecter avec un compte adhérent pour y accéder."
+    >
+      <div className="space-y-8">
+        <Helmet>
+          <title>Récapitulatif Annuel et Financier - ALJ Escalade Jonage</title>
+          <meta name="description" content="Récapitulatif annuel des participations aux compétitions et suivi financier." />
+        </Helmet>
 
-      <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="flex justify-between items-center">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate('/competitions')}><ArrowLeft /></Button>
-          <h1 className="text-4xl font-bold headline flex items-center gap-3">
-            <ListChecks className="w-10 h-10 text-primary" />
-            Récapitulatif Annuel et Financier
-          </h1>
-        </div>
-      </motion.div>
+        <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="flex justify-between items-center">
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" size="icon" onClick={() => navigate('/competitions')}><ArrowLeft /></Button>
+            <h1 className="text-4xl font-bold headline flex items-center gap-3">
+              <ListChecks className="w-10 h-10 text-primary" />
+              Récapitulatif Annuel et Financier
+            </h1>
+          </div>
+        </motion.div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
-          <TabsTrigger value="participation">Liste des compétitions</TabsTrigger>
-          <TabsTrigger value="financial">Récapitulatif Financier</TabsTrigger>
-          <TabsTrigger value="volunteers">Participation des adhérents</TabsTrigger>
-        </TabsList>
-        <TabsContent value="participation" className="pt-4">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="space-y-8">
-            <ParticipationSummaryTable title="Groupe U11-U15" competitors={summaryData.u11_u15} competitions={competitions.u11_u15} />
-            <ParticipationSummaryTable title="Groupe U15-U19" competitors={summaryData.u15_u19} competitions={competitions.u15_u19} />
-          </motion.div>
-        </TabsContent>
-        <TabsContent value="financial" className="pt-4">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="space-y-8">
-            <FinancialSummaryTable title="Groupe U11-U15" competitors={summaryData.u11_u15} competitions={competitions.u11_u15} />
-            <FinancialSummaryTable title="Groupe U15-U19" competitors={summaryData.u15_u19} competitions={competitions.u15_u19} />
-          </motion.div>
-        </TabsContent>
-        <TabsContent value="volunteers" className="pt-4">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="space-y-8">
-            <VolunteerSummaryTable title="Coachs" volunteers={volunteerData.coaches} competitions={competitions.all} icon={User} />
-            <VolunteerSummaryTable title="Arbitres" volunteers={volunteerData.referees} competitions={competitions.all} icon={Shield} />
-          </motion.div>
-        </TabsContent>
-      </Tabs>
-    </div>
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList>
+            <TabsTrigger value="participation">Liste des compétitions</TabsTrigger>
+            <TabsTrigger value="financial">Récapitulatif Financier</TabsTrigger>
+            <TabsTrigger value="volunteers">Participation des adhérents</TabsTrigger>
+          </TabsList>
+          <TabsContent value="participation" className="pt-4">
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="space-y-8">
+              <ParticipationSummaryTable title="Groupe U11-U15" competitors={summaryData.u11_u15} competitions={competitions.u11_u15} />
+              <ParticipationSummaryTable title="Groupe U15-U19" competitors={summaryData.u15_u19} competitions={competitions.u15_u19} />
+            </motion.div>
+          </TabsContent>
+          <TabsContent value="financial" className="pt-4">
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="space-y-8">
+              <FinancialSummaryTable title="Groupe U11-U15" competitors={summaryData.u11_u15} competitions={competitions.u11_u15} />
+              <FinancialSummaryTable title="Groupe U15-U19" competitors={summaryData.u15_u19} competitions={competitions.u15_u19} />
+            </motion.div>
+          </TabsContent>
+          <TabsContent value="volunteers" className="pt-4">
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="space-y-8">
+              <VolunteerSummaryTable title="Coachs" volunteers={volunteerData.coaches} competitions={competitions.all} icon={User} />
+              <VolunteerSummaryTable title="Arbitres" volunteers={volunteerData.referees} competitions={competitions.all} icon={Shield} />
+            </motion.div>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </ProtectedRoute>
   );
 };
 

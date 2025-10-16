@@ -15,6 +15,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
 const BUCKET_NAME = 'pedagogy_files';
 const CATEGORIES = ["Sécurité", "Noeud", "Secours", "Manip", "Information"];
@@ -381,279 +382,285 @@ const Pedagogy = () => {
     <div className="space-y-8">
       <Helmet>
         <title>Fiches Pédagogiques - ALJ Escalade Jonage</title>
-        <meta name="description" content="Ressources et supports d'apprentissage pour l'escalade." />
-      </Helmet>
+          <meta name="description" content="Ressources et supports d'apprentissage pour l'escalade." />
+        </Helmet>
 
-      <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-        <div className="flex justify-between items-center">
-          <h1 className="text-4xl font-bold headline flex items-center gap-3">
-            <BookMarked className="w-10 h-10 text-primary" />
-            Fiches Pédagogiques
-          </h1>
-          {isAdmin && (
-            <Button onClick={() => navigate('/pedagogy/new')}>
-              <PlusCircle className="w-4 h-4 mr-2" /> Ajouter une fiche
-            </Button>
-          )}
-        </div>
-      </motion.div>
-      
-      {loading ? (
-        <div className="flex justify-center items-center py-16">
-          <Loader2 className="w-12 h-12 animate-spin text-primary" />
-        </div>
-      ) : sheets.length === 0 ? (
-        <div className="text-center py-16 bg-muted/30 rounded-lg">
-          <p className="text-lg font-semibold">Aucune fiche pédagogique pour le moment.</p>
-          <p className="text-muted-foreground mt-2">Cliquez sur "Ajouter une fiche" pour commencer à créer votre bibliothèque.</p>
-        </div>
-      ) : (
-        <>
-        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-          <TabsList className="grid grid-cols-2 md:grid-cols-4 w-full h-auto p-1">
-            {Object.entries(TAB_CONFIG).map(([type, config]) => {
-              // Pour l'onglet passeports, toujours l'afficher
-              if (type === 'passeports') {
+        <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+          <div className="flex justify-between items-center">
+            <h1 className="text-4xl font-bold headline flex items-center gap-3">
+              <BookMarked className="w-10 h-10 text-primary" />
+              Fiches Pédagogiques
+            </h1>
+            {isAdmin && (
+              <Button onClick={() => navigate('/pedagogy/new')}>
+                <PlusCircle className="w-4 h-4 mr-2" /> Ajouter une fiche
+              </Button>
+            )}
+          </div>
+        </motion.div>
+
+        {loading ? (
+          <div className="flex justify-center items-center py-16">
+            <Loader2 className="w-12 h-12 animate-spin text-primary" />
+          </div>
+        ) : sheets.length === 0 ? (
+          <div className="text-center py-16 bg-muted/30 rounded-lg">
+            <p className="text-lg font-semibold">Aucune fiche pédagogique pour le moment.</p>
+            <p className="text-muted-foreground mt-2">Cliquez sur "Ajouter une fiche" pour commencer à créer votre bibliothèque.</p>
+          </div>
+        ) : (
+          <>
+          <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+            <TabsList className="grid grid-cols-2 md:grid-cols-4 w-full h-auto p-1">
+              {Object.entries(TAB_CONFIG).map(([type, config]) => {
+                // Pour l'onglet passeports, toujours l'afficher
+                if (type === 'passeports') {
+                  const Icon = config.icon;
+                  return (
+                    <TabsTrigger
+                      key={type}
+                      value={type}
+                      className="flex flex-col items-center gap-1 h-auto py-3 px-2 text-center min-h-[4rem]"
+                    >
+                      <Icon className="w-4 h-4 shrink-0" />
+                      <span className="text-xs leading-tight">{config.label}</span>
+                      <Badge variant="secondary" className="text-xs">3</Badge>
+                    </TabsTrigger>
+                  );
+                }
+
+                const count = type === 'educational_game'
+                  ? Object.values(sheetsByType[type] || {}).flat().length
+                  : (sheetsByType[type] || []).length;
+
+                if (count === 0) return null;
+
                 const Icon = config.icon;
                 return (
-                  <TabsTrigger 
-                    key={type} 
-                    value={type} 
+                  <TabsTrigger
+                    key={type}
+                    value={type}
                     className="flex flex-col items-center gap-1 h-auto py-3 px-2 text-center min-h-[4rem]"
                   >
                     <Icon className="w-4 h-4 shrink-0" />
                     <span className="text-xs leading-tight">{config.label}</span>
-                    <Badge variant="secondary" className="text-xs">3</Badge>
+                    <Badge variant="secondary" className="text-xs">{count}</Badge>
                   </TabsTrigger>
                 );
-              }
-              
-              const count = type === 'educational_game' 
-                ? Object.values(sheetsByType[type] || {}).flat().length
-                : (sheetsByType[type] || []).length;
-              
-              if (count === 0) return null;
-              
-              const Icon = config.icon;
-              return (
-                <TabsTrigger 
-                  key={type} 
-                  value={type} 
-                  className="flex flex-col items-center gap-1 h-auto py-3 px-2 text-center min-h-[4rem]"
+              })}
+            </TabsList>
+
+            {/* Onglet Passeports */}
+            <TabsContent value="passeports" className="mt-6">
+              <div className="space-y-6">
+                <div className="flex items-center gap-3">
+                  <Award className="w-8 h-8 text-primary" />
+                  <div>
+                    <h2 className="text-2xl font-bold">Passeports</h2>
+                    <p className="text-muted-foreground">Systèmes de validation des compétences FFME</p>
+                  </div>
+                </div>
+
+                <motion.div
+                  className="grid sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
                 >
-                  <Icon className="w-4 h-4 shrink-0" />
-                  <span className="text-xs leading-tight">{config.label}</span>
-                  <Badge variant="secondary" className="text-xs">{count}</Badge>
-                </TabsTrigger>
+                  {/* Passeport Blanc */}
+                  <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <Card
+                      className="h-full cursor-pointer hover:shadow-xl transition-all duration-300 border-2 hover:border-blue-500 bg-gradient-to-br from-blue-50 to-white group"
+                      onClick={() => navigate('/passeport-guide')}
+                    >
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2 text-xl">
+                          <span className="text-3xl">⚪</span>
+                          <span className="group-hover:text-blue-600 transition-colors">Passeport Blanc</span>
+                        </CardTitle>
+                        <CardDescription>Je grimpe en moulinette en autonomie sur SAE</CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="text-sm">39 compétences</Badge>
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          Validation en salle de bloc et voies en moulinette. Test de prise en charge et assurage.
+                        </p>
+                        <div className="pt-2 border-t">
+                          <p className="text-xs font-semibold text-primary">Modules :</p>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            <Badge variant="secondary" className="text-xs">Éco-responsabilité</Badge>
+                            <Badge variant="secondary" className="text-xs">Bloc</Badge>
+                            <Badge variant="secondary" className="text-xs">Difficulté</Badge>
+                            <Badge variant="secondary" className="text-xs">Sécurité</Badge>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+
+                  {/* Passeport Jaune */}
+                  <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <Card
+                      className="h-full cursor-pointer hover:shadow-xl transition-all duration-300 border-2 hover:border-yellow-500 bg-gradient-to-br from-yellow-50 to-white group"
+                      onClick={() => navigate('/passeport-guide')}
+                    >
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2 text-xl">
+                          <span className="text-3xl">🟡</span>
+                          <span className="group-hover:text-yellow-600 transition-colors">Passeport Jaune</span>
+                        </CardTitle>
+                        <CardDescription>Je grimpe en tête sur SAE</CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="text-sm">38 compétences</Badge>
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          Validation en salle de bloc (niveau 4a) et voies en tête (niveau 5b). Test de prise en charge.
+                        </p>
+                        <div className="pt-2 border-t">
+                          <p className="text-xs font-semibold text-primary">Modules :</p>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            <Badge variant="secondary" className="text-xs">Éco-responsabilité</Badge>
+                            <Badge variant="secondary" className="text-xs">Bloc</Badge>
+                            <Badge variant="secondary" className="text-xs">Difficulté</Badge>
+                            <Badge variant="secondary" className="text-xs">Sécurité</Badge>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+
+                  {/* Passeport Orange */}
+                  <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <Card
+                      className="h-full cursor-pointer hover:shadow-xl transition-all duration-300 border-2 hover:border-orange-500 bg-gradient-to-br from-orange-50 to-white group"
+                      onClick={() => navigate('/passeport-guide')}
+                    >
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2 text-xl">
+                          <span className="text-3xl">🟠</span>
+                          <span className="group-hover:text-orange-600 transition-colors">Passeport Orange</span>
+                        </CardTitle>
+                        <CardDescription>Je grimpe en autonomie sur SAE</CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="text-sm">30 compétences</Badge>
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          Maîtrise complète de l'autonomie sur SAE incluant la gestion des relais et des techniques avancées.
+                        </p>
+                        <div className="pt-2 border-t">
+                          <p className="text-xs font-semibold text-primary">Compétences :</p>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            <Badge variant="secondary" className="text-xs">Relais</Badge>
+                            <Badge variant="secondary" className="text-xs">Assurage</Badge>
+                            <Badge variant="secondary" className="text-xs">Autonomie</Badge>
+                            <Badge variant="secondary" className="text-xs">Sécurité</Badge>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                </motion.div>
+              </div>
+            </TabsContent>
+
+            {Object.entries(TAB_CONFIG).map(([type, config]) => {
+              const typeSheets = sheetsByType[type];
+              if (!typeSheets || (Array.isArray(typeSheets) && typeSheets.length === 0) ||
+                  (!Array.isArray(typeSheets) && Object.keys(typeSheets).length === 0)) {
+                return null;
+              }
+
+              const Icon = config.icon;
+
+              return (
+                <TabsContent key={type} value={type} className="mt-6">
+                  <div className="space-y-6">
+                    <div className="flex items-center gap-3">
+                      <Icon className="w-8 h-8 text-primary" />
+                      <div>
+                        <h2 className="text-2xl font-bold">{config.label}</h2>
+                        <p className="text-muted-foreground">{config.description}</p>
+                      </div>
+                    </div>
+
+                    {type === 'educational_game' ? (
+                      // Affichage spécial pour les jeux éducatifs avec sous-onglets par thème
+                      <Tabs value={activeTheme || Object.keys(typeSheets)[0]} onValueChange={handleThemeChange} className="w-full">
+                        <TabsList className="w-full justify-start flex-wrap h-auto gap-2 p-2">
+                          {Object.entries(typeSheets).map(([theme, themeSheets]) => (
+                            <TabsTrigger key={theme} value={theme} className="flex items-center gap-2">
+                              <span>{theme}</span>
+                              <Badge variant="outline" className="text-xs">{themeSheets.length}</Badge>
+                            </TabsTrigger>
+                          ))}
+                        </TabsList>
+
+                        {Object.entries(typeSheets).map(([theme, themeSheets]) => (
+                          <TabsContent key={theme} value={theme} className="mt-6">
+                            <div className="space-y-4">
+                              <h3 className="text-xl font-semibold border-b pb-2">{theme}</h3>
+                              <AnimatePresence>
+                                <motion.div className="grid sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                  {themeSheets.map(sheet => (
+                                    <SheetCard
+                                      key={sheet.id}
+                                      sheet={sheet}
+                                      onEdit={handleEdit}
+                                      onDelete={handleDelete}
+                                      isAdmin={isAdmin}
+                                    />
+                                  ))}
+                                </motion.div>
+                              </AnimatePresence>
+                            </div>
+                          </TabsContent>
+                        ))}
+                      </Tabs>
+                    ) : (
+                      // Affichage standard pour les autres types
+                      <AnimatePresence>
+                        <motion.div className="grid sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                          {typeSheets.map(sheet => (
+                            <SheetCard
+                              key={sheet.id}
+                              sheet={sheet}
+                              onEdit={handleEdit}
+                              onDelete={handleDelete}
+                              isAdmin={isAdmin}
+                            />
+                          ))}
+                        </motion.div>
+                      </AnimatePresence>
+                    )}
+                  </div>
+                </TabsContent>
               );
             })}
-          </TabsList>
-
-          {/* Onglet Passeports */}
-          <TabsContent value="passeports" className="mt-6">
-            <div className="space-y-6">
-              <div className="flex items-center gap-3">
-                <Award className="w-8 h-8 text-primary" />
-                <div>
-                  <h2 className="text-2xl font-bold">Passeports</h2>
-                  <p className="text-muted-foreground">Systèmes de validation des compétences FFME</p>
-                </div>
-              </div>
-
-              <motion.div 
-                className="grid sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-              >
-                {/* Passeport Blanc */}
-                <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <Card 
-                    className="h-full cursor-pointer hover:shadow-xl transition-all duration-300 border-2 hover:border-blue-500 bg-gradient-to-br from-blue-50 to-white group"
-                    onClick={() => navigate('/passeport-guide')}
-                  >
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2 text-xl">
-                        <span className="text-3xl">⚪</span>
-                        <span className="group-hover:text-blue-600 transition-colors">Passeport Blanc</span>
-                      </CardTitle>
-                      <CardDescription>Je grimpe en moulinette en autonomie sur SAE</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="text-sm">39 compétences</Badge>
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        Validation en salle de bloc et voies en moulinette. Test de prise en charge et assurage.
-                      </p>
-                      <div className="pt-2 border-t">
-                        <p className="text-xs font-semibold text-primary">Modules :</p>
-                        <div className="flex flex-wrap gap-1 mt-1">
-                          <Badge variant="secondary" className="text-xs">Éco-responsabilité</Badge>
-                          <Badge variant="secondary" className="text-xs">Bloc</Badge>
-                          <Badge variant="secondary" className="text-xs">Difficulté</Badge>
-                          <Badge variant="secondary" className="text-xs">Sécurité</Badge>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-
-                {/* Passeport Jaune */}
-                <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <Card 
-                    className="h-full cursor-pointer hover:shadow-xl transition-all duration-300 border-2 hover:border-yellow-500 bg-gradient-to-br from-yellow-50 to-white group"
-                    onClick={() => navigate('/passeport-guide')}
-                  >
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2 text-xl">
-                        <span className="text-3xl">🟡</span>
-                        <span className="group-hover:text-yellow-600 transition-colors">Passeport Jaune</span>
-                      </CardTitle>
-                      <CardDescription>Je grimpe en tête sur SAE</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="text-sm">38 compétences</Badge>
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        Validation en salle de bloc (niveau 4a) et voies en tête (niveau 5b). Test de prise en charge.
-                      </p>
-                      <div className="pt-2 border-t">
-                        <p className="text-xs font-semibold text-primary">Modules :</p>
-                        <div className="flex flex-wrap gap-1 mt-1">
-                          <Badge variant="secondary" className="text-xs">Éco-responsabilité</Badge>
-                          <Badge variant="secondary" className="text-xs">Bloc</Badge>
-                          <Badge variant="secondary" className="text-xs">Difficulté</Badge>
-                          <Badge variant="secondary" className="text-xs">Sécurité</Badge>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-
-                {/* Passeport Orange */}
-                <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <Card 
-                    className="h-full cursor-pointer hover:shadow-xl transition-all duration-300 border-2 hover:border-orange-500 bg-gradient-to-br from-orange-50 to-white group"
-                    onClick={() => navigate('/passeport-guide')}
-                  >
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2 text-xl">
-                        <span className="text-3xl">🟠</span>
-                        <span className="group-hover:text-orange-600 transition-colors">Passeport Orange</span>
-                      </CardTitle>
-                      <CardDescription>Je grimpe en autonomie sur SAE</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="text-sm">30 compétences</Badge>
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        Maîtrise complète de l'autonomie sur SAE incluant la gestion des relais et des techniques avancées.
-                      </p>
-                      <div className="pt-2 border-t">
-                        <p className="text-xs font-semibold text-primary">Compétences :</p>
-                        <div className="flex flex-wrap gap-1 mt-1">
-                          <Badge variant="secondary" className="text-xs">Relais</Badge>
-                          <Badge variant="secondary" className="text-xs">Assurage</Badge>
-                          <Badge variant="secondary" className="text-xs">Autonomie</Badge>
-                          <Badge variant="secondary" className="text-xs">Sécurité</Badge>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              </motion.div>
-            </div>
-          </TabsContent>
-
-          {Object.entries(TAB_CONFIG).map(([type, config]) => {
-            const typeSheets = sheetsByType[type];
-            if (!typeSheets || (Array.isArray(typeSheets) && typeSheets.length === 0) || 
-                (!Array.isArray(typeSheets) && Object.keys(typeSheets).length === 0)) {
-              return null;
-            }
-
-            const Icon = config.icon;
-
-            return (
-              <TabsContent key={type} value={type} className="mt-6">
-                <div className="space-y-6">
-                  <div className="flex items-center gap-3">
-                    <Icon className="w-8 h-8 text-primary" />
-                    <div>
-                      <h2 className="text-2xl font-bold">{config.label}</h2>
-                      <p className="text-muted-foreground">{config.description}</p>
-                    </div>
-                  </div>
-
-                  {type === 'educational_game' ? (
-                    // Affichage spécial pour les jeux éducatifs avec sous-onglets par thème
-                    <Tabs value={activeTheme || Object.keys(typeSheets)[0]} onValueChange={handleThemeChange} className="w-full">
-                      <TabsList className="w-full justify-start flex-wrap h-auto gap-2 p-2">
-                        {Object.entries(typeSheets).map(([theme, themeSheets]) => (
-                          <TabsTrigger key={theme} value={theme} className="flex items-center gap-2">
-                            <span>{theme}</span>
-                            <Badge variant="outline" className="text-xs">{themeSheets.length}</Badge>
-                          </TabsTrigger>
-                        ))}
-                      </TabsList>
-
-                      {Object.entries(typeSheets).map(([theme, themeSheets]) => (
-                        <TabsContent key={theme} value={theme} className="mt-6">
-                          <div className="space-y-4">
-                            <h3 className="text-xl font-semibold border-b pb-2">{theme}</h3>
-                            <AnimatePresence>
-                              <motion.div className="grid sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {themeSheets.map(sheet => (
-                                  <SheetCard 
-                                    key={sheet.id} 
-                                    sheet={sheet} 
-                                    onEdit={handleEdit} 
-                                    onDelete={handleDelete} 
-                                    isAdmin={isAdmin} 
-                                  />
-                                ))}
-                              </motion.div>
-                            </AnimatePresence>
-                          </div>
-                        </TabsContent>
-                      ))}
-                    </Tabs>
-                  ) : (
-                    // Affichage standard pour les autres types
-                    <AnimatePresence>
-                      <motion.div className="grid sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {typeSheets.map(sheet => (
-                          <SheetCard 
-                            key={sheet.id} 
-                            sheet={sheet} 
-                            onEdit={handleEdit} 
-                            onDelete={handleDelete} 
-                            isAdmin={isAdmin} 
-                          />
-                        ))}
-                      </motion.div>
-                    </AnimatePresence>
-                  )}
-                </div>
-              </TabsContent>
-            );
-          })}
-        </Tabs>
-        </>
-      )}
-    </div>
+          </Tabs>
+          </>
+        )}
+      </div>
   );
 };
 
-export default Pedagogy;
+const ProtectedPedagogy = () => (
+  <ProtectedRoute>
+    <Pedagogy />
+  </ProtectedRoute>
+);
+
+export default ProtectedPedagogy;

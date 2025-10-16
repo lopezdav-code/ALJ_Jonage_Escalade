@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Award, CheckCircle2, Target, TrendingUp, Book, Download } from 'lucide-react';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
 const PasseportGuide = () => {
   const [selectedPasseport, setSelectedPasseport] = useState('blanc');
@@ -328,7 +329,8 @@ const PasseportGuide = () => {
   const passeport = passeportsData[selectedPasseport];
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto">
+    <ProtectedRoute pageTitle="Guide des passeports">
+      <div className="space-y-6 max-w-6xl mx-auto">
       {/* En-tête */}
       <div className="flex items-center gap-3">
         <Book className="w-10 h-10 text-primary" />
@@ -477,6 +479,7 @@ const PasseportGuide = () => {
         </TabsContent>
       </Tabs>
     </div>
+    </ProtectedRoute>
   );
 };
 

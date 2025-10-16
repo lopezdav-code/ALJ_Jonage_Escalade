@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/components/ui/use-toast';
 import SessionList from '@/components/session-log/SessionList';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
 const SessionLog = () => {
   const navigate = useNavigate();
@@ -141,23 +142,13 @@ const SessionLog = () => {
     return result;
   }, [sessions, searchTerm, selectedSchedule]);
 
-  if (authLoading) {
-    return <div className="flex justify-center items-center h-64"><Loader2 className="w-12 h-12 animate-spin text-primary" /></div>;
-  }
-
-  if (!canViewPage) {
-    return (
-      <div className="text-center py-16">
-        <Lock className="w-12 h-12 mx-auto text-muted-foreground" />
-        <h1 className="text-2xl font-bold mt-4">Accès restreint</h1>
-        <p className="text-muted-foreground">Vous devez être un adhérent ou un administrateur pour voir cette page.</p>
-        {!user && <p className="mt-4">Veuillez vous connecter.</p>}
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-8">
+    <ProtectedRoute
+      requireAdherent={true}
+      pageTitle="Séances d'entraînement"
+      message="Le journal des séances d'entraînement est réservé aux adhérents du club. Veuillez vous connecter avec un compte adhérent pour y accéder."
+    >
+      <div className="space-y-8">
       <Helmet>
         <title>Séances d'entraînement - ALJ Escalade Jonage</title>
         <meta name="description" content="Consultez et gérez les séances d'escalade du club." />
@@ -222,6 +213,7 @@ const SessionLog = () => {
         </Card>
       </motion.div>
     </div>
+    </ProtectedRoute>
   );
 };
 

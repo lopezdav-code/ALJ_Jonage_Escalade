@@ -19,6 +19,7 @@ import { useMemberDetail } from '@/contexts/MemberDetailContext';
 import { uploadCompetitionPhoto } from '@/lib/competitionStorageUtils';
 import ParticipantsDisplay from '@/components/ParticipantsDisplay';
 import { formatName } from '@/lib/utils';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
 const CompetitionDetail = () => {
   const { id } = useParams();
@@ -361,7 +362,12 @@ const CompetitionDetail = () => {
   const dataToDisplay = isEditMode ? formData : competition;
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
+    <ProtectedRoute
+      requireAdherent={true}
+      pageTitle="Détail de la compétition"
+      message="Les détails des compétitions sont réservés aux adhérents du club. Veuillez vous connecter avec un compte adhérent pour y accéder."
+    >
+      <div className="max-w-6xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <Button variant="outline" onClick={() => navigate('/competitions')}>
@@ -942,6 +948,7 @@ const CompetitionDetail = () => {
         </DialogContent>
       </Dialog>
     </div>
+    </ProtectedRoute>
   );
 };
 

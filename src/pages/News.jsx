@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Helmet } from 'react-helmet';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Newspaper, PlusCircle, Loader2, Edit, Trash2, ExternalLink, Download, Users, Heart, MountainSnow as Ski, Share2, Eye, ArrowDownUp } from 'lucide-react';
+import { Newspaper, PlusCircle, Loader2, Edit, Trash2, ExternalLink, Download, Users, Heart, MountainSnow as Ski, Share2, Eye, ArrowDownUp, Lock } from 'lucide-react';
 import { supabase } from '@/lib/customSupabaseClient';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,6 +13,7 @@ import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { useConfig } from '@/contexts/ConfigContext';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Link } from 'react-router-dom';
+import { getSignedUrl } from '@/lib/newsStorageUtils';
 
 const SHARED_BUCKET = 'exercise_images';
 
@@ -90,8 +91,9 @@ const News = () => {
   const [sortOrder, setSortOrder] = useState('desc'); // Default to descending (newest first)
   const [selectedTheme, setSelectedTheme] = useState('');
   const [selectedDate, setSelectedDate] = useState('');
+  const [signedUrls, setSignedUrls] = useState({});
   const { toast } = useToast();
-  const { isAdmin, loading: authLoading } = useAuth();
+  const { isAdmin, isAdherent, loading: authLoading } = useAuth();
 
   const fetchNews = useCallback(async () => {
     setLoadingNews(true);
@@ -101,6 +103,18 @@ const News = () => {
       toast({ title: "Erreur", description: "Impossible de charger les actualités.", variant: "destructive" });
     } else {
       setNews(data);
+
+      // Générer les signed URLs pour toutes les images
+      const urlsMap = {};
+      for (const item of data) {
+        if (item.image_url) {
+          const signedUrl = await getSignedUrl(item.image_url);
+          if (signedUrl) {
+            urlsMap[item.id] = signedUrl;
+          }
+        }
+      }
+      setSignedUrls(urlsMap);
     }
     setLoadingNews(false);
   }, [toast]);
@@ -111,6 +125,14 @@ const News = () => {
 
   const filteredAndSortedNews = useMemo(() => {
     let processedNews = [...news];
+
+    // Filter private news: only show if user is adherent or admin
+    processedNews = processedNews.filter(item => {
+      if (item.is_private) {
+        return isAdherent; // Only adherents, encadrants and admins can see private news
+      }
+      return true; // Public news visible to everyone
+    });
 
     // Apply theme filter
     if (selectedTheme) {
@@ -141,7 +163,7 @@ const News = () => {
     });
 
     return { pinnedNews, nonPinnedNews };
-  }, [news, sortOrder, selectedTheme, selectedDate]);
+  }, [news, sortOrder, selectedTheme, selectedDate, isAdherent]);
 
   const handleDelete = async (newsId) => {
     if (!window.confirm("Êtes-vous sûr de vouloir supprimer cette actualité ?")) return;
@@ -186,13 +208,21 @@ const News = () => {
             transition={{ duration: 0.3 }}
           >
             <Card className="flex flex-col h-full">
-              {item.image_url && (
-                <div className="cursor-pointer" onClick={() => setViewingImage(item.image_url)}>
-                  <img src={item.image_url} alt={item.title} className="w-full h-48 object-cover rounded-t-lg" />
+              {signedUrls[item.id] && (
+                <div className="cursor-pointer" onClick={() => setViewingImage(signedUrls[item.id])}>
+                  <img src={signedUrls[item.id]} alt={item.title} className="w-full h-48 object-cover rounded-t-lg" />
                 </div>
               )}
               <CardHeader>
-                <CardTitle>{item.title}</CardTitle>
+                <div className="flex items-center gap-2">
+                  <CardTitle className="flex-1">{item.title}</CardTitle>
+                  {item.is_private && (
+                    <div className="flex items-center gap-1 text-xs bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-200 px-2 py-1 rounded-full">
+                      <Lock className="w-3 h-3" />
+                      <span>Privé</span>
+                    </div>
+                  )}
+                </div>
                 <CardDescription>{new Date(item.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</CardDescription>
               </CardHeader>
               <CardContent className="flex-grow">

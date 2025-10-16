@@ -18,14 +18,14 @@ CREATE INDEX idx_competitions_status ON competitions(status);
 -- (Optionnel: ajuster la date selon vos besoins)
 UPDATE competitions
 SET status = 'Clos'
-WHERE date < CURRENT_DATE - INTERVAL '7 days';
+WHERE start_date < CURRENT_DATE - INTERVAL '7 days';
 
 -- Étape 5: Mettre à jour les compétitions récentes en "En cours"
 -- (Optionnel: ajuster selon vos critères)
 UPDATE competitions
 SET status = 'En cours'
-WHERE date >= CURRENT_DATE - INTERVAL '7 days'
-  AND date <= CURRENT_DATE + INTERVAL '7 days';
+WHERE start_date >= CURRENT_DATE - INTERVAL '7 days'
+  AND start_date <= CURRENT_DATE + INTERVAL '7 days';
 
 -- Vérification: Afficher la distribution des statuts
 SELECT status, COUNT(*) as count

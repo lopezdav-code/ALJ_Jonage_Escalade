@@ -7,8 +7,9 @@ import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Loader2, ShieldCheck, UserCog, Settings, Save, PlusCircle, Link as LinkIcon, X, UserPlus, Search, Trash2, MailCheck } from 'lucide-react';
+import { Loader2, ShieldCheck, UserCog, Settings, Save, PlusCircle, Link as LinkIcon, X, UserPlus, Search, Trash2, MailCheck, Database } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Link } from 'react-router-dom';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
@@ -25,12 +26,16 @@ const NAV_PAGES = [
     { to: '/schedule', text: 'Planning' },
     { to: '/inscriptions', text: 'Inscription' },
     { to: '/contact', text: 'Contact' },
-    { to: '/volunteers', text: 'Adhérent' },
+    { to: '/volunteers', text: 'Adhérents' },
     { to: '/competitions', text: 'Compétitions' },
     { to: '/agenda', text: 'Agenda' },
     { to: '/session-log', text: 'Séances' },
     { to: '/cycles', text: 'Cycles' },
-    { to: '/passeport-validation', text: 'Validation Passeports' },
+    { to: '/pedagogy', text: 'Pédagogie' },
+    { to: '/passeport-viewer', text: 'Passeports - Visualisation' },
+    { to: '/passeport-guide', text: 'Passeports - Guide' },
+    { to: '/passeport-validation', text: 'Passeports - Validation' },
+    { to: '/annual-summary', text: 'Récapitulatif Annuel' },
 ];
 
 const MemberSearchPopover = ({ onSelect, children, existingLinks }) => {
@@ -213,6 +218,9 @@ const AdminManagement = () => {
       case '/competitions':
       case '/session-log':
       case '/cycles':
+      case '/pedagogy':
+      case '/passeport-viewer':
+      case '/annual-summary':
         return ['adherent', 'bureau', 'encadrant', 'admin'];
       case '/passeport-validation':
         return ['encadrant', 'admin'];
@@ -550,6 +558,25 @@ const AdminManagement = () => {
       </motion.div>
 
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+        <Card>
+          <CardHeader>
+            <CardTitle>Outils de Base de Données</CardTitle>
+            <CardDescription>
+              Gérez et consultez la structure de votre base de données.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Link to="/database-schema">
+              <Button variant="outline">
+                <Database className="mr-2 h-4 w-4" />
+                Voir le Schéma de la Base de Données
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+      </motion.div>
+
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
         <Card>
           <CardHeader>
             <CardTitle>Permissions Spéciales</CardTitle>

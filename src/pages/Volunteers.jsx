@@ -12,6 +12,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandInput, CommandEmpty, CommandGroup, CommandItem, CommandList } from '@/components/ui/command';
 import { cn } from '@/lib/utils';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
 // Placeholder for brevetColors - adapt if needed
 const brevetColors = {
@@ -211,10 +212,11 @@ const Volunteers = () => {
   };
 
   return (
-    <div className="p-8">
-      <Helmet><title>Membres - Club d'Escalade</title></Helmet>
+    <ProtectedRoute pageTitle="Gestion des membres">
+      <div className="p-8">
+        <Helmet><title>Membres - Club d'Escalade</title></Helmet>
 
-      <h1 className="text-2xl font-bold mb-6">Gestion des Membres</h1>
+        <h1 className="text-2xl font-bold mb-6">Gestion des Membres</h1>
 
       <div className="mb-6 flex items-center space-x-4">
         <Popover open={openMemberSearch} onOpenChange={setOpenMemberSearch}>
@@ -519,6 +521,7 @@ const Volunteers = () => {
         </div>
       </div>
     </div>
+    </ProtectedRoute>
   );
 };
 
