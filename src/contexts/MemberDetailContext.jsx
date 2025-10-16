@@ -23,8 +23,8 @@ export const MemberDetailProvider = ({ children }) => {
       .select(`
         *,
         profiles(role),
-        emergency_contact_1:emergency_contact_1_id(id, first_name, last_name, phone),
-        emergency_contact_2:emergency_contact_2_id(id, first_name, last_name, phone)
+        emergency_contact_1:members!emergency_contact_1_id(id, first_name, last_name, phone),
+        emergency_contact_2:members!emergency_contact_2_id(id, first_name, last_name, phone)
       `)
       .eq('id', memberId)
       .single();
