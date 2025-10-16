@@ -18,6 +18,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { useMemberDetail } from '@/contexts/MemberDetailContext';
 import { uploadCompetitionPhoto } from '@/lib/competitionStorageUtils';
 import ParticipantsDisplay from '@/components/ParticipantsDisplay';
+import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { formatName } from '@/lib/utils';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
@@ -26,6 +27,8 @@ const CompetitionDetail = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { showMemberDetails } = useMemberDetail();
+  const { isAdmin, isBureau, isEncadrant } = useAuth();
+  const canEdit = isAdmin || isBureau || isEncadrant;
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -376,12 +379,12 @@ const CompetitionDetail = () => {
         </Button>
 
         <div className="flex gap-2">
-          {!isEditMode ? (
+          {canEdit && !isEditMode ? (
             <Button onClick={() => setIsEditMode(true)} className="flex items-center gap-2">
               <Edit className="w-4 h-4" />
               Éditer
             </Button>
-          ) : (
+          ) : canEdit && isEditMode ? (
             <>
               <Button variant="outline" onClick={handleCancelEdit} disabled={saving}>
                 <X className="w-4 h-4 mr-2" />
@@ -396,7 +399,7 @@ const CompetitionDetail = () => {
                 Sauvegarder
               </Button>
             </>
-          )}
+          ) : null}
         </div>
       </div>
 

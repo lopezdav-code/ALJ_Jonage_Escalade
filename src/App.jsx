@@ -32,6 +32,8 @@ const InscriptionsSummary = lazy(() => import('@/pages/InscriptionsSummary'));
 const CompetitionsSummary = lazy(() => import('@/pages/CompetitionsSummary'));
 const CompetitionEditor = lazy(() => import('@/pages/CompetitionEditor'));
 const CompetitionDetail = lazy(() => import('@/pages/CompetitionDetail'));
+const UserRoles = lazy(() => import('@/pages/UserRoles'));
+const Permissions = lazy(() => import('@/pages/Permissions'));
 const ConnectionLogs = lazy(() => import('@/pages/ConnectionLogs'));
 const AccessLogs = lazy(() => import('@/pages/AccessLogs'));
 const CompetitionParticipants = lazy(() => import('@/pages/CompetitionParticipants'));
@@ -115,6 +117,8 @@ const AppContent = () => {
           <Route path="/site-settings" element={<LazyRoute><SiteSettings /></LazyRoute>} />
           <Route path="/annual-summary" element={<LazyRoute><AnnualSummary /></LazyRoute>} />
           <Route path="/admin-management" element={<LazyRoute><AdminManagement /></LazyRoute>} />
+          <Route path="/user-roles" element={<LazyRoute><UserRoles /></LazyRoute>} />
+          <Route path="/permissions" element={<LazyRoute><Permissions /></LazyRoute>} />
           <Route path="/image-admin" element={<LazyRoute><ImageAdmin /></LazyRoute>} />
           <Route path="/setup" element={<LazyRoute><Setup /></LazyRoute>} />
           <Route path="/connection-logs" element={<LazyRoute><ConnectionLogs /></LazyRoute>} />

@@ -11,6 +11,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/components/ui/use-toast';
 import { uploadCompetitionPhoto } from '@/lib/competitionStorageUtils';
+import { useAuth } from '@/contexts/SupabaseAuthContext';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
 const CompetitionEditor = () => {
   const navigate = useNavigate();
@@ -352,9 +354,13 @@ const CompetitionEditor = () => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
+    <ProtectedRoute
+      pageTitle="Éditeur de compétition"
+      message="Vous n'avez pas les droits nécessaires pour accéder à cette page."
+    >
+      <div className="max-w-4xl mx-auto space-y-6">
+        {/* Header */}
+        <div className="flex items-center gap-4">
         <Button variant="outline" onClick={() => navigate('/competitions')}>
           <ArrowLeft className="w-4 h-4 mr-2" />
           Retour
@@ -681,6 +687,7 @@ const CompetitionEditor = () => {
         </Button>
       </div>
     </div>
+    </ProtectedRoute>
   );
 };
 

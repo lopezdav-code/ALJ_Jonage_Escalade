@@ -528,6 +528,15 @@ const Volunteers = () => {
           </div>
         </div>
       </div>
+
+      {canEdit && (
+        <div className="mt-8 p-4 bg-blue-50 border-l-4 border-blue-400 rounded-r-lg">
+          <h3 className="text-sm font-semibold text-blue-800">Note pour les administrateurs et le bureau :</h3>
+          <p className="text-sm text-blue-700 mt-1">
+            Vous disposez des droits étendus sur cette page. Le nom de famille complet des membres est affiché et le bouton d'édition (crayon) est visible. Les autres utilisateurs ne voient que l'initiale du nom de famille et n'ont pas accès à l'édition.
+          </p>
+        </div>
+      )}
     </div>
     </ProtectedRoute>
   );

@@ -228,8 +228,16 @@ const Navigation = () => {
   }, [config.nav_config, loadingConfig]);
 
   const handleSignOut = async () => {
-    await signOut();
-    navigate('/');
+    const { error } = await signOut();
+    if (error) {
+      toast({
+        title: "Erreur de déconnexion",
+        description: error.message,
+        variant: "destructive",
+      });
+    } else {
+      navigate('/');
+    }
   };
 
   const closeMenu = () => setIsOpen(false);

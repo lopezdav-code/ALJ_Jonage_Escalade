@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/components/ui/use-toast';
 import CompetitionFilters from '@/components/competitions/CompetitionFilters';
+import { useAuth } from '@/contexts/SupabaseAuthContext';
 
 const ClubCompetitions = () => {
   const [competitions, setCompetitions] = useState([]);
@@ -22,6 +23,8 @@ const ClubCompetitions = () => {
 
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { isAdmin, isBureau, isEncadrant } = useAuth();
+  const canCreate = isAdmin || isBureau || isEncadrant;
 
   // Récupérer les compétitions et les participants
   const fetchCompetitions = useCallback(async () => {
@@ -175,13 +178,15 @@ const ClubCompetitions = () => {
             {filteredCompetitions.length} compétition{filteredCompetitions.length > 1 ? 's' : ''}
           </p>
         </div>
-        <Button
-          onClick={() => navigate('/competitions/new')}
-          className="flex items-center gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          Créer une compétition
-        </Button>
+        {canCreate && (
+          <Button
+            onClick={() => navigate('/competitions/new')}
+            className="flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            Créer une compétition
+          </Button>
+        )}
       </div>
 
       {/* Filtres */}

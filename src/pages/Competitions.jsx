@@ -4,12 +4,16 @@ import { motion } from 'framer-motion';
 import { Trophy } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
+import { useAuth } from '@/contexts/SupabaseAuthContext';
 import ClubCompetitions from './competitions/ClubCompetitions';
 import FederalCalendar from './competitions/FederalCalendar';
 import Palmares from './competitions/Palmares';
 import Vocabulary from './competitions/Vocabulary';
 
 const Competitions = () => {
+  const { isAdmin, isBureau, isEncadrant } = useAuth();
+  const canEdit = isAdmin || isBureau || isEncadrant;
+
   return (
     <ProtectedRoute pageTitle="Compétitions">
 
@@ -55,6 +59,15 @@ const Competitions = () => {
           <Vocabulary />
         </TabsContent>
       </Tabs>
+
+      {canEdit && (
+        <div className="mt-8 p-4 bg-blue-50 border-l-4 border-blue-400 rounded-r-lg">
+          <h3 className="text-sm font-semibold text-blue-800">Note pour les administrateurs, bureau et encadrants :</h3>
+          <p className="text-sm text-blue-700 mt-1">
+            Vous disposez des droits pour créer et modifier les compétitions du club. Le bouton "Créer une compétition" est visible pour vous dans l'onglet "Compétitions du club", et le bouton "Éditer" est disponible sur la page de détail de chaque compétition.
+          </p>
+        </div>
+      )}
     </div>
     </ProtectedRoute>
   );
