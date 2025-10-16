@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { uploadMemberPhoto } from '@/lib/memberStorageUtils';
+import { useAuth } from '@/contexts/SupabaseAuthContext';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
 const MemberEdit = () => {
   const { id } = useParams();
@@ -147,6 +149,10 @@ const MemberEdit = () => {
   }
 
   return (
+    <ProtectedRoute
+      pageTitle="Édition de membre"
+      message="Vous n'avez pas les droits nécessaires pour modifier cette page. Seuls les administrateurs et les membres du bureau peuvent éditer les informations des membres."
+    >
     <div className="p-4 max-w-4xl mx-auto">
       <Helmet>
         <title>Modifier {member.first_name} {member.last_name} - Club d'Escalade</title>
@@ -173,6 +179,7 @@ const MemberEdit = () => {
         isSaving={isSaving}
       />
     </div>
+    </ProtectedRoute>
   );
 };
 

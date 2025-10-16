@@ -7,19 +7,15 @@ import { supabase } from '@/lib/customSupabaseClient';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/components/ui/use-toast';
 import SessionList from '@/components/session-log/SessionList';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
-import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
 const SessionLog = () => {
   const navigate = useNavigate();
   const [sessions, setSessions] = useState([]);
-  const [schedules, setSchedules] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedSchedule, setSelectedSchedule] = useState('all');
   const { toast } = useToast();
   const { user, isAdmin, isAdherent, loading: authLoading } = useAuth();
 
@@ -32,22 +28,10 @@ const SessionLog = () => {
       return;
     }
     setLoading(true);
-
-    // Récupérer les schedules
-    const { data: schedulesData, error: schedulesError } = await supabase
-      .from('schedules')
-      .select('id, type, age_category, day, start_time, end_time')
-      .order('day, start_time');
-
-    if (!schedulesError && schedulesData) {
-      setSchedules(schedulesData);
-    }
-
-    // Récupérer les sessions
     const { data, error } = await supabase
       .from('sessions')
       .select(`
-        *,
+        *, 
         exercises (*),
         cycles (
           id,
@@ -64,21 +48,7 @@ const SessionLog = () => {
     if (error) {
       toast({ title: "Erreur", description: "Impossible de charger les séances.", variant: "destructive" });
     } else {
-      // Enrichir les sessions avec les informations de schedule
-      const enrichedSessions = await Promise.all(
-        data.map(async (s) => {
-          let scheduleData = null;
-          if (s.schedule_id && schedulesData) {
-            scheduleData = schedulesData.find(sch => sch.id === s.schedule_id);
-          }
-          return {
-            ...s,
-            schedule: scheduleData,
-            start_time: s.start_time ? s.start_time.substring(0, 5) : '18:30'
-          };
-        })
-      );
-      setSessions(enrichedSessions);
+      setSessions(data.map(s => ({...s, start_time: s.start_time ? s.start_time.substring(0, 5) : '18:30'})));
     }
     setLoading(false);
   }, [toast, canViewPage]);
@@ -111,25 +81,12 @@ const SessionLog = () => {
         // Filtrer les séances sans date
         if (!session.date) return false;
 
-        // Filtrage par schedule
-        if (selectedSchedule !== 'all') {
-          if (selectedSchedule === 'none') {
-            // Afficher uniquement les séances SANS emploi du temps
-            if (session.schedule_id) return false;
-          } else {
-            // Filtrer par schedule_id
-            if (session.schedule_id !== selectedSchedule) return false;
-          }
-        }
-
         // Filtrage par terme de recherche
         if (!searchTerm) return true;
         const lowerSearchTerm = searchTerm.toLowerCase();
         const searchIn = [
           session.cycles?.name || '',
           session.cycles?.short_description || '',
-          session.schedule?.type || '',
-          session.schedule?.age_category || '',
           session.session_objective,
           session.comment,
           ...(session.instructors || []),
@@ -139,16 +96,27 @@ const SessionLog = () => {
         return searchIn.includes(lowerSearchTerm);
       });
 
+    console.log('Séances après filtrage :', result); // Log filtered sessions
     return result;
-  }, [sessions, searchTerm, selectedSchedule]);
+  }, [sessions, searchTerm]);
+
+  if (authLoading) {
+    return <div className="flex justify-center items-center h-64"><Loader2 className="w-12 h-12 animate-spin text-primary" /></div>;
+  }
+
+  if (!canViewPage) {
+    return (
+      <div className="text-center py-16">
+        <Lock className="w-12 h-12 mx-auto text-muted-foreground" />
+        <h1 className="text-2xl font-bold mt-4">Accès restreint</h1>
+        <p className="text-muted-foreground">Vous devez être un adhérent ou un administrateur pour voir cette page.</p>
+        {!user && <p className="mt-4">Veuillez vous connecter.</p>}
+      </div>
+    );
+  }
 
   return (
-    <ProtectedRoute
-      requireAdherent={true}
-      pageTitle="Séances d'entraînement"
-      message="Le journal des séances d'entraînement est réservé aux adhérents du club. Veuillez vous connecter avec un compte adhérent pour y accéder."
-    >
-      <div className="space-y-8">
+    <div className="space-y-8">
       <Helmet>
         <title>Séances d'entraînement - ALJ Escalade Jonage</title>
         <meta name="description" content="Consultez et gérez les séances d'escalade du club." />
@@ -172,30 +140,14 @@ const SessionLog = () => {
         <Card>
           <CardHeader>
             <CardTitle>Historique des séances</CardTitle>
-            <div className="grid md:grid-cols-2 gap-4 mt-4">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                <Input
-                  placeholder="Rechercher par objectif, encadrant, élève..."
-                  className="pl-10"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
-              <Select value={selectedSchedule} onValueChange={setSelectedSchedule}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Filtrer par emploi du temps" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tous les emplois du temps</SelectItem>
-                  <SelectItem value="none">Sans emploi du temps</SelectItem>
-                  {schedules.map((schedule) => (
-                    <SelectItem key={schedule.id} value={schedule.id.toString()}>
-                      {schedule.type} / {schedule.age_category} / {schedule.day} / {schedule.start_time}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="relative mt-4">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+              <Input
+                placeholder="Rechercher par objectif, encadrant, élève..."
+                className="pl-10"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
             </div>
           </CardHeader>
           <CardContent>
@@ -213,7 +165,6 @@ const SessionLog = () => {
         </Card>
       </motion.div>
     </div>
-    </ProtectedRoute>
   );
 };
 
