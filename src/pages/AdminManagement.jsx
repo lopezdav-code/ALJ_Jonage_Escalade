@@ -7,7 +7,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Loader2, ShieldCheck, UserCog, Settings, Save, PlusCircle, Link as LinkIcon, X, UserPlus, Search, Trash2, MailCheck, Database } from 'lucide-react';
+import { Loader2, ShieldCheck, UserCog, Settings, Save, PlusCircle, Link as LinkIcon, X, UserPlus, Search, Trash2, MailCheck, Database, CalendarCheck } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Link } from 'react-router-dom';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -249,6 +249,25 @@ const AdminManagement = () => {
       </motion.div>
 
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
+        <Card>
+          <CardHeader>
+            <CardTitle>Récapitulatif de Présence</CardTitle>
+            <CardDescription>
+              Consultez les présences des élèves par planning et par séance.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Link to="/attendance-recap">
+              <Button variant="outline">
+                <CalendarCheck className="mr-2 h-4 w-4" />
+                Voir le Récapitulatif de Présence
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+      </motion.div>
+
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}>
         <Card>
           <CardHeader>
             <CardTitle>Gestion des Images et de la Sécurité</CardTitle>

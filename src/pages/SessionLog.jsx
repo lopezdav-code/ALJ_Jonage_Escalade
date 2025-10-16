@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { Helmet } from 'react-helmet';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { BookOpen, PlusCircle, Search, Loader2, Lock } from 'lucide-react';
+import { BookOpen, PlusCircle, Search, Loader2, Lock, CalendarCheck } from 'lucide-react';
 import { supabase } from '@/lib/customSupabaseClient';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -128,11 +128,18 @@ const SessionLog = () => {
             <BookOpen className="w-10 h-10 text-primary" />
             Séances d'entraînement
           </h1>
-          {canEditContent && (
-            <Button onClick={() => navigate('/session-log/new')}>
-              <PlusCircle className="w-4 h-4 mr-2" /> Créer une séance
-            </Button>
-          )}
+          <div className="flex gap-2">
+            {canEditContent && (
+              <Button variant="outline" onClick={() => navigate('/attendance-recap')}>
+                <CalendarCheck className="w-4 h-4 mr-2" /> Récapitulatif de Présence
+              </Button>
+            )}
+            {canEditContent && (
+              <Button onClick={() => navigate('/session-log/new')}>
+                <PlusCircle className="w-4 h-4 mr-2" /> Créer une séance
+              </Button>
+            )}
+          </div>
         </div>
       </motion.div>
 

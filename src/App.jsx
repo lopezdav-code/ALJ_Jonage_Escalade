@@ -44,6 +44,7 @@ const PasseportGuide = lazy(() => import('@/pages/PasseportGuide'));
 const TestImages = lazy(() => import('@/pages/TestImages'));
 const MemberEdit = lazy(() => import('@/pages/MemberEdit'));
 const NewsEdit = lazy(() => import('@/pages/news_edit')); // Import NewsEdit
+const AttendanceRecap = lazy(() => import('@/pages/AttendanceRecap'));
 
 import { AuthProvider, useAuth } from '@/contexts/SupabaseAuthContext';
 import { ConfigProvider } from '@/contexts/ConfigContext';
@@ -133,6 +134,7 @@ const AppContent = () => {
           <Route path="/passeport-viewer" element={<LazyRoute><PasseportViewer /></LazyRoute>} />
           <Route path="/passeport-guide" element={<LazyRoute><PasseportGuide /></LazyRoute>} />
           <Route path="/test-images" element={<LazyRoute><TestImages /></LazyRoute>} />
+          <Route path="/attendance-recap" element={<LazyRoute><AttendanceRecap /></LazyRoute>} />
         </Routes>
       </main>
       <Footer />
