@@ -147,6 +147,7 @@ const Volunteers = () => {
   const titles = useMemo(() => {
     const customOrder = [
       "Bureau",
+      "Bénévole",
       "Adhérent",
       "Compétition U11-U15",
       "Compétition U15-U19",
@@ -154,21 +155,22 @@ const Volunteers = () => {
       "Loisir collège",
       "Loisir lycée",
       "Adultes débutans",
-      "Adultes autonomes",
-      "emergency_contact"
+      "Adultes autonomes"
     ];
-    
-    return Object.keys(membersByTitle).sort((a, b) => {
-      const indexA = customOrder.indexOf(a);
-      const indexB = customOrder.indexOf(b);
-      
-      if (indexA !== -1 && indexB !== -1) {
-        return indexA - indexB;
-      }
-      if (indexA !== -1) return -1;
-      if (indexB !== -1) return 1;
-      return a.localeCompare(b);
-    });
+
+    return Object.keys(membersByTitle)
+      .filter(title => title !== "emergency_contact") // Masquer emergency_contact
+      .sort((a, b) => {
+        const indexA = customOrder.indexOf(a);
+        const indexB = customOrder.indexOf(b);
+
+        if (indexA !== -1 && indexB !== -1) {
+          return indexA - indexB;
+        }
+        if (indexA !== -1) return -1;
+        if (indexB !== -1) return 1;
+        return a.localeCompare(b);
+      });
   }, [membersByTitle]);
 
   // Get active tab from URL or default to first title
@@ -294,7 +296,7 @@ const Volunteers = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={handleTabChange}>
-        <TabsList>
+        <TabsList className="h-auto flex-wrap">
           {titles.map((title) => (
             <TabsTrigger key={title} value={title}>{getTabTitle(title)}</TabsTrigger>
           ))}
