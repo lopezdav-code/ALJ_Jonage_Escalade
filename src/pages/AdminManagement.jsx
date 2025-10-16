@@ -241,9 +241,9 @@ const AdminManagement = () => {
             </Link>
           </CardContent>
           <CardFooter>
-            <p className="text-sm text-muted-foreground">
+            <div className="text-sm text-muted-foreground">
               <strong>Protection des données :</strong> Pour protéger les données personnelles, le nom de famille des adhérents est masqué pour tous les rôles sauf 'Admin' et 'Bureau'. Cette logique est appliquée directement par la base de données via une vue sécurisée (`secure_members`).
-            </p>
+            </div>
           </CardFooter>
         </Card>
       </motion.div>
@@ -259,31 +259,31 @@ const AdminManagement = () => {
           <CardContent className="text-sm space-y-4">
             <div>
               <h4 className="font-semibold">Photos des Membres</h4>
-              <p className="text-muted-foreground">
+              <div className="text-muted-foreground">
                 - <strong>Bucket :</strong> `members_photos` <Badge variant="destructive">Privé</Badge><br/>
                 - <strong>Sécurité :</strong> L'accès aux photos est protégé. Le code génère des URLs sécurisées et temporaires (`signed URLs`) pour chaque image. C'est la configuration correcte et la plus sécurisée pour les données personnelles.
-              </p>
+              </div>
             </div>
             <div>
               <h4 className="font-semibold">Images des Actualités (News)</h4>
-              <p className="text-muted-foreground">
+              <div className="text-muted-foreground">
                 - <strong>Bucket :</strong> `news` <Badge variant="secondary">Public</Badge><br/>
                 - <strong>Sécurité :</strong> Le bucket est public. Le code utilise des URLs publiques directes, ce qui est optimal pour des images non sensibles.
-              </p>
+              </div>
             </div>
             <div>
               <h4 className="font-semibold">Images des Compétitions</h4>
-              <p className="text-muted-foreground">
+              <div className="text-muted-foreground">
                 - <strong>Bucket :</strong> `competition_photos` <Badge variant="destructive">Privé</Badge><br/>
                 - <strong>Sécurité :</strong> L'accès est restreint aux utilisateurs authentifiés via des URLs signées.
-              </p>
+              </div>
             </div>
             <div>
               <h4 className="font-semibold">Autres Images (Pédagogie, Cycles, etc.)</h4>
-              <p className="text-muted-foreground">
+              <div className="text-muted-foreground">
                 - <strong>Buckets :</strong> `pedagogy_files`, `cycles`, etc. <Badge variant="secondary">Publics</Badge><br/>
                 - <strong>Sécurité :</strong> Ces buckets sont publics. Le code utilise des URLs publiques directes.
-              </p>
+              </div>
             </div>
           </CardContent>
         </Card>

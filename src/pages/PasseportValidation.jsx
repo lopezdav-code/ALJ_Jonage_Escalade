@@ -28,9 +28,9 @@ import { useNavigate } from 'react-router-dom';
 import PasseportBlancForm from '@/components/PasseportBlancForm';
 import PasseportJauneForm from '@/components/PasseportJauneForm';
 import PasseportOrangeForm from '@/components/PasseportOrangeForm';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
 const PasseportValidation = () => {
-  const { isAdmin } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [members, setMembers] = useState([]);
@@ -173,14 +173,6 @@ const PasseportValidation = () => {
     }
   };
 
-  if (!isAdmin) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <p className="text-muted-foreground">Accès réservé aux administrateurs</p>
-      </div>
-    );
-  }
-
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -212,9 +204,10 @@ const PasseportValidation = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <Helmet>
-        <title>Validation des Passeports - Club d'Escalade</title>
+    <ProtectedRoute pageTitle="Validation des Passeports">
+      <div className="space-y-6">
+        <Helmet>
+          <title>Validation des Passeports - Club d'Escalade</title>
       </Helmet>
 
       <div className="flex items-center justify-between gap-3">
@@ -492,6 +485,7 @@ const PasseportValidation = () => {
         </Card>
       )}
     </div>
+    </ProtectedRoute>
   );
 };
 

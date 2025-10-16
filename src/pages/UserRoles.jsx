@@ -332,7 +332,11 @@ const UserRoles = () => {
                       <TableRow key={user.id}>
                           <TableCell className="font-medium truncate max-w-[200px]">
                               {user.email}
-                              {!user.email_confirmed_at && <Badge variant="outline" className="ml-2">Non confirmé</Badge>}
+                              {user.email_confirmed_at ? (
+                                <Badge variant="outline" className="ml-2 border-green-500 text-green-500">Confirmé</Badge>
+                              ) : (
+                                <Badge variant="destructive" className="ml-2">Non confirmé</Badge>
+                              )}
                           </TableCell>
                           <TableCell>
                               {isLinking === user.id ? <Loader2 className="h-4 w-4 animate-spin"/> : (
