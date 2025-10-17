@@ -7,6 +7,9 @@ import { supabase } from '@/lib/customSupabaseClient';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import InstructorAutocomplete from '@/components/schedule/InstructorAutocomplete';
 import { useToast } from '@/components/ui/use-toast';
 import SessionList from '@/components/session-log/SessionList';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
@@ -14,6 +17,13 @@ import { useAuth } from '@/contexts/SupabaseAuthContext';
 const SessionLog = () => {
   const navigate = useNavigate();
   const [sessions, setSessions] = useState([]);
+  const [cyclesOptions, setCyclesOptions] = useState([]);
+  const [schedulesOptions, setSchedulesOptions] = useState([]);
+  const [membersOptions, setMembersOptions] = useState([]);
+
+  const [filterCycleId, setFilterCycleId] = useState('');
+  const [filterScheduleId, setFilterScheduleId] = useState('');
+  const [filterInstructorId, setFilterInstructorId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const { toast } = useToast();
@@ -53,8 +63,25 @@ const SessionLog = () => {
     setLoading(false);
   }, [toast, canViewPage]);
 
+  // Fetch filter options (cycles, schedules, members)
+  const fetchFilterOptions = useCallback(async () => {
+    try {
+      const { data: cyclesData } = await supabase.from('cycles').select('id, name').order('name');
+      setCyclesOptions(cyclesData || []);
+
+      const { data: schedulesData } = await supabase.from('schedules').select('id, type, age_category, day, start_time').order('day, start_time');
+      setSchedulesOptions(schedulesData || []);
+
+  const { data: membersData } = await supabase.from('secure_members').select('id, first_name, last_name').order('last_name, first_name');
+  setMembersOptions(membersData || []);
+    } catch (err) {
+      console.error('Erreur lors du chargement des options de filtre:', err);
+    }
+  }, []);
+
   useEffect(() => {
     fetchSessions();
+    fetchFilterOptions();
   }, [fetchSessions]);
 
   const handleEdit = (session) => {
@@ -76,29 +103,54 @@ const SessionLog = () => {
   };
 
   const filteredSessions = useMemo(() => {
-    const result = sessions
-      .filter(session => {
-        // Filtrer les séances sans date
-        if (!session.date) return false;
+    const lowerSearchTerm = searchTerm.toLowerCase();
 
-        // Filtrage par terme de recherche
-        if (!searchTerm) return true;
-        const lowerSearchTerm = searchTerm.toLowerCase();
+    const result = sessions.filter(session => {
+      // Filtrer les séances sans date
+      if (!session.date) return false;
+
+      // Filtrage par terme de recherche
+      if (searchTerm) {
         const searchIn = [
           session.cycles?.name || '',
           session.cycles?.short_description || '',
-          session.session_objective,
-          session.comment,
-          ...(session.instructors || []),
-          ...(session.students || []),
+          session.session_objective || '',
+          session.comment || '',
+          ...(session.instructors || []).map(String),
+          ...(session.students || []).map(String),
           ...session.exercises.map(ex => Object.values(ex).join(' '))
         ].join(' ').toLowerCase();
-        return searchIn.includes(lowerSearchTerm);
-      });
+        if (!searchIn.includes(lowerSearchTerm)) return false;
+      }
 
-    console.log('Séances après filtrage :', result); // Log filtered sessions
+      // Filtrage par cycle
+      if (filterCycleId) {
+        if (!session.cycles || String(session.cycles.id) !== String(filterCycleId)) return false;
+      }
+
+      // Filtrage par schedule (use schedule_id field)
+      if (filterScheduleId) {
+        if (!session.schedule_id || String(session.schedule_id) !== String(filterScheduleId)) return false;
+      }
+
+      // Filtrage par encadrant (match by instructorNames or by instructor id)
+      if (filterInstructorId) {
+        const memberId = filterInstructorId;
+        const member = membersOptions.find(m => String(m.id) === String(memberId));
+        const memberName = member ? `${member.first_name} ${member.last_name}` : null;
+
+        const hasId = session.instructors && session.instructors.some(id => String(id) === String(memberId));
+        const hasName = memberName && session.instructorNames && session.instructorNames.includes(memberName);
+
+        if (!hasId && !hasName) return false;
+      }
+
+      return true;
+    });
+
+    console.log('Séances après filtrage :', result);
     return result;
-  }, [sessions, searchTerm]);
+  }, [sessions, searchTerm, filterCycleId, filterScheduleId, filterInstructorId, membersOptions]);
 
   if (authLoading) {
     return <div className="flex justify-center items-center h-64"><Loader2 className="w-12 h-12 animate-spin text-primary" /></div>;
@@ -155,6 +207,45 @@ const SessionLog = () => {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
+            </div>
+            {/* Filter card */}
+            <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div>
+                <Label htmlFor="filterCycle">Filtrer par cycle</Label>
+                <Select value={filterCycleId} onValueChange={(v) => setFilterCycleId(v)}>
+                  <SelectTrigger id="filterCycle">
+                    <SelectValue placeholder="Tous les cycles" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Tous les cycles</SelectItem>
+                    {cyclesOptions.map(c => (
+                      <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="filterSchedule">Filtrer par emploi du temps</Label>
+                <Select value={filterScheduleId} onValueChange={(v) => setFilterScheduleId(v)}>
+                  <SelectTrigger id="filterSchedule">
+                    <SelectValue placeholder="Tous les emplois" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Tous les emplois</SelectItem>
+                    {schedulesOptions.map(s => (
+                      <SelectItem key={s.id} value={s.id}>{`${s.type} / ${s.age_category} / ${s.day} ${s.start_time}`}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <InstructorAutocomplete
+                  value={filterInstructorId}
+                  onChange={(id) => setFilterInstructorId(id)}
+                  members={membersOptions}
+                  label="Filtrer par encadrant"
+                />
+              </div>
             </div>
           </CardHeader>
           <CardContent>

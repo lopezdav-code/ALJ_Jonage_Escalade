@@ -313,7 +313,7 @@ const SessionForm = ({ session, onSave, onCancel, isSaving }) => {
   // Instructors from selected schedule
   const scheduleInstructors = useMemo(() => {
     if (!formData.schedule_id || schedules.length === 0) return [];
-    const selectedSchedule = schedules.find(s => s.id === formData.schedule_id);
+    const selectedSchedule = schedules.find(s => String(s.id) === String(formData.schedule_id));
     if (!selectedSchedule) return [];
 
     const instructorNames = [
@@ -350,11 +350,11 @@ const SessionForm = ({ session, onSave, onCancel, isSaving }) => {
 
   // Auto-populate instructors and start_time when schedule is selected (only on schedule change)
   useEffect(() => {
-    if (formData.schedule_id !== previousScheduleIdRef.current) {
+    if (String(formData.schedule_id) !== String(previousScheduleIdRef.current)) {
       previousScheduleIdRef.current = formData.schedule_id;
 
       if (formData.schedule_id) {
-        const selectedSchedule = schedules.find(s => s.id === formData.schedule_id);
+  const selectedSchedule = schedules.find(s => String(s.id) === String(formData.schedule_id));
 
         if (selectedSchedule) {
           // Update instructors and start_time
@@ -477,7 +477,7 @@ const SessionForm = ({ session, onSave, onCancel, isSaving }) => {
               <Label htmlFor="schedule_id">Emploi du temps associé</Label>
               <Select
                 value={formData.schedule_id ? formData.schedule_id.toString() : ''}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, schedule_id: value ? parseInt(value) : null }))}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, schedule_id: value ? value : null }))}
               >
                 <SelectTrigger id="schedule_id">
                   <SelectValue placeholder="Sélectionner un emploi du temps (optionnel)" />
@@ -532,7 +532,7 @@ const SessionForm = ({ session, onSave, onCancel, isSaving }) => {
                 <Label htmlFor="cycle_id">Cycle associé</Label>
                 <Select
                   value={formData.cycle_id ? formData.cycle_id.toString() : ''}
-                  onValueChange={(value) => setFormData(prev => ({ ...prev, cycle_id: value ? parseInt(value) : null }))}
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, cycle_id: value ? value : null }))}
                 >
                   <SelectTrigger id="cycle_id">
                     <SelectValue placeholder="Sélectionner un cycle (optionnel)" />
