@@ -357,6 +357,54 @@ const Schedule = () => {
           </Card>
         </motion.div>
       </div>
+      
+      {/* Info panel for Adulte autonome rules */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.8 }}
+      >
+        <Card>
+          <CardHeader>
+            <CardTitle>Accès au cours « Adulte autonome »</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3 text-sm">
+              <p>
+                Le cours « Adulte autonome » est réservé aux adultes ayant validé le badge <strong>Orange</strong>.
+                La validation des passeports est réalisée par les encadrants lors de séances dédiées. Sans ce passeport,
+                il faut d'abord commencer par le cours « Adulte » qui est dédié aux adultes sans passeport. Ce cours est
+                encadré par une personne diplômée qui assure la sécurité.
+              </p>
+
+              <p>
+                Pour plus d'informations sur le passeport, consultez le guide&nbsp;:
+                <a className="text-primary hover:underline ml-1" href="/passeport-guide?passport=orange">Guide Passeport (Orange)</a>
+              </p>
+
+              <p>
+                Vous pouvez, à titre occasionnel, inviter un ami sous votre responsabilité à un cours adulte autonome. Cette personne doit
+                avoir passé le passeport Orange (fiche FFME à jour) et s'inscrire via HelloAsso :
+                <a className="text-primary hover:underline ml-1" href="https://www.helloasso.com/associations/amicale-laique-de-jonage/evenements/seance-decouverte-saison-2025-2026?utm_source=app_ha&utm_campaign=share_campaign_button&utm_medium=android" target="_blank" rel="noopener noreferrer">Inscription HelloAsso</a>
+              </p>
+
+              <p>
+                Pour une personne déjà licenciée FFME (détenteur d'un badge rouge ou du passeport orange), la participation est limitée
+                à <strong>10 séances par an</strong>. L'assurance n'est pas comprise.
+              </p>
+
+              <p>
+                Séance d'essai : pour un essai, une personne peut venir accompagnée d'un adulte autonome du club et sous l'autorisation
+                de l'encadrant. Assurage et grimpe en tête non autorisés pendant l'essai. Assurance non comprise.
+              </p>
+
+              <p>
+                Un adolescent en cours « Lycéen » ayant validé le badge Orange peut être autorisé à venir grimper sur un créneau autonome.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
     </div>
   );
 };
