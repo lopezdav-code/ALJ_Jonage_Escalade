@@ -11,7 +11,7 @@ import { timeSlots, days, ageCategories } from '@/data/schedule';
 import { formatParticipantName } from '@/lib/utils';
 import { supabase } from '@/lib/customSupabaseClient';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 
 const Schedule = () => {
   const navigate = useNavigate();
@@ -379,7 +379,7 @@ const Schedule = () => {
 
               <p>
                 Pour plus d'informations sur le passeport, consultez le guide&nbsp;:
-                <a className="text-primary hover:underline ml-1" href="/passeport-guide?passport=orange">Guide Passeport (Orange)</a>
+                <Link className="text-primary hover:underline ml-1" to="/passeport-guide?passport=orange">Guide Passeport (Orange)</Link>
               </p>
 
               <p>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -8,6 +8,20 @@ import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
 const PasseportGuide = () => {
   const [selectedPasseport, setSelectedPasseport] = useState('blanc');
+
+  // Read the passport param once on mount to initialize the selected tab.
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const param = (params.get('passport') || params.get('passeport') || '').toLowerCase();
+      if (param && Object.keys(passeportsData).includes(param)) {
+        setSelectedPasseport(param);
+      }
+    } catch (e) {
+      // ignore
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const passeportsData = {
     blanc: {
