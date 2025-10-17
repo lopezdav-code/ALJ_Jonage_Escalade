@@ -40,11 +40,11 @@ const Competitions = () => {
       </motion.div>
 
       <Tabs defaultValue="club" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="club">Compétitions du club</TabsTrigger>
-          <TabsTrigger value="federal">Calendrier des compétitions</TabsTrigger>
-          <TabsTrigger value="palmares">Palmarès 2024-2025</TabsTrigger>
-          <TabsTrigger value="vocabulaire">Vocabulaire</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 gap-1">
+          <TabsTrigger value="club" className="text-xs sm:text-sm">Compétitions du club</TabsTrigger>
+          <TabsTrigger value="federal" className="text-xs sm:text-sm">Calendrier</TabsTrigger>
+          <TabsTrigger value="palmares" className="text-xs sm:text-sm">Palmarès 2024-2025</TabsTrigger>
+          <TabsTrigger value="vocabulaire" className="text-xs sm:text-sm">Vocabulaire</TabsTrigger>
         </TabsList>
         <TabsContent value="club" className="mt-6">
           <ClubCompetitions />

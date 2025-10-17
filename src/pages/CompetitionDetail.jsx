@@ -908,29 +908,31 @@ const CompetitionDetail = () => {
       {/* Participants */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <CardTitle className="flex items-center gap-2">
               <Users className="w-5 h-5" />
               Participants
             </CardTitle>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigate(`/competitions/participants/${id}`)}
-              className="flex items-center gap-2"
-            >
-              <Plus className="w-4 h-4" />
-              Modifier les participants
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigate(`/competitions/results/${id}`)}
-              className="flex items-center gap-2"
-            >
-              <Trophy className="w-4 h-4" />
-              Modifier les résultats
-            </Button>
+            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate(`/competitions/participants/${id}`)}
+                className="flex items-center gap-2 w-full sm:w-auto"
+              >
+                <Plus className="w-4 h-4" />
+                <span className="whitespace-nowrap">Modifier les participants</span>
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate(`/competitions/results/${id}`)}
+                className="flex items-center gap-2 w-full sm:w-auto"
+              >
+                <Trophy className="w-4 h-4" />
+                <span className="whitespace-nowrap">Modifier les résultats</span>
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
