@@ -21,6 +21,7 @@ const PERMISSIONS = [
   { id: 'competition_participants', label: 'Participants à une compétition' },
   { id: 'cycle', label: 'Cycle' },
   { id: 'news', label: 'Actualité (News)' },
+  { id: 'news_advanced', label: 'Actualité (Actions avancées)' },
   { id: 'passeport', label: 'Passeport' },
   { id: 'profile', label: 'Profil utilisateur' },
   { id: 'role', label: 'Rôle utilisateur' },
@@ -29,6 +30,7 @@ const PERMISSIONS = [
 ];
 
 const ACTIONS = ['create', 'edit'];
+const ADVANCED_NEWS_ACTIONS = ['delete', 'archive', 'view_unpublished'];
 
 const Permissions = () => {
   const { isAdmin, loading: authLoading } = useAuth();
@@ -121,24 +123,57 @@ const Permissions = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {PERMISSIONS.map(permission => (
-                  <TableRow key={permission.id}>
-                    <TableCell className="font-medium">{permission.label}</TableCell>
-                    {ROLES.map(role => (
-                      <React.Fragment key={`${permission.id}-${role}`}>
-                        {ACTIONS.map(action => (
-                          <TableCell key={`${permission.id}-${role}-${action}`} className="text-center">
-                            <Checkbox
-                              checked={permissions[role]?.[permission.id]?.includes(action) || false}
-                              onCheckedChange={(checked) => handlePermissionChange(role, permission.id, action, checked)}
-                              disabled={role === 'admin'}
-                            />
-                          </TableCell>
-                        ))}
-                      </React.Fragment>
-                    ))}
-                  </TableRow>
-                ))}
+                {PERMISSIONS.map(permission => {
+                  const actions = permission.id === 'news_advanced' ? ADVANCED_NEWS_ACTIONS : ACTIONS;
+                  const isAdvancedNews = permission.id === 'news_advanced';
+
+                  return (
+                    <TableRow key={permission.id}>
+                      <TableCell className="font-medium">
+                        {permission.label}
+                        {isAdvancedNews && (
+                          <div className="text-xs text-muted-foreground mt-1">
+                            Supprimer, Archiver, Voir news non publiées
+                          </div>
+                        )}
+                      </TableCell>
+                      {ROLES.map(role => (
+                        <React.Fragment key={`${permission.id}-${role}`}>
+                          {isAdvancedNews ? (
+                            <TableCell colSpan={2} className="text-center">
+                              <div className="flex flex-col gap-1 items-center">
+                                {ADVANCED_NEWS_ACTIONS.map(action => (
+                                  <label key={action} className="flex items-center gap-2 text-xs">
+                                    <Checkbox
+                                      checked={permissions[role]?.[permission.id]?.includes(action) || false}
+                                      onCheckedChange={(checked) => handlePermissionChange(role, permission.id, action, checked)}
+                                      disabled={role === 'admin'}
+                                    />
+                                    <span className="capitalize">
+                                      {action === 'delete' ? 'Supprimer' : action === 'archive' ? 'Archiver' : 'Voir non publiées'}
+                                    </span>
+                                  </label>
+                                ))}
+                              </div>
+                            </TableCell>
+                          ) : (
+                            <>
+                              {ACTIONS.map(action => (
+                                <TableCell key={`${permission.id}-${role}-${action}`} className="text-center">
+                                  <Checkbox
+                                    checked={permissions[role]?.[permission.id]?.includes(action) || false}
+                                    onCheckedChange={(checked) => handlePermissionChange(role, permission.id, action, checked)}
+                                    disabled={role === 'admin'}
+                                  />
+                                </TableCell>
+                              ))}
+                            </>
+                          )}
+                        </React.Fragment>
+                      ))}
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </CardContent>

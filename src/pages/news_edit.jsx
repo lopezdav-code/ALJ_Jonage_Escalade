@@ -30,6 +30,7 @@ const NewsEdit = () => {
     is_pinned: false,
     is_private: false, // Initialize is_private
     competition_id: null, // Initialize competition_id
+    status: 'publie', // Initialize status with default value
   });
   const [imageFile, setImageFile] = useState(null);
   const [documentFile, setDocumentFile] = useState(null);
@@ -73,6 +74,7 @@ const NewsEdit = () => {
         is_pinned: false,
         is_private: false,
         competition_id: null,
+        status: 'publie',
       });
       setIsLoading(false);
     } else { // If id exists, it's an edit route '/news/edit/:id'
@@ -304,6 +306,29 @@ const NewsEdit = () => {
             className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
           />
           <Label htmlFor="is_private">Actualité privée (réservée aux adhérents du club)</Label>
+        </div>
+
+        {/* Status Field */}
+        <div>
+          <Label htmlFor="status">Statut de publication</Label>
+          <Select
+            name="status"
+            value={formData.status}
+            onValueChange={(value) => setFormData(prev => ({ ...prev, status: value }))}
+            required
+          >
+            <SelectTrigger className="mt-1">
+              <SelectValue placeholder="Sélectionnez un statut" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="en_cours_redaction">En cours de rédaction</SelectItem>
+              <SelectItem value="publie">Publié</SelectItem>
+              <SelectItem value="archive">Archivé</SelectItem>
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-muted-foreground mt-1">
+            Les news "en cours de rédaction" ne sont visibles que par les personnes autorisées.
+          </p>
         </div>
 
         <div className="flex justify-end gap-4">

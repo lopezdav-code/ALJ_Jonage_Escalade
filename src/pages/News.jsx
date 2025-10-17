@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Helmet } from 'react-helmet';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Newspaper, PlusCircle, Loader2, Edit, Trash2, ExternalLink, Download, Users, Heart, MountainSnow as Ski, Share2, Eye, ArrowDownUp, Lock } from 'lucide-react';
+import { Newspaper, PlusCircle, Loader2, Edit, Trash2, ExternalLink, Download, Users, Heart, MountainSnow as Ski, Share2, Eye, ArrowDownUp, Lock, Archive, FileEdit, MoreVertical } from 'lucide-react';
 import { supabase } from '@/lib/customSupabaseClient';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,6 +14,8 @@ import { useConfig } from '@/contexts/ConfigContext';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Link } from 'react-router-dom';
 import { getSignedUrl } from '@/lib/newsStorageUtils';
+import { useNewsPermissions } from '@/hooks/useNewsPermissions';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 const SHARED_BUCKET = 'exercise_images';
 
@@ -91,9 +93,11 @@ const News = () => {
   const [sortOrder, setSortOrder] = useState('desc'); // Default to descending (newest first)
   const [selectedTheme, setSelectedTheme] = useState('');
   const [selectedDate, setSelectedDate] = useState('');
+  const [statusFilter, setStatusFilter] = useState('publie'); // Filter by status
   const [signedUrls, setSignedUrls] = useState({});
   const { toast } = useToast();
   const { isAdmin, isAdherent, loading: authLoading } = useAuth();
+  const { canDelete, canArchive, canViewUnpublished, canEdit, loading: permissionsLoading } = useNewsPermissions();
 
   const fetchNews = useCallback(async () => {
     setLoadingNews(true);
@@ -134,6 +138,23 @@ const News = () => {
       return true; // Public news visible to everyone
     });
 
+    // Filter by status
+    processedNews = processedNews.filter(item => {
+      const itemStatus = item.status || 'publie'; // Default to 'publie' for old news without status
+
+      // If status is 'en_cours_redaction', only show if user has permission to view unpublished
+      if (itemStatus === 'en_cours_redaction') {
+        return canViewUnpublished;
+      }
+
+      // Apply status filter
+      if (statusFilter === 'all') {
+        return true; // Show all statuses if filter is 'all'
+      }
+
+      return itemStatus === statusFilter;
+    });
+
     // Apply theme filter
     if (selectedTheme) {
       processedNews = processedNews.filter(item => item.theme === selectedTheme);
@@ -163,9 +184,13 @@ const News = () => {
     });
 
     return { pinnedNews, nonPinnedNews };
-  }, [news, sortOrder, selectedTheme, selectedDate, isAdherent]);
+  }, [news, sortOrder, selectedTheme, selectedDate, isAdherent, statusFilter, canViewUnpublished]);
 
   const handleDelete = async (newsId) => {
+    if (!canDelete) {
+      toast({ title: "Erreur", description: "Vous n'avez pas la permission de supprimer des actualités.", variant: "destructive" });
+      return;
+    }
     if (!window.confirm("Êtes-vous sûr de vouloir supprimer cette actualité ?")) return;
     try {
       const { error } = await supabase.from('news').delete().eq('id', newsId);
@@ -177,7 +202,29 @@ const News = () => {
     }
   };
 
-  const showAdminFeatures = !authLoading && isAdmin;
+  const handleStatusChange = async (newsId, newStatus) => {
+    if (newStatus === 'archive' && !canArchive) {
+      toast({ title: "Erreur", description: "Vous n'avez pas la permission d'archiver des actualités.", variant: "destructive" });
+      return;
+    }
+    try {
+      const { error } = await supabase.from('news').update({ status: newStatus }).eq('id', newsId);
+      if (error) throw error;
+
+      const statusLabels = {
+        'en_cours_redaction': 'en cours de rédaction',
+        'publie': 'publiée',
+        'archive': 'archivée'
+      };
+
+      toast({ title: "Succès", description: `Actualité ${statusLabels[newStatus]}.` });
+      fetchNews();
+    } catch (error) {
+      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+    }
+  };
+
+  const showAdminFeatures = !authLoading && (isAdmin || canEdit);
 
   const handleShare = (platform, item) => {
     const url = `${window.location.origin}/news/${item.id}`;
@@ -214,12 +261,24 @@ const News = () => {
                 </div>
               )}
               <CardHeader>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <CardTitle className="flex-1">{item.title}</CardTitle>
                   {item.is_private && (
                     <div className="flex items-center gap-1 text-xs bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-200 px-2 py-1 rounded-full">
                       <Lock className="w-3 h-3" />
                       <span>Privé</span>
+                    </div>
+                  )}
+                  {(item.status === 'en_cours_redaction') && (
+                    <div className="flex items-center gap-1 text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded-full">
+                      <FileEdit className="w-3 h-3" />
+                      <span>En rédaction</span>
+                    </div>
+                  )}
+                  {(item.status === 'archive') && (
+                    <div className="flex items-center gap-1 text-xs bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-2 py-1 rounded-full">
+                      <Archive className="w-3 h-3" />
+                      <span>Archivé</span>
                     </div>
                   )}
                 </div>
@@ -252,12 +311,55 @@ const News = () => {
                   </Popover>
                   {showAdminFeatures && (
                     <>
-                      <Button asChild variant="ghost" size="icon">
-                        <Link to={`/news/edit/${item.id}`}>
-                          <Edit className="w-4 h-4" />
-                        </Link>
-                      </Button>
-                      <Button variant="ghost" size="icon" className="text-destructive" onClick={() => handleDelete(item.id)}><Trash2 className="w-4 h-4" /></Button>
+                      {canEdit && (
+                        <Button asChild variant="ghost" size="icon">
+                          <Link to={`/news/edit/${item.id}`}>
+                            <Edit className="w-4 h-4" />
+                          </Link>
+                        </Button>
+                      )}
+                      {(canArchive || canDelete) && (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                              <MoreVertical className="w-4 h-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            {canArchive && (
+                              <>
+                                {item.status !== 'publie' && (
+                                  <DropdownMenuItem onClick={() => handleStatusChange(item.id, 'publie')}>
+                                    <Eye className="w-4 h-4 mr-2" />
+                                    Publier
+                                  </DropdownMenuItem>
+                                )}
+                                {item.status !== 'en_cours_redaction' && (
+                                  <DropdownMenuItem onClick={() => handleStatusChange(item.id, 'en_cours_redaction')}>
+                                    <FileEdit className="w-4 h-4 mr-2" />
+                                    Mettre en rédaction
+                                  </DropdownMenuItem>
+                                )}
+                                {item.status !== 'archive' && (
+                                  <DropdownMenuItem onClick={() => handleStatusChange(item.id, 'archive')}>
+                                    <Archive className="w-4 h-4 mr-2" />
+                                    Archiver
+                                  </DropdownMenuItem>
+                                )}
+                              </>
+                            )}
+                            {canDelete && (
+                              <DropdownMenuItem
+                                onClick={() => handleDelete(item.id)}
+                                className="text-destructive focus:text-destructive"
+                              >
+                                <Trash2 className="w-4 h-4 mr-2" />
+                                Supprimer
+                              </DropdownMenuItem>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
                     </>
                   )}
                 </div>
@@ -352,6 +454,52 @@ const News = () => {
             )}
           </div>
         </div>
+
+        {/* Status filter - only show if user has permission to view unpublished */}
+        {canViewUnpublished && (
+          <motion.div
+            className="flex flex-wrap gap-2 mb-4"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1, duration: 0.4 }}
+          >
+            <span className="text-sm font-medium self-center text-muted-foreground">Statut :</span>
+            <Button
+              size="sm"
+              variant={statusFilter === 'publie' ? 'default' : 'outline'}
+              onClick={() => setStatusFilter('publie')}
+              className="rounded-full"
+            >
+              Publiées
+            </Button>
+            <Button
+              size="sm"
+              variant={statusFilter === 'en_cours_redaction' ? 'default' : 'outline'}
+              onClick={() => setStatusFilter('en_cours_redaction')}
+              className="rounded-full"
+            >
+              <FileEdit className="w-3 h-3 mr-1" />
+              En rédaction
+            </Button>
+            <Button
+              size="sm"
+              variant={statusFilter === 'archive' ? 'default' : 'outline'}
+              onClick={() => setStatusFilter('archive')}
+              className="rounded-full"
+            >
+              <Archive className="w-3 h-3 mr-1" />
+              Archivées
+            </Button>
+            <Button
+              size="sm"
+              variant={statusFilter === 'all' ? 'default' : 'outline'}
+              onClick={() => setStatusFilter('all')}
+              className="rounded-full"
+            >
+              Toutes
+            </Button>
+          </motion.div>
+        )}
 
         {/* Theme filter buttons */}
         <motion.div
