@@ -11,6 +11,8 @@ import { Badge } from '@/components/ui/badge';
 import { formatName } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 
 const AttendanceRecap = () => {
   const { isAdmin, isEncadrant, loading: authLoading } = useAuth();
@@ -18,6 +20,7 @@ const AttendanceRecap = () => {
   const [selectedScheduleId, setSelectedScheduleId] = useState('');
   const [attendanceData, setAttendanceData] = useState([]);
   const [sessions, setSessions] = useState([]);
+  const [onlyShowAbsent, setOnlyShowAbsent] = useState(false);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -228,6 +231,17 @@ const AttendanceRecap = () => {
 
   const selectedSchedule = schedules.find(s => s.id === selectedScheduleId);
 
+  // Appliquer le filtre si demandé : ne garder que les élèves absents au moins une fois
+  const displayedAttendance = onlyShowAbsent
+    ? attendanceData.filter(({ sessions: memberSessions }) => {
+        // Si aucune séance, on ne considère pas comme absent
+        const values = Object.values(memberSessions || {});
+        if (values.length === 0) return false;
+        // Retourne true si au moins une séance est faussey (absent ou non marqué)
+        return !values.every(Boolean);
+      })
+    : attendanceData;
+
   return (
     <div className="space-y-8">
       <Helmet>
@@ -267,7 +281,9 @@ const AttendanceRecap = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <Select value={selectedScheduleId} onValueChange={setSelectedScheduleId}>
+            <div className="flex gap-4 items-center">
+              <div className="flex-1">
+                <Select value={selectedScheduleId} onValueChange={setSelectedScheduleId}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Choisissez un planning..." />
               </SelectTrigger>
@@ -284,7 +300,17 @@ const AttendanceRecap = () => {
                   </SelectItem>
                 ))}
               </SelectContent>
-            </Select>
+                </Select>
+              </div>
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="only-absent"
+                  checked={onlyShowAbsent}
+                  onCheckedChange={(val) => setOnlyShowAbsent(Boolean(val))}
+                />
+                <Label htmlFor="only-absent" className="text-sm">Afficher seulement les absents</Label>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </motion.div>
