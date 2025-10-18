@@ -328,7 +328,7 @@ const AttendanceRecap = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="overflow-x-auto">
-              {attendanceData.length > 0 ? (
+              {displayedAttendance.length > 0 ? (
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -357,7 +357,7 @@ const AttendanceRecap = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {attendanceData.map(({ member, sessions: memberSessions }) => {
+                    {displayedAttendance.map(({ member, sessions: memberSessions }) => {
                       const totalPresent = Object.values(memberSessions).filter(Boolean).length;
 
                       return (
