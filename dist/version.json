@@ -1,6 +1,6 @@
 {
-  "version": "1.9.1",
-  "buildDate": "2025-10-12T18:40:00.000Z",
-  "description": "Fix: gestion d'erreur SafeMemberAvatar et affichage image Supabase",
+  "version": "1.9.2",
+  "buildDate": "2025-10-16T16:25:00.000Z",
+  "description": "Refactorisation de l'admin, sécurisation des images et permissions granulaires",
   "commit": "main"
 }

@@ -479,6 +479,22 @@ const Vocabulary = () => {
               </a>
             </div>
           </div>
+          <div>
+            <h3 className="font-semibold text-lg">Label FFME : Club Ambition Performance</h3>
+            <p className="text-muted-foreground">Notre club est fier d'être labellisé "Club Ambition Performance" par la FFME. Ce label officiel reconnaît notre projet centré sur la progression des jeunes athlètes, la qualité de notre encadrement et notre organisation pour structurer un parcours vers l'excellence. C'est une étape importante de notre développement, qui nous place sur la voie des plus hauts niveaux de performance reconnus par la fédération.</p>
+            <div className="mt-2 p-3 bg-blue-50 rounded-md border border-blue-200">
+              <p className="text-sm font-medium text-blue-900">Pour en savoir plus</p>
+              <a
+                href="https://www.ffme.fr"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-blue-600 hover:text-blue-800 underline flex items-center gap-1 mt-1"
+              >
+                <LinkIcon className="w-3 h-3" />
+                Référentiel national officiel
+              </a>
+            </div>
+          </div>
         </CardContent>
       </Card>
 
