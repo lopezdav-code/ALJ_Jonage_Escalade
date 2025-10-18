@@ -1,0 +1,11 @@
+{
+  "name": "ALJ_Jonage_Supabase",
+  "description": "MCP config template for Supabase project connection. Replace placeholders with your project-specific values or use environment variables.",
+  "supabase": {
+    "project_ref": "hvugiirundpxynozxxnd",
+    "api_url": "https://hvugiirundpxynozxxnd.supabase.co",
+    "anon_key_env": "SUPABASE_ANON_KEY",
+    "service_role_env": "SUPABASE_SERVICE_ROLE_KEY"
+  },
+  "notes": "Do NOT commit real keys. Store SUPABASE_ANON_KEY and SUPABASE_SERVICE_ROLE_KEY in GitHub Secrets or local env files."
+}
