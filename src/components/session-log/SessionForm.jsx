@@ -276,6 +276,7 @@ const SessionForm = ({ session, onSave, onCancel, isSaving }) => {
       start_time: '18:30',
       instructors: [],
       students: [],
+      absent_students: [],
       cycle_id: null,
       schedule_id: null,
       session_objective: '',
@@ -302,10 +303,18 @@ const SessionForm = ({ session, onSave, onCancel, isSaving }) => {
         })
         .filter(Boolean);
 
+      const absentNames = (session.absent_students || [])
+        .map(id => {
+          const member = allMembers.find(m => m.id === id);
+          return member ? `${member.first_name} ${member.last_name}` : null;
+        })
+        .filter(Boolean);
+
       setFormData(prev => ({
         ...prev,
         instructors: instructorNames,
-        students: studentNames
+        students: studentNames,
+        absent_students: absentNames
       }));
     }
   }, [session, allMembers, formData.instructors.length]);
@@ -339,6 +348,21 @@ const SessionForm = ({ session, onSave, onCancel, isSaving }) => {
     // Show all instructors
     return Array.from(new Set(instructorsOptions));
   }, [instructorsOptions, filterInstructorsBySchedule, formData.schedule_id, scheduleInstructors, formData.instructors]);
+
+  // Options pour les élèves absents : tous les lycéens sauf ceux marqués présents
+  const lyceeAbsentOptions = useMemo(() => {
+    const presents = formData.students || [];
+    return lyceeStudentsOptions.filter(name => !presents.includes(name));
+  }, [lyceeStudentsOptions, formData.students]);
+
+  // Si un élève est coché présent, il ne doit plus apparaître dans les absents sélectionnés
+  useEffect(() => {
+    if (!formData.absent_students || formData.absent_students.length === 0) return;
+    const cleanedAbsents = (formData.absent_students || []).filter(name => !(formData.students || []).includes(name));
+    if (cleanedAbsents.length !== (formData.absent_students || []).length) {
+      setFormData(prev => ({ ...prev, absent_students: cleanedAbsents }));
+    }
+  }, [formData.students]);
 
   // Initial load: just set the previousScheduleIdRef without changing instructors
   // The instructors are already set from the session data in useState initialization
@@ -452,6 +476,7 @@ const SessionForm = ({ session, onSave, onCancel, isSaving }) => {
     // Convertir les noms complets des encadrants/élèves en leurs IDs respectifs
     const instructorsIds = formData.instructors.map(name => allMembers.find(m => `${m.first_name} ${m.last_name}` === name)?.id).filter(Boolean);
     const studentsIds = formData.students.map(name => allMembers.find(m => `${m.first_name} ${m.last_name}` === name)?.id).filter(Boolean);
+  const absentStudentsIds = (formData.absent_students || []).map(name => allMembers.find(m => `${m.first_name} ${m.last_name}` === name)?.id).filter(Boolean);
 
     // Convertir les chaînes vides en null pour éviter les erreurs SQL
     const cleanedData = {
@@ -460,6 +485,7 @@ const SessionForm = ({ session, onSave, onCancel, isSaving }) => {
       start_time: formData.start_time || null,
       instructors: instructorsIds,
       students: studentsIds,
+      absent_students: absentStudentsIds,
     };
     onSave(cleanedData);
   };
@@ -520,12 +546,23 @@ const SessionForm = ({ session, onSave, onCancel, isSaving }) => {
                 isFiltered={filterInstructorsBySchedule}
                 canFilter={formData.schedule_id && scheduleInstructors.length > 0}
               />
-              <MultiSelectCheckbox
-                title="Élèves présents"
-                options={lyceeStudentsOptions}
-                selected={formData.students}
-                onChange={(value) => handleMultiSelectChange('students', value)}
-              />
+
+              {/* Regroup Présents et Absents dans une seule colonne pour garantir que "Absents" apparaisse dessous */}
+              <div className="space-y-4 md:col-span-1 lg:col-span-1">
+                <MultiSelectCheckbox
+                  title="Élèves présents"
+                  options={lyceeStudentsOptions}
+                  selected={formData.students}
+                  onChange={(value) => handleMultiSelectChange('students', value)}
+                />
+
+                <MultiSelectCheckbox
+                  title="Élèves absents"
+                  options={lyceeAbsentOptions}
+                  selected={formData.absent_students}
+                  onChange={(value) => handleMultiSelectChange('absent_students', value)}
+                />
+              </div>
             </div>
             <div className="grid md:grid-cols-2 gap-4">
               <div className="space-y-2">

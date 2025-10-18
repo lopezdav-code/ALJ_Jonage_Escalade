@@ -68,7 +68,8 @@ const SessionLogDetail = () => {
         // Récupérer les informations des membres
         const allMemberIds = [
           ...(data.instructors || []),
-          ...(data.students || [])
+          ...(data.students || []),
+          ...(data.absent_students || [])
         ];
 
         let membersMap = {};
@@ -134,6 +135,36 @@ const SessionLogDetail = () => {
           }, {});
         }
 
+        // Récupérer tous les membres 'Loisir lycée' depuis la table `members`
+        let lyceeMembers = [];
+        try {
+          const { data: lyceeData, error: lyceeError } = await supabase
+            .from('members')
+            .select('id, first_name, last_name')
+            .eq('title', 'Loisir lycée')
+            .order('last_name')
+            .order('first_name');
+
+          if (lyceeError) {
+            // Ne pas bloquer la page si l'appel échoue, on logge seulement
+            console.warn('Erreur en récupérant les membres lycéens:', lyceeError);
+          } else {
+            lyceeMembers = lyceeData || [];
+          }
+        } catch (err) {
+          console.warn('Exception en récupérant les membres lycéens:', err);
+        }
+
+        const lyceeMap = (lyceeMembers || []).reduce((acc, member) => {
+          acc[member.id] = {
+            id: member.id,
+            fullName: `${member.first_name} ${member.last_name}`,
+            firstName: member.first_name,
+            lastName: member.last_name
+          };
+          return acc;
+        }, {});
+
         // Enrichir la session avec les noms des membres et commentaires
         const enrichedSession = {
           ...data,
@@ -144,6 +175,19 @@ const SessionLogDetail = () => {
             ...(membersMap[memberId] || { id: memberId, fullName: `ID: ${memberId}`, firstName: '', lastName: '' }),
             comment: studentCommentsMap[memberId] || ''
           })),
+          // Absent students derived from table `members` (Loisir lycée) minus les présents
+          absentNames: (() => {
+            const presentIds = new Set(data.students || []);
+            return (lyceeMembers || [])
+              .filter(m => !presentIds.has(m.id))
+              .map(m => `${m.first_name} ${m.last_name}`);
+          })(),
+          absentData: (() => {
+            const presentIds = new Set(data.students || []);
+            return (lyceeMembers || [])
+              .filter(m => !presentIds.has(m.id))
+              .map(m => ({ id: m.id, fullName: `${m.first_name} ${m.last_name}`, firstName: m.first_name, lastName: m.last_name }));
+          })(),
           exercises: (data.exercises || []).map(ex => ({
             ...ex,
             pedagogy_sheet: ex.pedagogy_sheet_id ? pedagogySheetsMap[ex.pedagogy_sheet_id] : null
@@ -352,6 +396,25 @@ const SessionLogDetail = () => {
               </div>
             ) : (
               <p className="text-sm text-muted-foreground">Aucun élève enregistré</p>
+            )}
+          </div>
+
+          {/* Élèves absents */}
+          <div className="mt-4">
+            <div className="flex items-center gap-2 mb-3">
+              <Users className="w-5 h-5 text-muted-foreground" />
+              <p className="font-semibold">Élèves absents ({session.absentData?.length || 0})</p>
+            </div>
+            {session.absentData && session.absentData.length > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {session.absentData.map((student, index) => (
+                  <Badge key={index} variant="outline" className="text-sm py-1.5 px-3 bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-800 text-red-900 dark:text-red-100">
+                    {student.fullName}
+                  </Badge>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">Aucun élève absent enregistré</p>
             )}
           </div>
         </CardContent>
