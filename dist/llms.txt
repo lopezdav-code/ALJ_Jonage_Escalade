@@ -1,8 +1,0 @@
-## Pages
-- [Compétiteurs - ALJ Escalade Jonage](/competitors): Liste des compétiteurs du club d
-- [Compétitions - ALJ Escalade Jonage](/competitions): Consultez le calendrier des compétitions d
-- [Gestion des Images - Admin](/imageadmin): Gérer et lier les images du site.
-- [Inscriptions 2025-2026 - ALJ Escalade Jonage](/inscriptions): Toutes les informations pour les inscriptions à la saison 2025-2026 du club d
-- [Palmarès de  - ALJ Escalade Jonage](/competitorsummary): No description available
-- [Récapitulatif Annuel et Financier - ALJ Escalade Jonage](/annualsummary): Récapitulatif annuel des participations aux compétitions et suivi financier.
-- [Réglages du site - Admin](/sitesettings): No description available
