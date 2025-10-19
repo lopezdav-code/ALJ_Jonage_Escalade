@@ -1,6 +1,6 @@
 {
-  "version": "1.9.3",
-  "buildDate": "2025-10-19T00:00:00.000Z",
+  "version": "1.9.4",
+  "buildDate": "2025-10-19T13:50:00.000Z",
   "description": "Refactorisation de l'admin, sécurisation des images et permissions granulaires",
   "commit": "main"
 }
