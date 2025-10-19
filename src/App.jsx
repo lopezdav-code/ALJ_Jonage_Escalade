@@ -42,6 +42,8 @@ const PasseportValidation = lazy(() => import('@/pages/PasseportValidation'));
 const PasseportViewer = lazy(() => import('@/pages/PasseportViewer'));
 const PasseportGuide = lazy(() => import('@/pages/PasseportGuide'));
 const TestImages = lazy(() => import('@/pages/TestImages'));
+const MemberScheduleTest = lazy(() => import('@/pages/MemberScheduleTest'));
+const GroupeAdmin = lazy(() => import('@/pages/GroupeAdmin'));
 const MemberEdit = lazy(() => import('@/pages/MemberEdit'));
 const NewsEdit = lazy(() => import('@/pages/news_edit')); // Import NewsEdit
 const AttendanceRecap = lazy(() => import('@/pages/AttendanceRecap'));
@@ -136,6 +138,8 @@ const AppContent = () => {
           <Route path="/passeport-viewer" element={<LazyRoute><PasseportViewer /></LazyRoute>} />
           <Route path="/passeport-guide" element={<LazyRoute><PasseportGuide /></LazyRoute>} />
           <Route path="/test-images" element={<LazyRoute><TestImages /></LazyRoute>} />
+          <Route path="/member-schedule-test" element={<LazyRoute><MemberScheduleTest /></LazyRoute>} />
+          <Route path="/groupes/admin" element={<LazyRoute><GroupeAdmin /></LazyRoute>} />
           <Route path="/attendance-recap" element={<LazyRoute><AttendanceRecap /></LazyRoute>} />
         </Routes>
       </main>
