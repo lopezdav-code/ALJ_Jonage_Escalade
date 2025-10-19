@@ -21,7 +21,8 @@ const GroupeAdmin = () => {
   const [loading, setLoading] = useState(true);
   const [fetchResult, setFetchResult] = useState(null);
   const [editing, setEditing] = useState(null); // groupe being edited
-  const [description, setDescription] = useState('');
+  const [category, setCategory] = useState('');
+  const [sousCategory, setSousCategory] = useState('');
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -47,10 +48,10 @@ const GroupeAdmin = () => {
 
       const { data, error } = await supabase
         .from('groupe')
-        .select('*');
+        .select('id, category, sous_category');
 
       console.log('[GroupeAdmin] fetchGroupes response:', { data, error });
-      setFetchResult({ data, error });
+  setFetchResult({ data, error });
 
       if (error) throw error;
       setGroupes(data || []);
@@ -64,18 +65,20 @@ const GroupeAdmin = () => {
 
   const handleEdit = (g) => {
     setEditing(g);
-    setDescription(g.description || '');
+    setCategory(g.category || '');
+    setSousCategory(g.sous_category || '');
   };
 
   const handleNew = () => {
     setEditing({ id: null });
-    setDescription('');
+    setCategory('');
+    setSousCategory('');
   };
 
   const handleSave = async (e) => {
     e.preventDefault();
-    if (!description.trim()) {
-      toast({ title: 'Erreur', description: 'La description est requise.', variant: 'destructive' });
+    if (!category.trim()) {
+      toast({ title: 'Erreur', description: 'La catégorie est requise.', variant: 'destructive' });
       return;
     }
 
@@ -84,7 +87,7 @@ const GroupeAdmin = () => {
       if (editing && editing.id) {
         const { data, error } = await supabase
           .from('groupe')
-          .update({ description: description.trim() })
+          .update({ category: category.trim(), sous_category: sousCategory.trim() || null })
           .eq('id', editing.id)
           .select();
 
@@ -95,7 +98,7 @@ const GroupeAdmin = () => {
       } else {
         const { data, error } = await supabase
           .from('groupe')
-          .insert([{ description: description.trim() }])
+          .insert([{ category: category.trim(), sous_category: sousCategory.trim() || null }])
           .select();
 
         console.log('[GroupeAdmin] insert response:', { data, error });
@@ -104,8 +107,9 @@ const GroupeAdmin = () => {
         toast({ title: 'Groupe créé' });
       }
 
-      setEditing(null);
-      setDescription('');
+  setEditing(null);
+  setCategory('');
+  setSousCategory('');
       fetchGroupes();
     } catch (err) {
       console.error('Erreur sauvegarde groupe:', err);
@@ -182,7 +186,7 @@ const GroupeAdmin = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {groupes.length === 0 ? (
+                  {groupes.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={3} className="text-center py-8 text-muted-foreground">Aucun groupe</TableCell>
                   </TableRow>
@@ -190,7 +194,7 @@ const GroupeAdmin = () => {
                   groupes.map((g) => (
                     <TableRow key={g.id}>
                       <TableCell className="font-mono text-sm">{g.id}</TableCell>
-                      <TableCell>{g.description}</TableCell>
+                      <TableCell>{g.category}{g.sous_category ? ` — ${g.sous_category}` : ''}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           <Button variant="outline" size="sm" onClick={() => handleEdit(g)}>
@@ -218,9 +222,15 @@ const GroupeAdmin = () => {
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSave} className="space-y-4">
-                <div>
-                  <Label>Description</Label>
-                  <Input value={description} onChange={(e) => setDescription(e.target.value)} />
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Catégorie</Label>
+                    <Input value={category} onChange={(e) => setCategory(e.target.value)} />
+                  </div>
+                  <div>
+                    <Label>Sous-catégorie</Label>
+                    <Input value={sousCategory} onChange={(e) => setSousCategory(e.target.value)} />
+                  </div>
                 </div>
                 <div className="flex gap-2 justify-end">
                   <Button variant="ghost" onClick={() => { setEditing(null); setDescription(''); }}>Annuler</Button>
