@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Users, Save, Loader2, Filter, CheckSquare, Square } from 'lucide-react';
+import { Users, Save, Loader2, Filter, CheckSquare, Square, Settings } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -246,7 +246,7 @@ const MemberGroupTest = () => {
   return (
     <div className="space-y-6">
       <Helmet>
-        <title>Test - Gestion des Groupes Membres</title>
+        <title>Gestion des Groupes</title>
       </Helmet>
 
       <motion.div
@@ -254,10 +254,16 @@ const MemberGroupTest = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <h1 className="text-4xl font-bold headline flex items-center gap-3">
-          <Users className="w-10 h-10 text-primary" />
-          Test - Gestion des Groupes Membres
-        </h1>
+        <div className="flex justify-between items-center">
+          <h1 className="text-4xl font-bold headline flex items-center gap-3">
+            <Users className="w-10 h-10 text-primary" />
+            Gestion des Groupes
+          </h1>
+          <Button onClick={() => navigate('/groupes/admin')} variant="outline">
+            <Settings className="w-4 h-4 mr-2" />
+            Gestion des groupes
+          </Button>
+        </div>
       </motion.div>
 
       {/* Filtres */}

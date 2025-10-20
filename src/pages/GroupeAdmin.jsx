@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { PlusCircle, Edit, Trash2, ArrowLeft, Save, Loader2 } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, ArrowLeft, Save, Loader2, ArrowUpDown, ArrowUp, ArrowDown, Filter } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,7 +23,14 @@ const GroupeAdmin = () => {
   const [editing, setEditing] = useState(null); // groupe being edited
   const [category, setCategory] = useState('');
   const [sousCategory, setSousCategory] = useState('');
+  const [groupeSchedule, setGroupeSchedule] = useState('');
   const [saving, setSaving] = useState(false);
+
+  // Filtres et tri
+  const [categoryFilter, setCategoryFilter] = useState('');
+  const [sousCategoryFilter, setSousCategoryFilter] = useState('');
+  const [scheduleFilter, setScheduleFilter] = useState('');
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
 
   useEffect(() => {
     if (!authLoading && !isAdmin) {
@@ -48,7 +55,9 @@ const GroupeAdmin = () => {
 
       const { data, error } = await supabase
         .from('groupe')
-        .select('id, category, sous_category');
+        .select('id, category, sous_category, Groupe_schedule')
+        .order('category')
+        .order('sous_category');
 
       console.log('[GroupeAdmin] fetchGroupes response:', { data, error });
   setFetchResult({ data, error });
@@ -67,12 +76,14 @@ const GroupeAdmin = () => {
     setEditing(g);
     setCategory(g.category || '');
     setSousCategory(g.sous_category || '');
+    setGroupeSchedule(g.Groupe_schedule || '');
   };
 
   const handleNew = () => {
     setEditing({ id: null });
     setCategory('');
     setSousCategory('');
+    setGroupeSchedule('');
   };
 
   const handleSave = async (e) => {
@@ -84,10 +95,16 @@ const GroupeAdmin = () => {
 
     setSaving(true);
     try {
+      const dataToSave = {
+        category: category.trim(),
+        sous_category: sousCategory.trim() || null,
+        Groupe_schedule: groupeSchedule.trim() || null
+      };
+
       if (editing && editing.id) {
         const { data, error } = await supabase
           .from('groupe')
-          .update({ category: category.trim(), sous_category: sousCategory.trim() || null })
+          .update(dataToSave)
           .eq('id', editing.id)
           .select();
 
@@ -98,7 +115,7 @@ const GroupeAdmin = () => {
       } else {
         const { data, error } = await supabase
           .from('groupe')
-          .insert([{ category: category.trim(), sous_category: sousCategory.trim() || null }])
+          .insert([dataToSave])
           .select();
 
         console.log('[GroupeAdmin] insert response:', { data, error });
@@ -107,9 +124,10 @@ const GroupeAdmin = () => {
         toast({ title: 'Groupe créé' });
       }
 
-  setEditing(null);
-  setCategory('');
-  setSousCategory('');
+      setEditing(null);
+      setCategory('');
+      setSousCategory('');
+      setGroupeSchedule('');
       fetchGroupes();
     } catch (err) {
       console.error('Erreur sauvegarde groupe:', err);
@@ -138,6 +156,60 @@ const GroupeAdmin = () => {
       toast({ title: 'Erreur', description: 'Impossible de supprimer le groupe.', variant: 'destructive' });
     }
   };
+
+  // Fonctions de tri
+  const handleSort = (key) => {
+    let direction = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const getSortIcon = (columnKey) => {
+    if (sortConfig.key !== columnKey) {
+      return <ArrowUpDown className="w-4 h-4 ml-1 opacity-30" />;
+    }
+    return sortConfig.direction === 'asc'
+      ? <ArrowUp className="w-4 h-4 ml-1" />
+      : <ArrowDown className="w-4 h-4 ml-1" />;
+  };
+
+  // Filtrage et tri
+  const getFilteredAndSortedGroupes = () => {
+    let filtered = groupes.filter(g => {
+      const categoryMatch = !categoryFilter ||
+        (g.category && g.category.toLowerCase().includes(categoryFilter.toLowerCase()));
+      const sousCategoryMatch = !sousCategoryFilter ||
+        (g.sous_category && g.sous_category.toLowerCase().includes(sousCategoryFilter.toLowerCase()));
+      const scheduleMatch = !scheduleFilter ||
+        (g.Groupe_schedule && g.Groupe_schedule.toLowerCase().includes(scheduleFilter.toLowerCase()));
+
+      return categoryMatch && sousCategoryMatch && scheduleMatch;
+    });
+
+    if (!sortConfig.key) return filtered;
+
+    return [...filtered].sort((a, b) => {
+      let aValue = a[sortConfig.key] || '';
+      let bValue = b[sortConfig.key] || '';
+
+      if (sortConfig.key === 'id') {
+        aValue = Number(aValue);
+        bValue = Number(bValue);
+      }
+
+      if (aValue < bValue) {
+        return sortConfig.direction === 'asc' ? -1 : 1;
+      }
+      if (aValue > bValue) {
+        return sortConfig.direction === 'asc' ? 1 : -1;
+      }
+      return 0;
+    });
+  };
+
+  const filteredGroupes = getFilteredAndSortedGroupes();
 
   if (authLoading || loading) {
     return (
@@ -171,30 +243,115 @@ const GroupeAdmin = () => {
         </div>
       </motion.div>
 
+      {/* Filtres */}
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.1 }}>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Filter className="w-5 h-5" />
+              Filtres
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid md:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="categoryFilter">Catégorie</Label>
+                <Input
+                  id="categoryFilter"
+                  placeholder="Filtrer par catégorie..."
+                  value={categoryFilter}
+                  onChange={(e) => setCategoryFilter(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="sousCategoryFilter">Sous-catégorie</Label>
+                <Input
+                  id="sousCategoryFilter"
+                  placeholder="Filtrer par sous-catégorie..."
+                  value={sousCategoryFilter}
+                  onChange={(e) => setSousCategoryFilter(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="scheduleFilter">Groupe Schedule</Label>
+                <Input
+                  id="scheduleFilter"
+                  placeholder="Filtrer par schedule..."
+                  value={scheduleFilter}
+                  onChange={(e) => setScheduleFilter(e.target.value)}
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+
       <Card>
         <CardHeader>
-          <CardTitle>Liste des groupes ({groupes.length})</CardTitle>
+          <CardTitle>Liste des groupes ({filteredGroupes.length} / {groupes.length})</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>ID</TableHead>
-                  <TableHead>Description</TableHead>
+                  <TableHead>
+                    <Button
+                      variant="ghost"
+                      onClick={() => handleSort('id')}
+                      className="flex items-center hover:bg-transparent p-0 h-auto font-semibold"
+                    >
+                      ID
+                      {getSortIcon('id')}
+                    </Button>
+                  </TableHead>
+                  <TableHead>
+                    <Button
+                      variant="ghost"
+                      onClick={() => handleSort('category')}
+                      className="flex items-center hover:bg-transparent p-0 h-auto font-semibold"
+                    >
+                      Catégorie
+                      {getSortIcon('category')}
+                    </Button>
+                  </TableHead>
+                  <TableHead>
+                    <Button
+                      variant="ghost"
+                      onClick={() => handleSort('sous_category')}
+                      className="flex items-center hover:bg-transparent p-0 h-auto font-semibold"
+                    >
+                      Sous-catégorie
+                      {getSortIcon('sous_category')}
+                    </Button>
+                  </TableHead>
+                  <TableHead>
+                    <Button
+                      variant="ghost"
+                      onClick={() => handleSort('Groupe_schedule')}
+                      className="flex items-center hover:bg-transparent p-0 h-auto font-semibold"
+                    >
+                      Groupe Schedule
+                      {getSortIcon('Groupe_schedule')}
+                    </Button>
+                  </TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                  {groupes.length === 0 ? (
+                  {filteredGroupes.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={3} className="text-center py-8 text-muted-foreground">Aucun groupe</TableCell>
+                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                      {groupes.length === 0 ? 'Aucun groupe' : 'Aucun groupe ne correspond aux filtres'}
+                    </TableCell>
                   </TableRow>
                 ) : (
-                  groupes.map((g) => (
+                  filteredGroupes.map((g) => (
                     <TableRow key={g.id}>
                       <TableCell className="font-mono text-sm">{g.id}</TableCell>
-                      <TableCell>{g.category}{g.sous_category ? ` — ${g.sous_category}` : ''}</TableCell>
+                      <TableCell className="font-medium">{g.category || '-'}</TableCell>
+                      <TableCell>{g.sous_category || '-'}</TableCell>
+                      <TableCell>{g.Groupe_schedule || '-'}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           <Button variant="outline" size="sm" onClick={() => handleEdit(g)}>
@@ -224,16 +381,29 @@ const GroupeAdmin = () => {
               <form onSubmit={handleSave} className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label>Catégorie</Label>
-                    <Input value={category} onChange={(e) => setCategory(e.target.value)} />
+                    <Label>Catégorie <span className="text-red-500">*</span></Label>
+                    <Input value={category} onChange={(e) => setCategory(e.target.value)} required />
                   </div>
                   <div>
                     <Label>Sous-catégorie</Label>
                     <Input value={sousCategory} onChange={(e) => setSousCategory(e.target.value)} />
                   </div>
                 </div>
+                <div>
+                  <Label>Groupe Schedule</Label>
+                  <Input
+                    value={groupeSchedule}
+                    onChange={(e) => setGroupeSchedule(e.target.value)}
+                    placeholder="Nom du groupe pour le planning"
+                  />
+                </div>
                 <div className="flex gap-2 justify-end">
-                  <Button variant="ghost" onClick={() => { setEditing(null); setDescription(''); }}>Annuler</Button>
+                  <Button type="button" variant="ghost" onClick={() => {
+                    setEditing(null);
+                    setCategory('');
+                    setSousCategory('');
+                    setGroupeSchedule('');
+                  }}>Annuler</Button>
                   <Button type="submit" disabled={saving}>
                     <Save className="w-4 h-4 mr-2" />
                     {saving ? 'Enregistrement...' : 'Enregistrer'}
