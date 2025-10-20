@@ -174,6 +174,8 @@ const SessionForm = ({ session, onSave, onCancel, isSaving }) => {
   const [filterInstructorsBySchedule, setFilterInstructorsBySchedule] = useState(false);
   const [scheduleSearchTerm, setScheduleSearchTerm] = useState('');
   const [instructorSearchTerm, setInstructorSearchTerm] = useState('');
+  const [selectedStudentForComment, setSelectedStudentForComment] = useState('');
+  const [currentComment, setCurrentComment] = useState('');
   const previousScheduleIdRef = React.useRef(null);
 
   // Fetch all necessary data from Supabase
@@ -268,6 +270,7 @@ const SessionForm = ({ session, onSave, onCancel, isSaving }) => {
       equipment: session.equipment || '',
       comment: session.comment || '',
       exercises: session.exercises || [],
+      studentComments: session.studentComments || {},
     } : {
       date: '',
       start_time: '18:30',
@@ -280,6 +283,7 @@ const SessionForm = ({ session, onSave, onCancel, isSaving }) => {
       equipment: '',
       comment: '',
       exercises: [],
+      studentComments: {},
     };
   });
 
@@ -465,6 +469,46 @@ const SessionForm = ({ session, onSave, onCancel, isSaving }) => {
 
   const handleMultiSelectChange = (name, value) => {
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  // Gestion des commentaires élèves
+  const handleAddOrUpdateComment = () => {
+    if (!selectedStudentForComment || !currentComment.trim()) return;
+
+    // Trouver l'ID de l'élève à partir de son nom
+    const studentMember = allMembers.find(m => `${m.first_name} ${m.last_name}` === selectedStudentForComment);
+    if (!studentMember) return;
+
+    setFormData(prev => ({
+      ...prev,
+      studentComments: {
+        ...prev.studentComments,
+        [studentMember.id]: currentComment.trim()
+      }
+    }));
+
+    // Réinitialiser
+    setSelectedStudentForComment('');
+    setCurrentComment('');
+  };
+
+  const handleEditComment = (studentName) => {
+    const studentMember = allMembers.find(m => `${m.first_name} ${m.last_name}` === studentName);
+    if (!studentMember) return;
+
+    setSelectedStudentForComment(studentName);
+    setCurrentComment(formData.studentComments[studentMember.id] || '');
+  };
+
+  const handleDeleteComment = (studentName) => {
+    const studentMember = allMembers.find(m => `${m.first_name} ${m.last_name}` === studentName);
+    if (!studentMember) return;
+
+    const { [studentMember.id]: _, ...rest } = formData.studentComments;
+    setFormData(prev => ({
+      ...prev,
+      studentComments: rest
+    }));
   };
 
   const handleExerciseChange = (index, updatedExercise) => {
@@ -715,6 +759,97 @@ const SessionForm = ({ session, onSave, onCancel, isSaving }) => {
                     )}
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">Cette liste est calculée automatiquement (tous les lycéens moins les présents).</p>
+                </div>
+
+                {/* Commentaires élèves */}
+                <div className="mt-6">
+                  <Label className="text-base font-semibold">Commentaires élèves</Label>
+                  <div className="mt-3 space-y-3 rounded-md border p-4 bg-muted/30">
+                    <div className="space-y-2">
+                      <Label htmlFor="student-comment-select">Élève présent</Label>
+                      <Select
+                        value={selectedStudentForComment}
+                        onValueChange={setSelectedStudentForComment}
+                      >
+                        <SelectTrigger id="student-comment-select">
+                          <SelectValue placeholder="Sélectionner un élève présent..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {formData.students.map((studentName, idx) => (
+                            <SelectItem key={`comment-student-${idx}`} value={studentName}>
+                              {studentName}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="student-comment-text">Commentaire</Label>
+                      <Textarea
+                        id="student-comment-text"
+                        placeholder="Entrer un commentaire pour cet élève..."
+                        value={currentComment}
+                        onChange={(e) => setCurrentComment(e.target.value)}
+                        rows={3}
+                      />
+                    </div>
+
+                    <Button
+                      type="button"
+                      onClick={handleAddOrUpdateComment}
+                      disabled={!selectedStudentForComment || !currentComment.trim()}
+                      className="w-full"
+                    >
+                      {selectedStudentForComment && formData.studentComments[allMembers.find(m => `${m.first_name} ${m.last_name}` === selectedStudentForComment)?.id]
+                        ? 'Modifier le commentaire'
+                        : 'Ajouter le commentaire'}
+                    </Button>
+
+                    {/* Liste des commentaires existants */}
+                    {Object.keys(formData.studentComments).length > 0 && (
+                      <div className="mt-4 pt-4 border-t space-y-2">
+                        <Label className="text-sm font-medium">Commentaires enregistrés ({Object.keys(formData.studentComments).length})</Label>
+                        <div className="space-y-2 max-h-60 overflow-y-auto">
+                          {Object.entries(formData.studentComments).map(([memberId, comment]) => {
+                            const member = allMembers.find(m => m.id === memberId);
+                            const studentName = member ? `${member.first_name} ${member.last_name}` : 'Inconnu';
+
+                            return (
+                              <div key={`comment-${memberId}`} className="flex items-start gap-2 p-3 rounded-md bg-background border">
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium">{studentName}</p>
+                                  <p className="text-sm text-muted-foreground mt-1 break-words">{comment}</p>
+                                </div>
+                                <div className="flex gap-1 flex-shrink-0">
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleEditComment(studentName)}
+                                    className="h-8 w-8 p-0"
+                                  >
+                                    <span className="sr-only">Modifier</span>
+                                    ✏️
+                                  </Button>
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleDeleteComment(studentName)}
+                                    className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                                  >
+                                    <span className="sr-only">Supprimer</span>
+                                    🗑️
+                                  </Button>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
