@@ -27,6 +27,7 @@ const MemberGroupTest = () => {
   // Filtres
   const [titleFilter, setTitleFilter] = useState('');
   const [subGroupFilter, setSubGroupFilter] = useState('');
+  const [showWithoutGroup, setShowWithoutGroup] = useState(false);
 
   // Sélection
   const [selectedMembers, setSelectedMembers] = useState(new Set());
@@ -47,7 +48,7 @@ const MemberGroupTest = () => {
     setLoading(true);
     try {
       const { data, error } = await supabase
-        .from('secure_members')
+        .from('members')
         .select('id, first_name, last_name, title, sub_group, groupe_id')
         .order('last_name')
         .order('first_name');
@@ -75,24 +76,64 @@ const MemberGroupTest = () => {
         .order('sous_category');
 
       if (error) throw error;
+
+      console.log(`${(data || []).length} groupes chargés:`, data);
       setGroupes(data || []);
     } catch (error) {
       console.error('Erreur lors du chargement des groupes:', error);
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de charger les groupes.',
+        variant: 'destructive',
+      });
     }
+  };
+
+  // Récupérer les valeurs uniques pour les filtres
+  const getUniqueTitles = () => {
+    const titles = members
+      .map(m => m.title)
+      .filter(Boolean)
+      .filter((value, index, self) => self.indexOf(value) === index);
+    return titles.sort();
+  };
+
+  const getUniqueSubGroups = () => {
+    const filteredByTitle = titleFilter
+      ? members.filter(m => m.title === titleFilter)
+      : members;
+
+    const subGroups = filteredByTitle
+      .map(m => m.sub_group)
+      .filter(Boolean)
+      .filter((value, index, self) => self.indexOf(value) === index);
+    return subGroups.sort();
   };
 
   const getFilteredMembers = () => {
     return members.filter(member => {
-      const titleMatch = !titleFilter ||
-        (member.title && member.title.toLowerCase().includes(titleFilter.toLowerCase()));
-      const subGroupMatch = !subGroupFilter ||
-        (member.sub_group && member.sub_group.toLowerCase().includes(subGroupFilter.toLowerCase()));
+      const titleMatch = !titleFilter || member.title === titleFilter;
+      const subGroupMatch = !subGroupFilter || member.sub_group === subGroupFilter;
+      const groupMatch = !showWithoutGroup || !member.groupe_id;
 
-      return titleMatch && subGroupMatch;
+      return titleMatch && subGroupMatch && groupMatch;
     });
   };
 
   const filteredMembers = getFilteredMembers();
+  const uniqueTitles = getUniqueTitles();
+  const uniqueSubGroups = getUniqueSubGroups();
+
+  const handleTitleChange = (value) => {
+    setTitleFilter(value);
+    // Réinitialiser sub_group si le nouveau filtre title ne contient pas le sub_group actuel
+    if (value && subGroupFilter) {
+      const hasSubGroup = members.some(m => m.title === value && m.sub_group === subGroupFilter);
+      if (!hasSubGroup) {
+        setSubGroupFilter('');
+      }
+    }
+  };
 
   const handleSelectAll = () => {
     const allVisible = filteredMembers.map(m => m.id);
@@ -236,22 +277,56 @@ const MemberGroupTest = () => {
             <div className="grid md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="titleFilter">Titre</Label>
-                <Input
-                  id="titleFilter"
-                  placeholder="Filtrer par titre..."
+                <Select
                   value={titleFilter}
-                  onChange={(e) => setTitleFilter(e.target.value)}
-                />
+                  onValueChange={handleTitleChange}
+                >
+                  <SelectTrigger id="titleFilter">
+                    <SelectValue placeholder="Tous les titres" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Tous les titres</SelectItem>
+                    {uniqueTitles.map((title) => (
+                      <SelectItem key={title} value={title}>
+                        {title}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="subGroupFilter">Sous-groupe</Label>
-                <Input
-                  id="subGroupFilter"
-                  placeholder="Filtrer par sous-groupe..."
+                <Select
                   value={subGroupFilter}
-                  onChange={(e) => setSubGroupFilter(e.target.value)}
-                />
+                  onValueChange={setSubGroupFilter}
+                  disabled={uniqueSubGroups.length === 0}
+                >
+                  <SelectTrigger id="subGroupFilter">
+                    <SelectValue placeholder="Tous les sous-groupes" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Tous les sous-groupes</SelectItem>
+                    {uniqueSubGroups.map((subGroup) => (
+                      <SelectItem key={subGroup} value={subGroup}>
+                        {subGroup}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
+            </div>
+            <div className="mt-4 flex items-center space-x-2">
+              <Checkbox
+                id="showWithoutGroup"
+                checked={showWithoutGroup}
+                onCheckedChange={setShowWithoutGroup}
+              />
+              <Label
+                htmlFor="showWithoutGroup"
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+              >
+                Afficher uniquement les membres sans groupe
+              </Label>
             </div>
           </CardContent>
         </Card>
@@ -270,7 +345,9 @@ const MemberGroupTest = () => {
           <CardContent>
             <div className="flex flex-wrap gap-4 items-end">
               <div className="flex-1 min-w-[250px] space-y-2">
-                <Label htmlFor="groupeSelect">Groupe à assigner</Label>
+                <Label htmlFor="groupeSelect">
+                  Groupe à assigner {groupes.length > 0 && <span className="text-muted-foreground text-xs">({groupes.length} groupes disponibles)</span>}
+                </Label>
                 <Select
                   value={selectedGroupeId?.toString() || ''}
                   onValueChange={(value) => setSelectedGroupeId(value)}
