@@ -6,11 +6,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
-import { PlusCircle, Save, BookMarked, Search } from 'lucide-react';
+import { PlusCircle, Save, BookMarked, Search, ChevronsUpDown, Check } from 'lucide-react';
 import ExerciseFormItem from './ExerciseFormItem';
 import { supabase } from '@/lib/customSupabaseClient';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command';
+import { cn } from '@/lib/utils';
 
 const SHEET_TYPES = {
   'all': 'Toutes les fiches',
@@ -169,16 +172,18 @@ const SessionForm = ({ session, onSave, onCancel, isSaving }) => {
   const [isSheetSelectorOpen, setIsSheetSelectorOpen] = useState(false);
   const [importTargetIndex, setImportTargetIndex] = useState(null);
   const [filterInstructorsBySchedule, setFilterInstructorsBySchedule] = useState(false);
+  const [scheduleSearchTerm, setScheduleSearchTerm] = useState('');
+  const [instructorSearchTerm, setInstructorSearchTerm] = useState('');
   const previousScheduleIdRef = React.useRef(null);
 
   // Fetch all necessary data from Supabase
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch all members
+        // Fetch all members (use 'members' table to get groupe_id)
         const { data: membersData, error: membersError } = await supabase
-          .from('secure_members')
-          .select('id, first_name, last_name, title')
+          .from('members')
+          .select('id, first_name, last_name, title, groupe_id')
           .order('last_name')
           .order('first_name');
 
@@ -249,14 +254,6 @@ const SessionForm = ({ session, onSave, onCancel, isSaving }) => {
   // This will be computed after formData is initialized
   const instructorsOptions = allMembers.map(m => `${m.first_name} ${m.last_name}`);
 
-  const lyceeStudentsOptions = useMemo(() => {
-    const names = allMembers
-      .filter(member => member.title === 'Loisir lycée')
-      .map(m => `${m.first_name} ${m.last_name}`);
-    // Use Set to remove duplicates
-    return Array.from(new Set(names));
-  }, [allMembers]);
-
   // Initialize formData - instructors/students will be set by useEffect when members are loaded
   const [formData, setFormData] = useState(() => {
     return session ? {
@@ -285,6 +282,54 @@ const SessionForm = ({ session, onSave, onCancel, isSaving }) => {
       exercises: [],
     };
   });
+
+  // État pour stocker le groupe_id du schedule sélectionné
+  const [scheduleGroupeId, setScheduleGroupeId] = useState(null);
+
+  // Charger le groupe_id du schedule sélectionné
+  useEffect(() => {
+    const fetchScheduleGroupe = async () => {
+      if (!formData.schedule_id) {
+        setScheduleGroupeId(null);
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from('schedules')
+          .select('Groupe')
+          .eq('id', formData.schedule_id)
+          .single();
+
+        if (!error && data) {
+          setScheduleGroupeId(data.Groupe);
+        } else {
+          setScheduleGroupeId(null);
+        }
+      } catch (err) {
+        console.error('Erreur lors du chargement du groupe du schedule:', err);
+        setScheduleGroupeId(null);
+      }
+    };
+
+    fetchScheduleGroupe();
+  }, [formData.schedule_id]);
+
+  const lyceeStudentsOptions = useMemo(() => {
+    let filteredMembers = allMembers;
+
+    // Si un schedule est sélectionné et qu'il a un groupe, filtrer par groupe_id
+    if (scheduleGroupeId) {
+      filteredMembers = allMembers.filter(member => member.groupe_id === scheduleGroupeId);
+    } else {
+      // Fallback sur le filtre par 'Loisir lycée' si pas de groupe
+      filteredMembers = allMembers.filter(member => member.title === 'Loisir lycée');
+    }
+
+    const names = filteredMembers.map(m => `${m.first_name} ${m.last_name}`);
+    // Use Set to remove duplicates
+    return Array.from(new Set(names));
+  }, [allMembers, scheduleGroupeId]);
 
   // Populate instructors/students names when members are loaded
   useEffect(() => {
@@ -352,6 +397,29 @@ const SessionForm = ({ session, onSave, onCancel, isSaving }) => {
     const presents = formData.students || [];
     return lyceeStudentsOptions.filter(name => !presents.includes(name));
   }, [lyceeStudentsOptions, formData.students]);
+
+  // Filtrer les schedules selon le terme de recherche
+  const filteredSchedules = useMemo(() => {
+    if (!scheduleSearchTerm.trim()) return schedules;
+
+    const term = scheduleSearchTerm.toLowerCase();
+    return schedules.filter(schedule => {
+      const searchText = `${schedule.type} ${schedule.age_category} ${schedule.day} ${schedule.start_time}`.toLowerCase();
+      return searchText.includes(term);
+    });
+  }, [schedules, scheduleSearchTerm]);
+
+  // Filtrer les encadrants selon le terme de recherche
+  const filteredInstructors = useMemo(() => {
+    const baseOptions = filterInstructorsBySchedule && formData.schedule_id && scheduleInstructors.length > 0
+      ? [...scheduleInstructors, ...(formData.instructors || [])].filter((value, index, self) => self.indexOf(value) === index)
+      : filteredInstructorsOptions;
+
+    if (!instructorSearchTerm.trim()) return baseOptions;
+
+    const term = instructorSearchTerm.toLowerCase();
+    return baseOptions.filter(instructor => instructor.toLowerCase().includes(term));
+  }, [filteredInstructorsOptions, filterInstructorsBySchedule, formData.schedule_id, scheduleInstructors, formData.instructors, instructorSearchTerm]);
 
   // absent_students is derived from the list of lycee members minus the présents.
   // We no longer keep absent_students as an editable form field.
@@ -469,9 +537,12 @@ const SessionForm = ({ session, onSave, onCancel, isSaving }) => {
     const instructorsIds = formData.instructors.map(name => allMembers.find(m => `${m.first_name} ${m.last_name}` === name)?.id).filter(Boolean);
     const studentsIds = formData.students.map(name => allMembers.find(m => `${m.first_name} ${m.last_name}` === name)?.id).filter(Boolean);
 
+    // Exclure les champs calculés et ceux qui ne doivent pas être sauvegardés
+    const { absent_students, ...dataToSave } = formData;
+
     // Convertir les chaînes vides en null pour éviter les erreurs SQL
     const cleanedData = {
-      ...formData,
+      ...dataToSave,
       date: formData.date || null,
       start_time: formData.start_time || null,
       instructors: instructorsIds,
@@ -493,26 +564,39 @@ const SessionForm = ({ session, onSave, onCancel, isSaving }) => {
             {/* Emploi du temps en premier */}
             <div className="space-y-2">
               <Label htmlFor="schedule_id">Emploi du temps associé</Label>
-              <Select
-                value={formData.schedule_id ? formData.schedule_id.toString() : ''}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, schedule_id: value ? value : null }))}
-              >
-                <SelectTrigger id="schedule_id">
-                  <SelectValue placeholder="Sélectionner un emploi du temps (optionnel)" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">Aucun emploi du temps</SelectItem>
-                  {schedules.length === 0 ? (
-                    <SelectItem value="none" disabled>Aucun emploi du temps disponible</SelectItem>
-                  ) : (
-                    schedules.map((schedule) => (
-                      <SelectItem key={schedule.id} value={schedule.id.toString()}>
-                        {schedule.type} / {schedule.age_category} / {schedule.day} / {schedule.start_time}
+              <div className="space-y-2">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Rechercher un emploi du temps..."
+                    className="pl-9"
+                    value={scheduleSearchTerm}
+                    onChange={(e) => setScheduleSearchTerm(e.target.value)}
+                  />
+                </div>
+                <Select
+                  value={formData.schedule_id ? formData.schedule_id.toString() : ''}
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, schedule_id: value ? value : null }))}
+                >
+                  <SelectTrigger id="schedule_id">
+                    <SelectValue placeholder="Sélectionner un emploi du temps (optionnel)" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-[300px]">
+                    <SelectItem value="">Aucun emploi du temps</SelectItem>
+                    {filteredSchedules.length === 0 ? (
+                      <SelectItem value="none" disabled>
+                        {scheduleSearchTerm ? 'Aucun résultat' : 'Aucun emploi du temps disponible'}
                       </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
+                    ) : (
+                      filteredSchedules.map((schedule) => (
+                        <SelectItem key={schedule.id} value={schedule.id.toString()}>
+                          {schedule.type} / {schedule.age_category} / {schedule.day} / {schedule.start_time}
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
               {formData.schedule_id && session?.schedule && (
                 <p className="text-sm text-muted-foreground mt-1">
                   Emploi du temps actuel: {session.schedule.type} / {session.schedule.age_category} / {session.schedule.day} / {session.schedule.start_time}
@@ -525,19 +609,90 @@ const SessionForm = ({ session, onSave, onCancel, isSaving }) => {
                 <Label htmlFor="date">Date du cours (optionnel)</Label>
                 <Input id="date" name="date" type="date" value={formData.date} onChange={handleChange} />
               </div>
+
+              {/* Affichage du jour et de l'heure du schedule sélectionné */}
+              {formData.schedule_id && (() => {
+                const selectedSchedule = schedules.find(s => String(s.id) === String(formData.schedule_id));
+                return selectedSchedule ? (
+                  <div className="space-y-2">
+                    <Label>Jour et heure du créneau</Label>
+                    <div className="flex h-10 w-full rounded-md border border-input bg-muted px-3 py-2 text-sm">
+                      {selectedSchedule.day} à {selectedSchedule.start_time ? selectedSchedule.start_time.substring(0, 5) : ''}
+                    </div>
+                  </div>
+                ) : null;
+              })()}
+
+              {/* Encadrants avec recherche */}
               <div className="space-y-2">
-                <Label htmlFor="start_time">Heure de début</Label>
-                <Input id="start_time" name="start_time" type="time" value={formData.start_time} onChange={handleChange} />
+                <div className="flex justify-between items-center gap-2">
+                  <Label>Encadrants</Label>
+                  <div className="flex items-center gap-2">
+                    {formData.schedule_id && scheduleInstructors.length > 0 && (
+                      <Button
+                        type="button"
+                        variant={filterInstructorsBySchedule ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setFilterInstructorsBySchedule(!filterInstructorsBySchedule)}
+                        className="text-xs h-7 px-2"
+                      >
+                        {filterInstructorsBySchedule ? 'Tous' : 'Filtrer pour ce cours'}
+                      </Button>
+                    )}
+                    <Button
+                      type="button"
+                      variant="link"
+                      size="sm"
+                      onClick={() => {
+                        if (formData.instructors.length === filteredInstructors.length) {
+                          handleMultiSelectChange('instructors', []);
+                        } else {
+                          handleMultiSelectChange('instructors', filteredInstructors);
+                        }
+                      }}
+                      className="p-0 h-auto text-xs"
+                    >
+                      {formData.instructors.length === filteredInstructors.length ? 'Désél.' : 'Tout'}
+                    </Button>
+                  </div>
+                </div>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Rechercher un encadrant..."
+                    className="pl-9"
+                    value={instructorSearchTerm}
+                    onChange={(e) => setInstructorSearchTerm(e.target.value)}
+                  />
+                </div>
+                <div className="max-h-40 overflow-y-auto rounded-md border p-2 space-y-2">
+                  {filteredInstructors.map((instructor, index) => (
+                    <div key={`instructor-${instructor}-${index}`} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`instructor-${instructor}-${index}`}
+                        checked={formData.instructors.includes(instructor)}
+                        onCheckedChange={(checked) => {
+                          const newSelected = checked
+                            ? [...formData.instructors, instructor]
+                            : formData.instructors.filter(item => item !== instructor);
+                          handleMultiSelectChange('instructors', newSelected);
+                        }}
+                      />
+                      <label
+                        htmlFor={`instructor-${instructor}-${index}`}
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                      >
+                        {instructor}
+                      </label>
+                    </div>
+                  ))}
+                  {filteredInstructors.length === 0 && (
+                    <p className="text-sm text-muted-foreground text-center py-2">
+                      {instructorSearchTerm ? 'Aucun encadrant trouvé' : 'Aucun encadrant disponible'}
+                    </p>
+                  )}
+                </div>
               </div>
-              <MultiSelectCheckbox
-                title="Encadrants"
-                options={filteredInstructorsOptions}
-                selected={formData.instructors}
-                onChange={(value) => handleMultiSelectChange('instructors', value)}
-                onToggleFilter={() => setFilterInstructorsBySchedule(!filterInstructorsBySchedule)}
-                isFiltered={filterInstructorsBySchedule}
-                canFilter={formData.schedule_id && scheduleInstructors.length > 0}
-              />
 
               {/* Regroup Présents et Absents dans une seule colonne pour garantir que "Absents" apparaisse dessous */}
               <div className="space-y-4 md:col-span-1 lg:col-span-1">

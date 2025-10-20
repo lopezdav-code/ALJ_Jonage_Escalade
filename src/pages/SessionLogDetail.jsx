@@ -135,24 +135,47 @@ const SessionLogDetail = () => {
           }, {});
         }
 
-        // Récupérer tous les membres 'Loisir lycée' depuis la table `members`
+        // Récupérer les membres du groupe associé au schedule de la session
         let lyceeMembers = [];
         try {
-          const { data: lyceeData, error: lyceeError } = await supabase
+          // Récupérer d'abord le groupe_id du schedule
+          let groupeId = null;
+          if (sessionData.schedule_id) {
+            const { data: scheduleData, error: scheduleError } = await supabase
+              .from('schedules')
+              .select('Groupe')
+              .eq('id', sessionData.schedule_id)
+              .single();
+
+            if (!scheduleError && scheduleData) {
+              groupeId = scheduleData.Groupe;
+            }
+          }
+
+          // Récupérer les membres filtrés par groupe_id
+          let query = supabase
             .from('members')
-            .select('id, first_name, last_name')
-            .eq('title', 'Loisir lycée')
+            .select('id, first_name, last_name, groupe_id')
             .order('last_name')
             .order('first_name');
 
+          if (groupeId) {
+            query = query.eq('groupe_id', groupeId);
+          } else {
+            // Fallback sur 'Loisir lycée' si pas de groupe
+            query = query.eq('title', 'Loisir lycée');
+          }
+
+          const { data: lyceeData, error: lyceeError } = await query;
+
           if (lyceeError) {
             // Ne pas bloquer la page si l'appel échoue, on logge seulement
-            console.warn('Erreur en récupérant les membres lycéens:', lyceeError);
+            console.warn('Erreur en récupérant les membres:', lyceeError);
           } else {
             lyceeMembers = lyceeData || [];
           }
         } catch (err) {
-          console.warn('Exception en récupérant les membres lycéens:', err);
+          console.warn('Exception en récupérant les membres:', err);
         }
 
         const lyceeMap = (lyceeMembers || []).reduce((acc, member) => {
