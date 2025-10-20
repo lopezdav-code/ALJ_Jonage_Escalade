@@ -23,6 +23,8 @@ const Schedule = () => {
   const [showInstructors, setShowInstructors] = useState(false);
   const [scheduleData, setScheduleData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [ageInput, setAgeInput] = useState('');
+  const [ageResult, setAgeResult] = useState('');
 
   // Charger les données du planning depuis la BDD
   useEffect(() => {
@@ -345,13 +347,117 @@ const Schedule = () => {
               <CardTitle>Composition des catégories d'âge</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-2">
-                {ageCategories.map((cat, index) => (
-                  <div key={index} className="flex justify-between items-center">
-                    <Badge variant="outline">{cat.category}</Badge>
-                    <span className="text-sm text-muted-foreground">{cat.school}</span>
-                  </div>
-                ))}
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm text-left">
+                  <thead>
+                    <tr>
+                      <th className="px-3 py-2 font-semibold">CATEGORIE</th>
+                      <th className="px-3 py-2 font-semibold">AGE EN 2026</th>
+                      <th className="px-3 py-2 font-semibold">ANNEES DE NAISSANCE</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr className="border-t">
+                      <td className="px-3 py-2 font-medium">U11</td>
+                      <td className="px-3 py-2">9 &amp; 10</td>
+                      <td className="px-3 py-2">2017 &amp; 2016</td>
+                    </tr>
+                    <tr className="border-t">
+                      <td className="px-3 py-2 font-medium">U13</td>
+                      <td className="px-3 py-2">11 &amp; 12</td>
+                      <td className="px-3 py-2">2015 &amp; 2014</td>
+                    </tr>
+                    <tr className="border-t">
+                      <td className="px-3 py-2 font-medium">U15</td>
+                      <td className="px-3 py-2">13 &amp; 14</td>
+                      <td className="px-3 py-2">2013 &amp; 2012</td>
+                    </tr>
+                    <tr className="border-t">
+                      <td className="px-3 py-2 font-medium">U17</td>
+                      <td className="px-3 py-2">15 &amp; 16</td>
+                      <td className="px-3 py-2">2011 &amp; 2010</td>
+                    </tr>
+                    <tr className="border-t">
+                      <td className="px-3 py-2 font-medium">U19</td>
+                      <td className="px-3 py-2">17 &amp; 18</td>
+                      <td className="px-3 py-2">2009 &amp; 2008</td>
+                    </tr>
+                    <tr className="border-t">
+                      <td className="px-3 py-2 font-medium">SENIOR</td>
+                      <td className="px-3 py-2">19 à 39</td>
+                      <td className="px-3 py-2">2007 à 1987</td>
+                    </tr>
+                    <tr className="border-t">
+                      <td className="px-3 py-2 font-medium">VETERAN 1</td>
+                      <td className="px-3 py-2">40 à 49</td>
+                      <td className="px-3 py-2">1986 à 1977</td>
+                    </tr>
+                    <tr className="border-t">
+                      <td className="px-3 py-2 font-medium">VETERAN 2</td>
+                      <td className="px-3 py-2">50 &amp; plus</td>
+                      <td className="px-3 py-2">1976 &amp; avant</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div className="mt-4">
+                <Card>
+                  <CardContent>
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="number"
+                          min="0"
+                          placeholder="Entrez l'âge en 2026 ou année de naissance (ex: 2016)"
+                          value={ageInput}
+                          onChange={(e) => setAgeInput(e.target.value)}
+                          className="border rounded px-3 py-2 w-72"
+                        />
+                        <Button onClick={() => {
+                          const raw = ageInput && String(ageInput).trim();
+                          const n = parseInt(raw, 10);
+                          if (Number.isNaN(n)) {
+                            setAgeResult('Veuillez entrer un âge ou une année de naissance valide');
+                            return;
+                          }
+
+                          // Détecter si l'utilisateur a entré une année de naissance (ex: 2016)
+                          let age;
+                          let note = '';
+                          if (n >= 1900 && n <= 2026) {
+                            age = 2026 - n;
+                            note = ` (année ${n} → âge ${age} en 2026)`;
+                          } else if (n >= 0 && n <= 120) {
+                            age = n;
+                          } else {
+                            setAgeResult('Valeur hors plage. Entrez un âge plausible ou une année (>=1900).');
+                            return;
+                          }
+
+                          let cat = '';
+                          if (age === 9 || age === 10) cat = 'U11';
+                          else if (age === 11 || age === 12) cat = 'U13';
+                          else if (age === 13 || age === 14) cat = 'U15';
+                          else if (age === 15 || age === 16) cat = 'U17';
+                          else if (age === 17 || age === 18) cat = 'U19';
+                          else if (age >= 19 && age <= 39) cat = 'SENIOR';
+                          else if (age >= 40 && age <= 49) cat = 'VETERAN 1';
+                          else if (age >= 50) cat = 'VETERAN 2';
+                          else cat = 'Aucun (trop jeune)';
+
+                          setAgeResult(`${cat}${note}`);
+                        }}>
+                          Calculer
+                        </Button>
+                      </div>
+
+                      <div>
+                        <div className="text-sm text-muted-foreground">Résultat :</div>
+                        <div className="mt-2 font-semibold" id="age-sim-result">{ageResult}</div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
             </CardContent>
           </Card>
@@ -405,6 +511,8 @@ const Schedule = () => {
           </CardContent>
         </Card>
       </motion.div>
+      
+      
     </div>
   );
 };
