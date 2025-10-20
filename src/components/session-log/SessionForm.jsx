@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
-import { PlusCircle, Save, BookMarked, Search, ChevronsUpDown, Check } from 'lucide-react';
+import { PlusCircle, Save, BookMarked, Search, ChevronsUpDown, Check, MessageSquare } from 'lucide-react';
 import ExerciseFormItem from './ExerciseFormItem';
 import { supabase } from '@/lib/customSupabaseClient';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
@@ -166,6 +167,7 @@ const PedagogySheetSelector = ({ onSelect, onCancel }) => {
 };
 
 const SessionForm = ({ session, onSave, onCancel, isSaving }) => {
+  const navigate = useNavigate();
   const [allMembers, setAllMembers] = useState([]);
   const [cycles, setCycles] = useState([]);
   const [schedules, setSchedules] = useState([]); // New state for schedules
@@ -174,18 +176,16 @@ const SessionForm = ({ session, onSave, onCancel, isSaving }) => {
   const [filterInstructorsBySchedule, setFilterInstructorsBySchedule] = useState(false);
   const [scheduleSearchTerm, setScheduleSearchTerm] = useState('');
   const [instructorSearchTerm, setInstructorSearchTerm] = useState('');
-  const [selectedStudentForComment, setSelectedStudentForComment] = useState('');
-  const [currentComment, setCurrentComment] = useState('');
   const previousScheduleIdRef = React.useRef(null);
 
   // Fetch all necessary data from Supabase
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch all members (use 'members' table to get groupe_id)
+        // Fetch all members (use 'members' table to get groupe_id, sexe, category)
         const { data: membersData, error: membersError } = await supabase
           .from('members')
-          .select('id, first_name, last_name, title, groupe_id')
+          .select('id, first_name, last_name, title, groupe_id, sexe, category')
           .order('last_name')
           .order('first_name');
 
@@ -243,11 +243,15 @@ const SessionForm = ({ session, onSave, onCancel, isSaving }) => {
 
   const membersMap = useMemo(() => {
     return allMembers.reduce((acc, member) => {
+      const sex = member.sexe ? `(${member.sexe})` : '';
+      const category = member.category ? `[${member.category}]` : '';
       acc[member.id] = {
-        fullName: `${member.first_name} ${member.last_name}`,
+        fullName: `${member.first_name} ${member.last_name} ${sex} ${category}`.trim(),
         firstName: member.first_name,
         lastName: member.last_name,
-        title: member.title
+        title: member.title,
+        sex: member.sexe,
+        category: member.category
       };
       return acc;
     }, {});
@@ -330,7 +334,11 @@ const SessionForm = ({ session, onSave, onCancel, isSaving }) => {
       filteredMembers = allMembers.filter(member => member.title === 'Loisir lycée');
     }
 
-    const names = filteredMembers.map(m => `${m.first_name} ${m.last_name}`);
+    const names = filteredMembers.map(m => {
+      const sex = m.sexe ? `(${m.sexe})` : '';
+      const category = m.category ? `[${m.category}]` : '';
+      return `${m.first_name} ${m.last_name} ${sex} ${category}`.trim();
+    });
     // Use Set to remove duplicates
     return Array.from(new Set(names));
   }, [allMembers, scheduleGroupeId]);
@@ -348,14 +356,20 @@ const SessionForm = ({ session, onSave, onCancel, isSaving }) => {
       const studentNames = (session.students || [])
         .map(id => {
           const member = allMembers.find(m => m.id === id);
-          return member ? `${member.first_name} ${member.last_name}` : null;
+          if (!member) return null;
+          const sex = member.sexe ? `(${member.sexe})` : '';
+          const category = member.category ? `[${member.category}]` : '';
+          return `${member.first_name} ${member.last_name} ${sex} ${category}`.trim();
         })
         .filter(Boolean);
 
       const absentNames = (session.absent_students || [])
         .map(id => {
           const member = allMembers.find(m => m.id === id);
-          return member ? `${member.first_name} ${member.last_name}` : null;
+          if (!member) return null;
+          const sex = member.sexe ? `(${member.sexe})` : '';
+          const category = member.category ? `[${member.category}]` : '';
+          return `${member.first_name} ${member.last_name} ${sex} ${category}`.trim();
         })
         .filter(Boolean);
       setFormData(prev => ({
@@ -471,46 +485,6 @@ const SessionForm = ({ session, onSave, onCancel, isSaving }) => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  // Gestion des commentaires élèves
-  const handleAddOrUpdateComment = () => {
-    if (!selectedStudentForComment || !currentComment.trim()) return;
-
-    // Trouver l'ID de l'élève à partir de son nom
-    const studentMember = allMembers.find(m => `${m.first_name} ${m.last_name}` === selectedStudentForComment);
-    if (!studentMember) return;
-
-    setFormData(prev => ({
-      ...prev,
-      studentComments: {
-        ...prev.studentComments,
-        [studentMember.id]: currentComment.trim()
-      }
-    }));
-
-    // Réinitialiser
-    setSelectedStudentForComment('');
-    setCurrentComment('');
-  };
-
-  const handleEditComment = (studentName) => {
-    const studentMember = allMembers.find(m => `${m.first_name} ${m.last_name}` === studentName);
-    if (!studentMember) return;
-
-    setSelectedStudentForComment(studentName);
-    setCurrentComment(formData.studentComments[studentMember.id] || '');
-  };
-
-  const handleDeleteComment = (studentName) => {
-    const studentMember = allMembers.find(m => `${m.first_name} ${m.last_name}` === studentName);
-    if (!studentMember) return;
-
-    const { [studentMember.id]: _, ...rest } = formData.studentComments;
-    setFormData(prev => ({
-      ...prev,
-      studentComments: rest
-    }));
-  };
-
   const handleExerciseChange = (index, updatedExercise) => {
     const newExercises = [...formData.exercises];
     newExercises[index] = updatedExercise;
@@ -578,8 +552,25 @@ const SessionForm = ({ session, onSave, onCancel, isSaving }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     // Convertir les noms complets des encadrants/élèves en leurs IDs respectifs
-    const instructorsIds = formData.instructors.map(name => allMembers.find(m => `${m.first_name} ${m.last_name}` === name)?.id).filter(Boolean);
-    const studentsIds = formData.students.map(name => allMembers.find(m => `${m.first_name} ${m.last_name}` === name)?.id).filter(Boolean);
+    // Les noms peuvent contenir (M/F) et [Category], donc on les extrait d'abord
+    const extractName = (fullName) => {
+      // Extraire juste "FirstName LastName" en retirant (M/F) et [Category]
+      return fullName.split('(')[0].trim();
+    };
+
+    const instructorsIds = formData.instructors
+      .map(name => {
+        const cleanName = extractName(name);
+        return allMembers.find(m => `${m.first_name} ${m.last_name}` === cleanName)?.id;
+      })
+      .filter(Boolean);
+
+    const studentsIds = formData.students
+      .map(name => {
+        const cleanName = extractName(name);
+        return allMembers.find(m => `${m.first_name} ${m.last_name}` === cleanName)?.id;
+      })
+      .filter(Boolean);
 
     // Exclure les champs calculés et ceux qui ne doivent pas être sauvegardés
     const { absent_students, ...dataToSave } = formData;
@@ -763,93 +754,26 @@ const SessionForm = ({ session, onSave, onCancel, isSaving }) => {
 
                 {/* Commentaires élèves */}
                 <div className="mt-6">
-                  <Label className="text-base font-semibold">Commentaires élèves</Label>
-                  <div className="mt-3 space-y-3 rounded-md border p-4 bg-muted/30">
-                    <div className="space-y-2">
-                      <Label htmlFor="student-comment-select">Élève présent</Label>
-                      <Select
-                        value={selectedStudentForComment}
-                        onValueChange={setSelectedStudentForComment}
-                      >
-                        <SelectTrigger id="student-comment-select">
-                          <SelectValue placeholder="Sélectionner un élève présent..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {formData.students.map((studentName, idx) => (
-                            <SelectItem key={`comment-student-${idx}`} value={studentName}>
-                              {studentName}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="student-comment-text">Commentaire</Label>
-                      <Textarea
-                        id="student-comment-text"
-                        placeholder="Entrer un commentaire pour cet élève..."
-                        value={currentComment}
-                        onChange={(e) => setCurrentComment(e.target.value)}
-                        rows={3}
-                      />
-                    </div>
-
-                    <Button
-                      type="button"
-                      onClick={handleAddOrUpdateComment}
-                      disabled={!selectedStudentForComment || !currentComment.trim()}
-                      className="w-full"
-                    >
-                      {selectedStudentForComment && formData.studentComments[allMembers.find(m => `${m.first_name} ${m.last_name}` === selectedStudentForComment)?.id]
-                        ? 'Modifier le commentaire'
-                        : 'Ajouter le commentaire'}
-                    </Button>
-
-                    {/* Liste des commentaires existants */}
-                    {Object.keys(formData.studentComments).length > 0 && (
-                      <div className="mt-4 pt-4 border-t space-y-2">
-                        <Label className="text-sm font-medium">Commentaires enregistrés ({Object.keys(formData.studentComments).length})</Label>
-                        <div className="space-y-2 max-h-60 overflow-y-auto">
-                          {Object.entries(formData.studentComments).map(([memberId, comment]) => {
-                            const member = allMembers.find(m => m.id === memberId);
-                            const studentName = member ? `${member.first_name} ${member.last_name}` : 'Inconnu';
-
-                            return (
-                              <div key={`comment-${memberId}`} className="flex items-start gap-2 p-3 rounded-md bg-background border">
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-medium">{studentName}</p>
-                                  <p className="text-sm text-muted-foreground mt-1 break-words">{comment}</p>
-                                </div>
-                                <div className="flex gap-1 flex-shrink-0">
-                                  <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => handleEditComment(studentName)}
-                                    className="h-8 w-8 p-0"
-                                  >
-                                    <span className="sr-only">Modifier</span>
-                                    ✏️
-                                  </Button>
-                                  <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => handleDeleteComment(studentName)}
-                                    className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                                  >
-                                    <span className="sr-only">Supprimer</span>
-                                    🗑️
-                                  </Button>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      if (session?.id) {
+                        navigate(`/session-log/${session.id}/comments`);
+                      } else {
+                        alert('Veuillez d\'abord sauvegarder la séance avant de gérer les commentaires');
+                      }
+                    }}
+                    className="w-full"
+                  >
+                    <MessageSquare className="mr-2 h-4 w-4" />
+                    Gérer les commentaires élèves
+                    {Object.keys(formData.studentComments || {}).length > 0 && (
+                      <span className="ml-2 text-xs bg-primary text-primary-foreground rounded-full px-2 py-0.5">
+                        {Object.keys(formData.studentComments).length}
+                      </span>
                     )}
-                  </div>
+                  </Button>
                 </div>
               </div>
             </div>

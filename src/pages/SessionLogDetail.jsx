@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
 import { Helmet } from '../components/ui/helmet';
-import { ExternalLink, FileText, Calendar, Clock, Users, Target, Package, MessageSquare, ArrowLeft } from 'lucide-react';
+import { ExternalLink, FileText, Calendar, Clock, Users, Target, Package, MessageSquare, ArrowLeft, Edit } from 'lucide-react';
 
 const SessionLogDetail = () => {
   const { id } = useParams(); // Correctly extract 'id' from URL parameters
@@ -75,8 +75,8 @@ const SessionLogDetail = () => {
         let membersMap = {};
         if (allMemberIds.length > 0) {
           const { data: members, error: membersError } = await supabase
-            .from('secure_members')
-            .select('id, first_name, last_name')
+            .from('members')
+            .select('id, first_name, last_name, sexe, category')
             .in('id', allMemberIds);
 
           if (membersError) {
@@ -84,11 +84,15 @@ const SessionLogDetail = () => {
           }
 
           membersMap = (members || []).reduce((acc, member) => {
+            const sex = member.sexe ? `(${member.sexe})` : '';
+            const category = member.category ? `[${member.category}]` : '';
             acc[member.id] = {
               id: member.id,
-              fullName: `${member.first_name} ${member.last_name}`,
+              fullName: `${member.first_name} ${member.last_name} ${sex} ${category}`.trim(),
               firstName: member.first_name,
-              lastName: member.last_name
+              lastName: member.last_name,
+              sex: member.sexe,
+              category: member.category
             };
             return acc;
           }, {});
@@ -140,22 +144,22 @@ const SessionLogDetail = () => {
         try {
           // Récupérer d'abord le groupe_id du schedule
           let groupeId = null;
-          if (sessionData.schedule_id) {
-            const { data: scheduleData, error: scheduleError } = await supabase
+          if (data.schedule_id) {
+            const { data: scheduleDataForGroupe, error: scheduleError } = await supabase
               .from('schedules')
               .select('Groupe')
-              .eq('id', sessionData.schedule_id)
+              .eq('id', data.schedule_id)
               .single();
 
-            if (!scheduleError && scheduleData) {
-              groupeId = scheduleData.Groupe;
+            if (!scheduleError && scheduleDataForGroupe) {
+              groupeId = scheduleDataForGroupe.Groupe;
             }
           }
 
-          // Récupérer les membres filtrés par groupe_id
+          // Récupérer les membres filtrés par groupe_id (avec sexe et category)
           let query = supabase
             .from('members')
-            .select('id, first_name, last_name, groupe_id')
+            .select('id, first_name, last_name, groupe_id, sexe, category')
             .order('last_name')
             .order('first_name');
 
@@ -179,11 +183,15 @@ const SessionLogDetail = () => {
         }
 
         const lyceeMap = (lyceeMembers || []).reduce((acc, member) => {
+          const sex = member.sexe ? `(${member.sexe})` : '';
+          const category = member.category ? `[${member.category}]` : '';
           acc[member.id] = {
             id: member.id,
-            fullName: `${member.first_name} ${member.last_name}`,
+            fullName: `${member.first_name} ${member.last_name} ${sex} ${category}`.trim(),
             firstName: member.first_name,
-            lastName: member.last_name
+            lastName: member.last_name,
+            sex: member.sexe,
+            category: member.category
           };
           return acc;
         }, {});
@@ -194,10 +202,18 @@ const SessionLogDetail = () => {
           schedule: scheduleData,
           instructorNames: (data.instructors || []).map(memberId => membersMap[memberId]?.fullName || `ID: ${memberId}`),
           studentNames: (data.students || []).map(memberId => membersMap[memberId]?.fullName || `ID: ${memberId}`),
-          studentsData: (data.students || []).map(memberId => ({
-            ...(membersMap[memberId] || { id: memberId, fullName: `ID: ${memberId}`, firstName: '', lastName: '' }),
-            comment: studentCommentsMap[memberId] || ''
-          })),
+          studentsData: (data.students || []).map(memberId => {
+            const member = membersMap[memberId];
+            return {
+              id: memberId,
+              first_name: member?.firstName || '',
+              last_name: member?.lastName || '',
+              fullName: member?.fullName || `ID: ${memberId}`,
+              sex: member?.sex || '',
+              category: member?.category || '',
+              comment: studentCommentsMap[memberId] || ''
+            };
+          }),
           // Absent students derived from table `members` (Loisir lycée) minus les présents
           absentNames: (() => {
             const presentIds = new Set(data.students || []);
@@ -370,9 +386,19 @@ const SessionLogDetail = () => {
 
           {/* Élèves présents avec commentaires */}
           <div>
-            <div className="flex items-center gap-2 mb-3">
-              <Users className="w-5 h-5 text-muted-foreground" />
-              <p className="font-semibold">Élèves présents ({session.studentsData?.length || 0})</p>
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Users className="w-5 h-5 text-muted-foreground" />
+                <p className="font-semibold">Élèves présents ({session.studentsData?.length || 0})</p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate(`/session-log/${id}/comments`)}
+              >
+                <MessageSquare className="mr-2 h-4 w-4" />
+                Gérer les commentaires
+              </Button>
             </div>
             {session.studentsData && session.studentsData.length > 0 ? (
               <div className="space-y-3">
