@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, LogIn, LogOut, UserPlus, Settings, ShieldCheck, User, Database, Key } from 'lucide-react';
+import { Menu, X, LogIn, LogOut, UserPlus, Settings, ShieldCheck, User, Database, Key, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
@@ -313,6 +313,7 @@ const Navigation = () => {
                   {isAdmin && (
                     <>
                       <DropdownMenuSeparator />
+                      <DropdownMenuLabel>Administration</DropdownMenuLabel>
                       <DropdownMenuItem onClick={() => navigate('/site-settings')}>
                         <Settings className="mr-2 h-4 w-4" />
                         <span>Réglages du site</span>
@@ -324,6 +325,10 @@ const Navigation = () => {
                       <DropdownMenuItem onClick={() => navigate('/connection-logs')}>
                         <Database className="mr-2 h-4 w-4" />
                         <span>Logs Connexion</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => navigate('/member-group-test')}>
+                        <Users className="mr-2 h-4 w-4" />
+                        <span>Test Groupes Membres</span>
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                     </>
