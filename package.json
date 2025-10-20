@@ -16,7 +16,8 @@
     "server:status": "powershell -ExecutionPolicy Bypass -File scripts/server-manager.ps1 status",
     "server:start": "powershell -ExecutionPolicy Bypass -File scripts/server-manager.ps1 start",
     "server:stop": "powershell -ExecutionPolicy Bypass -File scripts/server-manager.ps1 stop",
-    "server:check": "node -e \"require('http').get('http://localhost:3000/ALJ_Jonage_Escalade/', (res) => console.log('✅ Serveur actif:', res.statusCode)).on('error', () => console.log('❌ Serveur inactif'))\""
+    "server:check": "node -e \"require('http').get('http://localhost:3000/ALJ_Jonage_Escalade/', (res) => console.log('✅ Serveur actif:', res.statusCode)).on('error', () => console.log('❌ Serveur inactif'))\"",
+    "update-schema": "node scripts/update-schema.js"
   },
   "dependencies": {
     "@emailjs/browser": "^4.3.3",
