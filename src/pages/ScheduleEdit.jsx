@@ -48,8 +48,10 @@ const ScheduleEdit = () => {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [members, setMembers] = useState([]);
+  const [groupes, setGroupes] = useState([]);
 
   const [formData, setFormData] = useState({
+    Groupe: null,
     type: '',
     age_category: '',
     day: '',
@@ -68,11 +70,29 @@ const ScheduleEdit = () => {
     }
     if (isAdmin) {
       fetchMembers();
+      fetchGroupes();
       if (id) {
         fetchScheduleItem();
       }
     }
   }, [isAdmin, authLoading, id, navigate]);
+
+  const fetchGroupes = async () => {
+    try {
+      const { data: groupesData, error: groupesError } = await supabase
+        .from('groupe')
+        .select('id, category, sous_category, Groupe_schedule')
+        .order('category')
+        .order('sous_category');
+
+      if (groupesError) throw groupesError;
+
+      console.log(`${(groupesData || []).length} groupes chargés`);
+      setGroupes(groupesData || []);
+    } catch (error) {
+      console.error('Erreur lors du chargement des groupes:', error);
+    }
+  };
 
   const fetchMembers = async () => {
     try {
@@ -106,6 +126,7 @@ const ScheduleEdit = () => {
       if (error) throw error;
 
       setFormData({
+        Groupe: data.Groupe,
         type: data.type || '',
         age_category: data.age_category || '',
         day: data.day || '',
@@ -146,6 +167,7 @@ const ScheduleEdit = () => {
       }
 
       const dataToSave = {
+        Groupe: formData.Groupe || null,
         type: formData.type,
         age_category: formData.age_category,
         day: formData.day,
@@ -243,6 +265,29 @@ const ScheduleEdit = () => {
               <CardTitle>Informations du créneau</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
+              {/* Groupe */}
+              <div className="space-y-2">
+                <Label htmlFor="groupe">Groupe</Label>
+                <Select
+                  value={formData.Groupe?.toString() || ''}
+                  onValueChange={(value) => setFormData({ ...formData, Groupe: value ? parseInt(value) : null })}
+                >
+                  <SelectTrigger id="groupe">
+                    <SelectValue placeholder="Sélectionner un groupe (optionnel)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Aucun groupe</SelectItem>
+                    {groupes.map((groupe) => (
+                      <SelectItem key={groupe.id} value={groupe.id.toString()}>
+                        {groupe.category}
+                        {groupe.sous_category ? ` - ${groupe.sous_category}` : ''}
+                        {groupe.Groupe_schedule ? ` (${groupe.Groupe_schedule})` : ''}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
               {/* Type et Catégorie d'âge */}
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-2">

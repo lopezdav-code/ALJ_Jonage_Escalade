@@ -49,6 +49,7 @@ const MemberEdit = lazy(() => import('@/pages/MemberEdit'));
 const NewsEdit = lazy(() => import('@/pages/news_edit')); // Import NewsEdit
 const AttendanceRecap = lazy(() => import('@/pages/AttendanceRecap'));
 const ScheduleAdmin = lazy(() => import('@/pages/ScheduleAdmin'));
+const ScheduleEdit = lazy(() => import('@/pages/ScheduleEdit'));
 
 import { AuthProvider, useAuth } from '@/contexts/SupabaseAuthContext';
 import { ConfigProvider } from '@/contexts/ConfigContext';
@@ -115,6 +116,8 @@ const AppContent = () => {
           <Route path="/agenda" element={<Agenda />} />
           <Route path="/schedule" element={<Schedule />} />
           <Route path="/schedule/admin" element={<LazyRoute><ScheduleAdmin /></LazyRoute>} />
+          <Route path="/schedule/admin/new" element={<LazyRoute><ScheduleEdit /></LazyRoute>} />
+          <Route path="/schedule/admin/edit/:id" element={<LazyRoute><ScheduleEdit /></LazyRoute>} />
           <Route path="/session-log" element={<LazyRoute><SessionLog /></LazyRoute>} />
           <Route path="/session-log/:id" element={<LazyRoute><SessionLogDetail /></LazyRoute>} /> {/* Route for viewing a specific session log detail */}
           <Route path="/session-log/new" element={<LazyRoute><SessionEdit /></LazyRoute>} />

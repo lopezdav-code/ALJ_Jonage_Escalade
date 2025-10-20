@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, Edit, Trash2, PlusCircle, ArrowLeft, Loader2 } from 'lucide-react';
+import { Calendar, Edit, Trash2, PlusCircle, ArrowLeft, Loader2, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -17,6 +17,7 @@ const ScheduleAdmin = () => {
   const { isAdmin, loading: authLoading } = useAuth();
   const [scheduleItems, setScheduleItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
 
   useEffect(() => {
     if (!authLoading && !isAdmin) {
@@ -35,6 +36,7 @@ const ScheduleAdmin = () => {
         .from('schedules')
         .select(`
           *,
+          groupe:Groupe(id, category, sous_category, Groupe_schedule),
           instructor_1:instructor_1_id(id, first_name, last_name),
           instructor_2:instructor_2_id(id, first_name, last_name),
           instructor_3:instructor_3_id(id, first_name, last_name),
@@ -114,6 +116,85 @@ const ScheduleAdmin = () => {
       .join(', ');
   };
 
+  const formatGroupe = (groupe) => {
+    if (!groupe) return '-';
+
+    let display = groupe.category;
+    if (groupe.sous_category) {
+      display += ` - ${groupe.sous_category}`;
+    }
+    if (groupe.Groupe_schedule) {
+      display += ` (${groupe.Groupe_schedule})`;
+    }
+    return display;
+  };
+
+  const handleSort = (key) => {
+    let direction = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const getSortIcon = (columnKey) => {
+    if (sortConfig.key !== columnKey) {
+      return <ArrowUpDown className="w-4 h-4 ml-1 opacity-30" />;
+    }
+    return sortConfig.direction === 'asc'
+      ? <ArrowUp className="w-4 h-4 ml-1" />
+      : <ArrowDown className="w-4 h-4 ml-1" />;
+  };
+
+  const getSortedItems = () => {
+    if (!sortConfig.key) return scheduleItems;
+
+    const sorted = [...scheduleItems].sort((a, b) => {
+      let aValue, bValue;
+
+      switch (sortConfig.key) {
+        case 'groupe':
+          aValue = formatGroupe(a.groupe);
+          bValue = formatGroupe(b.groupe);
+          break;
+        case 'type':
+          aValue = a.type || '';
+          bValue = b.type || '';
+          break;
+        case 'age_category':
+          aValue = a.age_category || '';
+          bValue = b.age_category || '';
+          break;
+        case 'day':
+          // Ordre des jours de la semaine
+          const daysOrder = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
+          aValue = daysOrder.indexOf(a.day);
+          bValue = daysOrder.indexOf(b.day);
+          break;
+        case 'time':
+          aValue = a.start_time || '';
+          bValue = b.start_time || '';
+          break;
+        case 'instructors':
+          aValue = formatInstructors(a);
+          bValue = formatInstructors(b);
+          break;
+        default:
+          return 0;
+      }
+
+      if (aValue < bValue) {
+        return sortConfig.direction === 'asc' ? -1 : 1;
+      }
+      if (aValue > bValue) {
+        return sortConfig.direction === 'asc' ? 1 : -1;
+      }
+      return 0;
+    });
+
+    return sorted;
+  };
+
   if (authLoading || loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -170,24 +251,82 @@ const ScheduleAdmin = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Catégorie d'âge</TableHead>
-                    <TableHead>Jour</TableHead>
-                    <TableHead>Horaires</TableHead>
-                    <TableHead>Encadrants</TableHead>
+                    <TableHead>
+                      <Button
+                        variant="ghost"
+                        onClick={() => handleSort('groupe')}
+                        className="flex items-center hover:bg-transparent p-0 h-auto font-semibold"
+                      >
+                        Groupe
+                        {getSortIcon('groupe')}
+                      </Button>
+                    </TableHead>
+                    <TableHead>
+                      <Button
+                        variant="ghost"
+                        onClick={() => handleSort('type')}
+                        className="flex items-center hover:bg-transparent p-0 h-auto font-semibold"
+                      >
+                        Type
+                        {getSortIcon('type')}
+                      </Button>
+                    </TableHead>
+                    <TableHead>
+                      <Button
+                        variant="ghost"
+                        onClick={() => handleSort('age_category')}
+                        className="flex items-center hover:bg-transparent p-0 h-auto font-semibold"
+                      >
+                        Catégorie d'âge
+                        {getSortIcon('age_category')}
+                      </Button>
+                    </TableHead>
+                    <TableHead>
+                      <Button
+                        variant="ghost"
+                        onClick={() => handleSort('day')}
+                        className="flex items-center hover:bg-transparent p-0 h-auto font-semibold"
+                      >
+                        Jour
+                        {getSortIcon('day')}
+                      </Button>
+                    </TableHead>
+                    <TableHead>
+                      <Button
+                        variant="ghost"
+                        onClick={() => handleSort('time')}
+                        className="flex items-center hover:bg-transparent p-0 h-auto font-semibold"
+                      >
+                        Horaires
+                        {getSortIcon('time')}
+                      </Button>
+                    </TableHead>
+                    <TableHead>
+                      <Button
+                        variant="ghost"
+                        onClick={() => handleSort('instructors')}
+                        className="flex items-center hover:bg-transparent p-0 h-auto font-semibold"
+                      >
+                        Encadrants
+                        {getSortIcon('instructors')}
+                      </Button>
+                    </TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {scheduleItems.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                      <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                         Aucun créneau dans le planning. Cliquez sur "Nouveau créneau" pour commencer.
                       </TableCell>
                     </TableRow>
                   ) : (
-                    scheduleItems.map((item) => (
+                    getSortedItems().map((item) => (
                       <TableRow key={item.id}>
+                        <TableCell className="text-sm">
+                          {formatGroupe(item.groupe)}
+                        </TableCell>
                         <TableCell>
                           <Badge className={getTypeColor(item.type)}>
                             {item.type}
