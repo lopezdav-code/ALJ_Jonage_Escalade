@@ -346,6 +346,9 @@ const Schedule = () => {
             <CardHeader>
               <CardTitle>Composition des catégories d'âge</CardTitle>
             </CardHeader>
+            <div className="px-4">
+              <a href="https://www.ffme.fr/nouvelles-categories-jeunes/" target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline">FFME 2025 Ajustements nouvelles catégories jeunes</a>
+            </div>
             <CardContent>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm text-left">
