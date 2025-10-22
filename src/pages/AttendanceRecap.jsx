@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { supabase } from '@/lib/customSupabaseClient';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { useToast } from '@/components/ui/use-toast';
-import { Loader2, CalendarCheck, CheckCircle2, X, User, Calendar } from 'lucide-react';
+import { Loader2, CalendarCheck, CheckCircle2, X, User, Calendar, MessageSquare } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -13,6 +13,8 @@ import { useNavigate } from 'react-router-dom';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Button } from '@/components/ui/button';
 
 const AttendanceRecap = () => {
   const { isAdmin, isEncadrant, loading: authLoading } = useAuth();
@@ -170,17 +172,41 @@ const AttendanceRecap = () => {
 
       console.log('Membres trouvés:', membersData);
 
-      // 3. Construire le tableau de présence
+      // 3. Récupérer les commentaires pour toutes les sessions
+      const sessionIds = sessionsData.map(s => s.id);
+      const memberIds = membersData.map(m => m.id);
+
+      let commentsData = [];
+      if (sessionIds.length > 0 && memberIds.length > 0) {
+        const { data: comments, error: commentsError } = await supabase
+          .from('student_session_comments')
+          .select('session_id, member_id, comment')
+          .in('session_id', sessionIds)
+          .in('member_id', memberIds);
+
+        if (!commentsError) {
+          commentsData = comments || [];
+        }
+      }
+
+      console.log('Commentaires récupérés:', commentsData);
+
+      // 4. Construire le tableau de présence
       const attendance = (membersData || []).map(member => {
         const memberAttendance = {
           member,
-          sessions: {}
+          sessions: {},
+          comments: {}
         };
 
-        // Pour chaque session, vérifier si l'élève était présent
+        // Pour chaque session, vérifier si l'élève était présent et s'il a un commentaire
         (sessionsData || []).forEach(session => {
           const isPresent = session.students && session.students.includes(member.id);
           memberAttendance.sessions[session.id] = isPresent;
+
+          // Récupérer le commentaire pour cet élève dans cette session
+          const commentObj = commentsData.find(c => c.session_id === session.id && c.member_id === member.id && c.comment);
+          memberAttendance.comments[session.id] = commentObj ? commentObj.comment : null;
         });
 
         return memberAttendance;
@@ -337,7 +363,12 @@ const AttendanceRecap = () => {
                       </TableHead>
                       {sessions.map(session => (
                         <TableHead key={session.id} className="text-center min-w-[120px]">
-                          <div className="flex flex-col items-center">
+                          <Button
+                            variant="ghost"
+                            className="flex flex-col items-center h-auto p-2"
+                            onClick={() => navigate(`/session-log/${session.id}`)}
+                            title="Voir la fiche de séance"
+                          >
                             <span className="font-semibold">
                               {new Date(session.date).toLocaleDateString('fr-FR', {
                                 day: '2-digit',
@@ -348,7 +379,7 @@ const AttendanceRecap = () => {
                             <span className="text-xs text-muted-foreground font-normal">
                               {session.start_time}
                             </span>
-                          </div>
+                          </Button>
                         </TableHead>
                       ))}
                       <TableHead className="text-center font-bold sticky right-0 bg-background z-10 min-w-[100px]">
@@ -357,26 +388,53 @@ const AttendanceRecap = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {displayedAttendance.map(({ member, sessions: memberSessions }) => {
+                    {displayedAttendance.map(({ member, sessions: memberSessions, comments: memberComments }) => {
                       const totalPresent = Object.values(memberSessions).filter(Boolean).length;
 
                       return (
                         <TableRow key={member.id}>
                           <TableCell className="font-medium sticky left-0 bg-background z-10">
-                            <div className="flex items-center gap-2">
+                            <Button
+                              variant="ghost"
+                              className="flex items-center gap-2 h-auto p-2"
+                              onClick={() => navigate(`/member-view/${member.id}`)}
+                              title="Voir la fiche du membre"
+                            >
                               <User className="w-4 h-4 text-primary" />
                               <span>
                                 {formatName(member.first_name, member.last_name, true)}
                               </span>
-                            </div>
+                            </Button>
                           </TableCell>
                           {sessions.map(session => (
                             <TableCell key={session.id} className="text-center">
-                              {memberSessions[session.id] ? (
-                                <CheckCircle2 className="w-5 h-5 text-green-500 mx-auto" />
-                              ) : (
-                                <X className="w-5 h-5 text-gray-300 mx-auto" />
-                              )}
+                              <div className="flex items-center justify-center gap-1">
+                                {memberSessions[session.id] ? (
+                                  <CheckCircle2 className="w-5 h-5 text-green-500" />
+                                ) : (
+                                  <X className="w-5 h-5 text-gray-300" />
+                                )}
+                                {memberComments && memberComments[session.id] && (
+                                  <Popover>
+                                    <PopoverTrigger asChild>
+                                      <button className="focus:outline-none focus:ring-2 focus:ring-blue-500 rounded">
+                                        <MessageSquare className="w-4 h-4 text-blue-500 cursor-pointer hover:text-blue-700" />
+                                      </button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-80">
+                                      <div className="space-y-2">
+                                        <h4 className="font-medium text-sm flex items-center gap-2">
+                                          <MessageSquare className="w-4 h-4 text-blue-500" />
+                                          Commentaire de l'encadrant
+                                        </h4>
+                                        <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                                          {memberComments[session.id]}
+                                        </p>
+                                      </div>
+                                    </PopoverContent>
+                                  </Popover>
+                                )}
+                              </div>
                             </TableCell>
                           ))}
                           <TableCell className="text-center font-bold sticky right-0 bg-background z-10 text-primary">

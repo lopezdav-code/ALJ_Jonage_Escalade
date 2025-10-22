@@ -1,6 +1,6 @@
 {
   "version": "1.10.0",
   "buildDate": "2025-10-22T10:00:00.000Z",
-  "description": "Ajout page de visualisation des membres et correction du chargement initial des données",
+  "description": "Historique des séances avec accordéon, commentaires interactifs dans récap présence, navigation améliorée",
   "commit": "main"
 }

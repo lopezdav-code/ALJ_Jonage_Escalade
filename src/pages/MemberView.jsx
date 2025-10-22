@@ -4,7 +4,8 @@ import { Helmet } from 'react-helmet';
 import { supabase } from '@/lib/customSupabaseClient';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Loader2, User, Mail, Phone, Award, Shield, FileText, Calendar, Users, Eye, Trophy, Medal, MapPin, Euro, Pencil, GraduationCap, Clock } from 'lucide-react';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { ArrowLeft, Loader2, User, Mail, Phone, Award, Shield, FileText, Calendar, Users, Eye, Trophy, Medal, MapPin, Euro, Pencil, GraduationCap, Clock, MessageSquare, BookOpen } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { useMemberViewPermissions } from '@/hooks/useMemberViewPermissions';
@@ -43,6 +44,9 @@ const MemberView = () => {
   const [competitionInscriptions, setCompetitionInscriptions] = useState([]);
   const [teachingSchedule, setTeachingSchedule] = useState([]);
   const [memberSchedules, setMemberSchedules] = useState([]);
+  const [sessionHistory, setSessionHistory] = useState([]);
+  const [sessionHistoryLoading, setSessionHistoryLoading] = useState(false);
+  const [sessionHistoryLoaded, setSessionHistoryLoaded] = useState(false);
 
   // Get the tab to return to from navigation state
   const fromTab = location.state?.fromTab;
@@ -50,6 +54,70 @@ const MemberView = () => {
   const navigateToVolunteers = () => {
     const url = fromTab ? `/volunteers?tab=${encodeURIComponent(fromTab)}` : '/volunteers';
     navigate(url);
+  };
+
+  // Function to fetch session history when accordion is opened
+  const fetchSessionHistory = async () => {
+    if (sessionHistoryLoaded || sessionHistoryLoading || !id) return;
+
+    setSessionHistoryLoading(true);
+    try {
+      // Fetch session history (sessions the member attended)
+      const { data: sessions } = await supabase
+        .from('sessions')
+        .select(`
+          id,
+          date,
+          start_time,
+          session_objective,
+          equipment,
+          comment,
+          instructors,
+          cycles (id, name),
+          schedules (id, type, age_category, day, start_time)
+        `)
+        .contains('students', [id])
+        .order('date', { ascending: false })
+        .order('start_time', { ascending: false });
+
+      if (sessions && sessions.length > 0) {
+        // Fetch member's specific comments for these sessions
+        const sessionIds = sessions.map(s => s.id);
+        const { data: comments } = await supabase
+          .from('student_session_comments')
+          .select('session_id, comment')
+          .eq('member_id', id)
+          .in('session_id', sessionIds);
+
+        // Fetch instructor details
+        const allInstructorIds = [...new Set(sessions.flatMap(s => s.instructors || []))];
+        const { data: instructors } = await supabase
+          .from('members')
+          .select('id, first_name, last_name')
+          .in('id', allInstructorIds);
+
+        // Merge data
+        const sessionsWithDetails = sessions.map(session => ({
+          ...session,
+          memberComment: comments?.find(c => c.session_id === session.id)?.comment || null,
+          instructorsList: (session.instructors || [])
+            .map(instId => instructors?.find(i => i.id === instId))
+            .filter(Boolean)
+        }));
+
+        setSessionHistory(sessionsWithDetails);
+      }
+      setSessionHistoryLoaded(true);
+    } catch (error) {
+      console.error('Erreur chargement historique séances:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de charger l'historique des séances",
+        variant: "destructive",
+      });
+    } finally {
+      setSessionHistoryLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -79,6 +147,9 @@ const MemberView = () => {
       setCompetitionInscriptions([]);
       setTeachingSchedule([]);
       setMemberSchedules([]);
+      setSessionHistory([]);
+      setSessionHistoryLoading(false);
+      setSessionHistoryLoaded(false);
 
       try {
         // Fetch member data
@@ -792,6 +863,164 @@ const MemberView = () => {
             </CardContent>
           </Card>
         )}
+
+        {/* Session History - Accordion */}
+        <Card className="md:col-span-2">
+          <Accordion type="single" collapsible onValueChange={(value) => {
+            if (value === 'session-history') {
+              fetchSessionHistory();
+            }
+          }}>
+            <AccordionItem value="session-history" className="border-none">
+              <AccordionTrigger className="px-6 hover:no-underline">
+                <CardTitle className="flex items-center gap-2">
+                  <BookOpen className="w-5 h-5" />
+                  Historique des séances {sessionHistory.length > 0 && `(${sessionHistory.length})`}
+                </CardTitle>
+              </AccordionTrigger>
+              <AccordionContent className="px-6 pb-6">
+                {sessionHistoryLoading ? (
+                  <div className="flex justify-center items-center py-8">
+                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                  </div>
+                ) : sessionHistory.length > 0 ? (
+                  <div className="space-y-4">
+                    {sessionHistory.map((session) => (
+                  <div key={session.id} className="p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                    {/* Session header with date and time */}
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="flex items-center gap-2">
+                        <Calendar className="w-4 h-4 text-primary" />
+                        <span className="font-semibold">
+                          {new Date(session.date).toLocaleDateString('fr-FR', {
+                            weekday: 'long',
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                          })}
+                        </span>
+                      </div>
+                      {session.start_time && (
+                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                          <Clock className="w-3 h-3" />
+                          <span>{session.start_time.substring(0, 5)}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Cycle and Schedule info */}
+                    <div className="flex flex-wrap gap-2 mb-3">
+                      {session.cycles && (
+                        <Badge variant="default">
+                          {session.cycles.name}
+                        </Badge>
+                      )}
+                      {session.schedules && (
+                        <>
+                          {session.schedules.type && (
+                            <Badge variant="secondary">{session.schedules.type}</Badge>
+                          )}
+                          {session.schedules.age_category && (
+                            <Badge variant="outline">{session.schedules.age_category}</Badge>
+                          )}
+                        </>
+                      )}
+                    </div>
+
+                    {/* Session objective */}
+                    {session.session_objective && (
+                      <div className="mb-3 p-3 bg-blue-50 dark:bg-blue-950/20 rounded border border-blue-200 dark:border-blue-800">
+                        <div className="flex items-start gap-2">
+                          <FileText className="w-4 h-4 text-blue-600 dark:text-blue-400 mt-0.5 shrink-0" />
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-1">
+                              Objectif de la séance
+                            </p>
+                            <p className="text-sm text-blue-800 dark:text-blue-200 whitespace-pre-wrap">
+                              {session.session_objective}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Equipment */}
+                    {session.equipment && (
+                      <div className="mb-3 text-sm">
+                        <span className="font-medium text-muted-foreground">Matériel : </span>
+                        <span>{session.equipment}</span>
+                      </div>
+                    )}
+
+                    {/* General session comment */}
+                    {session.comment && (
+                      <div className="mb-3 p-3 bg-muted/50 rounded">
+                        <div className="flex items-start gap-2">
+                          <MessageSquare className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-muted-foreground mb-1">
+                              Commentaire général
+                            </p>
+                            <p className="text-sm whitespace-pre-wrap">
+                              {session.comment}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Member-specific instructor comment */}
+                    {session.memberComment && (
+                      <div className="mb-3 p-3 bg-green-50 dark:bg-green-950/20 rounded border border-green-200 dark:border-green-800">
+                        <div className="flex items-start gap-2">
+                          <MessageSquare className="w-4 h-4 text-green-600 dark:text-green-400 mt-0.5 shrink-0" />
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-green-900 dark:text-green-100 mb-1">
+                              Commentaire de l'encadrant pour vous
+                            </p>
+                            <p className="text-sm text-green-800 dark:text-green-200 whitespace-pre-wrap">
+                              {session.memberComment}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Instructors */}
+                    {session.instructorsList && session.instructorsList.length > 0 && (
+                      <div className="pt-2 border-t">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <GraduationCap className="w-4 h-4 text-muted-foreground" />
+                          <span className="text-sm font-medium text-muted-foreground">Encadrants :</span>
+                          <div className="flex flex-wrap gap-2">
+                            {session.instructorsList.map((instructor) => (
+                              <Button
+                                key={instructor.id}
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => navigate(`/member-view/${instructor.id}`, { state: { fromTab } })}
+                                className="h-7 text-xs px-2"
+                              >
+                                <Eye className="w-3 h-3 mr-1" />
+                                {instructor.first_name} {instructor.last_name}
+                              </Button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-center text-muted-foreground py-4">
+                    Aucune séance enregistrée
+                  </p>
+                )}
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        </Card>
       </div>
     </div>
   );
