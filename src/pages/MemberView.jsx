@@ -4,7 +4,7 @@ import { Helmet } from 'react-helmet';
 import { supabase } from '@/lib/customSupabaseClient';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Loader2, User, Mail, Phone, Award, Shield, FileText, Calendar, Users, Eye, Trophy, Medal, MapPin, Euro, Pencil } from 'lucide-react';
+import { ArrowLeft, Loader2, User, Mail, Phone, Award, Shield, FileText, Calendar, Users, Eye, Trophy, Medal, MapPin, Euro, Pencil, GraduationCap, Clock } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { useMemberViewPermissions } from '@/hooks/useMemberViewPermissions';
@@ -41,6 +41,7 @@ const MemberView = () => {
   const [isEmergencyContactFor, setIsEmergencyContactFor] = useState([]);
   const [competitionResults, setCompetitionResults] = useState([]);
   const [competitionInscriptions, setCompetitionInscriptions] = useState([]);
+  const [teachingSchedule, setTeachingSchedule] = useState([]);
 
   // Get the tab to return to from navigation state
   const fromTab = location.state?.fromTab;
@@ -75,6 +76,7 @@ const MemberView = () => {
       setIsEmergencyContactFor([]);
       setCompetitionResults([]);
       setCompetitionInscriptions([]);
+      setTeachingSchedule([]);
 
       try {
         // Fetch member data
@@ -158,6 +160,21 @@ const MemberView = () => {
 
           setCompetitionResults(results);
           setCompetitionInscriptions(inscriptions);
+        }
+
+        // Fetch teaching schedule (courses where member is instructor)
+        const { data: schedules } = await supabase
+          .from('schedules')
+          .select(`
+            *,
+            groupe:Groupe(id, category, sous_category, Groupe_schedule)
+          `)
+          .or(`instructor_1_id.eq.${id},instructor_2_id.eq.${id},instructor_3_id.eq.${id},instructor_4_id.eq.${id}`)
+          .order('day')
+          .order('start_time');
+
+        if (schedules) {
+          setTeachingSchedule(schedules);
         }
       } catch (error) {
         console.error('Erreur:', error);
@@ -521,6 +538,70 @@ const MemberView = () => {
                       <Eye className="w-4 h-4 mr-1" />
                       Détails
                     </Button>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Teaching Schedule - Courses where member is instructor */}
+        {teachingSchedule.length > 0 && (
+          <Card className="md:col-span-2">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <GraduationCap className="w-5 h-5" />
+                Cours encadrés ({teachingSchedule.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {teachingSchedule.map((schedule) => (
+                  <div key={schedule.id} className="flex items-start gap-4 p-3 border rounded-lg hover:bg-muted/50 transition-colors">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <Badge variant="default" className="font-medium">
+                          {schedule.day}
+                        </Badge>
+                        <div className="flex items-center gap-1 text-sm font-medium">
+                          <Clock className="w-3 h-3" />
+                          <span>{schedule.start_time.substring(0, 5)} - {schedule.end_time.substring(0, 5)}</span>
+                        </div>
+                      </div>
+
+                      <div className="space-y-1">
+                        {schedule.type && (
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium text-muted-foreground">Type:</span>
+                            <Badge variant="secondary" className="text-xs">{schedule.type}</Badge>
+                          </div>
+                        )}
+
+                        {schedule.age_category && (
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium text-muted-foreground">Catégorie d'âge:</span>
+                            <span className="text-sm">{schedule.age_category}</span>
+                          </div>
+                        )}
+
+                        {schedule.groupe && (
+                          <div className="mt-2 p-2 bg-muted/30 rounded">
+                            <p className="text-sm font-medium mb-1">Groupe:</p>
+                            <div className="flex flex-wrap gap-2 text-xs">
+                              {schedule.groupe.category && (
+                                <Badge variant="outline">{schedule.groupe.category}</Badge>
+                              )}
+                              {schedule.groupe.sous_category && (
+                                <Badge variant="outline">{schedule.groupe.sous_category}</Badge>
+                              )}
+                              {schedule.groupe.Groupe_schedule && (
+                                <span className="text-muted-foreground">{schedule.groupe.Groupe_schedule}</span>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>
