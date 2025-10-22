@@ -15,7 +15,7 @@ import { useNavigate, Link } from 'react-router-dom';
 
 const Schedule = () => {
   const navigate = useNavigate();
-  const { isAdmin } = useAuth();
+  const { isAdmin, loading: authLoading } = useAuth();
   const [filters, setFilters] = useState({
     group: '',
     instructor: ''
@@ -28,6 +28,9 @@ const Schedule = () => {
 
   // Charger les données du planning depuis la BDD
   useEffect(() => {
+    // Only fetch schedule when authentication is ready
+    if (authLoading) return;
+
     const fetchSchedule = async () => {
       setLoading(true);
       try {
@@ -120,7 +123,7 @@ const Schedule = () => {
     };
 
     fetchSchedule();
-  }, []);
+  }, [authLoading]);
 
   const filteredSchedule = scheduleData.filter(course => {
     if (!course) return false;

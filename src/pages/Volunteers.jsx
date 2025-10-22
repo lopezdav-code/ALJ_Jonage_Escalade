@@ -96,7 +96,7 @@ const Volunteers = () => {
   const [showAllInGroup, setShowAllInGroup] = useState({}); // State to track which groups show all members
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { isAdmin, isBureau } = useAuth();
+  const { isAdmin, isBureau, loading: authLoading } = useAuth();
   const canEdit = useMemo(() => isAdmin || isBureau, [isAdmin, isBureau]);
 
   const emergencyContactIds = useMemo(() => {
@@ -109,6 +109,9 @@ const Volunteers = () => {
   }, [members]);
 
   useEffect(() => {
+    // Only fetch members when authentication is ready
+    if (authLoading) return;
+
     const fetchMembers = async () => {
       setLoading(true);
       const { data, error } = await supabase
@@ -124,7 +127,7 @@ const Volunteers = () => {
     };
 
     fetchMembers();
-  }, []);
+  }, [authLoading]);
 
   const membersForDisplay = useMemo(() => {
     if (showNoEmailFilter) {

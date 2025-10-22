@@ -124,8 +124,11 @@ const News = () => {
   }, [toast]);
 
   useEffect(() => {
-    fetchNews();
-  }, [fetchNews]);
+    // Only fetch news when authentication is ready
+    if (!authLoading) {
+      fetchNews();
+    }
+  }, [fetchNews, authLoading]);
 
   const filteredAndSortedNews = useMemo(() => {
     let processedNews = [...news];
