@@ -4,7 +4,7 @@ import { Helmet } from 'react-helmet';
 import { supabase } from '@/lib/customSupabaseClient';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Loader2, User, Mail, Phone, Award, Shield, FileText, Calendar, Users } from 'lucide-react';
+import { ArrowLeft, Loader2, User, Mail, Phone, Award, Shield, FileText, Calendar, Users, Eye } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { useMemberViewPermissions } from '@/hooks/useMemberViewPermissions';
@@ -91,7 +91,7 @@ const MemberView = () => {
           const contactIds = [data.emergency_contact_1_id, data.emergency_contact_2_id].filter(Boolean);
           const { data: contacts } = await supabase
             .from('secure_members')
-            .select('id, first_name, last_name, phone')
+            .select('id, first_name, last_name, phone, email')
             .in('id', contactIds);
 
           if (contacts) {
@@ -259,23 +259,67 @@ const MemberView = () => {
                 Contacts d'urgence
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent className="space-y-4">
               {emergencyContacts.contact1 && (
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Contact 1</p>
-                  <p className="text-base">{emergencyContacts.contact1.first_name} {emergencyContacts.contact1.last_name}</p>
-                  {emergencyContacts.contact1.phone && (
-                    <p className="text-sm text-muted-foreground">{emergencyContacts.contact1.phone}</p>
-                  )}
+                <div className="pb-3 border-b last:border-b-0">
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    <p className="text-sm font-medium text-muted-foreground">Contact 1</p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => navigate(`/member-view/${emergencyContacts.contact1.id}`, { state: { fromTab } })}
+                      className="flex items-center gap-1"
+                    >
+                      <Eye className="w-3 h-3" />
+                      Voir la fiche
+                    </Button>
+                  </div>
+                  <p className="text-base font-semibold mb-1">{emergencyContacts.contact1.first_name} {emergencyContacts.contact1.last_name}</p>
+                  <div className="space-y-1">
+                    {emergencyContacts.contact1.phone && (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Phone className="w-3 h-3" />
+                        <span>{emergencyContacts.contact1.phone}</span>
+                      </div>
+                    )}
+                    {emergencyContacts.contact1.email && (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Mail className="w-3 h-3" />
+                        <span>{emergencyContacts.contact1.email}</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
               {emergencyContacts.contact2 && (
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Contact 2</p>
-                  <p className="text-base">{emergencyContacts.contact2.first_name} {emergencyContacts.contact2.last_name}</p>
-                  {emergencyContacts.contact2.phone && (
-                    <p className="text-sm text-muted-foreground">{emergencyContacts.contact2.phone}</p>
-                  )}
+                <div className="pb-3 border-b last:border-b-0">
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    <p className="text-sm font-medium text-muted-foreground">Contact 2</p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => navigate(`/member-view/${emergencyContacts.contact2.id}`, { state: { fromTab } })}
+                      className="flex items-center gap-1"
+                    >
+                      <Eye className="w-3 h-3" />
+                      Voir la fiche
+                    </Button>
+                  </div>
+                  <p className="text-base font-semibold mb-1">{emergencyContacts.contact2.first_name} {emergencyContacts.contact2.last_name}</p>
+                  <div className="space-y-1">
+                    {emergencyContacts.contact2.phone && (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Phone className="w-3 h-3" />
+                        <span>{emergencyContacts.contact2.phone}</span>
+                      </div>
+                    )}
+                    {emergencyContacts.contact2.email && (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Mail className="w-3 h-3" />
+                        <span>{emergencyContacts.contact2.email}</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
             </CardContent>
@@ -294,9 +338,16 @@ const MemberView = () => {
             <CardContent>
               <div className="flex flex-wrap gap-2">
                 {isEmergencyContactFor.map((person) => (
-                  <Badge key={person.id} variant="secondary">
+                  <Button
+                    key={person.id}
+                    variant="outline"
+                    size="sm"
+                    onClick={() => navigate(`/member-view/${person.id}`, { state: { fromTab } })}
+                    className="flex items-center gap-2"
+                  >
+                    <Eye className="w-3 h-3" />
                     {person.first_name} {person.last_name}
-                  </Badge>
+                  </Button>
                 ))}
               </div>
             </CardContent>
