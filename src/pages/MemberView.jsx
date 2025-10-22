@@ -4,7 +4,7 @@ import { Helmet } from 'react-helmet';
 import { supabase } from '@/lib/customSupabaseClient';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Loader2, User, Mail, Phone, Award, Shield, FileText, Calendar, Users, Eye } from 'lucide-react';
+import { ArrowLeft, Loader2, User, Mail, Phone, Award, Shield, FileText, Calendar, Users, Eye, Trophy, Medal, MapPin, Euro } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { useMemberViewPermissions } from '@/hooks/useMemberViewPermissions';
@@ -38,6 +38,8 @@ const MemberView = () => {
   const [photoUrl, setPhotoUrl] = useState(null);
   const [emergencyContacts, setEmergencyContacts] = useState({ contact1: null, contact2: null });
   const [isEmergencyContactFor, setIsEmergencyContactFor] = useState([]);
+  const [competitionResults, setCompetitionResults] = useState([]);
+  const [competitionInscriptions, setCompetitionInscriptions] = useState([]);
 
   // Get the tab to return to from navigation state
   const fromTab = location.state?.fromTab;
@@ -115,6 +117,38 @@ const MemberView = () => {
         if (data.photo_url) {
           const url = await getMemberPhotoUrl(data.photo_url);
           setPhotoUrl(url);
+        }
+
+        // Fetch competition participations
+        const { data: participations } = await supabase
+          .from('competition_participants')
+          .select(`
+            id,
+            role,
+            ranking,
+            nb_competitor,
+            competitions (
+              id,
+              name,
+              short_title,
+              start_date,
+              location,
+              prix,
+              disciplines,
+              nature,
+              niveau
+            )
+          `)
+          .eq('member_id', id)
+          .order('start_date', { foreignTable: 'competitions', ascending: false });
+
+        if (participations) {
+          // Separate results (with ranking) from simple inscriptions
+          const results = participations.filter(p => p.role === 'Competiteur' && p.ranking);
+          const inscriptions = participations.filter(p => p.role === 'Competiteur');
+
+          setCompetitionResults(results);
+          setCompetitionInscriptions(inscriptions);
         }
       } catch (error) {
         console.error('Erreur:', error);
@@ -348,6 +382,129 @@ const MemberView = () => {
                     <Eye className="w-3 h-3" />
                     {person.first_name} {person.last_name}
                   </Button>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Palmares - Competition Results */}
+        {competitionResults.length > 0 && (
+          <Card className="md:col-span-2">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Trophy className="w-5 h-5" />
+                Palmarès
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {competitionResults.map((result) => (
+                  <div key={result.id} className="flex items-start justify-between gap-4 p-3 border rounded-lg hover:bg-muted/50 transition-colors">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Medal className={`w-4 h-4 ${result.ranking === 1 ? 'text-yellow-500' : result.ranking === 2 ? 'text-gray-400' : result.ranking === 3 ? 'text-amber-600' : 'text-muted-foreground'}`} />
+                        <span className="font-semibold text-lg">
+                          {result.ranking}{result.ranking === 1 ? 'er' : 'e'}
+                          {result.nb_competitor && <span className="text-sm text-muted-foreground ml-1">/ {result.nb_competitor}</span>}
+                        </span>
+                      </div>
+                      <p className="font-medium">{result.competitions.name}</p>
+                      <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground mt-1">
+                        {result.competitions.start_date && (
+                          <div className="flex items-center gap-1">
+                            <Calendar className="w-3 h-3" />
+                            <span>{new Date(result.competitions.start_date).toLocaleDateString('fr-FR')}</span>
+                          </div>
+                        )}
+                        {result.competitions.location && (
+                          <div className="flex items-center gap-1">
+                            <MapPin className="w-3 h-3" />
+                            <span>{result.competitions.location}</span>
+                          </div>
+                        )}
+                        {result.competitions.disciplines && result.competitions.disciplines.length > 0 && (
+                          <div className="flex items-center gap-1">
+                            <span className="font-medium">Discipline:</span>
+                            <span>{result.competitions.disciplines.join(', ')}</span>
+                          </div>
+                        )}
+                      </div>
+                      {(result.competitions.nature || result.competitions.niveau) && (
+                        <div className="flex gap-2 mt-2">
+                          {result.competitions.nature && (
+                            <Badge variant="secondary" className="text-xs">
+                              {result.competitions.nature}
+                            </Badge>
+                          )}
+                          {result.competitions.niveau && (
+                            <Badge variant="outline" className="text-xs">
+                              {result.competitions.niveau}
+                            </Badge>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => navigate(`/competitions/detail/${result.competitions.id}`)}
+                    >
+                      <Eye className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Competition Inscriptions */}
+        {competitionInscriptions.length > 0 && (
+          <Card className="md:col-span-2">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Trophy className="w-5 h-5" />
+                Inscriptions aux compétitions ({competitionInscriptions.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {competitionInscriptions.map((inscription) => (
+                  <div key={inscription.id} className="flex items-center justify-between gap-4 p-3 border rounded-lg hover:bg-muted/50 transition-colors">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium truncate">{inscription.competitions.short_title || inscription.competitions.name}</p>
+                      <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground mt-1">
+                        {inscription.competitions.start_date && (
+                          <div className="flex items-center gap-1">
+                            <Calendar className="w-3 h-3" />
+                            <span>{new Date(inscription.competitions.start_date).toLocaleDateString('fr-FR')}</span>
+                          </div>
+                        )}
+                        {inscription.competitions.location && (
+                          <div className="flex items-center gap-1">
+                            <MapPin className="w-3 h-3" />
+                            <span>{inscription.competitions.location}</span>
+                          </div>
+                        )}
+                        {inscription.competitions.prix !== null && inscription.competitions.prix !== undefined && (
+                          <div className="flex items-center gap-1 font-medium">
+                            <Euro className="w-3 h-3" />
+                            <span>{inscription.competitions.prix} €</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => navigate(`/competitions/detail/${inscription.competitions.id}`)}
+                      className="shrink-0"
+                    >
+                      <Eye className="w-4 h-4 mr-1" />
+                      Détails
+                    </Button>
+                  </div>
                 ))}
               </div>
             </CardContent>
