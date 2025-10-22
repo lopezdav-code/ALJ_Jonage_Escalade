@@ -47,6 +47,7 @@ const TestImages = lazy(() => import('@/pages/TestImages'));
 const MemberScheduleTest = lazy(() => import('@/pages/MemberScheduleTest'));
 const GroupeAdmin = lazy(() => import('@/pages/GroupeAdmin'));
 const MemberEdit = lazy(() => import('@/pages/MemberEdit'));
+const MemberView = lazy(() => import('@/pages/MemberView'));
 const NewsEdit = lazy(() => import('@/pages/news_edit')); // Import NewsEdit
 const AttendanceRecap = lazy(() => import('@/pages/AttendanceRecap'));
 const ScheduleAdmin = lazy(() => import('@/pages/ScheduleAdmin'));
@@ -115,6 +116,7 @@ const AppContent = () => {
           <Route path="/inscriptions-summary" element={<LazyRoute><InscriptionsSummary /></LazyRoute>} />
           <Route path="/volunteers" element={<Volunteers />} />
           <Route path="/member-edit/:id" element={<LazyRoute><MemberEdit /></LazyRoute>} />
+          <Route path="/member-view/:id" element={<LazyRoute><MemberView /></LazyRoute>} />
           <Route path="/agenda" element={<Agenda />} />
           <Route path="/schedule" element={<Schedule />} />
           <Route path="/schedule/admin" element={<LazyRoute><ScheduleAdmin /></LazyRoute>} />

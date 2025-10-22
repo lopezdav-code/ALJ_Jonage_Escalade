@@ -7,13 +7,14 @@ import VolunteerQuiz from '@/components/VolunteerQuiz';
 import CompetitionTabs from '@/components/CompetitionTabs';
 import LeisureChildrenTabs from '@/components/LeisureChildrenTabs';
 import { Button } from '@/components/ui/button';
-import { Info, Loader2, Pencil, Shield, Star, Mail, Phone, Award, Gavel, Scale, Flag, Check, ChevronsUpDown, Users, List } from 'lucide-react';
+import { Info, Loader2, Pencil, Eye, Shield, Star, Mail, Phone, Award, Gavel, Scale, Flag, Check, ChevronsUpDown, Users, List } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandInput, CommandEmpty, CommandGroup, CommandItem, CommandList } from '@/components/ui/command';
 import { cn } from '@/lib/utils';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
+import { useMemberViewPermissions } from '@/hooks/useMemberViewPermissions';
 
 // Placeholder for brevetColors - adapt if needed
 const brevetColors = {
@@ -22,7 +23,7 @@ const brevetColors = {
   'Moniteur Escalade': 'bg-red-500',
 };
 
-const VolunteerRow = React.memo(({ member, onEdit, isEmergencyContact, showSubGroup, showCategory, canEdit }) => {
+const VolunteerRow = React.memo(({ member, onEdit, onView, isEmergencyContact, showSubGroup, showCategory, canEdit, canView }) => {
     const hasEmergencyContact = !!(member.emergency_contact_1_id || member.emergency_contact_2_id);
     return (
       <tr className="border-b">
@@ -45,11 +46,18 @@ const VolunteerRow = React.memo(({ member, onEdit, isEmergencyContact, showSubGr
           </div>
         </td>
         <td className="p-2">
-          {canEdit && (
-            <Button variant="ghost" size="icon" onClick={() => onEdit(member)}>
-              <Pencil className="h-4 w-4" />
-            </Button>
-          )}
+          <div className="flex items-center gap-1">
+            {canView && (
+              <Button variant="ghost" size="icon" onClick={() => onView(member)} title="Voir le détail">
+                <Eye className="h-4 w-4" />
+              </Button>
+            )}
+            {canEdit && (
+              <Button variant="ghost" size="icon" onClick={() => onEdit(member)} title="Modifier">
+                <Pencil className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
         </td>
       </tr>
     );
@@ -97,6 +105,7 @@ const Volunteers = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { isAdmin, isBureau, loading: authLoading } = useAuth();
+  const { canViewDetail } = useMemberViewPermissions();
   const canEdit = useMemo(() => isAdmin || isBureau, [isAdmin, isBureau]);
 
   const emergencyContactIds = useMemo(() => {
@@ -357,7 +366,7 @@ const Volunteers = () => {
                           {showSubGroupColumn && <th className="text-left p-2">Sous-groupe</th>}
                           {showCategoryColumn && <th className="text-left p-2">Catégorie</th>}
                           <th className="text-left p-2">Info</th>
-                          {canEdit && <th className="text-left p-2">Actions</th>}
+                          {(canEdit || canViewDetail) && <th className="text-left p-2">Actions</th>}
                         </tr>
                       </thead>
                       <tbody>
@@ -368,10 +377,14 @@ const Volunteers = () => {
                             onEdit={(member) => {
                               navigate(`/member-edit/${member.id}`, { state: { fromTab: activeTab } });
                             }}
+                            onView={(member) => {
+                              navigate(`/member-view/${member.id}`, { state: { fromTab: activeTab } });
+                            }}
                             isEmergencyContact={emergencyContactIds.has(member.id)}
                             showSubGroup={showSubGroupColumn}
                             showCategory={showCategoryColumn}
                             canEdit={canEdit}
+                            canView={canViewDetail}
                           />
                         ))}
                       </tbody>
@@ -480,7 +493,7 @@ const Volunteers = () => {
                           {showSubGroupColumn && <th className="text-left p-2">Sous-groupe</th>}
                           {showCategoryColumn && <th className="text-left p-2">Catégorie</th>}
                           <th className="text-left p-2">Info</th>
-                          {canEdit && <th className="text-left p-2">Actions</th>}
+                          {(canEdit || canViewDetail) && <th className="text-left p-2">Actions</th>}
                         </tr>
                       </thead>
                       <tbody>
@@ -491,10 +504,14 @@ const Volunteers = () => {
                             onEdit={(member) => {
                               navigate(`/member-edit/${member.id}`, { state: { fromTab: activeTab } });
                             }}
+                            onView={(member) => {
+                              navigate(`/member-view/${member.id}`, { state: { fromTab: activeTab } });
+                            }}
                             isEmergencyContact={emergencyContactIds.has(member.id)}
                             showSubGroup={showSubGroupColumn}
                             showCategory={showCategoryColumn}
                             canEdit={canEdit}
+                            canView={canViewDetail}
                           />
                         ))}
                       </tbody>
