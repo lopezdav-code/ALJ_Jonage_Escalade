@@ -173,8 +173,36 @@ const MemberView = () => {
           .order('day')
           .order('start_time');
 
-        if (schedules) {
-          setTeachingSchedule(schedules);
+        if (schedules && schedules.length > 0) {
+          // Fetch students for each schedule
+          const scheduleIds = schedules.map(s => s.id);
+          const { data: memberSchedules } = await supabase
+            .from('member_schedule')
+            .select(`
+              id,
+              schedule_id,
+              member:members(id, first_name, last_name)
+            `)
+            .in('schedule_id', scheduleIds);
+
+          // Group students by schedule_id
+          const studentsBySchedule = (memberSchedules || []).reduce((acc, ms) => {
+            if (!acc[ms.schedule_id]) {
+              acc[ms.schedule_id] = [];
+            }
+            if (ms.member) {
+              acc[ms.schedule_id].push(ms.member);
+            }
+            return acc;
+          }, {});
+
+          // Add students to each schedule
+          const schedulesWithStudents = schedules.map(schedule => ({
+            ...schedule,
+            students: studentsBySchedule[schedule.id] || []
+          }));
+
+          setTeachingSchedule(schedulesWithStudents);
         }
       } catch (error) {
         console.error('Erreur:', error);
@@ -597,6 +625,31 @@ const MemberView = () => {
                               {schedule.groupe.Groupe_schedule && (
                                 <span className="text-muted-foreground">{schedule.groupe.Groupe_schedule}</span>
                               )}
+                            </div>
+                          </div>
+                        )}
+
+                        {schedule.students && schedule.students.length > 0 && (
+                          <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-950/20 rounded border border-blue-200 dark:border-blue-800">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Users className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                              <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                                Élèves ({schedule.students.length})
+                              </p>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                              {schedule.students.map((student) => (
+                                <Button
+                                  key={student.id}
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => navigate(`/member-view/${student.id}`, { state: { fromTab } })}
+                                  className="h-7 text-xs bg-white dark:bg-gray-800 hover:bg-blue-100 dark:hover:bg-blue-900"
+                                >
+                                  <Eye className="w-3 h-3 mr-1" />
+                                  {student.first_name} {student.last_name}
+                                </Button>
+                              ))}
                             </div>
                           </div>
                         )}
