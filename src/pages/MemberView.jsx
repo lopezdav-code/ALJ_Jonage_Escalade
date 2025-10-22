@@ -4,7 +4,7 @@ import { Helmet } from 'react-helmet';
 import { supabase } from '@/lib/customSupabaseClient';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Loader2, User, Mail, Phone, Award, Shield, FileText, Calendar, Users, Eye, Trophy, Medal, MapPin, Euro } from 'lucide-react';
+import { ArrowLeft, Loader2, User, Mail, Phone, Award, Shield, FileText, Calendar, Users, Eye, Trophy, Medal, MapPin, Euro, Pencil } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { useMemberViewPermissions } from '@/hooks/useMemberViewPermissions';
@@ -31,8 +31,9 @@ const MemberView = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
-  const { loading: authLoading } = useAuth();
+  const { isAdmin, isBureau, loading: authLoading } = useAuth();
   const { canViewDetail, loading: permissionsLoading } = useMemberViewPermissions();
+  const canEdit = isAdmin || isBureau;
   const [member, setMember] = useState(null);
   const [loading, setLoading] = useState(true);
   const [photoUrl, setPhotoUrl] = useState(null);
@@ -201,15 +202,23 @@ const MemberView = () => {
         <title>{member.first_name} {member.last_name} - Club d'Escalade</title>
       </Helmet>
 
-      <div className="mb-6">
+      <div className="mb-6 flex items-center justify-between gap-4">
         <Button
           variant="ghost"
           onClick={() => navigateToVolunteers()}
-          className="mb-4"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
           Retour aux adhérents
         </Button>
+        {canEdit && (
+          <Button
+            onClick={() => navigate(`/member-edit/${id}`, { state: { fromTab } })}
+            className="flex items-center gap-2"
+          >
+            <Pencil className="h-4 w-4" />
+            Modifier
+          </Button>
+        )}
       </div>
 
       {/* Header with photo and name */}
