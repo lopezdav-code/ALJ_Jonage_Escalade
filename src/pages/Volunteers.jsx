@@ -413,7 +413,7 @@ const Volunteers = () => {
                                 {showSubGroupColumn && <th className="text-left p-2">Sous-groupe</th>}
                                 {showCategoryColumn && <th className="text-left p-2">Catégorie</th>}
                                 <th className="text-left p-2">Info</th>
-                                {canEdit && <th className="text-left p-2">Actions</th>}
+                                {(canEdit || canViewDetail) && <th className="text-left p-2">Actions</th>}
                               </tr>
                             </thead>
                             <tbody>
@@ -424,10 +424,14 @@ const Volunteers = () => {
                                   onEdit={(member) => {
                                     navigate(`/member-edit/${member.id}`, { state: { fromTab: activeTab } });
                                   }}
+                                  onView={(member) => {
+                                    navigate(`/member-view/${member.id}`, { state: { fromTab: activeTab } });
+                                  }}
                                   isEmergencyContact={emergencyContactIds.has(member.id)}
                                   showSubGroup={showSubGroupColumn}
                                   showCategory={showCategoryColumn}
                                   canEdit={canEdit}
+                                  canView={canViewDetail}
                                 />
                               ))}
                             </tbody>
@@ -540,7 +544,7 @@ const Volunteers = () => {
                                 {showSubGroupColumn && <th className="text-left p-2">Sous-groupe</th>}
                                 {showCategoryColumn && <th className="text-left p-2">Catégorie</th>}
                                 <th className="text-left p-2">Info</th>
-                                {canEdit && <th className="text-left p-2">Actions</th>}
+                                {(canEdit || canViewDetail) && <th className="text-left p-2">Actions</th>}
                               </tr>
                             </thead>
                             <tbody>
@@ -551,10 +555,14 @@ const Volunteers = () => {
                                   onEdit={(member) => {
                                     navigate(`/member-edit/${member.id}`, { state: { fromTab: activeTab } });
                                   }}
+                                  onView={(member) => {
+                                    navigate(`/member-view/${member.id}`, { state: { fromTab: activeTab } });
+                                  }}
                                   isEmergencyContact={emergencyContactIds.has(member.id)}
                                   showSubGroup={showSubGroupColumn}
                                   showCategory={showCategoryColumn}
                                   canEdit={canEdit}
+                                  canView={canViewDetail}
                                 />
                               ))}
                             </tbody>
@@ -585,7 +593,7 @@ const Volunteers = () => {
                       {showSubGroupColumn && <th className="text-left p-2">Sous-groupe</th>}
                       {showCategoryColumn && <th className="text-left p-2">Catégorie</th>}
                       <th className="text-left p-2">Info</th>
-                      {canEdit && <th className="text-left p-2">Actions</th>}
+                      {(canEdit || canViewDetail) && <th className="text-left p-2">Actions</th>}
                     </tr>
                   </thead>
                   <tbody>
@@ -596,10 +604,14 @@ const Volunteers = () => {
                         onEdit={(member) => {
                           navigate(`/member-edit/${member.id}`, { state: { fromTab: activeTab } });
                         }}
+                        onView={(member) => {
+                          navigate(`/member-view/${member.id}`, { state: { fromTab: activeTab } });
+                        }}
                         isEmergencyContact={emergencyContactIds.has(member.id)}
                         showSubGroup={showSubGroupColumn}
                         showCategory={showCategoryColumn}
                         canEdit={canEdit}
+                        canView={canViewDetail}
                       />
                     ))}
                   </tbody>
