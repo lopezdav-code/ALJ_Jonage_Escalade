@@ -67,6 +67,14 @@ const MemberView = () => {
     const fetchMember = async () => {
       setLoading(true);
 
+      // Reset all states when loading a new member to avoid showing cached data
+      setMember(null);
+      setPhotoUrl(null);
+      setEmergencyContacts({ contact1: null, contact2: null });
+      setIsEmergencyContactFor([]);
+      setCompetitionResults([]);
+      setCompetitionInscriptions([]);
+
       try {
         // Fetch member data
         const { data, error } = await supabase
