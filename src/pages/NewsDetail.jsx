@@ -72,6 +72,7 @@ const NewsDetail = () => {
   const [viewingImage, setViewingImage] = useState(null);
   const [signedImageUrl, setSignedImageUrl] = useState(null);
   const [signedGalleryUrls, setSignedGalleryUrls] = useState([]);
+  const [signedDocUrl, setSignedDocUrl] = useState(null);
   const { toast } = useToast();
   const { isAdmin, isAdherent, loading: authLoading } = useAuth();
 
@@ -83,7 +84,7 @@ const NewsDetail = () => {
     } else {
       setNewsItem(data);
 
-      // Générer les URLs publiques pour l'image principale et la galerie
+      // Générer les URLs publiques pour l'image principale, la galerie et le document
       if (data.image_url) {
         const publicUrl = getSignedUrl(data.image_url);
         setSignedImageUrl(publicUrl);
@@ -92,6 +93,11 @@ const NewsDetail = () => {
       if (data.photo_gallery && data.photo_gallery.length > 0) {
         const publicUrls = getSignedUrls(data.photo_gallery);
         setSignedGalleryUrls(publicUrls);
+      }
+
+      if (data.document_url) {
+        const docUrl = getSignedUrl(data.document_url);
+        setSignedDocUrl(docUrl);
       }
     }
     setLoading(false);
@@ -302,7 +308,7 @@ const NewsDetail = () => {
           <CardFooter className="flex justify-between items-center">
             <div className="flex gap-2 flex-wrap">
               {newsItem.external_link && <Button asChild variant="outline"><a href={newsItem.external_link} target="_blank" rel="noreferrer"><ExternalLink className="w-4 h-4 mr-2" />Plus d'infos</a></Button>}
-              {newsItem.document_url && <Button asChild variant="outline"><a href={newsItem.document_url} target="_blank" rel="noreferrer"><Download className="w-4 h-4 mr-2" />Télécharger</a></Button>}
+              {signedDocUrl && <Button asChild variant="outline"><a href={signedDocUrl} target="_blank" rel="noreferrer"><Download className="w-4 h-4 mr-2" />Télécharger</a></Button>}
               {showAdminFeatures && (
                 <Button variant="outline" onClick={() => setIsPhotoUploadFormVisible(true)}>
                   <ImagePlus className="w-4 h-4 mr-2" /> Ajouter des photos

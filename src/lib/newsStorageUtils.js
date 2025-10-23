@@ -15,7 +15,15 @@ import { supabase } from '@/lib/customSupabaseClient';
 // Configuration
 const BUCKET_NAME = 'news';
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+const ALLOWED_DOCUMENT_TYPES = [
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'text/plain'
+];
 const SIGNED_URL_EXPIRY = 3600; // 1 heure en secondes
 
 /**
@@ -28,10 +36,37 @@ export const validateImageFile = (file) => {
     return { valid: false, error: 'Aucun fichier fourni' };
   }
 
-  if (!ALLOWED_TYPES.includes(file.type)) {
+  if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
     return {
       valid: false,
       error: `Type de fichier non supporté. Formats acceptés : JPEG, JPG, PNG, WebP`
+    };
+  }
+
+  if (file.size > MAX_FILE_SIZE) {
+    return {
+      valid: false,
+      error: `Fichier trop volumineux (${(file.size / 1024 / 1024).toFixed(2)}MB). Taille max : ${MAX_FILE_SIZE / 1024 / 1024}MB`
+    };
+  }
+
+  return { valid: true };
+};
+
+/**
+ * Valide un fichier document avant upload
+ * @param {File} file - Le fichier à valider
+ * @returns {Object} { valid: boolean, error?: string }
+ */
+export const validateDocumentFile = (file) => {
+  if (!file) {
+    return { valid: false, error: 'Aucun fichier fourni' };
+  }
+
+  if (!ALLOWED_DOCUMENT_TYPES.includes(file.type)) {
+    return {
+      valid: false,
+      error: `Type de fichier non supporté. Formats acceptés : PDF, Word, Excel, TXT`
     };
   }
 
@@ -82,6 +117,47 @@ export const uploadNewsImage = async (file) => {
 
   } catch (error) {
     console.error('Erreur uploadNewsImage:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+/**
+ * Upload un document pour une actualité
+ * @param {File} file - Le fichier document à uploader
+ * @returns {Promise<Object>} { success: boolean, path?: string, error?: string }
+ */
+export const uploadNewsDocument = async (file) => {
+  try {
+    // Validation du fichier
+    const validation = validateDocumentFile(file);
+    if (!validation.valid) {
+      return { success: false, error: validation.error };
+    }
+
+    // Génération du nom de fichier
+    const fileExt = file.name.split('.').pop();
+    const fileName = `news/documents/${Date.now()}.${fileExt}`;
+
+    // Upload vers Supabase Storage
+    const { data, error: uploadError } = await supabase.storage
+      .from(BUCKET_NAME)
+      .upload(fileName, file, {
+        cacheControl: '3600',
+        upsert: false
+      });
+
+    if (uploadError) {
+      console.error('Erreur upload Supabase:', uploadError);
+      return { success: false, error: `Erreur d'upload : ${uploadError.message}` };
+    }
+
+    return {
+      success: true,
+      path: fileName
+    };
+
+  } catch (error) {
+    console.error('Erreur uploadNewsDocument:', error);
     return { success: false, error: error.message };
   }
 };
@@ -226,7 +302,9 @@ export const deleteNewsImage = async (pathOrUrl) => {
 
 export default {
   validateImageFile,
+  validateDocumentFile,
   uploadNewsImage,
+  uploadNewsDocument,
   uploadNewsGalleryImage,
   getSignedUrl,
   getSignedUrls,
@@ -234,6 +312,7 @@ export default {
   deleteNewsImage,
   BUCKET_NAME,
   MAX_FILE_SIZE,
-  ALLOWED_TYPES,
+  ALLOWED_IMAGE_TYPES,
+  ALLOWED_DOCUMENT_TYPES,
   SIGNED_URL_EXPIRY
 };

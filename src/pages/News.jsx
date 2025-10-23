@@ -17,8 +17,6 @@ import { getSignedUrl } from '@/lib/newsStorageUtils';
 import { useNewsPermissions } from '@/hooks/useNewsPermissions';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
-const SHARED_BUCKET = 'exercise_images';
-
 const themes = [
   "Compétition",
   "Information générale",
@@ -95,6 +93,7 @@ const News = () => {
   const [selectedDate, setSelectedDate] = useState('');
   const [statusFilter, setStatusFilter] = useState('publie'); // Filter by status
   const [signedUrls, setSignedUrls] = useState({});
+  const [signedDocUrls, setSignedDocUrls] = useState({});
   const { toast } = useToast();
   const { isAdmin, isAdherent, loading: authLoading } = useAuth();
   const { canDelete, canArchive, canViewUnpublished, canEdit, loading: permissionsLoading } = useNewsPermissions();
@@ -108,8 +107,9 @@ const News = () => {
     } else {
       setNews(data);
 
-      // Générer les signed URLs pour toutes les images
+      // Générer les signed URLs pour toutes les images et documents
       const urlsMap = {};
+      const docUrlsMap = {};
       for (const item of data) {
         if (item.image_url) {
           const signedUrl = await getSignedUrl(item.image_url);
@@ -117,8 +117,15 @@ const News = () => {
             urlsMap[item.id] = signedUrl;
           }
         }
+        if (item.document_url) {
+          const signedDocUrl = await getSignedUrl(item.document_url);
+          if (signedDocUrl) {
+            docUrlsMap[item.id] = signedDocUrl;
+          }
+        }
       }
       setSignedUrls(urlsMap);
+      setSignedDocUrls(docUrlsMap);
     }
     setLoadingNews(false);
   }, [toast]);
@@ -293,7 +300,7 @@ const News = () => {
               <CardFooter className="flex flex-col items-start gap-2">
                 <div className="flex gap-2 flex-wrap">
                   <Button asChild variant="link" size="sm"><Link to={`/news/${item.id}`}><Eye className="w-4 h-4 mr-2" />Voir plus</Link></Button>
-                  {item.document_url && <Button asChild variant="link" size="sm"><a href={item.document_url} target="_blank" rel="noreferrer"><Download className="w-4 h-4 mr-2" />Télécharger</a></Button>}
+                  {signedDocUrls[item.id] && <Button asChild variant="link" size="sm"><a href={signedDocUrls[item.id]} target="_blank" rel="noreferrer"><Download className="w-4 h-4 mr-2" />Télécharger</a></Button>}
                   {item.theme === "Compétition" && item.competition_id && item.competitions && (
                     <Button asChild variant="link" size="sm">
                       <Link to={`/competitions/${item.competition_id}`}><ExternalLink className="w-4 h-4 mr-2" />{item.competitions.short_title}</Link>

@@ -9,9 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
-import { uploadNewsImage, getSignedUrl } from '@/lib/newsStorageUtils';
-
-const SHARED_BUCKET = 'exercise_images';
+import { uploadNewsImage, uploadNewsDocument, getSignedUrl } from '@/lib/newsStorageUtils';
 
 const NewsEdit = () => {
   const { id } = useParams();
@@ -38,6 +36,7 @@ const NewsEdit = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [competitions, setCompetitions] = useState([]); // State to store competitions
   const [signedImageUrl, setSignedImageUrl] = useState(null);
+  const [signedDocUrl, setSignedDocUrl] = useState(null);
 
   const themes = [
     "Compétition",
@@ -88,10 +87,15 @@ const NewsEdit = () => {
             date: data.date ? data.date.split('T')[0] : new Date().toISOString().split('T')[0],
           });
 
-          // Générer une signed URL pour l'image existante
+          // Générer les signed URLs pour l'image et le document existants
           if (data.image_url) {
             const signedUrl = await getSignedUrl(data.image_url);
             setSignedImageUrl(signedUrl);
+          }
+
+          if (data.document_url) {
+            const signedDocUrlTemp = await getSignedUrl(data.document_url);
+            setSignedDocUrl(signedDocUrlTemp);
           }
         } catch (error) {
           toast({ title: "Erreur", description: `Impossible de charger l'actualité : ${error.message}`, variant: "destructive" });
@@ -112,31 +116,24 @@ const NewsEdit = () => {
     }));
   };
 
-  const handleFileChange = (e, setFile) => {
+  const handleFileChange = (e, setFile, fileType) => {
     if (e.target.files && e.target.files[0]) {
       setFile(e.target.files[0]);
     }
   };
 
-  const uploadFile = async (file, bucket) => {
+  const uploadFile = async (file, isImage = true) => {
     if (!file) return null;
 
-    // Pour les images dans exercise_images, utiliser la fonction utilitaire
-    if (bucket === SHARED_BUCKET) {
-      const result = await uploadNewsImage(file);
-      if (!result.success) {
-        throw new Error(result.error);
-      }
-      return result.path;
+    // Utiliser la bonne fonction selon le type de fichier
+    const uploadFunction = isImage ? uploadNewsImage : uploadNewsDocument;
+    const result = await uploadFunction(file);
+
+    if (!result.success) {
+      throw new Error(result.error);
     }
 
-    // Pour les autres buckets (documents), utiliser l'ancienne méthode
-    const fileExt = file.name.split('.').pop();
-    const fileName = `news/${Date.now()}.${fileExt}`;
-    const { error } = await supabase.storage.from(bucket).upload(fileName, file);
-    if (error) throw error;
-    const { data } = supabase.storage.from(bucket).getPublicUrl(fileName);
-    return data.publicUrl;
+    return result.path;
   };
 
   const handleSubmit = async (e) => {
@@ -147,12 +144,12 @@ const NewsEdit = () => {
 
       // Upload image if a new one is selected
       if (imageFile) {
-        const imagePath = await uploadFile(imageFile, SHARED_BUCKET);
+        const imagePath = await uploadFile(imageFile, true);
         updatedFormData.image_url = imagePath;
       }
       // Upload document if a new one is selected
       if (documentFile) {
-        const documentUrl = await uploadFile(documentFile, SHARED_BUCKET);
+        const documentUrl = await uploadFile(documentFile, false);
         updatedFormData.document_url = documentUrl;
       }
 
@@ -177,7 +174,7 @@ const NewsEdit = () => {
         if (error) throw error;
         result = "Actualité créée avec succès.";
       }
-      
+
       toast({ title: "Succès", description: result });
       navigate('/news'); // Redirect back to news list
     } catch (error) {
@@ -226,8 +223,19 @@ const NewsEdit = () => {
           <Input id="external_link" name="external_link" value={formData.external_link} onChange={handleChange} placeholder="https://..." className="mt-1" />
         </div>
         <div>
-          <Label htmlFor="image">Image</Label>
-          <Input id="image" type="file" onChange={(e) => handleFileChange(e, setImageFile)} className="mt-1" accept="image/*" />
+          <Label htmlFor="image">Image principale</Label>
+          <Input
+            id="image"
+            type="file"
+            onChange={(e) => handleFileChange(e, setImageFile, 'Image principale')}
+            className="mt-1"
+            accept="image/*"
+          />
+          {imageFile && (
+            <p className="text-sm text-green-600 dark:text-green-400 mt-1 font-semibold">
+              ✓ Nouvelle image sélectionnée : {imageFile.name}
+            </p>
+          )}
           {signedImageUrl && !imageFile && (
             <div className="mt-2">
               <img src={signedImageUrl} alt="Aperçu actuel" className="h-20 rounded-md" />
@@ -236,11 +244,22 @@ const NewsEdit = () => {
           )}
         </div>
         <div>
-          <Label htmlFor="document">Document</Label>
-          <Input id="document" type="file" onChange={(e) => handleFileChange(e, setDocumentFile)} className="mt-1" />
-          {formData.document_url && !documentFile && (
+          <Label htmlFor="document">Document (PDF, etc.)</Label>
+          <Input
+            id="document"
+            type="file"
+            onChange={(e) => handleFileChange(e, setDocumentFile, 'Document')}
+            className="mt-1"
+            accept=".pdf,.doc,.docx,.xls,.xlsx,.txt"
+          />
+          {documentFile && (
+            <p className="text-sm text-green-600 dark:text-green-400 mt-1 font-semibold">
+              ✓ Nouveau document sélectionné : {documentFile.name}
+            </p>
+          )}
+          {signedDocUrl && !documentFile && (
             <div className="mt-2">
-              <a href={formData.document_url} target="_blank" rel="noreferrer" className="text-sm text-primary hover:underline">Voir le document actuel</a>
+              <a href={signedDocUrl} target="_blank" rel="noreferrer" className="text-sm text-primary hover:underline">Voir le document actuel</a>
             </div>
           )}
         </div>
