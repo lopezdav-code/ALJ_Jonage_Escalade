@@ -254,15 +254,21 @@ const MemberGroupTest = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <div className="flex justify-between items-center">
+          <div className="flex justify-between items-center">
           <h1 className="text-4xl font-bold headline flex items-center gap-3">
             <Users className="w-10 h-10 text-primary" />
             Gestion des Groupes
           </h1>
-          <Button onClick={() => navigate('/groupes/admin')} variant="outline">
-            <Settings className="w-4 h-4 mr-2" />
-            Gestion des groupes
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button onClick={() => navigate('/groupes/admin')} variant="outline">
+              <Settings className="w-4 h-4 mr-2" />
+              Gestion des groupes
+            </Button>
+            <Button onClick={() => navigate('/bureau-management')} variant="outline">
+              <Users className="w-4 h-4 mr-2" />
+              Gestion du bureau
+            </Button>
+          </div>
         </div>
       </motion.div>
 
