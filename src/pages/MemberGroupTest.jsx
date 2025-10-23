@@ -23,6 +23,7 @@ const MemberGroupTest = () => {
   const [groupes, setGroupes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [bureauMap, setBureauMap] = useState({});
 
   // Filtres
   const [titleFilter, setTitleFilter] = useState('');
@@ -32,6 +33,7 @@ const MemberGroupTest = () => {
   // Sélection
   const [selectedMembers, setSelectedMembers] = useState(new Set());
   const [selectedGroupeId, setSelectedGroupeId] = useState(null);
+  const [isVolunteer, setIsVolunteer] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !isAdmin) {
@@ -55,6 +57,27 @@ const MemberGroupTest = () => {
 
       if (error) throw error;
       setMembers(data || []);
+
+      // Charger les entrées 'bureau' et construire une map member_id -> [roles]
+      try {
+        const { data: bureauData, error: bErr } = await supabase
+          .from('bureau')
+          .select('id, members_id, role, sub_role');
+
+        if (bErr) throw bErr;
+
+        const map = {};
+        (bureauData || []).forEach(b => {
+          const mid = b.members_id;
+          if (!map[mid]) map[mid] = [];
+          map[mid].push(b);
+        });
+        setBureauMap(map);
+      } catch (innerErr) {
+        console.error('Erreur lors du chargement des entrées bureau:', innerErr);
+        // Ne pas bloquer le chargement des membres, mais avertir
+        toast({ title: 'Erreur', description: 'Impossible de charger les données du bureau.', variant: 'destructive' });
+      }
     } catch (error) {
       console.error('Erreur lors du chargement des membres:', error);
       toast({
@@ -190,6 +213,33 @@ const MemberGroupTest = () => {
           .eq('id', update.id);
 
         if (error) throw error;
+
+        // Si la checkbox "Bénévole ?" est cochée, ajouter une ligne dans 'bureau'
+        if (isVolunteer) {
+          try {
+            // Eviter les doublons : vérifier s'il existe déjà une ligne pour ce membre avec role 'Bénévole'
+            const { data: existing, error: checkErr } = await supabase
+              .from('bureau')
+              .select('id')
+              .eq('members_id', update.id)
+              .eq('role', 'Bénévole')
+              .limit(1);
+
+            if (checkErr) throw checkErr;
+
+            if (!existing || existing.length === 0) {
+              const { error: insertErr } = await supabase
+                .from('bureau')
+                .insert([{ members_id: update.id, role: 'Bénévole', sub_role: null }]);
+
+              if (insertErr) throw insertErr;
+            }
+          } catch (err) {
+            console.error('Erreur lors de l\'insertion bureau (Bénévole):', err);
+            // Ne pas bloquer l'ensemble, on enregistre l'erreur pour notifier
+            toast({ title: 'Erreur', description: `Impossible d'ajouter Bénévole pour l'id ${update.id}.`, variant: 'destructive' });
+          }
+        }
       }
 
       toast({
@@ -201,6 +251,7 @@ const MemberGroupTest = () => {
       await fetchMembers();
       setSelectedMembers(new Set());
       setSelectedGroupeId(null);
+      setIsVolunteer(false);
     } catch (error) {
       console.error('Erreur lors de la mise à jour:', error);
       toast({
@@ -379,6 +430,10 @@ const MemberGroupTest = () => {
                   </SelectContent>
                 </Select>
               </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox id="isVolunteer" checked={isVolunteer} onCheckedChange={setIsVolunteer} />
+                <Label htmlFor="isVolunteer" className="cursor-pointer">Bénévole ?</Label>
+              </div>
               <Button
                 onClick={handleBulkUpdate}
                 disabled={saving || selectedMembers.size === 0}
@@ -449,12 +504,13 @@ const MemberGroupTest = () => {
                     <TableHead>Titre</TableHead>
                     <TableHead>Sous-groupe</TableHead>
                     <TableHead>Groupe actuel</TableHead>
+                    <TableHead>Bureau</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredMembers.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                      <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                         Aucun membre trouvé avec ces filtres.
                       </TableCell>
                     </TableRow>
@@ -476,6 +532,19 @@ const MemberGroupTest = () => {
                         <TableCell>{member.sub_group || '-'}</TableCell>
                         <TableCell className="text-sm">
                           {formatGroupe(member.groupe_id)}
+                        </TableCell>
+                        <TableCell className="text-sm">
+                          {bureauMap[member.id] ? (
+                            <div className="flex flex-col text-sm">
+                              {bureauMap[member.id].map(b => (
+                                <div key={b.id} className="py-0.5">
+                                  {b.role}{b.sub_role ? ` (${b.sub_role})` : ''}
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <span className="text-muted-foreground">-</span>
+                          )}
                         </TableCell>
                       </TableRow>
                     ))

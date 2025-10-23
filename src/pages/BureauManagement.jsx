@@ -62,9 +62,11 @@ const BureauManagement = () => {
 
         const map = {};
         (bureauData || []).forEach((b) => {
+          // construire la clé complète (ex: 'Trésorier Adjoint')
+          const fullRole = b.sub_role ? `${b.role} ${b.sub_role}` : b.role;
           // associe le membre au rôle si présent
           const member = (membersData || []).find(m => m.id === b.members_id);
-          map[b.role] = member ? { ...member, bureau_id: b.id } : null;
+          map[fullRole] = member ? { ...member, bureau_id: b.id } : null;
         });
 
         setAssignments(map);
@@ -95,7 +97,8 @@ const BureauManagement = () => {
   }, [members]);
 
   const handleSelectSuggestion = (role, member) => {
-    setAssignments(prev => ({ ...prev, [role]: member }));
+    // Conserver l'ancien bureau_id lié au rôle si présent, pour pouvoir faire un update
+    setAssignments(prev => ({ ...prev, [role]: { ...member, bureau_id: prev?.[role]?.bureau_id || null } }));
     setSearchTextByRole(prev => ({ ...prev, [role]: '' }));
     setSuggestionsByRole(prev => ({ ...prev, [role]: [] }));
   };
@@ -132,22 +135,38 @@ const BureauManagement = () => {
 
     setSavingRole(prev => ({ ...prev, [role]: true }));
     try {
+      // Décomposer role complet en role + sub_role si nécessaire
+      // Exemple: 'Trésorier Adjoint' => role='Trésorier', sub_role='Adjoint'
+      let baseRole = role;
+      let subRole = null;
+      const parts = role.split(' ');
+      // si le dernier mot est 'Adjoint' ou 'Adjointe', on le considère comme sub_role
+      const last = parts[parts.length - 1];
+      if (last === 'Adjoint' || last === 'Adjointe') {
+        subRole = last;
+        baseRole = parts.slice(0, parts.length - 1).join(' ');
+      }
+
       // Si bureau_id est présent -> update, sinon insert
       if (member.bureau_id) {
-        const { error } = await supabase.from('bureau').update({ members_id: member.id }).eq('id', member.bureau_id);
+        const updates = { members_id: member.id, role: baseRole, sub_role: subRole };
+        const { error } = await supabase.from('bureau').update(updates).eq('id', member.bureau_id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from('bureau').insert([{ members_id: member.id, role }]);
+        const toInsert = { members_id: member.id, role: baseRole };
+        if (subRole) toInsert.sub_role = subRole;
+        const { error } = await supabase.from('bureau').insert([toInsert]);
         if (error) throw error;
       }
 
       toast({ title: 'Enregistré', description: `Le rôle ${role} a été attribué à ${member.first_name} ${member.last_name}.` });
       // recharger pour récupérer bureau_id et assurer cohérence
-      const { data: refreshed } = await supabase.from('bureau').select('id, members_id, role');
+      const { data: refreshed } = await supabase.from('bureau').select('id, members_id, role, sub_role');
       const map = {};
       (refreshed || []).forEach((b) => {
+        const fullRole = b.sub_role ? `${b.role} ${b.sub_role}` : b.role;
         const mem = members.find(m => m.id === b.members_id);
-        map[b.role] = mem ? { ...mem, bureau_id: b.id } : null;
+        map[fullRole] = mem ? { ...mem, bureau_id: b.id } : null;
       });
       setAssignments(map);
     } catch (err) {
