@@ -5,6 +5,7 @@ import { Trophy } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
+import { usePageAccess } from '@/hooks/usePageAccess';
 import ClubCompetitions from './competitions/ClubCompetitions';
 import FederalCalendar from './competitions/FederalCalendar';
 import Palmares from './competitions/Palmares';
@@ -12,6 +13,7 @@ import Vocabulary from './competitions/Vocabulary';
 
 const Competitions = () => {
   const { isAdmin, isBureau, isEncadrant } = useAuth();
+  const { hasAccess, loading: pageAccessLoading } = usePageAccess();
   const canEdit = isAdmin || isBureau || isEncadrant;
 
   return (

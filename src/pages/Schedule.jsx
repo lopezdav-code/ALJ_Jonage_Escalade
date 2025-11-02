@@ -11,11 +11,13 @@ import { timeSlots, days, ageCategories } from '@/data/schedule';
 import { formatParticipantName } from '@/lib/utils';
 import { supabase } from '@/lib/customSupabaseClient';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
+import { usePageAccess } from '@/hooks/usePageAccess';
 import { useNavigate, Link } from 'react-router-dom';
 
 const Schedule = () => {
   const navigate = useNavigate();
   const { isAdmin, loading: authLoading } = useAuth();
+  const { hasAccess, loading: pageAccessLoading } = usePageAccess();
   const [filters, setFilters] = useState({
     group: '',
     instructor: ''

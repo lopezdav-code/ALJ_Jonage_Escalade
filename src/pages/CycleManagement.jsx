@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/lib/customSupabaseClient';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
+import { usePageAccess } from '@/hooks/usePageAccess';
 import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -26,6 +27,7 @@ const CycleManagement = () => {
   const [deletingCycle, setDeletingCycle] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
   const { user, isAdmin, isEncadrant } = useAuth();
+  const { hasAccess, loading: pageAccessLoading } = usePageAccess();
   const { toast } = useToast();
   const navigate = useNavigate();
 

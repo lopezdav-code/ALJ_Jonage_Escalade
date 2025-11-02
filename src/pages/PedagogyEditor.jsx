@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { BookMarked, Loader2, ArrowLeft, Save, UploadCloud } from 'lucide-react';
 import { supabase } from '@/lib/customSupabaseClient';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
+import { usePageAccess } from '@/hooks/usePageAccess';
 import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -30,6 +31,7 @@ const PedagogyEditor = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { isAdmin } = useAuth();
+  const { hasAccess, loading: pageAccessLoading } = usePageAccess();
   const { toast } = useToast();
 
   const [isLoading, setIsLoading] = useState(!!id);

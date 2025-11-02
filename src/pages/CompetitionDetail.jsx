@@ -19,6 +19,7 @@ import { useMemberDetail } from '@/contexts/MemberDetailContext';
 import { uploadCompetitionPhoto, getCompetitionPhotoUrl } from '@/lib/competitionStorageUtils';
 import ParticipantsDisplay from '@/components/ParticipantsDisplay';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
+import { usePageAccess } from '@/hooks/usePageAccess';
 import { formatName } from '@/lib/utils';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
@@ -28,6 +29,7 @@ const CompetitionDetail = () => {
   const { toast } = useToast();
   const { showMemberDetails } = useMemberDetail();
   const { isAdmin, isBureau, isEncadrant } = useAuth();
+  const { hasAccess, loading: pageAccessLoading } = usePageAccess();
   const canEdit = isAdmin || isBureau || isEncadrant;
 
   const [loading, setLoading] = useState(true);

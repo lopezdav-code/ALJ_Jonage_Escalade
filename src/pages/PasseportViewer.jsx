@@ -12,11 +12,13 @@ import { CheckCircle2, Calendar, User as UserIcon, FileText, Loader2, Award, Arr
 import { useToast } from '@/components/ui/use-toast';
 import { formatName } from '@/lib/utils';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
+import { usePageAccess } from '@/hooks/usePageAccess';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
 const PasseportViewer = () => {
   const { isAdmin, isAdherent } = useAuth();
+  const { hasAccess, loading: pageAccessLoading } = usePageAccess();
   const { toast } = useToast();
   const [members, setMembers] = useState([]);
   const [allValidations, setAllValidations] = useState([]);

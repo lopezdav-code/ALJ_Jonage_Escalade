@@ -4,6 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { supabase } from '@/lib/customSupabaseClient';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
+import { usePageAccess } from '@/hooks/usePageAccess';
 import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -21,6 +22,7 @@ const CycleDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user, isAdmin, isEncadrant } = useAuth();
+  const { hasAccess, loading: pageAccessLoading } = usePageAccess();
   const { toast } = useToast();
 
   const [cycle, setCycle] = useState(null);

@@ -3,6 +3,7 @@ import { Helmet } from 'react-helmet';
 import { motion } from 'framer-motion';
 import { supabase } from '@/lib/customSupabaseClient';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
+import { usePageAccess } from '@/hooks/usePageAccess';
 import { useToast } from '@/components/ui/use-toast';
 import { Loader2, CalendarCheck, CheckCircle2, X, User, Calendar, MessageSquare } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,6 +19,7 @@ import { Button } from '@/components/ui/button';
 
 const AttendanceRecap = () => {
   const { isAdmin, isEncadrant, loading: authLoading } = useAuth();
+  const { hasAccess, loading: pageAccessLoading } = usePageAccess();
   const [schedules, setSchedules] = useState([]);
   const [selectedScheduleId, setSelectedScheduleId] = useState('');
   const [attendanceData, setAttendanceData] = useState([]);
@@ -27,13 +29,13 @@ const AttendanceRecap = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  // Redirection si pas admin ou encadrant
+  // Redirection si pas d'accès à la page
   useEffect(() => {
-    if (!authLoading && !isAdmin && !isEncadrant) {
+    if (!authLoading && !pageAccessLoading && !hasAccess) {
       navigate('/schedule');
       return;
     }
-  }, [isAdmin, isEncadrant, authLoading, navigate]);
+  }, [hasAccess, authLoading, pageAccessLoading, navigate]);
 
   // Charger tous les schedules
   const fetchSchedules = useCallback(async () => {

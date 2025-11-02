@@ -7,6 +7,7 @@ import { supabase } from '@/lib/customSupabaseClient';
 import { useToast } from '@/components/ui/use-toast';
 import SessionForm from '@/components/session-log/SessionForm';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
+import { usePageAccess } from '@/hooks/usePageAccess';
 
 const BUCKET_NAME = 'exercise_images';
 
@@ -19,6 +20,7 @@ const SessionEdit = () => {
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
   const { user, isAdmin, loading: authLoading } = useAuth();
+  const { hasAccess, loading: pageAccessLoading } = usePageAccess();
 
   const canEditContent = !authLoading && isAdmin;
 

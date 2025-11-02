@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useToast } from '@/components/ui/use-toast';
 import CompetitionFilters from '@/components/competitions/CompetitionFilters';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
+import { usePageAccess } from '@/hooks/usePageAccess';
 import { getCompetitionPhotoUrl } from '@/lib/competitionStorageUtils';
 
 const ClubCompetitions = () => {
@@ -26,6 +27,7 @@ const ClubCompetitions = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { isAdmin, isBureau, isEncadrant } = useAuth();
+  const { hasAccess, loading: pageAccessLoading } = usePageAccess();
   const canCreate = isAdmin || isBureau || isEncadrant;
 
   // Récupérer les compétitions et les participants

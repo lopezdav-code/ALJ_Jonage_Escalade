@@ -14,6 +14,7 @@ import { Command, CommandInput, CommandEmpty, CommandGroup, CommandItem, Command
 import { cn } from '@/lib/utils';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
+import { usePageAccess } from '@/hooks/usePageAccess';
 import { useMemberViewPermissions } from '@/hooks/useMemberViewPermissions';
 
 // Placeholder for brevetColors - adapt if needed
