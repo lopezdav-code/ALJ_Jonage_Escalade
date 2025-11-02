@@ -104,10 +104,10 @@ const getDefaultPageConfig = (path) => {
   }
 
   // Pages réservées aux encadrants
-  const encadrantPages = ['/passeport-validation'];
+  const encadrantPages = ['/passeport-validation', '/attendance-recap'];
 
   if (encadrantPages.some(p => path.startsWith(p))) {
-    return { to: path, roles: ['encadrant', 'admin'] };
+    return { to: path, roles: ['bureau', 'encadrant', 'admin'] };
   }
 
   // Par défaut, réservé aux adhérents et plus
