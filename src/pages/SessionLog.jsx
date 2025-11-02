@@ -13,6 +13,7 @@ import InstructorAutocomplete from '@/components/schedule/InstructorAutocomplete
 import { useToast } from '@/components/ui/use-toast';
 import SessionList from '@/components/session-log/SessionList';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
+import { usePageAccess } from '@/hooks/usePageAccess';
 
 const SessionLog = () => {
   const navigate = useNavigate();
@@ -27,9 +28,12 @@ const SessionLog = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const { toast } = useToast();
-  const { user, isAdmin, isAdherent, loading: authLoading } = useAuth();
+  const { user, isAdmin, loading: authLoading } = useAuth();
+  const { hasAccess, loading: pageAccessLoading, userRole } = usePageAccess();
 
-  const canViewPage = !authLoading && (isAdmin || isAdherent);
+  // Utiliser usePageAccess() pour vérifier l'accès à la page
+  const canViewPage = !authLoading && !pageAccessLoading && hasAccess;
+  // Seul l'admin peut éditer le contenu des séances
   const canEditContent = !authLoading && isAdmin;
 
   const fetchSessions = useCallback(async () => {
@@ -152,7 +156,7 @@ const SessionLog = () => {
     return result;
   }, [sessions, searchTerm, filterCycleId, filterScheduleId, filterInstructorId, membersOptions]);
 
-  if (authLoading) {
+  if (authLoading || pageAccessLoading) {
     return <div className="flex justify-center items-center h-64"><Loader2 className="w-12 h-12 animate-spin text-primary" /></div>;
   }
 
@@ -161,7 +165,7 @@ const SessionLog = () => {
       <div className="text-center py-16">
         <Lock className="w-12 h-12 mx-auto text-muted-foreground" />
         <h1 className="text-2xl font-bold mt-4">Accès restreint</h1>
-        <p className="text-muted-foreground">Vous devez être un adhérent ou un administrateur pour voir cette page.</p>
+        <p className="text-muted-foreground">Vous n'avez pas les permissions nécessaires pour accéder à cette page.</p>
         {!user && <p className="mt-4">Veuillez vous connecter.</p>}
       </div>
     );

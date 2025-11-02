@@ -192,12 +192,12 @@ const Navigation = () => {
     { to: '/volunteers', text: 'Adhérent', roles: ['adherent', 'bureau', 'encadrant', 'admin'] },
     { to: '/competitions', text: 'Compétitions', roles: ['adherent', 'bureau', 'encadrant', 'admin'] },
     { to: '/agenda', text: 'Agenda', roles: ['public', 'user', 'adherent', 'bureau', 'encadrant', 'admin'] },
-    { 
-      to: '/session-log', 
-      text: 'Séances', 
-      roles: ['adherent', 'encadrant', 'admin'],
+    {
+      to: '/session-log',
+      text: 'Séances',
+      roles: ['adherent', 'bureau', 'encadrant', 'admin'],
       subMenu: [
-        { to: '/session-log', text: 'Historique des séances', roles: ['adherent', 'encadrant', 'admin'] },
+        { to: '/session-log', text: 'Historique des séances', roles: ['adherent', 'bureau', 'encadrant', 'admin'] },
         { to: '/cycles', text: 'Gestion des cycles', roles: ['encadrant', 'admin'] },
         { to: '/passeport-validation', text: 'Validation Passeports', roles: ['encadrant', 'admin'] },
       ]
