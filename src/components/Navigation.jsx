@@ -198,8 +198,8 @@ const Navigation = () => {
       roles: ['adherent', 'bureau', 'encadrant', 'admin'],
       subMenu: [
         { to: '/session-log', text: 'Historique des séances', roles: ['adherent', 'bureau', 'encadrant', 'admin'] },
-        { to: '/cycles', text: 'Gestion des cycles', roles: ['encadrant', 'admin'] },
-        { to: '/passeport-validation', text: 'Validation Passeports', roles: ['encadrant', 'admin'] },
+        { to: '/cycles', text: 'Gestion des cycles', roles: ['bureau', 'encadrant', 'admin'] },
+        { to: '/passeport-validation', text: 'Validation Passeports', roles: ['bureau', 'encadrant', 'admin'] },
       ]
     },
     { to: '/pedagogy', text: 'Support Pédagogique', roles: ['adherent', 'encadrant', 'admin'] },
