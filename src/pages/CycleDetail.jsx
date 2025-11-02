@@ -15,8 +15,59 @@ import { Loader2, ArrowLeft, PlusCircle, Trash2, Calendar, Users, Clock, Pencil,
 import { Input, Textarea } from '@/components/ui/input'; // Ensure Input and Textarea are imported
 import { Label } from '@/components/ui/label';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
+import { supabaseUrl } from '@/lib/customSupabaseClient';
 
 const CYCLE_BUCKET_NAME = 'cycle_documents';
+
+// Fonction pour obtenir l'URL signée d'une image de cycle
+const getCycleImageUrl = async (imagePath) => {
+  if (!imagePath) return null;
+  try {
+    const { data, error } = await supabase.storage
+      .from(CYCLE_BUCKET_NAME)
+      .createSignedUrl(imagePath, 3600); // Valide 1 heure
+
+    if (error) {
+      console.error('Erreur getCycleImageUrl:', error);
+      return null;
+    }
+
+    let finalUrl = data.signedUrl;
+    if (finalUrl && finalUrl.startsWith('/')) {
+      finalUrl = `${supabaseUrl}/storage/v1${finalUrl}`;
+    }
+
+    return finalUrl;
+  } catch (error) {
+    console.error('Erreur getCycleImageUrl:', error);
+    return null;
+  }
+};
+
+// Fonction pour obtenir l'URL signée d'un document PDF
+const getCyclePdfUrl = async (pdfPath) => {
+  if (!pdfPath) return null;
+  try {
+    const { data, error } = await supabase.storage
+      .from(CYCLE_BUCKET_NAME)
+      .createSignedUrl(pdfPath, 3600); // Valide 1 heure
+
+    if (error) {
+      console.error('Erreur getCyclePdfUrl:', error);
+      return null;
+    }
+
+    let finalUrl = data.signedUrl;
+    if (finalUrl && finalUrl.startsWith('/')) {
+      finalUrl = `${supabaseUrl}/storage/v1${finalUrl}`;
+    }
+
+    return finalUrl;
+  } catch (error) {
+    console.error('Erreur getCyclePdfUrl:', error);
+    return null;
+  }
+};
 
 const CycleDetail = () => {
   const { id } = useParams();
@@ -26,6 +77,8 @@ const CycleDetail = () => {
   const { toast } = useToast();
 
   const [cycle, setCycle] = useState(null);
+  const [signedImageUrl, setSignedImageUrl] = useState(null);
+  const [signedPdfUrl, setSignedPdfUrl] = useState(null);
   const [sessions, setSessions] = useState([]);
   const [availableSessions, setAvailableSessions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -66,7 +119,7 @@ const CycleDetail = () => {
       short_description: cycle.short_description || '',
       long_description: cycle.long_description || '',
     });
-    setImagePreview(cycle.image_url || null);
+    setImagePreview(signedImageUrl || null);
     setImagePosition(cycle.image_position || 'center');
     setIsEditCycleDialogOpen(true);
   };
@@ -95,8 +148,8 @@ const CycleDetail = () => {
       throw new Error(`Erreur d'upload: ${uploadError.message || 'Le bucket "cycle_documents" n\'existe peut-être pas dans Supabase Storage'}`);
     }
 
-    const { data } = supabase.storage.from(CYCLE_BUCKET_NAME).getPublicUrl(fileName);
-    return data.publicUrl;
+    // Retourner seulement le chemin relatif du fichier
+    return fileName;
   };
 
   const handleSaveCycleEdits = async () => {
@@ -158,6 +211,19 @@ const CycleDetail = () => {
 
       if (error) throw error;
       setCycle(data);
+
+      // Charger l'URL signée pour l'image si elle existe
+      if (data.image_url) {
+        const signedUrl = await getCycleImageUrl(data.image_url);
+        setSignedImageUrl(signedUrl);
+      }
+
+      // Charger l'URL signée pour le PDF si elle existe
+      if (data.pdf_url) {
+        const signedUrl = await getCyclePdfUrl(data.pdf_url);
+        setSignedPdfUrl(signedUrl);
+      }
+
       setLoading(false);
     } catch (error) {
       toast({
@@ -451,16 +517,16 @@ const CycleDetail = () => {
               <div className="flex-1">
                 <div className="flex items-start gap-4">
                   {/* Image illustrative en miniature */}
-                  {cycle.image_url && (
+                  {signedImageUrl && (
                     <div className="flex-shrink-0">
                       <a
-                        href={cycle.image_url}
+                        href={signedImageUrl}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="block"
                       >
                         <img
-                          src={cycle.image_url}
+                          src={signedImageUrl}
                           alt={cycle.name}
                           className="w-24 h-24 sm:w-32 sm:h-32 object-cover rounded-lg shadow-md hover:shadow-lg transition-shadow border-2 border-gray-200"
                         />
@@ -497,10 +563,10 @@ const CycleDetail = () => {
                     )}
 
                     {/* Affichage du document PDF */}
-                    {cycle.pdf_url && (
+                    {signedPdfUrl && (
                       <div className="mt-4">
                         <a
-                          href={cycle.pdf_url}
+                          href={signedPdfUrl}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="inline-flex items-center gap-2 px-3 py-2 bg-red-50 text-red-700 rounded-md hover:bg-red-100 transition-colors"
@@ -902,11 +968,11 @@ const CycleDetail = () => {
 
               <div className="space-y-2">
                 <Label htmlFor="cycle-pdf">Document PDF</Label>
-                {cycle.pdf_url && (
+                {signedPdfUrl && (
                   <div className="flex items-center gap-2 mb-2">
                     <FileText className="w-4 h-4 text-red-600" />
                     <a
-                      href={cycle.pdf_url}
+                      href={signedPdfUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-sm text-blue-600 hover:underline"
@@ -1002,7 +1068,7 @@ const CycleDetail = () => {
                   )}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  {imageFile ? 'Une nouvelle image sera téléchargée' : cycle.image_url ? 'Laisser vide pour conserver l\'image actuelle' : 'Format recommandé: 16:9 (1200x675px)'}
+                  {imageFile ? 'Une nouvelle image sera téléchargée' : signedImageUrl ? 'Laisser vide pour conserver l\'image actuelle' : 'Format recommandé: 16:9 (1200x675px)'}
                 </p>
               </div>
             </div>
