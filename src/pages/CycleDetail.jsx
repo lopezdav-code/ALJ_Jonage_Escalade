@@ -185,6 +185,31 @@ const CycleDetail = () => {
     }
   };
 
+  const getMemberNamesFromIds = async (memberIds) => {
+    if (!memberIds || memberIds.length === 0) return [];
+
+    try {
+      const { data, error } = await supabase
+        .from('members')
+        .select('id, first_name, last_name')
+        .in('id', memberIds);
+
+      if (error) throw error;
+
+      // Créer une map ID -> Nom
+      const memberMap = {};
+      data?.forEach((member) => {
+        memberMap[member.id] = `${member.first_name} ${member.last_name}`;
+      });
+
+      // Retourner les noms dans l'ordre original
+      return memberIds.map((id) => memberMap[id] || id).filter(Boolean);
+    } catch (error) {
+      console.error('Erreur lors de la conversion des IDs en noms:', error);
+      return memberIds; // Retourner les IDs en cas d'erreur
+    }
+  };
+
   const fetchCycleSessions = async () => {
     try {
       const { data, error } = await supabase
@@ -194,7 +219,22 @@ const CycleDetail = () => {
         .order('date', { ascending: false, nullsFirst: false });
 
       if (error) throw error;
-      setSessions(data || []);
+
+      // Convertir les IDs en noms pour les instructeurs et élèves
+      const sessionsWithNames = await Promise.all(
+        (data || []).map(async (session) => {
+          const instructorNames = await getMemberNamesFromIds(session.instructors || []);
+          const studentNames = await getMemberNamesFromIds(session.students || []);
+
+          return {
+            ...session,
+            instructorNames: instructorNames,
+            studentNames: studentNames,
+          };
+        })
+      );
+
+      setSessions(sessionsWithNames);
       setLoading(false);
     } catch (error) {
       console.error('Erreur lors du chargement des séances du cycle:', error);
@@ -506,7 +546,7 @@ const CycleDetail = () => {
                   {(() => {
                     const allStudents = new Set();
                     sessions.forEach(session => {
-                      session.students?.forEach(student => allStudents.add(student));
+                      session.studentNames?.forEach(student => allStudents.add(student));
                     });
                     const studentsList = Array.from(allStudents).sort();
                     return studentsList.length > 0 ? (
@@ -534,7 +574,7 @@ const CycleDetail = () => {
                   {(() => {
                     const allInstructors = new Set();
                     sessions.forEach(session => {
-                      session.instructors?.forEach(instructor => allInstructors.add(instructor));
+                      session.instructorNames?.forEach(instructor => allInstructors.add(instructor));
                     });
                     const instructorsList = Array.from(allInstructors).sort();
                     return instructorsList.length > 0 ? (
@@ -636,11 +676,11 @@ const CycleDetail = () => {
                                 <span>{session.start_time}</span>
                               </div>
                             )}
-                            {session.instructors && session.instructors.length > 0 && (
+                            {session.instructorNames && session.instructorNames.length > 0 && (
                               <div className="flex items-start gap-2">
                                 <Users className="w-4 h-4 flex-shrink-0 mt-0.5" />
                                 <span className="break-words">
-                                  Encadrants: {session.instructors.join(', ')}
+                                  Encadrants: {session.instructorNames.join(', ')}
                                 </span>
                               </div>
                             )}
