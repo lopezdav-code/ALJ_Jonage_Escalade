@@ -53,6 +53,18 @@ export const usePageAccess = (pagePath = null) => {
     // Vérifier si le rôle de l'utilisateur a accès à cette page
     const hasAccess = pageConfig ? pageConfig.roles.includes(userRole) : false;
 
+    // Debugging pour diagnostiquer les problèmes d'accès
+    if (currentPath === '/attendance-recap' || currentPath.startsWith('/attendance-recap')) {
+      console.log('[usePageAccess] Diagnostic for /attendance-recap:', {
+        userRole,
+        profile: profile ? { role: profile.role } : 'no profile',
+        user: user ? user.email : 'no user',
+        pageConfig,
+        allowedRoles: pageConfig?.roles,
+        hasAccess,
+      });
+    }
+
     return {
       hasAccess,
       loading: false,

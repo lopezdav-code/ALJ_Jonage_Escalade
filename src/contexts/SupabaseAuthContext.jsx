@@ -50,13 +50,33 @@ export const AuthProvider = ({ children }) => {
           return null;
         }
 
+        // Si le profil existe, vérifier si l'utilisateur est dans la table bureau
+        let profileData = data;
+        if (profileData && profileData.member_id) {
+          try {
+            const { data: bureauData, error: bureauError } = await supabase
+              .from('bureau')
+              .select('id, role')
+              .eq('members_id', profileData.member_id)
+              .single();
+
+            // Si l'utilisateur a un rôle dans la table bureau, marquer comme 'bureau'
+            if (bureauData && !bureauError) {
+              profileData.role = 'bureau';
+            }
+          } catch (bureauCheckError) {
+            // Pas dans la table bureau, garder le rôle original
+            console.debug('User not found in bureau table, using profile role');
+          }
+        }
+
         // Mettre en cache le résultat
         profileCache.set(userId, {
-          data,
+          data: profileData,
           timestamp: Date.now()
         });
 
-        return data;
+        return profileData;
       } catch (profileError) {
         console.error("Error in profile fetch:", profileError);
         return null;
