@@ -200,6 +200,7 @@ const Navigation = () => {
         { to: '/session-log', text: 'Historique des séances', roles: ['adherent', 'bureau', 'encadrant', 'admin'] },
         { to: '/cycles', text: 'Gestion des cycles', roles: ['bureau', 'encadrant', 'admin'] },
         { to: '/passeport-validation', text: 'Validation Passeports', roles: ['bureau', 'encadrant', 'admin'] },
+        { to: '/attendance-recap', text: 'Récapitulatif des présences', roles: ['bureau', 'encadrant', 'admin'] },
       ]
     },
     { to: '/pedagogy', text: 'Support Pédagogique', roles: ['adherent', 'encadrant', 'admin'] },
