@@ -138,6 +138,16 @@ describe('Test d\'affichage de toutes les pages', () => {
     "isSubMenu": false
   },
   {
+    "to": "/exercise-progress",
+    "text": "Progression des exercices",
+    "roles": [
+      "bureau",
+      "encadrant",
+      "admin"
+    ],
+    "isSubMenu": false
+  },
+  {
     "to": "/pedagogy",
     "text": "Support Pédagogique",
     "roles": [

@@ -54,6 +54,7 @@ const ScheduleAdmin = lazy(() => import('@/pages/ScheduleAdmin'));
 const ScheduleEdit = lazy(() => import('@/pages/ScheduleEdit'));
 const MemberGroupTest = lazy(() => import('@/pages/MemberGroupTest'));
 const BureauManagement = lazy(() => import('@/pages/BureauManagement'));
+const ExerciseProgress = lazy(() => import('@/pages/ExerciseProgress'));
 
 import { AuthProvider, useAuth } from '@/contexts/SupabaseAuthContext';
 import { ConfigProvider } from '@/contexts/ConfigContext';
@@ -154,6 +155,7 @@ const AppContent = () => {
           <Route path="/bureau-management" element={<LazyRoute><BureauManagement /></LazyRoute>} />
           <Route path="/groupes/admin" element={<LazyRoute><GroupeAdmin /></LazyRoute>} />
           <Route path="/attendance-recap" element={<LazyRoute><AttendanceRecap /></LazyRoute>} />
+          <Route path="/exercise-progress" element={<LazyRoute><ExerciseProgress /></LazyRoute>} />
         </Routes>
       </main>
       <Footer />
