@@ -53,20 +53,24 @@ export const AuthProvider = ({ children }) => {
         // Si le profil existe, vérifier si l'utilisateur est dans la table bureau
         let profileData = data;
         if (profileData && profileData.member_id) {
-          try {
-            const { data: bureauData, error: bureauError } = await supabase
-              .from('bureau')
-              .select('id, role')
-              .eq('members_id', profileData.member_id)
-              .single();
+          // Ne vérifier la table bureau que si le rôle ne est pas déjà admin ou encadrant
+          // Les admins et encadrants gardent leur rôle explicite
+          if (!profileData.role || (profileData.role !== 'admin' && profileData.role !== 'encadrant')) {
+            try {
+              const { data: bureauData, error: bureauError } = await supabase
+                .from('bureau')
+                .select('id, role')
+                .eq('members_id', profileData.member_id)
+                .single();
 
-            // Si l'utilisateur a un rôle dans la table bureau, marquer comme 'bureau'
-            if (bureauData && !bureauError) {
-              profileData.role = 'bureau';
+              // Si l'utilisateur a un rôle dans la table bureau ET n'a pas de rôle explicite, assigner 'bureau'
+              if (bureauData && !bureauError && !profileData.role) {
+                profileData.role = 'bureau';
+              }
+            } catch (bureauCheckError) {
+              // Pas dans la table bureau, garder le rôle original
+              console.debug('User not found in bureau table, using profile role');
             }
-          } catch (bureauCheckError) {
-            // Pas dans la table bureau, garder le rôle original
-            console.debug('User not found in bureau table, using profile role');
           }
         }
 
