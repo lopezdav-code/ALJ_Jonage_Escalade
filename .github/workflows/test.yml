@@ -36,22 +36,25 @@ jobs:
         run: npm run build
 
       - name: 🚀 Start dev server
-        run: npm run dev &
+        run: npm run dev > /tmp/server.log 2>&1 &
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
 
       - name: ⏳ Wait for server to be ready
         run: |
+          echo "⏳ Waiting for server to start..."
           for i in {1..30}; do
-            if curl -s http://localhost:3000/ALJ_Jonage_Escalade/ > /dev/null; then
+            if curl -s http://localhost:3000/ALJ_Jonage_Escalade/ > /dev/null 2>&1; then
               echo "✅ Server is ready"
               exit 0
             fi
-            echo "⏳ Waiting for server... ($i/30)"
+            echo "Attempt $i/30..."
             sleep 2
           done
           echo "❌ Server failed to start"
+          echo "📋 Server logs:"
+          cat /tmp/server.log || echo "No server logs available"
           exit 1
 
       - name: 🧪 Run Cypress tests
