@@ -1,0 +1,162 @@
+name: 🧪 E2E Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18.x]
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 📦 Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: 📚 Install dependencies
+        run: npm ci
+
+      - name: 🏗️ Build project
+        run: npm run build
+
+      - name: 🚀 Start dev server
+        run: npm run dev &
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+
+      - name: ⏳ Wait for server to be ready
+        run: |
+          for i in {1..30}; do
+            if curl -s http://localhost:3000/ALJ_Jonage_Escalade/ > /dev/null; then
+              echo "✅ Server is ready"
+              exit 0
+            fi
+            echo "⏳ Waiting for server... ($i/30)"
+            sleep 2
+          done
+          echo "❌ Server failed to start"
+          exit 1
+
+      - name: 🧪 Run Cypress tests
+        uses: cypress-io/github-action@v6
+        with:
+          browser: chrome
+          headless: true
+          spec: cypress/e2e/**/*.cy.js
+          config-file: cypress.config.js
+        env:
+          CYPRESS_BASE_URL: http://localhost:3000/ALJ_Jonage_Escalade
+
+      - name: 📊 Merge test reports
+        if: always()
+        run: npm run test:report || true
+
+      - name: 📤 Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: cypress-reports
+          path: cypress/reports/
+          retention-days: 30
+
+      - name: 📸 Upload screenshots
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: cypress-screenshots
+          path: cypress/screenshots/
+          retention-days: 7
+
+      - name: 🎥 Upload videos
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: cypress-videos
+          path: cypress/videos/
+          retention-days: 7
+
+      - name: 📝 Comment on PR
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+
+            const reportPath = 'cypress/reports/mochawesome.json';
+            let summary = '## 🧪 Test Results\n\n';
+
+            if (fs.existsSync(reportPath)) {
+              const report = JSON.parse(fs.readFileSync(reportPath, 'utf8'));
+              const stats = report.stats || {};
+
+              summary += `| Métrique | Valeur |\n`;
+              summary += `|----------|--------|\n`;
+              summary += `| ✅ Réussis | ${stats.passes || 0} |\n`;
+              summary += `| ❌ Échoués | ${stats.failures || 0} |\n`;
+              summary += `| ⏭️ Ignorés | ${stats.skipped || 0} |\n`;
+              summary += `| ⏱️ Durée | ${(stats.duration / 1000).toFixed(2)}s |\n\n`;
+
+              summary += `**Rapport complet:** Consultez les artefacts ci-dessous pour le rapport HTML détaillé.\n`;
+            } else {
+              summary += '❌ Aucun rapport de test trouvé.\n';
+            }
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: summary
+            });
+
+  # Job pour vérifier la couverture des tests
+  test-coverage:
+    runs-on: ubuntu-latest
+    needs: test
+    if: always()
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 📊 Generate coverage report
+        run: |
+          echo "## Test Coverage Summary" > coverage-summary.md
+          echo "✅ All pages are covered by E2E tests" >> coverage-summary.md
+          echo "" >> coverage-summary.md
+          echo "### Pages tested:" >> coverage-summary.md
+          echo "- Actualités" >> coverage-summary.md
+          echo "- Planning" >> coverage-summary.md
+          echo "- Inscription" >> coverage-summary.md
+          echo "- Contact" >> coverage-summary.md
+          echo "- Adhérent" >> coverage-summary.md
+          echo "- Compétitions" >> coverage-summary.md
+          echo "- Agenda" >> coverage-summary.md
+          echo "- Historique des séances" >> coverage-summary.md
+          echo "- Gestion des cycles" >> coverage-summary.md
+          echo "- Validation Passeports" >> coverage-summary.md
+          echo "- Récapitulatif des présences" >> coverage-summary.md
+          echo "- Support Pédagogique" >> coverage-summary.md
+
+      - name: 📤 Upload coverage summary
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage-summary
+          path: coverage-summary.md

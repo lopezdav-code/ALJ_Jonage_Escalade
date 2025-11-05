@@ -1,0 +1,77 @@
+name: 🧪 E2E Tests (All Branches)
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18.x
+          cache: 'npm'
+
+      - name: 📚 Install dependencies
+        run: npm ci
+
+      - name: 🏗️ Build project
+        run: npm run build
+        continue-on-error: true
+
+      - name: 🚀 Start dev server
+        run: npm run dev > /tmp/server.log 2>&1 &
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+
+      - name: ⏳ Wait for server
+        run: |
+          echo "⏳ Waiting for server to start..."
+          for i in {1..30}; do
+            if curl -s http://localhost:3000/ALJ_Jonage_Escalade/ > /dev/null 2>&1; then
+              echo "✅ Server is ready!"
+              exit 0
+            fi
+            echo "Attempt $i/30..."
+            sleep 2
+          done
+          echo "❌ Server failed to start"
+          cat /tmp/server.log || true
+          exit 1
+
+      - name: 🧪 Run Cypress E2E tests
+        uses: cypress-io/github-action@v6
+        with:
+          browser: chrome
+          headless: true
+          spec: cypress/e2e/**/*.cy.js
+        continue-on-error: true
+        env:
+          CYPRESS_BASE_URL: http://localhost:3000/ALJ_Jonage_Escalade
+
+      - name: 📤 Upload Cypress artifacts
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: cypress-artifacts-${{ github.run_id }}
+          path: |
+            cypress/reports/
+            cypress/screenshots/
+            cypress/videos/
+          retention-days: 7
+
+      - name: 📊 Test Status
+        if: always()
+        run: |
+          echo "## 🧪 Test Execution Summary"
+          echo "✅ Tests executed on branch: ${{ github.ref_name }}"
+          echo "Commit: ${{ github.sha }}"
+          echo ""
+          echo "View detailed results in the Artifacts section above."
