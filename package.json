@@ -17,7 +17,13 @@
     "server:start": "powershell -ExecutionPolicy Bypass -File scripts/server-manager.ps1 start",
     "server:stop": "powershell -ExecutionPolicy Bypass -File scripts/server-manager.ps1 stop",
     "server:check": "node -e \"require('http').get('http://localhost:3000/ALJ_Jonage_Escalade/', (res) => console.log('✅ Serveur actif:', res.statusCode)).on('error', () => console.log('❌ Serveur inactif'))\"",
-    "update-schema": "node scripts/update-schema.js"
+    "update-schema": "node scripts/update-schema.js",
+    "test:generate": "node scripts/generate-tests.cjs",
+    "test:e2e": "cypress run --headless --browser chrome",
+    "test:e2e:ui": "cypress open",
+    "test:e2e:debug": "cypress run --headed --browser chrome --no-exit",
+    "test:report": "node scripts/merge-reports.cjs && open cypress/reports/mochawesome.html || start cypress/reports/mochawesome.html",
+    "test:watch": "cypress run --watch --headless"
   },
   "dependencies": {
     "@emailjs/browser": "^4.3.3",
@@ -71,9 +77,13 @@
     "@types/react-dom": "^18.2.7",
     "@vitejs/plugin-react": "^4.0.3",
     "autoprefixer": "^10.4.16",
+    "cypress": "^15.6.0",
     "eslint": "^8.57.1",
     "eslint-config-react-app": "^7.0.1",
     "gh-pages": "^6.3.0",
+    "mochawesome": "^7.1.4",
+    "mochawesome-merge": "^5.0.0",
+    "mochawesome-report-generator": "^6.3.2",
     "pdf-parse": "^2.4.5",
     "pdfjs-dist": "^5.4.296",
     "postcss": "^8.4.31",
