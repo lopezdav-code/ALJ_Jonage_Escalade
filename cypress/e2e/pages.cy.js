@@ -171,8 +171,8 @@ describe('Test d\'affichage de toutes les pages', () => {
           // Vérifier que la page s'est chargée
           cy.get('body', { timeout: 5000 }).should('be.visible');
 
-          // Vérifier qu'il n'y a pas d'erreur
-          cy.get('[class*="error"]', { timeout: 2000 }).should('not.be.visible');
+          // Vérifier qu'il n'y a pas d'erreur visible
+          cy.get('[class*="error"]').should('not.exist');
 
           // Prendre une capture d'écran pour référence
           cy.screenshot('page-' + page.to.replace(/\//g, '-') + '-public');
@@ -200,8 +200,8 @@ describe('Test d\'affichage de toutes les pages', () => {
           // Vérifier que la page s'est chargée
           cy.get('body', { timeout: 5000 }).should('be.visible');
 
-          // Vérifier qu'il n'y a pas d'erreur
-          cy.get('[class*="error"]', { timeout: 2000 }).should('not.be.visible');
+          // Vérifier qu'il n'y a pas d'erreur visible
+          cy.get('[class*="error"]').should('not.exist');
 
           // Prendre une capture d'écran pour référence
           cy.screenshot('page-' + page.to.replace(/\//g, '-') + '-protected');
