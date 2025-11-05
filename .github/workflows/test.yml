@@ -58,7 +58,7 @@ jobs:
         uses: cypress-io/github-action@v6
         with:
           browser: chrome
-          headless: true
+          headed: false
           spec: cypress/e2e/**/*.cy.js
           config-file: cypress.config.js
         env:
