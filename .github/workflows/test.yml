@@ -63,7 +63,7 @@ jobs:
           browser: chrome
           headed: false
           spec: cypress/e2e/**/*.cy.js
-          config-file: cypress.config.js
+          config-file: cypress.config.cjs
         env:
           CYPRESS_BASE_URL: http://localhost:3000/ALJ_Jonage_Escalade
 
