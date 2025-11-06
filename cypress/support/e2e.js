@@ -4,9 +4,17 @@
 
 // Authentification Supabase pour les tests
 Cypress.Commands.add('loginAsAdmin', () => {
-  // Utilise les variables d'environnement du test
-  const supabaseUrl = Cypress.env('SUPABASE_URL') || 'https://ysatjuqxobhosvnyihbh.supabase.co';
-  const supabaseAnonKey = Cypress.env('SUPABASE_ANON_KEY') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlzYXRqdXF4b2Job3N2bnlpaGJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE2OTI0NDg0NDgsImV4cCI6MjAwODA0ODQ0OH0.fEQE5OMpWRZCFoqqQ8Z6m4pYrCLqkqjHNqvVZ4e8Jnw';
+  // Utilise UNIQUEMENT les variables d'environnement (depuis les secrets GitHub)
+  const supabaseUrl = Cypress.env('VITE_SUPABASE_URL');
+  const supabaseAnonKey = Cypress.env('VITE_SUPABASE_ANON_KEY');
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    throw new Error('❌ Variables d\'environnement manquantes: VITE_SUPABASE_URL ou VITE_SUPABASE_ANON_KEY');
+  }
+
+  // Extraire l'ID du projet depuis l'URL Supabase
+  // URL format: https://[project-id].supabase.co
+  const projectId = supabaseUrl.split('//')[1].split('.')[0];
 
   // Simuler l'authentification via localStorage
   // Dans un cas réel, tu pourrais utiliser une API de test ou un compte de test dédié
@@ -23,9 +31,11 @@ Cypress.Commands.add('loginAsAdmin', () => {
     }
   };
 
-  // Stocker la session dans localStorage
+  // Stocker la session dans localStorage avec la bonne clé
   cy.window().then((win) => {
-    win.localStorage.setItem('sb-ysatjuqxobhosvnyihbh-auth-token', JSON.stringify(mockSession));
+    // La clé localStorage dépend de l'ID du projet Supabase
+    const authKey = `sb-${projectId}-auth-token`;
+    win.localStorage.setItem(authKey, JSON.stringify(mockSession));
   });
 
   // Recharger la page pour que l'authentification soit appliquée

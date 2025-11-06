@@ -66,6 +66,8 @@ jobs:
           config-file: cypress.config.cjs
         env:
           CYPRESS_BASE_URL: http://localhost:3000/ALJ_Jonage_Escalade
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
 
       - name: 📊 Merge test reports
         if: always()
