@@ -2,8 +2,8 @@
  * Cypress Support - Configuration et commandes globales
  */
 
-// Authentification Supabase pour les tests
-Cypress.Commands.add('loginAsAdmin', () => {
+// Authentification Supabase pour les tests avec rôle configurable
+Cypress.Commands.add('loginAsUser', (role = 'admin') => {
   // Utilise UNIQUEMENT les variables d'environnement (depuis les secrets GitHub)
   const supabaseUrl = Cypress.env('VITE_SUPABASE_URL');
   const supabaseAnonKey = Cypress.env('VITE_SUPABASE_ANON_KEY');
@@ -16,17 +16,50 @@ Cypress.Commands.add('loginAsAdmin', () => {
   // URL format: https://[project-id].supabase.co
   const projectId = supabaseUrl.split('//')[1].split('.')[0];
 
+  // Créer une session mock selon le rôle
+  const userConfig = {
+    admin: {
+      id: 'admin-test-user-id',
+      email: 'admin@test.com',
+      firstname: 'Admin',
+      lastname: 'Test',
+      role: 'admin'
+    },
+    bureau: {
+      id: 'bureau-test-user-id',
+      email: 'bureau@test.com',
+      firstname: 'Bureau',
+      lastname: 'Member',
+      role: 'bureau'
+    },
+    encadrant: {
+      id: 'encadrant-test-user-id',
+      email: 'encadrant@test.com',
+      firstname: 'Encadrant',
+      lastname: 'Test',
+      role: 'encadrant'
+    },
+    adherent: {
+      id: 'adherent-test-user-id',
+      email: 'adherent@test.com',
+      firstname: 'Adherent',
+      lastname: 'Test',
+      role: 'adherent'
+    }
+  };
+
+  const user = userConfig[role] || userConfig.admin;
+
   // Simuler l'authentification via localStorage
-  // Dans un cas réel, tu pourrais utiliser une API de test ou un compte de test dédié
   const mockSession = {
     access_token: 'mock-token-for-testing',
     refresh_token: 'mock-refresh-token',
     user: {
-      id: 'admin-test-user-id',
-      email: 'admin@test.com',
+      id: user.id,
+      email: user.email,
       user_metadata: {
-        firstname: 'Admin',
-        lastname: 'Test'
+        firstname: user.firstname,
+        lastname: user.lastname
       }
     }
   };
@@ -36,11 +69,20 @@ Cypress.Commands.add('loginAsAdmin', () => {
     // La clé localStorage dépend de l'ID du projet Supabase
     const authKey = `sb-${projectId}-auth-token`;
     win.localStorage.setItem(authKey, JSON.stringify(mockSession));
+
+    // Stocker aussi le rôle si nécessaire
+    const profileKey = `profile-${user.id}`;
+    win.localStorage.setItem(profileKey, JSON.stringify({ role: user.role }));
   });
 
   // Recharger la page pour que l'authentification soit appliquée
   cy.visit('/');
   cy.get('body', { timeout: 5000 }).should('be.visible');
+});
+
+// Alias pour compatibilité avec les tests existants
+Cypress.Commands.add('loginAsAdmin', () => {
+  cy.loginAsUser('admin');
 });
 
 // Attendre que la page se charge complètement
