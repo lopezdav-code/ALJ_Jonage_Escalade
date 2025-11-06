@@ -128,7 +128,7 @@ describe('Test d\\'affichage de toutes les pages', () => {
       // Ne PAS se connecter - tester l'accès sans authentification
 
       protectedPages.forEach(page => {
-        it('devrait bloquer l\'accès à "' + page.text + '" (' + page.to + ') sans connexion', () => {
+        it('devrait bloquer l' + "'" + 'accès à "' + page.text + '" (' + page.to + ') sans connexion', () => {
           cy.visit(page.to);
 
           // Vérifier que l'utilisateur a été redirigé
