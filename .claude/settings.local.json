@@ -1,12 +1,20 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git add .gitignore)",
-      "Bash(git commit -m \"chore: add Claude settings to gitignore and remove unused StudentCommentModal\")",
+      "Bash(__NEW_LINE__ for file in \"c:\\Users\\a138672\\Downloads\\club-escalade-app\\src\\pages/AccessLogs.jsx\" \"c:\\Users\\a138672\\Downloads\\club-escalade-app\\src\\pages/AdminManagement.jsx\" \"c:\\Users\\a138672\\Downloads\\club-escalade-app\\src\\pages/AttendanceRecap.jsx\" \"c:\\Users\\a138672\\Downloads\\club-escalade-app\\src\\pages/BureauManagement.jsx\")",
+      "Bash(npm run dev:*)",
+      "Bash(npm run build:*)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(npm run build:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(npm install:*)",
+      "Bash(node scripts/generate-tests.js:*)",
+      "Bash(node scripts/generate-tests.cjs:*)",
+      "Bash(npm run test:e2e:*)",
+      "Bash(cat:*)",
+      "Bash(npm run test:generate:*)",
+      "Bash(node -c:*)",
+      "Bash(gh workflow:*)"
     ],
     "deny": [],
     "ask": []
