@@ -2,6 +2,37 @@
  * Cypress Support - Configuration et commandes globales
  */
 
+// Authentification Supabase pour les tests
+Cypress.Commands.add('loginAsAdmin', () => {
+  // Utilise les variables d'environnement du test
+  const supabaseUrl = Cypress.env('SUPABASE_URL') || 'https://ysatjuqxobhosvnyihbh.supabase.co';
+  const supabaseAnonKey = Cypress.env('SUPABASE_ANON_KEY') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlzYXRqdXF4b2Job3N2bnlpaGJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE2OTI0NDg0NDgsImV4cCI6MjAwODA0ODQ0OH0.fEQE5OMpWRZCFoqqQ8Z6m4pYrCLqkqjHNqvVZ4e8Jnw';
+
+  // Simuler l'authentification via localStorage
+  // Dans un cas réel, tu pourrais utiliser une API de test ou un compte de test dédié
+  const mockSession = {
+    access_token: 'mock-token-for-testing',
+    refresh_token: 'mock-refresh-token',
+    user: {
+      id: 'admin-test-user-id',
+      email: 'admin@test.com',
+      user_metadata: {
+        firstname: 'Admin',
+        lastname: 'Test'
+      }
+    }
+  };
+
+  // Stocker la session dans localStorage
+  cy.window().then((win) => {
+    win.localStorage.setItem('sb-ysatjuqxobhosvnyihbh-auth-token', JSON.stringify(mockSession));
+  });
+
+  // Recharger la page pour que l'authentification soit appliquée
+  cy.visit('/');
+  cy.get('body', { timeout: 5000 }).should('be.visible');
+});
+
 // Attendre que la page se charge complètement
 Cypress.Commands.add('waitForPageLoad', () => {
   cy.get('body', { timeout: 10000 }).should('be.visible');

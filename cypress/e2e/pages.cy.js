@@ -187,10 +187,8 @@ describe('Test d\'affichage de toutes les pages', () => {
   if (protectedPages.length > 0) {
     describe('Pages protégées (avec connexion admin)', () => {
       beforeEach(() => {
-        // Avant chaque test de page protégée, effectuer une connexion
-        cy.visit('/');
-        // Note: Vous devez configurer une authentification de test
-        // Ceci est un placeholder - à adapter selon votre système auth
+        // Avant chaque test de page protégée, se connecter en tant qu'admin
+        cy.loginAsAdmin();
       });
 
       protectedPages.forEach(page => {
@@ -205,6 +203,23 @@ describe('Test d\'affichage de toutes les pages', () => {
 
           // Prendre une capture d'écran pour référence
           cy.screenshot('page-' + page.to.replace(/\//g, '-') + '-protected');
+        });
+      });
+    });
+  }
+
+  // Test pour vérifier que les pages protégées se bloquent sans connexion
+  if (protectedPages.length > 0) {
+    describe('Pages protégées (blocage sans connexion)', () => {
+      // Ne PAS se connecter - tester l'accès sans authentification
+
+      protectedPages.forEach(page => {
+        it('devrait bloquer l'accès à "' + page.text + '" (' + page.to + ') sans connexion', () => {
+          cy.visit(page.to);
+
+          // Vérifier que l'utilisateur a été redirigé
+          // (soit vers /login, soit vers la page d'accueil, soit une page d'erreur)
+          cy.url().should('not.include', page.to);
         });
       });
     });
