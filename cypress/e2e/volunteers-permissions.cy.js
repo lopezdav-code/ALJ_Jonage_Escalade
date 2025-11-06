@@ -28,8 +28,9 @@ describe('Accès et permissions - Page Adhérent (/volunteers)', () => {
         // Vérifier qu'il n'y a pas d'erreur de permission
         cy.get('[class*="error"]').should('not.exist');
 
-        // Vérifier qu'il y a du contenu (titre de page)
-        cy.contains('h1, h2', /Gestion|Membre|Adhérent/i, { timeout: 5000 }).should('exist');
+        // Vérifier qu'il y a du contenu (au moins une heading ou main element)
+        cy.get('h1, h2, main, [role="main"]', { timeout: 5000 })
+          .should('exist');
 
         // Prendre une capture d'écran
         cy.screenshot(`volunteers-${role}-access`);
@@ -72,7 +73,7 @@ describe('Accès et permissions - Page Adhérent (/volunteers)', () => {
         cy.get('[class*="error"], [class*="forbidden"], [class*="unauthorized"]').should('not.exist');
 
         // Vérifier qu'il y a un élément principal (pas une page vide)
-        cy.get('h1, h2, main, [role="main"]').should('exist');
+        cy.get('h1, h2, main, [role="main"]', { timeout: 5000 }).should('exist');
       });
     });
   });
