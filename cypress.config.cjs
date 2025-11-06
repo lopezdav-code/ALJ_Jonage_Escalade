@@ -6,6 +6,12 @@ module.exports = defineConfig({
     specPattern: 'cypress/e2e/**/*.cy.js',
     supportFile: 'cypress/support/e2e.js',
 
+    // Load Supabase credentials from environment variables or cypress.env.json
+    env: {
+      VITE_SUPABASE_URL: process.env.VITE_SUPABASE_URL || '',
+      VITE_SUPABASE_ANON_KEY: process.env.VITE_SUPABASE_ANON_KEY || ''
+    },
+
     // Configuration des rapports
     reporter: 'mochawesome',
     reporterOptions: {
