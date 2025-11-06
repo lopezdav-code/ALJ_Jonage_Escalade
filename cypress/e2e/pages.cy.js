@@ -171,8 +171,8 @@ describe('Test d\'affichage de toutes les pages', () => {
           // Vérifier que la page s'est chargée
           cy.get('body', { timeout: 5000 }).should('be.visible');
 
-          // Attendre que les loaders disparaissent
-          cy.get('[class*="loader"], [class*="loading"]', { timeout: 10000 }).should('not.be.visible');
+          // Attendre que les loaders disparaissent (ou qu'ils n'existent pas)
+          cy.get('[class*="loader"], [class*="loading"]', { timeout: 10000 }).should('not.exist');
 
           // Vérifier qu'il n'y a pas d'erreur visible
           cy.get('[class*="error"]').should('not.exist');
@@ -201,8 +201,8 @@ describe('Test d\'affichage de toutes les pages', () => {
           // Vérifier que la page s'est chargée
           cy.get('body', { timeout: 5000 }).should('be.visible');
 
-          // Attendre que les loaders disparaissent
-          cy.get('[class*="loader"], [class*="loading"]', { timeout: 10000 }).should('not.be.visible');
+          // Attendre que les loaders disparaissent (ou qu'ils n'existent pas)
+          cy.get('[class*="loader"], [class*="loading"]', { timeout: 10000 }).should('not.exist');
 
           // Vérifier qu'il n'y a pas d'erreur visible
           cy.get('[class*="error"]').should('not.exist');
