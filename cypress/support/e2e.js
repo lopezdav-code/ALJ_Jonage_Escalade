@@ -91,12 +91,20 @@ Cypress.Commands.add('loginWithCredentials', (email, password) => {
   cy.visit('/', { failOnStatusCode: false });
   cy.get('body', { timeout: 5000 }).should('be.visible');
 
-  // Essayer de remplir les deux premiers inputs (email et password)
-  cy.get('input').first().type(email, { force: true });
-  cy.get('input').eq(1).type(password, { force: true });
+  // Chercher et remplir l'input email
+  cy.get('input[type="email"]').type(email, { force: true });
 
-  // Cliquer sur le premier bouton
-  cy.get('button').first().click({ force: true });
+  // Chercher et remplir l'input password
+  cy.get('input[type="password"]').type(password, { force: true });
+
+  // Soumettre le formulaire - chercher le bouton submit ou le premier bouton
+  cy.get('button[type="submit"]').then(($btn) => {
+    if ($btn.length > 0) {
+      cy.get('button[type="submit"]').first().click({ force: true });
+    } else {
+      cy.get('button').first().click({ force: true });
+    }
+  });
 
   // Attendre que la page se charge après login
   cy.get('body', { timeout: 10000 }).should('be.visible');

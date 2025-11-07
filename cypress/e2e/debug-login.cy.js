@@ -45,16 +45,35 @@ describe('🔍 Test connexion Bureau', () => {
     cy.visit('/', { failOnStatusCode: false });
     cy.get('body', { timeout: 5000 }).should('be.visible');
 
-    // Remplir les champs avec les premiers inputs
-    cy.get('input').first().type(bureauEmail);
-    cy.get('input').eq(1).type(bureauPassword);
+    // Chercher les inputs par type
+    cy.get('input[type="email"]').then(($emailInputs) => {
+      if ($emailInputs.length > 0) {
+        cy.get('input[type="email"]').first().type(bureauEmail, { force: true });
+        cy.log('✅ Email saisi dans input[type="email"]');
+      } else {
+        cy.log('❌ Pas d\'input[type="email"] trouvé');
+      }
+    });
+
+    cy.get('input[type="password"]').then(($pwdInputs) => {
+      if ($pwdInputs.length > 0) {
+        cy.get('input[type="password"]').first().type(bureauPassword, { force: true });
+        cy.log('✅ Password saisi dans input[type="password"]');
+      } else {
+        cy.log('❌ Pas d\'input[type="password"] trouvé');
+      }
+    });
 
     cy.screenshot('02-form-filled');
 
     // Soumettre le formulaire
-    cy.get('button').then(($buttons) => {
-      if ($buttons.length > 0) {
-        cy.get('button').first().click();
+    cy.get('button[type="submit"]').then(($submitBtn) => {
+      if ($submitBtn.length > 0) {
+        cy.get('button[type="submit"]').first().click({ force: true });
+        cy.log('✅ Bouton submit cliqué');
+      } else {
+        cy.get('button').first().click({ force: true });
+        cy.log('⚠️ Pas de button[type="submit"], premier bouton cliqué');
       }
     });
 
