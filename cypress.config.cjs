@@ -9,7 +9,12 @@ module.exports = defineConfig({
     // Load Supabase credentials from environment variables or cypress.env.json
     env: {
       VITE_SUPABASE_URL: process.env.VITE_SUPABASE_URL || '',
-      VITE_SUPABASE_ANON_KEY: process.env.VITE_SUPABASE_ANON_KEY || ''
+      VITE_SUPABASE_ANON_KEY: process.env.VITE_SUPABASE_ANON_KEY || '',
+      // Credentials pour les tests avec authentification réelle
+      TEST_BUREAU_EMAIL: process.env.TEST_BUREAU_EMAIL || '',
+      TEST_BUREAU_PASSWORD: process.env.TEST_BUREAU_PASSWORD || '',
+      TEST_ADMIN_EMAIL: process.env.TEST_ADMIN_EMAIL || '',
+      TEST_ADMIN_PASSWORD: process.env.TEST_ADMIN_PASSWORD || ''
     },
 
     // Configuration des rapports

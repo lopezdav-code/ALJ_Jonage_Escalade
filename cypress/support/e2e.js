@@ -85,6 +85,23 @@ Cypress.Commands.add('loginAsAdmin', () => {
   cy.loginAsUser('admin');
 });
 
+// Authentification réelle avec email/password (depuis les secrets GitHub)
+Cypress.Commands.add('loginWithCredentials', (email, password) => {
+  // Aller sur la page de login
+  cy.visit('/');
+
+  // Chercher le formulaire de login (adapter les sélecteurs si nécessaire)
+  cy.get('input[type="email"], input[name="email"]', { timeout: 5000 }).type(email);
+  cy.get('input[type="password"], input[name="password"]').type(password);
+
+  // Soumettre le formulaire
+  cy.get('button[type="submit"], button:contains("Connexion"), button:contains("Se connecter")', { timeout: 5000 }).click();
+
+  // Attendre que la page se charge après login
+  cy.get('body', { timeout: 10000 }).should('be.visible');
+  cy.get('[class*="loader"], [class*="loading"]', { timeout: 10000 }).should('not.exist');
+});
+
 // Attendre que la page se charge complètement
 Cypress.Commands.add('waitForPageLoad', () => {
   cy.get('body', { timeout: 10000 }).should('be.visible');
