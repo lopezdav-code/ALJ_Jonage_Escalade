@@ -85,16 +85,38 @@ describe('Tests avec authentification réelle', () => {
         throw new Error('❌ Variables manquantes: TEST_ADMIN_EMAIL ou TEST_ADMIN_PASSWORD');
       }
 
+      // Log avant connexion
+      cy.log(`📧 Connexion Admin: ${adminEmail}`);
+
       // Se connecter avec les vrais identifiants
       cy.loginWithCredentials(adminEmail, adminPassword);
+
+      // Log après connexion
+      cy.url().then((url) => {
+        cy.log(`📍 URL après connexion: ${url}`);
+      });
     });
 
     it('devrait afficher "Réglages du site" sur /site-settings', () => {
+      cy.log('🔄 Visite de /site-settings');
       cy.visit('/site-settings');
 
       // Attendre le chargement
       cy.get('body', { timeout: 5000 }).should('be.visible');
       cy.get('[class*="loader"], [class*="loading"]', { timeout: 10000 }).should('not.exist');
+
+      // Log l'URL et vérifier qu'on n'est pas redirigé
+      cy.url().then((url) => {
+        cy.log(`📍 URL sur site-settings: ${url}`);
+      });
+
+      // Log le contenu de la page
+      cy.get('h1, h2, main, [role="main"]').then(($elements) => {
+        cy.log(`🔍 Éléments trouvés: ${$elements.length}`);
+        $elements.each((i, el) => {
+          cy.log(`  [${i}] ${el.tagName}: ${el.textContent.substring(0, 100)}`);
+        });
+      });
 
       // Vérifier le titre "Réglages du site" ou variantes
       cy.contains(/réglages du site|site settings|configuration/i).should('be.visible');

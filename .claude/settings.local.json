@@ -14,7 +14,10 @@
       "Bash(cat:*)",
       "Bash(npm run test:generate:*)",
       "Bash(node -c:*)",
-      "Bash(gh workflow:*)"
+      "Bash(gh workflow:*)",
+      "Bash(timeout 30 npm run dev:*)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)"
     ],
     "deny": [],
     "ask": []

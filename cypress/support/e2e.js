@@ -100,8 +100,24 @@ Cypress.Commands.add('loginWithCredentials', (email, password) => {
   // Cliquer sur le bouton de soumission
   cy.get('button[type="submit"]').click({ force: true });
 
-  // Attendre que la page se charge après login et redirection
+  // Attendre la redirection vers la homepage (ou une autre page)
+  cy.url({ timeout: 10000 }).should('not.include', '/login');
+
+  // Attendre que la page se charge complètement
   cy.get('body', { timeout: 10000 }).should('be.visible');
+
+  // Attendre que la session soit bien établie dans localStorage
+  cy.window().then((win) => {
+    cy.wrap(null).should(() => {
+      // Vérifier que la session Supabase est bien établie
+      const keys = Object.keys(win.localStorage);
+      const hasAuthToken = keys.some(key => key.includes('auth-token') || key.includes('session'));
+      expect(hasAuthToken).to.be.true;
+    });
+  });
+
+  // Attendre un peu pour que la session soit complètement traitée
+  cy.wait(500);
 });
 
 // Attendre que la page se charge complètement
