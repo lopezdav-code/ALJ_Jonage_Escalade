@@ -64,8 +64,11 @@ jobs:
           headed: false
           spec: cypress/e2e/**/*.cy.js
           config-file: cypress.config.cjs
+          record: true
         env:
           CYPRESS_BASE_URL: http://localhost:3000/ALJ_Jonage_Escalade
+          CYPRESS_PROJECT_ID: ${{ secrets.CYPRESS_PROJECT_ID }}
+          CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_RECORD_KEY }}
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
           TEST_BUREAU_EMAIL: ${{ secrets.TEST_BUREAU_EMAIL }}
