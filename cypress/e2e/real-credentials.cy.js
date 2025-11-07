@@ -11,14 +11,14 @@ describe('1️⃣  Mode Déconnecté - Accès Public/Privé', () => {
   const publicPages = [
     { path: '/', name: 'Accueil/Actualités' },
     { path: '/news', name: 'Actualités' },
-    { path: '/competitions', name: 'Compétitions' },
     { path: '/agenda', name: 'Agenda' },
-    { path: '/schedule', name: 'Planning' },
     { path: '/contact', name: 'Contact' }
   ];
 
   // Pages privées - doivent afficher "Accès restreint"
   const privatePages = [
+    { path: '/competitions', name: 'Compétitions' },
+    { path: '/schedule', name: 'Planning' },
     { path: '/volunteers', name: 'Adhérents' },
     { path: '/site-settings', name: 'Réglages du site' },
     { path: '/admin-management', name: 'Gestion Admin' },
