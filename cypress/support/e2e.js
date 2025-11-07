@@ -112,12 +112,15 @@ Cypress.Commands.add('loginWithCredentials', (email, password) => {
       // Vérifier que la session Supabase est bien établie
       const keys = Object.keys(win.localStorage);
       const hasAuthToken = keys.some(key => key.includes('auth-token') || key.includes('session'));
+      cy.log(`📍 Clés localStorage: ${keys.filter(k => k.includes('sb-') || k.includes('auth')).join(', ')}`);
       expect(hasAuthToken).to.be.true;
-    });
+    }, { timeout: 10000 });
   });
 
-  // Attendre un peu pour que la session soit complètement traitée
-  cy.wait(500);
+  // Attendre que le contexte React mette à jour l'utilisateur
+  // Cela se fait via l'onAuthStateChange de Supabase
+  cy.get('body').should('exist');
+  cy.wait(1500);
 });
 
 // Attendre que la page se charge complètement
