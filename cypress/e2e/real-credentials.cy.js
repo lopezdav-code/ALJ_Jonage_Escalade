@@ -1,81 +1,134 @@
 /**
- * Tests E2E - Authentification réelle avec vrais identifiants
- * Utilise les secrets GitHub: TEST_BUREAU_EMAIL, TEST_BUREAU_PASSWORD, TEST_ADMIN_EMAIL, TEST_ADMIN_PASSWORD
+ * Tests E2E - Contrôle d'accès par rôle
+ * Test les pages publiques, pages Bureau et pages Admin
  */
 
-/*
-describe('Tests avec authentification réelle', () => {
-  const baseUrl = Cypress.config('baseUrl') || 'http://localhost:3000/ALJ_Jonage_Escalade';
+// ============================================================================
+// SUITE 1: Mode DÉCONNECTÉ - Pages Publiques vs Privées
+// ============================================================================
+describe('1️⃣  Mode Déconnecté - Accès Public/Privé', () => {
+  // Pages publiques - doivent s'afficher
+  const publicPages = [
+    { path: '/', name: 'Accueil/Actualités' },
+    { path: '/news', name: 'Actualités' },
+    { path: '/competitions', name: 'Compétitions' },
+    { path: '/agenda', name: 'Agenda' },
+    { path: '/schedule', name: 'Planning' },
+    { path: '/contact', name: 'Contact' }
+  ];
 
-  // Test 1: Accès sans connexion à /volunteers
-  describe('Sans connexion', () => {
-    it('devrait afficher "Accès restreint" sur la page /volunteers', () => {
-      cy.visit('/volunteers', { failOnStatusCode: false });
-      cy.get('body', { timeout: 5000 }).should('be.visible');
-      cy.contains(/accès restreint|access denied|restricted/i).should('be.visible');
-      cy.screenshot('01-no-auth-volunteers-restricted');
+  // Pages privées - doivent afficher "Accès restreint"
+  const privatePages = [
+    { path: '/volunteers', name: 'Adhérents' },
+    { path: '/site-settings', name: 'Réglages du site' },
+    { path: '/admin-management', name: 'Gestion Admin' },
+    { path: '/bureau-management', name: 'Gestion Bureau' },
+    { path: '/attendance-recap', name: 'Récapitulatif présences' }
+  ];
+
+  describe('Pages Publiques Accessibles', () => {
+    publicPages.forEach((page) => {
+      it(`devrait afficher "${page.name}" sur ${page.path}`, () => {
+        cy.visit(page.path, { failOnStatusCode: false });
+        cy.get('body', { timeout: 5000 }).should('be.visible');
+        cy.wait(500);
+
+        // Vérifier qu'il y a du contenu
+        cy.get('h1, h2, main, nav', { timeout: 5000 }).should('exist');
+
+        // Vérifier qu'il n'y a pas de message d'erreur d'accès
+        cy.contains(/accès restreint|access denied|forbidden|non autorisé/i).should('not.exist');
+
+        cy.screenshot(`public-${page.path.replace(/\//g, '-') || 'home'}`);
+      });
     });
   });
 
-  // Test 2: Connexion Bureau - page /volunteers
-  describe('Connexion Bureau', () => {
-    beforeEach(() => {
-      const bureauEmail = Cypress.env('TEST_BUREAU_EMAIL') || '';
-      const bureauPassword = Cypress.env('TEST_BUREAU_PASSWORD') || '';
+  describe('Pages Privées Bloquées', () => {
+    privatePages.forEach((page) => {
+      it(`devrait bloquer l'accès à ${page.path} avec "Accès restreint"`, () => {
+        cy.visit(page.path, { failOnStatusCode: false });
+        cy.get('body', { timeout: 5000 }).should('be.visible');
+        cy.wait(500);
 
-      if (!bureauEmail || !bureauPassword) {
-        throw new Error('❌ Variables manquantes: TEST_BUREAU_EMAIL ou TEST_BUREAU_PASSWORD');
-      }
+        // Vérifier qu'un message d'accès restreint s'affiche
+        cy.contains(/accès restreint|access denied|forbidden|non autorisé/i).should('be.visible');
 
-      cy.loginWithCredentials(bureauEmail, bureauPassword);
-    });
-
-    it('devrait afficher une liste de noms sur /volunteers', () => {
-      cy.visit('/volunteers');
-      cy.get('body', { timeout: 5000 }).should('be.visible');
-      cy.get('[class*="loader"], [class*="loading"]', { timeout: 10000 }).should('not.exist');
-      cy.get('h1, h2, main, [role="main"]', { timeout: 5000 }).should('exist');
-      cy.contains(/accès restreint|access denied/i).should('not.exist');
-      cy.screenshot('02-bureau-volunteers-list');
-    });
-
-    it('devrait afficher "Accès non autorisé" sur /site-settings', () => {
-      cy.visit('/site-settings', { failOnStatusCode: false });
-      cy.get('body', { timeout: 5000 }).should('be.visible');
-      cy.contains(/accès non autorisé|not authorized|forbidden/i).should('be.visible');
-      cy.screenshot('03-bureau-site-settings-forbidden');
-    });
-  });
-
-  // Test 3: Connexion Admin - page /site-settings
-  describe('Connexion Admin', () => {
-    beforeEach(() => {
-      const adminEmail = Cypress.env('TEST_ADMIN_EMAIL') || '';
-      const adminPassword = Cypress.env('TEST_ADMIN_PASSWORD') || '';
-
-      if (!adminEmail || !adminPassword) {
-        throw new Error('❌ Variables manquantes: TEST_ADMIN_EMAIL ou TEST_ADMIN_PASSWORD');
-      }
-
-      cy.loginWithCredentials(adminEmail, adminPassword);
-    });
-
-    it('devrait afficher "Réglages du site" sur /site-settings', () => {
-      cy.visit('/site-settings');
-      cy.get('body', { timeout: 5000 }).should('be.visible');
-      cy.get('[class*="loader"], [class*="loading"]', { timeout: 10000 }).should('not.exist');
-      cy.contains(/réglages du site|site settings|configuration/i).should('be.visible');
-      cy.contains(/accès non autorisé|forbidden|not authorized/i).should('not.exist');
-      cy.screenshot('04-admin-site-settings-loaded');
+        cy.screenshot(`blocked-${page.path.replace(/\//g, '-')}`);
+      });
     });
   });
 });
-*/
 
-// Test simplifié: Admin login et vérification de /site-settings
-describe('Test Admin - Site Settings', () => {
-  it('devrait se connecter via /login et afficher "Réglages du site"', () => {
-    // Récupérer les identifiants
+// ============================================================================
+// SUITE 2: Mode BUREAU - Pages Accessibles au Bureau
+// ============================================================================
+describe('2️⃣  Mode Bureau - Pages Accessibles', () => {
+  beforeEach(() => {
+    const bureauEmail = Cypress.env('TEST_BUREAU_EMAIL') || '';
+    const bureauPassword = Cypress.env('TEST_BUREAU_PASSWORD') || '';
+
+    if (!bureauEmail || !bureauPassword) {
+      throw new Error('❌ Variables manquantes: TEST_BUREAU_EMAIL ou TEST_BUREAU_PASSWORD');
+    }
+
+    cy.log(`📧 Connexion Bureau: ${bureauEmail}`);
+    cy.loginWithCredentials(bureauEmail, bureauPassword);
+  });
+
+  it('devrait afficher /volunteers (liste des adhérents)', () => {
+    cy.visit('/volunteers');
+    cy.get('body', { timeout: 5000 }).should('be.visible');
+    cy.wait(1000);
+
+    // Vérifier qu'il y a du contenu
+    cy.get('h1, h2, main, [role="main"]', { timeout: 5000 }).should('exist');
+
+    // Vérifier qu'il n'y a pas de message d'accès restreint
+    cy.contains(/accès restreint|access denied|forbidden/i).should('not.exist');
+
+    cy.screenshot('bureau-volunteers');
+  });
+
+  it('devrait bloquer l\'accès à /site-settings (Admin only)', () => {
+    cy.visit('/site-settings', { failOnStatusCode: false });
+    cy.get('body', { timeout: 5000 }).should('be.visible');
+    cy.wait(500);
+
+    // Devrait avoir un message d'accès non autorisé
+    cy.contains(/accès non autorisé|not authorized|forbidden/i).should('be.visible');
+
+    cy.screenshot('bureau-blocked-site-settings');
+  });
+
+  it('devrait afficher /bureau-management', () => {
+    cy.visit('/bureau-management', { failOnStatusCode: false });
+    cy.get('body', { timeout: 5000 }).should('be.visible');
+    cy.wait(1000);
+
+    // Vérifier qu'il y a du contenu ou un titre
+    cy.get('h1, h2, main', { timeout: 5000 }).should('exist');
+
+    cy.screenshot('bureau-management');
+  });
+
+  it('devrait bloquer l\'accès à /admin-management', () => {
+    cy.visit('/admin-management', { failOnStatusCode: false });
+    cy.get('body', { timeout: 5000 }).should('be.visible');
+    cy.wait(500);
+
+    // Devrait avoir un message d'accès non autorisé
+    cy.contains(/accès non autorisé|not authorized|forbidden/i).should('be.visible');
+
+    cy.screenshot('bureau-blocked-admin-management');
+  });
+});
+
+// ============================================================================
+// SUITE 3: Mode ADMIN - Pages Accessibles à l'Admin
+// ============================================================================
+describe('3️⃣  Mode Admin - Pages Accessibles', () => {
+  beforeEach(() => {
     const adminEmail = Cypress.env('TEST_ADMIN_EMAIL') || '';
     const adminPassword = Cypress.env('TEST_ADMIN_PASSWORD') || '';
 
@@ -83,48 +136,76 @@ describe('Test Admin - Site Settings', () => {
       throw new Error('❌ Variables manquantes: TEST_ADMIN_EMAIL ou TEST_ADMIN_PASSWORD');
     }
 
-    cy.log(`📧 Email Admin: ${adminEmail}`);
+    cy.log(`📧 Connexion Admin: ${adminEmail}`);
+    cy.loginWithCredentials(adminEmail, adminPassword);
+  });
 
-    // Étape 1: Aller sur la page login
-    cy.visit('/login', { failOnStatusCode: false });
-    cy.get('body', { timeout: 5000 }).should('be.visible');
-    cy.screenshot('01-login-page');
-
-    // Étape 2: Remplir les identifiants
-    cy.get('input[type="email"]').type(adminEmail, { force: true });
-    cy.get('input[type="password"]').type(adminPassword, { force: true });
-    cy.screenshot('02-form-filled');
-
-    // Étape 3: Cliquer sur le bouton de soumission
-    cy.get('button[type="submit"]').click({ force: true });
-
-    // Étape 4: Attendre la redirection
-    cy.url({ timeout: 10000 }).should('not.include', '/login');
-    cy.wait(2000);
-    cy.screenshot('03-after-login');
-
-    // Étape 5: Aller sur /site-settings
+  it('devrait afficher /site-settings (Réglages du site)', () => {
     cy.visit('/site-settings');
     cy.get('body', { timeout: 5000 }).should('be.visible');
-    cy.log('⏳ Attente du chargement complet de /site-settings...');
     cy.wait(1500);
-    cy.screenshot('04-site-settings-loaded');
 
-    // Étape 6: Vérifier l'URL
-    cy.url().then((url) => {
-      cy.log(`📍 URL actuelle: ${url}`);
-    });
-    cy.screenshot('05-site-settings-url-verified');
-
-    // Étape 7: Vérifier le contenu visible
-    cy.get('body').then((body) => {
-      cy.log(`📝 Contenu du body: ${body.text().substring(0, 200)}`);
-    });
-    cy.screenshot('06-site-settings-content');
-
-    // Étape 8: Vérifier que le titre "Réglages du site" est visible
-    cy.log('🔍 Cherche le titre "Réglages du site"...');
+    // Vérifier le titre
     cy.contains(/réglages du site|site settings|configuration/i).should('be.visible');
-    cy.screenshot('07-title-found-success');
+
+    // Vérifier qu'il n'y a pas de message d'erreur
+    cy.contains(/accès non autorisé|forbidden|not authorized/i).should('not.exist');
+
+    cy.screenshot('admin-site-settings');
+  });
+
+  it('devrait afficher /admin-management', () => {
+    cy.visit('/admin-management', { failOnStatusCode: false });
+    cy.get('body', { timeout: 5000 }).should('be.visible');
+    cy.wait(1000);
+
+    // Vérifier qu'il y a du contenu
+    cy.get('h1, h2, main', { timeout: 5000 }).should('exist');
+
+    cy.screenshot('admin-admin-management');
+  });
+
+  it('devrait afficher /user-roles (Gestion des rôles)', () => {
+    cy.visit('/user-roles', { failOnStatusCode: false });
+    cy.get('body', { timeout: 5000 }).should('be.visible');
+    cy.wait(1000);
+
+    // Vérifier qu'il y a du contenu
+    cy.get('h1, h2, main', { timeout: 5000 }).should('exist');
+
+    cy.screenshot('admin-user-roles');
+  });
+
+  it('devrait afficher /permissions (Gestion des permissions)', () => {
+    cy.visit('/permissions', { failOnStatusCode: false });
+    cy.get('body', { timeout: 5000 }).should('be.visible');
+    cy.wait(1000);
+
+    // Vérifier qu'il y a du contenu
+    cy.get('h1, h2, main', { timeout: 5000 }).should('exist');
+
+    cy.screenshot('admin-permissions');
+  });
+
+  it('devrait afficher /access-logs (Logs d\'accès)', () => {
+    cy.visit('/access-logs', { failOnStatusCode: false });
+    cy.get('body', { timeout: 5000 }).should('be.visible');
+    cy.wait(1000);
+
+    // Vérifier qu'il y a du contenu
+    cy.get('h1, h2, main', { timeout: 5000 }).should('exist');
+
+    cy.screenshot('admin-access-logs');
+  });
+
+  it('devrait afficher /volunteers (Adhérents)', () => {
+    cy.visit('/volunteers');
+    cy.get('body', { timeout: 5000 }).should('be.visible');
+    cy.wait(1000);
+
+    // Vérifier qu'il y a du contenu
+    cy.get('h1, h2, main, [role="main"]', { timeout: 5000 }).should('exist');
+
+    cy.screenshot('admin-volunteers');
   });
 });
