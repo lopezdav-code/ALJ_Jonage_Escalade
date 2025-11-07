@@ -106,11 +106,25 @@ describe('Test Admin - Site Settings', () => {
     // Étape 5: Aller sur /site-settings
     cy.visit('/site-settings');
     cy.get('body', { timeout: 5000 }).should('be.visible');
-    cy.wait(1000);
-    cy.screenshot('04-site-settings-page');
+    cy.log('⏳ Attente du chargement complet de /site-settings...');
+    cy.wait(1500);
+    cy.screenshot('04-site-settings-loaded');
 
-    // Étape 6: Vérifier que le titre "Réglages du site" est visible
+    // Étape 6: Vérifier l'URL
+    cy.url().then((url) => {
+      cy.log(`📍 URL actuelle: ${url}`);
+    });
+    cy.screenshot('05-site-settings-url-verified');
+
+    // Étape 7: Vérifier le contenu visible
+    cy.get('body').then((body) => {
+      cy.log(`📝 Contenu du body: ${body.text().substring(0, 200)}`);
+    });
+    cy.screenshot('06-site-settings-content');
+
+    // Étape 8: Vérifier que le titre "Réglages du site" est visible
+    cy.log('🔍 Cherche le titre "Réglages du site"...');
     cy.contains(/réglages du site|site settings|configuration/i).should('be.visible');
-    cy.screenshot('05-title-found');
+    cy.screenshot('07-title-found-success');
   });
 });
