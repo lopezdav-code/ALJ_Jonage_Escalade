@@ -13,6 +13,7 @@ import Volunteers from '@/pages/Volunteers';
 import Agenda from '@/pages/Agenda';
 import Schedule from '@/pages/Schedule';
 import Contact from '@/pages/Contact';
+import Login from '@/pages/Login';
 
 // Pages chargées paresseusement (code-splitting)
 const SessionLog = lazy(() => import('@/pages/SessionLog'));
@@ -103,6 +104,7 @@ const AppContent = () => {
       <Navigation />
       <main className="flex-grow container mx-auto px-4 py-8">
         <Routes>
+          <Route path="/login" element={<Login />} />
           <Route path="/" element={<News />} />
           <Route path="/news" element={<News />} />
           <Route path="/news/:id" element={<NewsDetail />} />

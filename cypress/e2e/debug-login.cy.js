@@ -3,14 +3,14 @@
  */
 
 describe('🔍 Test connexion Bureau', () => {
-  it('devrait afficher la page d\'accueil', () => {
-    cy.visit('/', { failOnStatusCode: false });
+  it('devrait afficher la page de login', () => {
+    cy.visit('/login', { failOnStatusCode: false });
     cy.get('body', { timeout: 5000 }).should('be.visible');
-    cy.screenshot('01-homepage');
+    cy.screenshot('01-login-page');
   });
 
-  it('devrait lister tous les inputs et boutons de la page', () => {
-    cy.visit('/', { failOnStatusCode: false });
+  it('devrait lister tous les inputs et boutons de la page de login', () => {
+    cy.visit('/login', { failOnStatusCode: false });
     cy.get('body', { timeout: 5000 }).should('be.visible');
 
     // Afficher les inputs
@@ -42,24 +42,8 @@ describe('🔍 Test connexion Bureau', () => {
       return;
     }
 
-    cy.visit('/', { failOnStatusCode: false });
+    cy.visit('/login', { failOnStatusCode: false });
     cy.get('body', { timeout: 5000 }).should('be.visible');
-
-    // Essayer de cliquer sur un bouton login si visible
-    cy.get('button, a').then(($elements) => {
-      const loginBtn = [...$elements].find($el =>
-        /login|connexion|se connecter|sign in/i.test($el.textContent)
-      );
-      if (loginBtn) {
-        cy.log('🔘 Bouton login trouvé, clic...');
-        cy.wrap(loginBtn).click({ force: true });
-        cy.get('body').then(() => {
-          cy.wait(1000); // Attendre l'apparition du formulaire
-        });
-      } else {
-        cy.log('ℹ️ Pas de bouton login trouvé, on continue');
-      }
-    });
 
     // Essayer avec input[type="email"]
     cy.get('input[type="email"]', { timeout: 2000 }).then(($emailInputs) => {
