@@ -87,15 +87,28 @@ Cypress.Commands.add('loginAsAdmin', () => {
 
 // Authentification réelle avec email/password (depuis les secrets GitHub)
 Cypress.Commands.add('loginWithCredentials', (email, password) => {
-  // Aller sur la page de login
-  cy.visit('/');
+  // Aller sur la page de login ou d'accueil
+  cy.visit('/', { failOnStatusCode: false });
 
-  // Chercher le formulaire de login (adapter les sélecteurs si nécessaire)
-  cy.get('input[type="email"], input[name="email"]', { timeout: 5000 }).type(email);
-  cy.get('input[type="password"], input[name="password"]').type(password);
+  // Chercher et remplir le champ email
+  cy.get('input[type="email"], input[name="email"], input[placeholder*="email" i]', { timeout: 5000 })
+    .should('exist')
+    .type(email);
 
-  // Soumettre le formulaire
-  cy.get('button[type="submit"], button:contains("Connexion"), button:contains("Se connecter")', { timeout: 5000 }).click();
+  // Chercher et remplir le champ password
+  cy.get('input[type="password"], input[name="password"], input[placeholder*="password" i]', { timeout: 5000 })
+    .should('exist')
+    .type(password);
+
+  // Soumettre le formulaire - essayer plusieurs sélecteurs possibles
+  cy.get('button[type="submit"]', { timeout: 5000 }).then(($buttons) => {
+    if ($buttons.length > 0) {
+      cy.get('button[type="submit"]').first().click();
+    } else {
+      // Alternative: chercher par texte
+      cy.contains('button', /connexion|se connecter|login|sign in/i).click();
+    }
+  });
 
   // Attendre que la page se charge après login
   cy.get('body', { timeout: 10000 }).should('be.visible');
