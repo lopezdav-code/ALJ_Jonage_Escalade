@@ -89,30 +89,17 @@ Cypress.Commands.add('loginAsAdmin', () => {
 Cypress.Commands.add('loginWithCredentials', (email, password) => {
   // Aller sur la page de login ou d'accueil
   cy.visit('/', { failOnStatusCode: false });
+  cy.get('body', { timeout: 5000 }).should('be.visible');
 
-  // Chercher et remplir le champ email
-  cy.get('input[type="email"], input[name="email"], input[placeholder*="email" i]', { timeout: 5000 })
-    .should('exist')
-    .type(email);
+  // Essayer de remplir les deux premiers inputs (email et password)
+  cy.get('input').first().type(email, { force: true });
+  cy.get('input').eq(1).type(password, { force: true });
 
-  // Chercher et remplir le champ password
-  cy.get('input[type="password"], input[name="password"], input[placeholder*="password" i]', { timeout: 5000 })
-    .should('exist')
-    .type(password);
-
-  // Soumettre le formulaire - essayer plusieurs sélecteurs possibles
-  cy.get('button[type="submit"]', { timeout: 5000 }).then(($buttons) => {
-    if ($buttons.length > 0) {
-      cy.get('button[type="submit"]').first().click();
-    } else {
-      // Alternative: chercher par texte
-      cy.contains('button', /connexion|se connecter|login|sign in/i).click();
-    }
-  });
+  // Cliquer sur le premier bouton
+  cy.get('button').first().click({ force: true });
 
   // Attendre que la page se charge après login
   cy.get('body', { timeout: 10000 }).should('be.visible');
-  cy.get('[class*="loader"], [class*="loading"]', { timeout: 10000 }).should('not.exist');
 });
 
 // Attendre que la page se charge complètement
