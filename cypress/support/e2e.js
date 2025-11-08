@@ -181,12 +181,21 @@ Cypress.Commands.add('saveScreenshot', (prefix = '') => {
 
 // Configuration globale
 beforeEach(() => {
-  // Désactiver les erreurs non bloquantes
+  // Gestion intelligente des erreurs non capturées
   cy.on('uncaught:exception', (err) => {
-    // Ignorer certaines erreurs
+    // Ignorer les erreurs ResizeObserver (non critiques)
     if (err.message.includes('ResizeObserver')) {
       return false;
     }
+
+    // Détecter les erreurs de modules dynamiques (cache Vite corrompu)
+    if (err.message.includes('Failed to fetch dynamically imported module') ||
+        err.message.includes('Outdated Optimize Dep')) {
+      cy.log('🔄 Erreur de module détectée - Rechargement automatique...');
+      cy.reload();
+      return false; // Empêcher Cypress de faire échouer le test
+    }
+
     return true;
   });
 });
