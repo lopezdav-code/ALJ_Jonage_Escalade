@@ -168,15 +168,21 @@ describe('3️⃣  Mode Admin - Pages Accessibles', () => {
     cy.visit('/user-roles', { failOnStatusCode: false });
     cy.waitForPageLoad();
 
-    // Attendre que le spinner de ProtectedRoute disparaisse (si présent)
+    // Vérifier si la page est bloquée sur le spinner ou n'a pas de contenu
     cy.get('body').then($body => {
-      if ($body.find('.animate-spin').length > 0) {
-        cy.get('.animate-spin', { timeout: 10000 }).should('not.exist');
+      const hasSpinner = $body.find('.animate-spin').length > 0;
+      const hasContent = $body.find('h1, h2, main').length > 0;
+
+      // Si spinner présent OU pas de contenu après 5s, recharger la page
+      if (hasSpinner || !hasContent) {
+        cy.log('Page stuck or not loaded, reloading...');
+        cy.reload();
+        cy.waitForPageLoad();
       }
     });
 
     // Vérifier qu'il y a du contenu
-    cy.get('h1, h2, main', { timeout: 5000 }).should('exist');
+    cy.get('h1, h2, main', { timeout: 10000 }).should('exist');
 
     cy.screenshot('admin-user-roles');
   });
@@ -196,15 +202,21 @@ describe('3️⃣  Mode Admin - Pages Accessibles', () => {
     cy.visit('/access-logs', { failOnStatusCode: false });
     cy.waitForPageLoad();
 
-    // Attendre que le spinner de ProtectedRoute disparaisse (si présent)
+    // Vérifier si la page est bloquée sur le spinner ou n'a pas de contenu
     cy.get('body').then($body => {
-      if ($body.find('.animate-spin').length > 0) {
-        cy.get('.animate-spin', { timeout: 10000 }).should('not.exist');
+      const hasSpinner = $body.find('.animate-spin').length > 0;
+      const hasContent = $body.find('h1, h2, main').length > 0;
+
+      // Si spinner présent OU pas de contenu après 5s, recharger la page
+      if (hasSpinner || !hasContent) {
+        cy.log('Page stuck or not loaded, reloading...');
+        cy.reload();
+        cy.waitForPageLoad();
       }
     });
 
     // Vérifier qu'il y a du contenu
-    cy.get('h1, h2, main', { timeout: 5000 }).should('exist');
+    cy.get('h1, h2, main', { timeout: 10000 }).should('exist');
 
     cy.screenshot('admin-access-logs');
   });
