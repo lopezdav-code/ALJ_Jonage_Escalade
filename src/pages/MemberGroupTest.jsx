@@ -13,6 +13,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/lib/customSupabaseClient';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { Checkbox } from '@/components/ui/checkbox';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
 const MemberGroupTest = () => {
   const navigate = useNavigate();
@@ -36,15 +37,11 @@ const MemberGroupTest = () => {
   const [isVolunteer, setIsVolunteer] = useState(false);
 
   useEffect(() => {
-    if (!authLoading && !isAdmin) {
-      navigate('/');
-      return;
-    }
     if (isAdmin) {
       fetchMembers();
       fetchGroupes();
     }
-  }, [isAdmin, authLoading, navigate]);
+  }, [isAdmin]);
 
   const fetchMembers = async () => {
     setLoading(true);
@@ -290,15 +287,12 @@ const MemberGroupTest = () => {
     );
   }
 
-  if (!isAdmin) {
-    return null;
-  }
-
   return (
-    <div className="space-y-6">
-      <Helmet>
-        <title>Gestion des Groupes</title>
-      </Helmet>
+    <ProtectedRoute pageTitle="Gestion des Groupes" message="Cette page est réservée aux administrateurs.">
+      <div className="space-y-6">
+        <Helmet>
+          <title>Gestion des Groupes</title>
+        </Helmet>
 
       <motion.div
         initial={{ opacity: 0, y: -20 }}
@@ -555,7 +549,8 @@ const MemberGroupTest = () => {
           </CardContent>
         </Card>
       </motion.div>
-    </div>
+      </div>
+    </ProtectedRoute>
   );
 };
 

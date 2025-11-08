@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/lib/customSupabaseClient';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
 const ScheduleAdmin = () => {
   const navigate = useNavigate();
@@ -20,14 +21,10 @@ const ScheduleAdmin = () => {
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
 
   useEffect(() => {
-    if (!authLoading && !isAdmin) {
-      navigate('/schedule');
-      return;
-    }
     if (isAdmin) {
       fetchScheduleItems();
     }
-  }, [isAdmin, authLoading, navigate]);
+  }, [isAdmin]);
 
   const fetchScheduleItems = async () => {
     setLoading(true);
@@ -203,16 +200,13 @@ const ScheduleAdmin = () => {
     );
   }
 
-  if (!isAdmin) {
-    return null;
-  }
-
   return (
-    <div className="space-y-8">
-      <Helmet>
-        <title>Gestion du Planning - Admin</title>
-        <meta name="description" content="Administration du planning des cours" />
-      </Helmet>
+    <ProtectedRoute pageTitle="Gestion du Planning" message="Cette page est réservée aux administrateurs.">
+      <div className="space-y-8">
+        <Helmet>
+          <title>Gestion du Planning - Admin</title>
+          <meta name="description" content="Administration du planning des cours" />
+        </Helmet>
 
       <motion.div
         initial={{ opacity: 0, y: -20 }}
@@ -367,7 +361,8 @@ const ScheduleAdmin = () => {
           </CardContent>
         </Card>
       </motion.div>
-    </div>
+      </div>
+    </ProtectedRoute>
   );
 };
 

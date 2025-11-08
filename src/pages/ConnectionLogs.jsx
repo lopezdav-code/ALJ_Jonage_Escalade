@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { 
   UserCheck, 
   UserX, 
@@ -42,12 +42,6 @@ const ConnectionLogs = () => {
     activeUsers: 0
   });
 
-  // Redirection si pas admin
-  useEffect(() => {
-    if (!isAdmin && !loading) {
-      window.location.href = '/';
-    }
-  }, [isAdmin, loading]);
 
   // Charger les logs de connexion
   const fetchConnectionLogs = async () => {
@@ -211,22 +205,13 @@ const ConnectionLogs = () => {
     );
   };
 
-  if (!isAdmin) {
-    return (
-      <Alert>
-        <AlertDescription>
-          Accès non autorisé. Cette page est réservée aux administrateurs.
-        </AlertDescription>
-      </Alert>
-    );
-  }
-
   return (
-    <div className="space-y-6">
-      <Helmet>
-        <title>Logs de Connexion - Administration</title>
-        <meta name="description" content="Suivi des connexions et déconnexions des membres" />
-      </Helmet>
+    <ProtectedRoute pageTitle="Logs de Connexion" message="Cette page est réservée aux administrateurs.">
+      <div className="space-y-6">
+        <Helmet>
+          <title>Logs de Connexion - Administration</title>
+          <meta name="description" content="Suivi des connexions et déconnexions des membres" />
+        </Helmet>
 
       <motion.div 
         initial={{ opacity: 0, y: -20 }} 
@@ -420,7 +405,8 @@ const ConnectionLogs = () => {
           )}
         </CardContent>
       </Card>
-    </div>
+      </div>
+    </ProtectedRoute>
   );
 };
 

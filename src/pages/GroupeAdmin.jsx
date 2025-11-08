@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/lib/customSupabaseClient';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
 const GroupeAdmin = () => {
   const navigate = useNavigate();
@@ -33,12 +34,8 @@ const GroupeAdmin = () => {
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
 
   useEffect(() => {
-    if (!authLoading && !isAdmin) {
-      navigate('/');
-      return;
-    }
     if (isAdmin) fetchGroupes();
-  }, [isAdmin, authLoading, navigate]);
+  }, [isAdmin]);
 
   const fetchGroupes = async () => {
     setLoading(true);
@@ -219,13 +216,12 @@ const GroupeAdmin = () => {
     );
   }
 
-  if (!isAdmin) return null;
-
   return (
-    <div className="space-y-8 max-w-4xl mx-auto p-6">
-      <Helmet>
-        <title>Gestion des groupes</title>
-      </Helmet>
+    <ProtectedRoute pageTitle="Gestion des groupes" message="Cette page est réservée aux administrateurs.">
+      <div className="space-y-8 max-w-4xl mx-auto p-6">
+        <Helmet>
+          <title>Gestion des groupes</title>
+        </Helmet>
 
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
         <div className="flex items-center justify-between">
@@ -414,7 +410,8 @@ const GroupeAdmin = () => {
           </Card>
         </motion.div>
       )}
-    </div>
+      </div>
+    </ProtectedRoute>
   );
 };
 

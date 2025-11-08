@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Helmet } from 'react-helmet';
-import { useNavigate } from 'react-router-dom';
 import { Users, Search, Save, X, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -9,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/lib/customSupabaseClient';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
 // Rôles gérés
 const BUREAU_ROLES = [
@@ -22,8 +22,7 @@ const BUREAU_ROLES = [
 
 const BureauManagement = () => {
   const { toast } = useToast();
-  const { isAdmin, loading: authLoading } = useAuth();
-  const navigate = useNavigate();
+  const { loading: authLoading } = useAuth();
 
   const [members, setMembers] = useState([]); // cache complet pour recherche
   const [loading, setLoading] = useState(true);
@@ -35,11 +34,6 @@ const BureauManagement = () => {
 
   // Charger membres et affectations actuelles
   useEffect(() => {
-    if (!authLoading && !isAdmin) {
-      navigate('/');
-      return;
-    }
-
     const fetchAll = async () => {
       setLoading(true);
       try {
@@ -79,7 +73,7 @@ const BureauManagement = () => {
     };
 
     fetchAll();
-  }, [authLoading, isAdmin, navigate, toast]);
+  }, [toast]);
 
   // Recherche basique côté client, par rôle
   const handleSearch = useCallback((role, text) => {
@@ -185,22 +179,21 @@ const BureauManagement = () => {
     );
   }
 
-  if (!isAdmin) return null;
-
   return (
-    <div className="space-y-6">
-      <Helmet>
-        <title>Gestion du Bureau</title>
-      </Helmet>
+    <ProtectedRoute pageTitle="Gestion du Bureau" message="Cette page est réservée aux administrateurs.">
+      <div className="space-y-6">
+        <Helmet>
+          <title>Gestion du Bureau</title>
+        </Helmet>
 
-      <div className="flex justify-between items-center">
-        <h1 className="text-4xl font-bold flex items-center gap-3">
-          <Users className="w-10 h-10 text-primary" /> Gestion des membres du Bureau
-        </h1>
-        <Button variant="outline" onClick={() => navigate('/member-group-test')}>
-          Retour
-        </Button>
-      </div>
+        <div className="flex justify-between items-center">
+          <h1 className="text-4xl font-bold flex items-center gap-3">
+            <Users className="w-10 h-10 text-primary" /> Gestion des membres du Bureau
+          </h1>
+          <Button variant="outline" onClick={() => window.history.back()}>
+            Retour
+          </Button>
+        </div>
 
       <Card>
         <CardHeader>
@@ -263,7 +256,8 @@ const BureauManagement = () => {
           </div>
         </CardContent>
       </Card>
-    </div>
+      </div>
+    </ProtectedRoute>
   );
 };
 
