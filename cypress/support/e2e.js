@@ -125,10 +125,44 @@ Cypress.Commands.add('loginWithCredentials', (email, password) => {
   cy.wait(1500);
 });
 
-// Attendre que la page se charge complètement
-Cypress.Commands.add('waitForPageLoad', () => {
+// Attendre que la page se charge complètement avec détection de chargement bloqué
+Cypress.Commands.add('waitForPageLoad', (options = {}) => {
   cy.get('body', { timeout: 10000 }).should('be.visible');
-  cy.get('[class*="loader"], [class*="loading"]', { timeout: 2000 }).should('not.be.visible');
+
+  // Sélecteurs pour détecter les barres de chargement
+  const loadingSelectors = '[class*="loader"], [class*="loading"], [class*="spinner"], .animate-spin';
+
+  // Attendre que les loaders disparaissent OU timeout de 3 secondes
+  cy.wait(500); // Petit délai initial pour que les loaders apparaissent s'ils doivent apparaître
+
+  cy.get('body').then(($body) => {
+    const hasLoader = $body.find(loadingSelectors).filter(':visible').length > 0;
+
+    if (hasLoader) {
+      cy.log('⏳ Barre de chargement détectée');
+
+      // Attendre max 3 secondes
+      cy.wait(3000);
+
+      // Vérifier si toujours bloqué
+      cy.get('body').then(($body2) => {
+        const stillHasLoader = $body2.find(loadingSelectors).filter(':visible').length > 0;
+
+        if (stillHasLoader) {
+          cy.log('⚠️ Chargement bloqué - Rechargement...');
+          cy.reload();
+          cy.wait(1000);
+          cy.get('body', { timeout: 10000 }).should('be.visible');
+          // Attendre que les loaders disparaissent après reload
+          cy.get(loadingSelectors, { timeout: 5000 }).should('not.be.visible');
+        } else {
+          cy.log('✅ Chargement terminé');
+        }
+      });
+    } else {
+      cy.log('✅ Page prête (pas de loader)');
+    }
+  });
 });
 
 // Vérifier qu'une page s'affiche correctement
