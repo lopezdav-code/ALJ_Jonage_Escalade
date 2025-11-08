@@ -166,8 +166,7 @@ describe('3️⃣  Mode Admin - Pages Accessibles', () => {
 
   it('devrait afficher /user-roles (Gestion des rôles)', () => {
     cy.visit('/user-roles', { failOnStatusCode: false });
-    cy.get('body', { timeout: 5000 }).should('be.visible');
-    cy.wait(1000);
+    cy.waitForPageLoad();
 
     // Vérifier qu'il y a du contenu
     cy.get('h1, h2, main', { timeout: 5000 }).should('exist');
@@ -188,8 +187,7 @@ describe('3️⃣  Mode Admin - Pages Accessibles', () => {
 
   it('devrait afficher /access-logs (Logs d\'accès)', () => {
     cy.visit('/access-logs', { failOnStatusCode: false });
-    cy.get('body', { timeout: 5000 }).should('be.visible');
-    cy.wait(1000);
+    cy.waitForPageLoad();
 
     // Vérifier qu'il y a du contenu
     cy.get('h1, h2, main', { timeout: 5000 }).should('exist');
