@@ -130,8 +130,8 @@ Cypress.Commands.add('waitForPageLoad', () => {
   // Attendre que le body soit visible
   cy.get('body', { timeout: 10000 }).should('be.visible');
 
-  // Attendre un court instant pour que la page se stabilise
-  cy.wait(1000);
+  // Attendre que la page se stabilise (plus longtemps pour les pages lourdes)
+  cy.wait(2000);
 });
 
 // Vérifier qu'une page s'affiche correctement
