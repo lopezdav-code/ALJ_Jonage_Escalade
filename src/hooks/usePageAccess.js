@@ -48,14 +48,38 @@ export const usePageAccess = (pagePath = null) => {
 
     // Trouver la configuration pour la page actuelle
     // On cherche la page qui correspond le mieux au chemin actuel
-    const pageConfig = findPageConfig(currentPath, navConfig);
+    let pageConfig = findPageConfig(currentPath, navConfig);
+
+    // Force secure defaults for critical admin pages
+    // Even if the database config is wrong, these pages must be admin-only
+    const criticalAdminPages = {
+      '/site-settings': ['admin'],
+      '/admin-management': ['admin'],
+      '/image-admin': ['admin'],
+      '/user-roles': ['admin'],
+      '/permissions': ['admin'],
+      '/access-logs': ['admin'],
+      '/database-schema': ['admin'],
+      '/bureau-management': ['bureau', 'admin'],
+      '/attendance-recap': ['bureau', 'encadrant', 'admin'],
+      '/passeport-validation': ['encadrant', 'admin']
+    };
+
+    // Override with critical page config if applicable
+    if (criticalAdminPages[currentPath]) {
+      pageConfig = {
+        to: currentPath,
+        roles: criticalAdminPages[currentPath]
+      };
+    }
 
     // Vérifier si le rôle de l'utilisateur a accès à cette page
     const hasAccess = pageConfig ? pageConfig.roles.includes(userRole) : false;
 
     // Debugging pour diagnostiquer les problèmes d'accès
-    if (currentPath === '/attendance-recap' || currentPath.startsWith('/attendance-recap')) {
-      console.log('[usePageAccess] Diagnostic for /attendance-recap:', {
+    if (currentPath === '/site-settings' || currentPath === '/attendance-recap' || currentPath.startsWith('/attendance-recap')) {
+      console.log('[usePageAccess] Diagnostic:', {
+        path: currentPath,
         userRole,
         profile: profile ? { role: profile.role } : 'no profile',
         user: user ? user.email : 'no user',
