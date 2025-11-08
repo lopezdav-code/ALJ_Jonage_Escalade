@@ -125,58 +125,13 @@ Cypress.Commands.add('loginWithCredentials', (email, password) => {
   cy.wait(1500);
 });
 
-// Attendre que la page se charge complètement avec détection de chargement bloqué
-Cypress.Commands.add('waitForPageLoad', (options = {}) => {
-  const { timeout = 3000, retryOnEmpty = true } = options;
-
+// Attendre que la page se charge complètement
+Cypress.Commands.add('waitForPageLoad', () => {
+  // Attendre que le body soit visible
   cy.get('body', { timeout: 10000 }).should('be.visible');
 
-  // Sélecteurs pour détecter les barres de chargement
-  const loadingSelectors = '[class*="loader"], [class*="loading"], [class*="spinner"], .animate-spin';
-
-  // Attendre un peu pour que la page se charge
-  cy.wait(500);
-
-  cy.get('body').then(($body) => {
-    // Vérifier si la page est vide (erreur de module)
-    const bodyText = $body.text().trim();
-    const hasContent = $body.find('h1, h2, main, [role="main"]').length > 0;
-
-    if (!hasContent && bodyText.length < 50 && retryOnEmpty) {
-      cy.log('⚠️ Page vide détectée (erreur de module?) - Rechargement...');
-      cy.reload();
-      cy.wait(1000);
-      cy.get('body', { timeout: 10000 }).should('be.visible');
-      cy.wait(500);
-    }
-
-    const hasLoader = $body.find(loadingSelectors).filter(':visible').length > 0;
-
-    if (hasLoader) {
-      cy.log('⏳ Barre de chargement détectée');
-
-      // Attendre max timeout
-      cy.wait(timeout);
-
-      // Vérifier si toujours bloqué
-      cy.get('body').then(($body2) => {
-        const stillHasLoader = $body2.find(loadingSelectors).filter(':visible').length > 0;
-
-        if (stillHasLoader) {
-          cy.log('⚠️ Chargement bloqué - Rechargement...');
-          cy.reload();
-          cy.wait(1000);
-          cy.get('body', { timeout: 10000 }).should('be.visible');
-          // Attendre que les loaders disparaissent après reload
-          cy.get(loadingSelectors, { timeout: 5000 }).should('not.be.visible');
-        } else {
-          cy.log('✅ Chargement terminé');
-        }
-      });
-    } else {
-      cy.log('✅ Page prête');
-    }
-  });
+  // Attendre un court instant pour que la page se stabilise
+  cy.wait(1000);
 });
 
 // Vérifier qu'une page s'affiche correctement
