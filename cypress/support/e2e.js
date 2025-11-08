@@ -127,22 +127,36 @@ Cypress.Commands.add('loginWithCredentials', (email, password) => {
 
 // Attendre que la page se charge complètement avec détection de chargement bloqué
 Cypress.Commands.add('waitForPageLoad', (options = {}) => {
+  const { timeout = 3000, retryOnEmpty = true } = options;
+
   cy.get('body', { timeout: 10000 }).should('be.visible');
 
   // Sélecteurs pour détecter les barres de chargement
   const loadingSelectors = '[class*="loader"], [class*="loading"], [class*="spinner"], .animate-spin';
 
-  // Attendre que les loaders disparaissent OU timeout de 3 secondes
-  cy.wait(500); // Petit délai initial pour que les loaders apparaissent s'ils doivent apparaître
+  // Attendre un peu pour que la page se charge
+  cy.wait(500);
 
   cy.get('body').then(($body) => {
+    // Vérifier si la page est vide (erreur de module)
+    const bodyText = $body.text().trim();
+    const hasContent = $body.find('h1, h2, main, [role="main"]').length > 0;
+
+    if (!hasContent && bodyText.length < 50 && retryOnEmpty) {
+      cy.log('⚠️ Page vide détectée (erreur de module?) - Rechargement...');
+      cy.reload();
+      cy.wait(1000);
+      cy.get('body', { timeout: 10000 }).should('be.visible');
+      cy.wait(500);
+    }
+
     const hasLoader = $body.find(loadingSelectors).filter(':visible').length > 0;
 
     if (hasLoader) {
       cy.log('⏳ Barre de chargement détectée');
 
-      // Attendre max 3 secondes
-      cy.wait(3000);
+      // Attendre max timeout
+      cy.wait(timeout);
 
       // Vérifier si toujours bloqué
       cy.get('body').then(($body2) => {
@@ -160,7 +174,7 @@ Cypress.Commands.add('waitForPageLoad', (options = {}) => {
         }
       });
     } else {
-      cy.log('✅ Page prête (pas de loader)');
+      cy.log('✅ Page prête');
     }
   });
 });
@@ -188,12 +202,11 @@ beforeEach(() => {
       return false;
     }
 
-    // Détecter les erreurs de modules dynamiques (cache Vite corrompu)
+    // Ignorer les erreurs de modules dynamiques (cache Vite corrompu)
+    // Ces erreurs sont gérées par le rechargement de page dans les tests
     if (err.message.includes('Failed to fetch dynamically imported module') ||
         err.message.includes('Outdated Optimize Dep')) {
-      cy.log('🔄 Erreur de module détectée - Rechargement automatique...');
-      cy.reload();
-      return false; // Empêcher Cypress de faire échouer le test
+      return false; // Ignorer l'erreur sans faire échouer le test
     }
 
     return true;
