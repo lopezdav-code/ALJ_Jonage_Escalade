@@ -52,7 +52,7 @@ describe('1️⃣  Mode Déconnecté - Accès Public/Privé', () => {
         cy.wait(500);
 
         // Vérifier qu'un message d'accès restreint s'affiche
-        cy.contains(/accès restreint|access denied|forbidden|non autorisé/i).should('be.visible');
+        cy.contains(/accès restreint/i).should('be.visible');
 
         cy.screenshot(`blocked-${page.path.replace(/\//g, '-')}`);
       });
@@ -95,8 +95,8 @@ describe('2️⃣  Mode Bureau - Pages Accessibles', () => {
     cy.get('body', { timeout: 5000 }).should('be.visible');
     cy.wait(500);
 
-    // Devrait avoir un message d'accès non autorisé
-    cy.contains(/accès non autorisé|not authorized|forbidden/i).should('be.visible');
+    // Devrait avoir un message d'accès restreint
+    cy.contains(/accès restreint/i).should('be.visible');
 
     cy.screenshot('bureau-blocked-site-settings');
   });
@@ -117,8 +117,8 @@ describe('2️⃣  Mode Bureau - Pages Accessibles', () => {
     cy.get('body', { timeout: 5000 }).should('be.visible');
     cy.wait(500);
 
-    // Devrait avoir un message d'accès non autorisé
-    cy.contains(/accès non autorisé|not authorized|forbidden/i).should('be.visible');
+    // Devrait avoir un message d'accès restreint
+    cy.contains(/accès restreint/i).should('be.visible');
 
     cy.screenshot('bureau-blocked-admin-management');
   });
@@ -148,8 +148,8 @@ describe('3️⃣  Mode Admin - Pages Accessibles', () => {
     // Vérifier le titre
     cy.contains(/réglages du site|site settings|configuration/i).should('be.visible');
 
-    // Vérifier qu'il n'y a pas de message d'erreur
-    cy.contains(/accès non autorisé|forbidden|not authorized/i).should('not.exist');
+    // Vérifier qu'il n'y a pas de message d'erreur d'accès restreint
+    cy.contains(/accès restreint/i).should('not.exist');
 
     cy.screenshot('admin-site-settings');
   });
