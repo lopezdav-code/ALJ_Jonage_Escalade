@@ -20,7 +20,6 @@ import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
 const AttendanceRecap = () => {
   const { isAdmin, isEncadrant, loading: authLoading } = useAuth();
-  const { hasAccess, loading: pageAccessLoading } = usePageAccess();
   const [schedules, setSchedules] = useState([]);
   const [selectedScheduleId, setSelectedScheduleId] = useState('');
   const [attendanceData, setAttendanceData] = useState([]);
@@ -29,14 +28,6 @@ const AttendanceRecap = () => {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const navigate = useNavigate();
-
-  // Redirection si pas d'accès à la page
-  useEffect(() => {
-    if (!authLoading && !pageAccessLoading && !hasAccess) {
-      navigate('/schedule');
-      return;
-    }
-  }, [hasAccess, authLoading, pageAccessLoading, navigate]);
 
   // Charger tous les schedules
   const fetchSchedules = useCallback(async () => {
