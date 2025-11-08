@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
 const AccessLogs = () => {
   const { isAdmin, user } = useAuth();
@@ -227,16 +228,9 @@ const AccessLogs = () => {
     }
   };
 
-  if (!isAdmin) {
-    return (
-      <div className="text-center py-8">
-        <p className="text-muted-foreground">Accès réservé aux administrateurs.</p>
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-6">
+    <ProtectedRoute pageTitle="Logs d'accès" message="Cette page est réservée aux administrateurs.">
+      <div className="space-y-6">
       {/* En-tête */}
       <div className="flex items-center justify-between">
         <div>
@@ -444,7 +438,8 @@ const AccessLogs = () => {
           )}
         </CardContent>
       </Card>
-    </div>
+      </div>
+    </ProtectedRoute>
   );
 };
 
