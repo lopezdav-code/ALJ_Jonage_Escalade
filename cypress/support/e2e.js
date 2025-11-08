@@ -108,11 +108,13 @@ Cypress.Commands.add('loginWithCredentials', (email, password) => {
 
   // Attendre que la session soit bien établie dans localStorage
   cy.window().then((win) => {
+    const keys = Object.keys(win.localStorage);
+    const authKeys = keys.filter(k => k.includes('sb-') || k.includes('auth'));
+    cy.log(`📍 Clés localStorage: ${authKeys.join(', ')}`);
+
     cy.wrap(null).should(() => {
       // Vérifier que la session Supabase est bien établie
-      const keys = Object.keys(win.localStorage);
       const hasAuthToken = keys.some(key => key.includes('auth-token') || key.includes('session'));
-      cy.log(`📍 Clés localStorage: ${keys.filter(k => k.includes('sb-') || k.includes('auth')).join(', ')}`);
       expect(hasAuthToken).to.be.true;
     }, { timeout: 10000 });
   });
