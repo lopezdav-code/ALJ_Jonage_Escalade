@@ -132,16 +132,38 @@ const getDefaultPageConfig = (path) => {
  */
 const getDefaultNavConfig = () => {
   return [
+    // Pages publiques
     { to: '/news', text: 'Actualités', roles: ['public', 'user', 'adherent', 'bureau', 'encadrant', 'admin'] },
     { to: '/schedule', text: 'Planning', roles: ['public', 'user', 'adherent', 'bureau', 'encadrant', 'admin'] },
     { to: '/inscriptions', text: 'Inscription', roles: ['public', 'user', 'adherent', 'bureau', 'encadrant', 'admin'] },
     { to: '/contact', text: 'Contact', roles: ['public', 'user', 'adherent', 'bureau', 'encadrant', 'admin'] },
+    { to: '/agenda', text: 'Agenda', roles: ['public', 'user', 'adherent', 'bureau', 'encadrant', 'admin'] },
+
+    // Pages pour adhérents et plus
     { to: '/volunteers', text: 'Adhérent', roles: ['adherent', 'bureau', 'encadrant', 'admin'] },
     { to: '/competitions', text: 'Compétitions', roles: ['adherent', 'bureau', 'encadrant', 'admin'] },
-    { to: '/agenda', text: 'Agenda', roles: ['public', 'user', 'adherent', 'bureau', 'encadrant', 'admin'] },
     { to: '/session-log', text: 'Séances', roles: ['adherent', 'bureau', 'encadrant', 'admin'] },
     { to: '/cycles', text: 'Cycles', roles: ['adherent', 'bureau', 'encadrant', 'admin'] },
+    { to: '/pedagogy', text: 'Pédagogie', roles: ['adherent', 'bureau', 'encadrant', 'admin'] },
+    { to: '/passeport-viewer', text: 'Passeports - Visualisation', roles: ['adherent', 'bureau', 'encadrant', 'admin'] },
+    { to: '/passeport-guide', text: 'Passeports - Guide', roles: ['adherent', 'bureau', 'encadrant', 'admin'] },
+    { to: '/annual-summary', text: 'Récapitulatif Annuel', roles: ['adherent', 'bureau', 'encadrant', 'admin'] },
+
+    // Pages réservées aux encadrants et admins
+    { to: '/attendance-recap', text: 'Récapitulatif Présence', roles: ['bureau', 'encadrant', 'admin'] },
     { to: '/passeport-validation', text: 'Validation Passeports', roles: ['encadrant', 'admin'] },
+
+    // Pages réservées aux ADMINS uniquement
+    { to: '/site-settings', text: 'Réglages du site', roles: ['admin'] },
+    { to: '/admin-management', text: 'Gestion des Accès', roles: ['admin'] },
+    { to: '/user-roles', text: 'Gestion des Rôles', roles: ['admin'] },
+    { to: '/permissions', text: 'Gestion des Permissions', roles: ['admin'] },
+    { to: '/access-logs', text: 'Logs d\'accès', roles: ['admin'] },
+    { to: '/database-schema', text: 'Schéma de la Base de Données', roles: ['admin'] },
+    { to: '/image-admin', text: 'Gestion des Images', roles: ['admin'] },
+
+    // Pages Bureau et Admin
+    { to: '/bureau-management', text: 'Gestion du Bureau', roles: ['bureau', 'admin'] },
   ];
 };
 
