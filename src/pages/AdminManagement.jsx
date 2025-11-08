@@ -19,6 +19,7 @@ import { Input } from '@/components/ui/input';
 import { formatName } from '@/lib/utils.jsx';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
 const NAV_PAGES = [
     { to: '/user-roles', text: 'Gestion des Rôles' },
@@ -120,18 +121,9 @@ const AdminManagement = () => {
     return <div className="flex justify-center items-center h-64"><Loader2 className="w-12 h-12 animate-spin text-primary" /></div>;
   }
 
-  if (!isAdmin) {
-    return (
-      <div className="text-center py-16">
-        <h1 className="text-2xl font-bold">Accès non autorisé</h1>
-        <p className="text-muted-foreground">Cette page est réservée aux administrateurs.</p>
-      </div>
-    );
-  }
-
   return (
-    <>
-    <div className="space-y-8">
+    <ProtectedRoute pageTitle="Gestion des Accès" message="Cette page est réservée aux administrateurs.">
+      <div className="space-y-8">
       <Helmet><title>Gestion des Rôles et Accès</title></Helmet>
       
       <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="flex justify-between items-center">
@@ -307,8 +299,8 @@ const AdminManagement = () => {
           </CardContent>
         </Card>
       </motion.div>
-    </div>
-    </>
+      </div>
+    </ProtectedRoute>
   );
 };
 

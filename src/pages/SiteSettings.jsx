@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2, Settings, Upload, Image as ImageIcon } from 'lucide-react';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
 const ImageSettingCard = ({ title, description, configKey, currentImageUrl }) => {
   const { updateConfig } = useConfig();
@@ -105,28 +106,20 @@ const SiteSettings = () => {
     return <div className="flex justify-center items-center h-64"><Loader2 className="w-12 h-12 animate-spin text-primary" /></div>;
   }
 
-  if (!isAdmin) {
-    return (
-      <div className="text-center py-16">
-        <h1 className="text-2xl font-bold">Accès non autorisé</h1>
-        <p className="text-muted-foreground">Cette page est réservée aux administrateurs.</p>
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-8">
-      <Helmet>
-        <title>Réglages du site - Admin</title>
-      </Helmet>
-      
-      <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
-        <h1 className="text-4xl font-bold headline flex items-center gap-3">
-          <Settings className="w-10 h-10 text-primary" />
-          Réglages du site
-        </h1>
-        <p className="text-muted-foreground mt-2">Modifiez les éléments globaux du site ici.</p>
-      </motion.div>
+    <ProtectedRoute pageTitle="Réglages du site" message="Cette page est réservée aux administrateurs.">
+      <div className="space-y-8">
+        <Helmet>
+          <title>Réglages du site - Admin</title>
+        </Helmet>
+
+        <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
+          <h1 className="text-4xl font-bold headline flex items-center gap-3">
+            <Settings className="w-10 h-10 text-primary" />
+            Réglages du site
+          </h1>
+          <p className="text-muted-foreground mt-2">Modifiez les éléments globaux du site ici.</p>
+        </motion.div>
 
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
         <h2 className="text-2xl font-semibold mb-4">Images principales</h2>
@@ -160,7 +153,8 @@ const SiteSettings = () => {
           ))}
         </div>
       </motion.div>
-    </div>
+      </div>
+    </ProtectedRoute>
   );
 };
 

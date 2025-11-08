@@ -16,6 +16,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
 const AttendanceRecap = () => {
   const { isAdmin, isEncadrant, loading: authLoading } = useAuth();
@@ -246,17 +247,6 @@ const AttendanceRecap = () => {
     );
   }
 
-  if (!isAdmin && !isEncadrant) {
-    return (
-      <div className="text-center py-16">
-        <h1 className="text-2xl font-bold">Accès non autorisé</h1>
-        <p className="text-muted-foreground">
-          Cette page est réservée aux administrateurs et encadrants.
-        </p>
-      </div>
-    );
-  }
-
   const selectedSchedule = schedules.find(s => s.id === selectedScheduleId);
 
   // Appliquer le filtre si demandé : ne garder que les élèves absents au moins une fois
@@ -271,7 +261,8 @@ const AttendanceRecap = () => {
     : attendanceData;
 
   return (
-    <div className="space-y-8">
+    <ProtectedRoute pageTitle="Récapitulatif Présence" message="Cette page est réservée aux administrateurs et encadrants.">
+      <div className="space-y-8">
       <Helmet>
         <title>Récapitulatif de Présence - ALJ Escalade Jonage</title>
         <meta
@@ -488,7 +479,8 @@ const AttendanceRecap = () => {
           </Card>
         </motion.div>
       )}
-    </div>
+      </div>
+    </ProtectedRoute>
   );
 };
 

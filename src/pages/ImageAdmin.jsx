@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Loader2, Image as ImageIcon, Link as LinkIcon, Search } from 'lucide-react';
 import { formatName } from '@/lib/utils';
 import ImageErrorReporting from '@/components/ImageErrorReporting';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
 const Autocomplete = ({ members, onSelect, onClear }) => {
   const [query, setQuery] = useState('');
@@ -185,28 +186,20 @@ const ImageAdmin = () => {
     );
   }
 
-  if (!isAdmin) {
-    return (
-      <div className="text-center py-16">
-        <h1 className="text-2xl font-bold">Accès non autorisé</h1>
-        <p className="text-muted-foreground">Cette page est réservée aux administrateurs.</p>
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-8">
-      <Helmet>
-        <title>Gestion des Images - Admin</title>
-        <meta name="description" content="Gérer et lier les images du site." />
-      </Helmet>
+    <ProtectedRoute pageTitle="Gestion des Images" message="Cette page est réservée aux administrateurs.">
+      <div className="space-y-8">
+        <Helmet>
+          <title>Gestion des Images - Admin</title>
+          <meta name="description" content="Gérer et lier les images du site." />
+        </Helmet>
 
-      <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
-        <h1 className="text-4xl font-bold headline flex items-center gap-3">
-          <ImageIcon className="w-10 h-10 text-primary" />
-          Gestion des Images
-        </h1>
-      </motion.div>
+        <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
+          <h1 className="text-4xl font-bold headline flex items-center gap-3">
+            <ImageIcon className="w-10 h-10 text-primary" />
+            Gestion des Images
+          </h1>
+        </motion.div>
 
       {/* Composant de rapport des erreurs d'images */}
       <ImageErrorReporting />
@@ -226,7 +219,8 @@ const ImageAdmin = () => {
           ))}
         </div>
       )}
-    </div>
+      </div>
+    </ProtectedRoute>
   );
 };
 
