@@ -63,7 +63,8 @@ describe('1️⃣  Mode Déconnecté - Accès Public/Privé', () => {
 // SUITE 2: Mode BUREAU - Pages Accessibles au Bureau
 // ============================================================================
 describe('2️⃣  Mode Bureau - Pages Accessibles', () => {
-  beforeEach(() => {
+  // Connexion UNE SEULE FOIS au début de la suite
+  before(() => {
     const bureauEmail = Cypress.env('TEST_BUREAU_EMAIL') || '';
     const bureauPassword = Cypress.env('TEST_BUREAU_PASSWORD') || '';
 
@@ -71,8 +72,13 @@ describe('2️⃣  Mode Bureau - Pages Accessibles', () => {
       throw new Error('❌ Variables manquantes: TEST_BUREAU_EMAIL ou TEST_BUREAU_PASSWORD');
     }
 
-    cy.log(`📧 Connexion Bureau: ${bureauEmail}`);
+    cy.log(`📧 Connexion Bureau (une seule fois pour tous les tests): ${bureauEmail}`);
     cy.loginWithCredentials(bureauEmail, bureauPassword);
+  });
+
+  // Préserver la session entre les tests
+  beforeEach(() => {
+    Cypress.Cookies.preserveOnce(/sb-.*-auth-token/);
   });
 
   it('devrait afficher /volunteers (liste des adhérents)', () => {
@@ -127,7 +133,8 @@ describe('2️⃣  Mode Bureau - Pages Accessibles', () => {
 // SUITE 3: Mode ADMIN - Pages Accessibles à l'Admin
 // ============================================================================
 describe('3️⃣  Mode Admin - Pages Accessibles', () => {
-  beforeEach(() => {
+  // Connexion UNE SEULE FOIS au début de la suite (pas avant chaque test)
+  before(() => {
     const adminEmail = Cypress.env('TEST_ADMIN_EMAIL') || '';
     const adminPassword = Cypress.env('TEST_ADMIN_PASSWORD') || '';
 
@@ -135,13 +142,18 @@ describe('3️⃣  Mode Admin - Pages Accessibles', () => {
       throw new Error('❌ Variables manquantes: TEST_ADMIN_EMAIL ou TEST_ADMIN_PASSWORD');
     }
 
-    cy.log(`📧 Connexion Admin: ${adminEmail}`);
+    cy.log(`📧 Connexion Admin (une seule fois pour tous les tests): ${adminEmail}`);
     cy.loginWithCredentials(adminEmail, adminPassword);
 
     // Attendre que le profil soit complètement chargé
-    // en visitant une page simple qui vérifie l'authentification
     cy.visit('/', { failOnStatusCode: false });
-    cy.wait(2000); // Attendre que le contexte React se mette à jour
+    cy.wait(2000);
+  });
+
+  // Préserver la session entre les tests
+  beforeEach(() => {
+    // Préserver les cookies et localStorage de Supabase entre les tests
+    Cypress.Cookies.preserveOnce(/sb-.*-auth-token/);
   });
 
   it('devrait afficher /site-settings (Réglages du site)', () => {
