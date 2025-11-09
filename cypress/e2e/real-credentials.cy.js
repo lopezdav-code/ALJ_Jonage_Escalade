@@ -171,22 +171,11 @@ describe('3️⃣  Mode Admin - Pages Accessibles', () => {
 
   it('devrait afficher /user-roles (Gestion des rôles)', () => {
     cy.visit('/user-roles', { failOnStatusCode: false });
+
+    // waitForPageLoad gère automatiquement le reload si la page est bloquée
     cy.waitForPageLoad();
 
-    // Vérifier si la page est bloquée sur le spinner ou n'a pas de contenu
-    cy.get('body').then($body => {
-      const hasSpinner = $body.find('.animate-spin').length > 0;
-      const hasContent = $body.find('h1, h2, main').length > 0;
-
-      // Si spinner présent OU pas de contenu après 5s, recharger la page
-      if (hasSpinner || !hasContent) {
-        cy.log('Page stuck or not loaded, forcing hard reload to clear Vite cache...');
-        cy.reload(true); // Hard reload = force cache refresh
-        cy.waitForPageLoad();
-      }
-    });
-
-    // Vérifier qu'il y a du contenu
+    // Vérifier qu'il y a du contenu après le chargement
     cy.get('h1, h2, main', { timeout: 10000 }).should('exist');
 
     cy.screenshot('admin-user-roles');
@@ -205,22 +194,11 @@ describe('3️⃣  Mode Admin - Pages Accessibles', () => {
 
   it('devrait afficher /access-logs (Logs d\'accès)', () => {
     cy.visit('/access-logs', { failOnStatusCode: false });
+
+    // waitForPageLoad gère automatiquement le reload si la page est bloquée
     cy.waitForPageLoad();
 
-    // Vérifier si la page est bloquée sur le spinner ou n'a pas de contenu
-    cy.get('body').then($body => {
-      const hasSpinner = $body.find('.animate-spin').length > 0;
-      const hasContent = $body.find('h1, h2, main').length > 0;
-
-      // Si spinner présent OU pas de contenu après 5s, recharger la page
-      if (hasSpinner || !hasContent) {
-        cy.log('Page stuck or not loaded, forcing hard reload to clear Vite cache...');
-        cy.reload(true); // Hard reload = force cache refresh
-        cy.waitForPageLoad();
-      }
-    });
-
-    // Vérifier qu'il y a du contenu
+    // Vérifier qu'il y a du contenu après le chargement
     cy.get('h1, h2, main', { timeout: 10000 }).should('exist');
 
     cy.screenshot('admin-access-logs');

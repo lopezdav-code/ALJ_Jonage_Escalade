@@ -179,8 +179,9 @@ beforeEach(() => {
     // Ces erreurs seront gérées automatiquement par waitForPageLoad()
     if (err.message.includes('Failed to fetch dynamically imported module') ||
         err.message.includes('Outdated Optimize Dep')) {
-      cy.log('⚠️ Vite module loading error detected - page will be reloaded');
-      return false; // Ignorer l'erreur sans faire échouer le test
+      // NE PAS exécuter de commandes Cypress ici - juste ignorer l'erreur
+      // Le reload sera géré par waitForPageLoad() et les tests individuels
+      return false;
     }
 
     return true;
