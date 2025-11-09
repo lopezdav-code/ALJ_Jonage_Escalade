@@ -180,8 +180,8 @@ describe('3️⃣  Mode Admin - Pages Accessibles', () => {
 
       // Si spinner présent OU pas de contenu après 5s, recharger la page
       if (hasSpinner || !hasContent) {
-        cy.log('Page stuck or not loaded, reloading...');
-        cy.reload();
+        cy.log('Page stuck or not loaded, forcing hard reload to clear Vite cache...');
+        cy.reload(true); // Hard reload = force cache refresh
         cy.waitForPageLoad();
       }
     });
@@ -214,8 +214,8 @@ describe('3️⃣  Mode Admin - Pages Accessibles', () => {
 
       // Si spinner présent OU pas de contenu après 5s, recharger la page
       if (hasSpinner || !hasContent) {
-        cy.log('Page stuck or not loaded, reloading...');
-        cy.reload();
+        cy.log('Page stuck or not loaded, forcing hard reload to clear Vite cache...');
+        cy.reload(true); // Hard reload = force cache refresh
         cy.waitForPageLoad();
       }
     });
