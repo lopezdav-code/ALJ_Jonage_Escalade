@@ -35,6 +35,12 @@ jobs:
       - name: 🏗️ Build project
         run: npm run build
 
+      - name: 🧹 Clean Vite cache
+        run: |
+          echo "🧹 Cleaning Vite cache to prevent module loading errors..."
+          rm -rf node_modules/.vite
+          echo "✅ Vite cache cleaned"
+
       - name: 🚀 Start dev server
         run: npm run dev > /tmp/server.log 2>&1 &
         env:

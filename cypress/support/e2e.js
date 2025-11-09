@@ -125,13 +125,31 @@ Cypress.Commands.add('loginWithCredentials', (email, password) => {
   cy.wait(1500);
 });
 
-// Attendre que la page se charge complètement
+// Attendre que la page se charge complètement avec auto-reload en cas d'erreur Vite
 Cypress.Commands.add('waitForPageLoad', () => {
   // Attendre que le body soit visible
   cy.get('body', { timeout: 10000 }).should('be.visible');
 
-  // Attendre que la page se stabilise (plus longtemps pour les pages lourdes)
-  cy.wait(2000);
+  // Attendre que la page se stabilise
+  cy.wait(3000);
+
+  // Vérifier si la page a du contenu ou est bloquée par une erreur Vite
+  cy.get('body').then($body => {
+    const hasSpinner = $body.find('.animate-spin').length > 0;
+    const hasContent = $body.find('h1, h2, main, [role="main"]').length > 0;
+    const hasErrorBoundary = $body.text().includes('error') ||
+                              $body.text().includes('Something went wrong');
+
+    // Si pas de contenu, spinner présent, ou erreur détectée → reload
+    if (!hasContent || hasSpinner || hasErrorBoundary) {
+      cy.log('⚠️ Page stuck, blank, or has error - forcing hard reload...');
+      cy.reload(true);
+      cy.wait(3000);
+
+      // Vérifier à nouveau après le reload
+      cy.get('body', { timeout: 10000 }).should('be.visible');
+    }
+  });
 });
 
 // Vérifier qu'une page s'affiche correctement
@@ -158,9 +176,10 @@ beforeEach(() => {
     }
 
     // Ignorer les erreurs de modules dynamiques (cache Vite corrompu)
-    // Ces erreurs sont gérées par le rechargement de page dans les tests
+    // Ces erreurs seront gérées automatiquement par waitForPageLoad()
     if (err.message.includes('Failed to fetch dynamically imported module') ||
         err.message.includes('Outdated Optimize Dep')) {
+      cy.log('⚠️ Vite module loading error detected - page will be reloaded');
       return false; // Ignorer l'erreur sans faire échouer le test
     }
 
