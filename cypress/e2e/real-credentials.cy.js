@@ -137,6 +137,11 @@ describe('3️⃣  Mode Admin - Pages Accessibles', () => {
 
     cy.log(`📧 Connexion Admin: ${adminEmail}`);
     cy.loginWithCredentials(adminEmail, adminPassword);
+
+    // Attendre que le profil soit complètement chargé
+    // en visitant une page simple qui vérifie l'authentification
+    cy.visit('/', { failOnStatusCode: false });
+    cy.wait(2000); // Attendre que le contexte React se mette à jour
   });
 
   it('devrait afficher /site-settings (Réglages du site)', () => {
