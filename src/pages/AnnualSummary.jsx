@@ -3,7 +3,7 @@ import { Helmet } from 'react-helmet';
 import { motion } from 'framer-motion';
 import { supabase } from '@/lib/customSupabaseClient';
 import { useToast } from '@/components/ui/use-toast';
-import { Loader2, ListChecks, ArrowLeft, CheckCircle2, Euro, Shield, User, Medal } from 'lucide-react';
+import { Loader2, ListChecks, ArrowLeft, CheckCircle2, Euro, Shield, User, Medal, Calendar, Filter, Users } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -11,6 +11,9 @@ import { formatName } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
 const DISCIPLINE_COLORS = {
@@ -19,8 +22,26 @@ const DISCIPLINE_COLORS = {
   'Vitesse': 'vitesse'
 };
 
-const ParticipationSummaryTable = ({ title, competitors, competitions }) => {
-  if (competitions.length === 0) return null;
+const ParticipationSummaryTable = ({ title, competitors, competitions, dateDebut, dateFin, showOnlyWithParticipation }) => {
+  // Filtrer les compétitions par plage de dates
+  const filteredCompetitions = competitions.filter(comp => {
+    const compDate = new Date(comp.start_date);
+
+    if (dateDebut && new Date(dateDebut) > compDate) return false;
+    if (dateFin && new Date(dateFin) < compDate) return false;
+
+    return true;
+  });
+
+  // Filtrer les compétiteurs
+  const filteredCompetitors = competitors.filter(({ participations }) => {
+    if (!showOnlyWithParticipation) return true;
+
+    // Vérifier si le compétiteur a au moins une participation dans les compétitions filtrées
+    return filteredCompetitions.some(comp => participations[comp.id]);
+  });
+
+  if (filteredCompetitions.length === 0) return null;
 
   return (
     <Card>
@@ -28,12 +49,12 @@ const ParticipationSummaryTable = ({ title, competitors, competitions }) => {
         <CardTitle>{title}</CardTitle>
       </CardHeader>
       <CardContent className="overflow-x-auto">
-        {competitors.length > 0 ? (
+        {filteredCompetitors.length > 0 ? (
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead className="sticky left-0 bg-background z-10 min-w-[150px]">Compétiteur</TableHead>
-                {competitions.map(comp => (
+                {filteredCompetitions.map(comp => (
                   <TableHead key={comp.id} className="text-center min-w-[150px]">
                     <div className="flex flex-col items-center">
                       <span>{comp.short_title || comp.name}</span>
@@ -50,7 +71,7 @@ const ParticipationSummaryTable = ({ title, competitors, competitions }) => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {competitors.map(({ member, participations }) => (
+              {filteredCompetitors.map(({ member, participations }) => (
                 <TableRow key={member.id}>
                   <TableCell className="font-medium sticky left-0 bg-background z-10">
                     <div className="flex items-center gap-2">
@@ -63,7 +84,7 @@ const ParticipationSummaryTable = ({ title, competitors, competitions }) => {
                       )}
                     </div>
                   </TableCell>
-                  {competitions.map(comp => (
+                  {filteredCompetitions.map(comp => (
                     <TableCell key={comp.id} className="text-center">
                       {participations[comp.id] ? (
                         participations[comp.id].ranking ? (
@@ -228,6 +249,11 @@ const AnnualSummary = () => {
   const location = useLocation();
   const [activeTab, setActiveTab] = useState('participation');
 
+  // Filtres pour l'onglet participation
+  const [dateDebut, setDateDebut] = useState('');
+  const [dateFin, setDateFin] = useState('');
+  const [showOnlyWithParticipation, setShowOnlyWithParticipation] = useState(false);
+
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const tab = params.get('tab');
@@ -375,8 +401,137 @@ const AnnualSummary = () => {
           </TabsList>
           <TabsContent value="participation" className="pt-4">
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="space-y-8">
-              <ParticipationSummaryTable title="Groupe U11-U15" competitors={summaryData.u11_u15} competitions={competitions.u11_u15} />
-              <ParticipationSummaryTable title="Groupe U15-U19" competitors={summaryData.u15_u19} competitions={competitions.u15_u19} />
+              {/* Filtres */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Filter className="w-5 h-5" />
+                    Filtres
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex flex-wrap gap-4 items-end">
+                    <div className="flex-1 min-w-[200px]">
+                      <Label htmlFor="dateDebut" className="flex items-center gap-2 mb-2">
+                        <Calendar className="w-4 h-4" />
+                        Date de début
+                      </Label>
+                      <Input
+                        id="dateDebut"
+                        type="date"
+                        value={dateDebut}
+                        onChange={(e) => setDateDebut(e.target.value)}
+                      />
+                    </div>
+                    <div className="flex-1 min-w-[200px]">
+                      <Label htmlFor="dateFin" className="flex items-center gap-2 mb-2">
+                        <Calendar className="w-4 h-4" />
+                        Date de fin
+                      </Label>
+                      <Input
+                        id="dateFin"
+                        type="date"
+                        value={dateFin}
+                        onChange={(e) => setDateFin(e.target.value)}
+                      />
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="showOnlyWithParticipation"
+                        checked={showOnlyWithParticipation}
+                        onCheckedChange={setShowOnlyWithParticipation}
+                      />
+                      <Label htmlFor="showOnlyWithParticipation" className="cursor-pointer">
+                        Afficher uniquement les compétiteurs ayant participé
+                      </Label>
+                    </div>
+                    {(dateDebut || dateFin || showOnlyWithParticipation) && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setDateDebut('');
+                          setDateFin('');
+                          setShowOnlyWithParticipation(false);
+                        }}
+                      >
+                        Réinitialiser les filtres
+                      </Button>
+                    )}
+                  </div>
+
+                  {/* Statistiques des participants */}
+                  {(() => {
+                    // Calculer pour U11-U15
+                    const u11_u15_filteredComps = competitions.u11_u15.filter(comp => {
+                      const compDate = new Date(comp.start_date);
+                      if (dateDebut && new Date(dateDebut) > compDate) return false;
+                      if (dateFin && new Date(dateFin) < compDate) return false;
+                      return true;
+                    });
+                    const u11_u15_filteredCompetitors = summaryData.u11_u15.filter(({ participations }) => {
+                      if (!showOnlyWithParticipation) return true;
+                      return u11_u15_filteredComps.some(comp => participations[comp.id]);
+                    });
+
+                    // Calculer pour U15-U19
+                    const u15_u19_filteredComps = competitions.u15_u19.filter(comp => {
+                      const compDate = new Date(comp.start_date);
+                      if (dateDebut && new Date(dateDebut) > compDate) return false;
+                      if (dateFin && new Date(dateFin) < compDate) return false;
+                      return true;
+                    });
+                    const u15_u19_filteredCompetitors = summaryData.u15_u19.filter(({ participations }) => {
+                      if (!showOnlyWithParticipation) return true;
+                      return u15_u19_filteredComps.some(comp => participations[comp.id]);
+                    });
+
+                    const totalCompetitors = u11_u15_filteredCompetitors.length + u15_u19_filteredCompetitors.length;
+                    const totalCompetitions = u11_u15_filteredComps.length + u15_u19_filteredComps.length;
+
+                    return (
+                      <div className="flex flex-wrap gap-4 pt-4 border-t">
+                        <div className="flex items-center gap-2">
+                          <Users className="w-5 h-5 text-primary" />
+                          <span className="font-semibold text-lg">
+                            {totalCompetitors} {totalCompetitors > 1 ? 'compétiteurs' : 'compétiteur'}
+                          </span>
+                          <span className="text-muted-foreground text-sm">
+                            (U11-U15: {u11_u15_filteredCompetitors.length}, U15-U19: {u15_u19_filteredCompetitors.length})
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Medal className="w-5 h-5 text-primary" />
+                          <span className="font-semibold text-lg">
+                            {totalCompetitions} {totalCompetitions > 1 ? 'compétitions' : 'compétition'}
+                          </span>
+                          <span className="text-muted-foreground text-sm">
+                            (U11-U15: {u11_u15_filteredComps.length}, U15-U19: {u15_u19_filteredComps.length})
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </CardContent>
+              </Card>
+
+              {/* Tableaux */}
+              <ParticipationSummaryTable
+                title="Groupe U11-U15"
+                competitors={summaryData.u11_u15}
+                competitions={competitions.u11_u15}
+                dateDebut={dateDebut}
+                dateFin={dateFin}
+                showOnlyWithParticipation={showOnlyWithParticipation}
+              />
+              <ParticipationSummaryTable
+                title="Groupe U15-U19"
+                competitors={summaryData.u15_u19}
+                competitions={competitions.u15_u19}
+                dateDebut={dateDebut}
+                dateFin={dateFin}
+                showOnlyWithParticipation={showOnlyWithParticipation}
+              />
             </motion.div>
           </TabsContent>
           <TabsContent value="financial" className="pt-4">
