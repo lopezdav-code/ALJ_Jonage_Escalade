@@ -15,6 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
+import CompetitionGroupedTable from '@/components/CompetitionGroupedTable';
 
 const DISCIPLINE_COLORS = {
   'Bloc': 'bloc',
@@ -241,6 +242,7 @@ const VolunteerSummaryTable = ({ title, volunteers, competitions, icon: Icon }) 
 
 const AnnualSummary = () => {
   const [summaryData, setSummaryData] = useState({ u11_u15: [], u15_u19: [] });
+  const [allCompetitors, setAllCompetitors] = useState([]);
   const [volunteerData, setVolunteerData] = useState({ coaches: [], referees: [] });
   const [competitions, setCompetitions] = useState({ u11_u15: [], u15_u19: [], all: [] });
   const [loading, setLoading] = useState(true);
@@ -253,6 +255,7 @@ const AnnualSummary = () => {
   const [dateDebut, setDateDebut] = useState('');
   const [dateFin, setDateFin] = useState('');
   const [showOnlyWithParticipation, setShowOnlyWithParticipation] = useState(false);
+  const [viewMode, setViewMode] = useState('by-group'); // 'by-group' ou 'by-competition'
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -344,10 +347,37 @@ const AnnualSummary = () => {
 
       const u11_u15_data = processGroup('Compétition U11-U15');
       const u15_u19_data = processGroup('Compétition U15-U19');
-      
+
+      // Garder une trace des IDs de compétiteurs déjà traités
+      const processedMemberIds = new Set();
+      u11_u15_data.members.forEach(m => processedMemberIds.add(m.member.id));
+      u15_u19_data.members.forEach(m => processedMemberIds.add(m.member.id));
+
+      // Traiter tous les autres compétiteurs (autre titre ou sans titre)
+      const otherCompetitors = {};
+      participations
+        .filter(p => p.role === 'Competiteur' && !processedMemberIds.has(p.members?.id))
+        .forEach(p => {
+          if (!p.members || !p.competitions) return;
+          const memberId = p.members.id;
+          const compId = p.competitions.id;
+
+          if (!otherCompetitors[memberId]) {
+            otherCompetitors[memberId] = { member: p.members, participations: {} };
+          }
+          otherCompetitors[memberId].participations[compId] = { ranking: p.ranking };
+        });
+      const otherMembers = Object.values(otherCompetitors).sort((a, b) => {
+        return a.member.first_name.localeCompare(b.member.first_name);
+      });
+
+      // Combiner tous les compétiteurs pour la vue par compétition
+      const combinedCompetitors = [...u11_u15_data.members, ...u15_u19_data.members, ...otherMembers];
+
       setSummaryData({ u11_u15: u11_u15_data.members, u15_u19: u15_u19_data.members });
-      setCompetitions({ 
-        u11_u15: u11_u15_data.competitions, 
+      setAllCompetitors(combinedCompetitors);
+      setCompetitions({
+        u11_u15: u11_u15_data.competitions,
         u15_u19: u15_u19_data.competitions,
         all: allCompetitions
       });
@@ -377,21 +407,23 @@ const AnnualSummary = () => {
       pageTitle="Récapitulatif annuel"
       message="Le récapitulatif annuel est réservé aux adhérents du club. Veuillez vous connecter avec un compte adhérent pour y accéder."
     >
-      <div className="space-y-8">
+      <div className={`${activeTab === 'participation' ? 'space-y-4' : 'space-y-8'}`}>
         <Helmet>
           <title>Récapitulatif Annuel et Financier - ALJ Escalade Jonage</title>
           <meta name="description" content="Récapitulatif annuel des participations aux compétitions et suivi financier." />
         </Helmet>
 
-        <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="flex justify-between items-center">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => navigate('/competitions')}><ArrowLeft /></Button>
-            <h1 className="text-4xl font-bold headline flex items-center gap-3">
-              <ListChecks className="w-10 h-10 text-primary" />
-              Récapitulatif Annuel et Financier
-            </h1>
-          </div>
-        </motion.div>
+        {activeTab !== 'participation' && (
+          <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="flex justify-between items-center">
+            <div className="flex items-center gap-4">
+              <Button variant="ghost" size="icon" onClick={() => navigate('/competitions')}><ArrowLeft /></Button>
+              <h1 className="text-4xl font-bold headline flex items-center gap-3">
+                <ListChecks className="w-10 h-10 text-primary" />
+                Récapitulatif Annuel et Financier
+              </h1>
+            </div>
+          </motion.div>
+        )}
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList>
@@ -399,63 +431,89 @@ const AnnualSummary = () => {
             <TabsTrigger value="financial">Récapitulatif Financier</TabsTrigger>
             <TabsTrigger value="volunteers">Participation des adhérents</TabsTrigger>
           </TabsList>
-          <TabsContent value="participation" className="pt-4">
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="space-y-8">
+          <TabsContent value="participation" className="pt-2">
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="space-y-4">
               {/* Filtres */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Filter className="w-5 h-5" />
+              <Card className="border-l-4 border-l-primary">
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Filter className="w-4 h-4" />
                     Filtres
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex flex-wrap gap-4 items-end">
-                    <div className="flex-1 min-w-[200px]">
-                      <Label htmlFor="dateDebut" className="flex items-center gap-2 mb-2">
-                        <Calendar className="w-4 h-4" />
-                        Date de début
+                <CardContent className="space-y-3">
+                  {/* Mode d'affichage */}
+                  <div className="flex items-center gap-4">
+                    <Label className="font-semibold">
+                      Mode d'affichage:
+                    </Label>
+                    <div className="flex gap-2">
+                      <Button
+                        variant={viewMode === 'by-group' ? 'default' : 'outline'}
+                        onClick={() => setViewMode('by-group')}
+                      >
+                        Par groupe
+                      </Button>
+                      <Button
+                        variant={viewMode === 'by-competition' ? 'default' : 'outline'}
+                        onClick={() => setViewMode('by-competition')}
+                      >
+                        Par compétition
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap gap-3 items-end">
+                    <div className="flex-1 min-w-[160px]">
+                      <Label htmlFor="dateDebut" className="flex items-center gap-1 mb-1 text-xs">
+                        <Calendar className="w-3 h-3" />
+                        Du
                       </Label>
                       <Input
                         id="dateDebut"
                         type="date"
+                        size="sm"
+                        className="text-sm h-8"
                         value={dateDebut}
                         onChange={(e) => setDateDebut(e.target.value)}
                       />
                     </div>
-                    <div className="flex-1 min-w-[200px]">
-                      <Label htmlFor="dateFin" className="flex items-center gap-2 mb-2">
-                        <Calendar className="w-4 h-4" />
-                        Date de fin
+                    <div className="flex-1 min-w-[160px]">
+                      <Label htmlFor="dateFin" className="flex items-center gap-1 mb-1 text-xs">
+                        <Calendar className="w-3 h-3" />
+                        Au
                       </Label>
                       <Input
                         id="dateFin"
                         type="date"
+                        size="sm"
+                        className="text-sm h-8"
                         value={dateFin}
                         onChange={(e) => setDateFin(e.target.value)}
                       />
                     </div>
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-2 text-sm">
                       <Checkbox
                         id="showOnlyWithParticipation"
                         checked={showOnlyWithParticipation}
                         onCheckedChange={setShowOnlyWithParticipation}
                       />
-                      <Label htmlFor="showOnlyWithParticipation" className="cursor-pointer">
-                        Afficher uniquement les compétiteurs ayant participé
+                      <Label htmlFor="showOnlyWithParticipation" className="cursor-pointer text-xs">
+                        Avec participation
                       </Label>
                     </div>
                     {(dateDebut || dateFin || showOnlyWithParticipation) && (
                       <Button
                         variant="outline"
-                        size="sm"
+                        size="xs"
                         onClick={() => {
                           setDateDebut('');
                           setDateFin('');
                           setShowOnlyWithParticipation(false);
                         }}
+                        className="text-xs h-8"
                       >
-                        Réinitialiser les filtres
+                        Réinit.
                       </Button>
                     )}
                   </div>
@@ -490,23 +548,23 @@ const AnnualSummary = () => {
                     const totalCompetitions = u11_u15_filteredComps.length + u15_u19_filteredComps.length;
 
                     return (
-                      <div className="flex flex-wrap gap-4 pt-4 border-t">
-                        <div className="flex items-center gap-2">
-                          <Users className="w-5 h-5 text-primary" />
-                          <span className="font-semibold text-lg">
-                            {totalCompetitors} {totalCompetitors > 1 ? 'compétiteurs' : 'compétiteur'}
+                      <div className="flex flex-wrap gap-3 pt-3 border-t text-sm">
+                        <div className="flex items-center gap-1">
+                          <Users className="w-4 h-4 text-primary" />
+                          <span className="font-semibold">
+                            {totalCompetitors}
                           </span>
-                          <span className="text-muted-foreground text-sm">
-                            (U11-U15: {u11_u15_filteredCompetitors.length}, U15-U19: {u15_u19_filteredCompetitors.length})
+                          <span className="text-muted-foreground text-xs">
+                            compétiteurs
                           </span>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <Medal className="w-5 h-5 text-primary" />
-                          <span className="font-semibold text-lg">
-                            {totalCompetitions} {totalCompetitions > 1 ? 'compétitions' : 'compétition'}
+                        <div className="flex items-center gap-1">
+                          <Medal className="w-4 h-4 text-primary" />
+                          <span className="font-semibold">
+                            {totalCompetitions}
                           </span>
-                          <span className="text-muted-foreground text-sm">
-                            (U11-U15: {u11_u15_filteredComps.length}, U15-U19: {u15_u19_filteredComps.length})
+                          <span className="text-muted-foreground text-xs">
+                            compétitions
                           </span>
                         </div>
                       </div>
@@ -516,22 +574,47 @@ const AnnualSummary = () => {
               </Card>
 
               {/* Tableaux */}
-              <ParticipationSummaryTable
-                title="Groupe U11-U15"
-                competitors={summaryData.u11_u15}
-                competitions={competitions.u11_u15}
-                dateDebut={dateDebut}
-                dateFin={dateFin}
-                showOnlyWithParticipation={showOnlyWithParticipation}
-              />
-              <ParticipationSummaryTable
-                title="Groupe U15-U19"
-                competitors={summaryData.u15_u19}
-                competitions={competitions.u15_u19}
-                dateDebut={dateDebut}
-                dateFin={dateFin}
-                showOnlyWithParticipation={showOnlyWithParticipation}
-              />
+              {viewMode === 'by-group' ? (
+                <>
+                  <ParticipationSummaryTable
+                    title="Groupe U11-U15"
+                    competitors={summaryData.u11_u15}
+                    competitions={competitions.u11_u15}
+                    dateDebut={dateDebut}
+                    dateFin={dateFin}
+                    showOnlyWithParticipation={showOnlyWithParticipation}
+                  />
+                  <ParticipationSummaryTable
+                    title="Groupe U15-U19"
+                    competitors={summaryData.u15_u19}
+                    competitions={competitions.u15_u19}
+                    dateDebut={dateDebut}
+                    dateFin={dateFin}
+                    showOnlyWithParticipation={showOnlyWithParticipation}
+                  />
+                </>
+              ) : (
+                <CompetitionGroupedTable
+                  competitions={competitions.all}
+                  allCompetitors={
+                    showOnlyWithParticipation
+                      ? allCompetitors.filter(({ participations }) => {
+                          // Filtrer par compétitions dans la plage de dates
+                          const filteredComps = competitions.all.filter(comp => {
+                            const compDate = new Date(comp.start_date);
+                            if (dateDebut && new Date(dateDebut) > compDate) return false;
+                            if (dateFin && new Date(dateFin) < compDate) return false;
+                            return true;
+                          });
+                          return filteredComps.some(comp => participations[comp.id]);
+                        })
+                      : allCompetitors
+                  }
+                  dateDebut={dateDebut}
+                  dateFin={dateFin}
+                  showOnlyWithParticipation={showOnlyWithParticipation}
+                />
+              )}
             </motion.div>
           </TabsContent>
           <TabsContent value="financial" className="pt-4">
