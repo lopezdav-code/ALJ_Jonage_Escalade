@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Helmet } from 'react-helmet';
 import { motion } from 'framer-motion';
 import { supabase } from '@/lib/customSupabaseClient';
 import { useToast } from '@/components/ui/use-toast';
-import { Loader2, ListChecks, ArrowLeft, CheckCircle2, Euro, Shield, User, Medal, Calendar, Filter, Users } from 'lucide-react';
+import { Loader2, ListChecks, ArrowLeft, CheckCircle2, Euro, Shield, User, Medal, Calendar, Filter, Users, Printer, Copy } from 'lucide-react';
+import html2canvas from 'html2canvas';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -186,18 +187,75 @@ const FinancialSummaryTable = ({ title, competitors, competitions }) => {
 };
 
 const VolunteerSummaryTable = ({ title, volunteers, competitions, icon: Icon }) => {
+  const { toast } = useToast();
+  const contentRef = useRef(null);
+
   if (competitions.length === 0 || volunteers.length === 0) return null;
 
+  const handleCopyAsImage = async () => {
+    try {
+      if (!contentRef.current) return;
+
+      const canvas = await html2canvas(contentRef.current, {
+        backgroundColor: '#ffffff',
+        scale: 2,
+        allowTaint: true,
+        useCORS: true,
+      });
+
+      canvas.toBlob(async (blob) => {
+        try {
+          const item = new ClipboardItem({ 'image/png': blob });
+          await navigator.clipboard.write([item]);
+          toast({
+            title: 'Succès',
+            description: 'Tableau copié dans le presse-papier',
+          });
+        } catch (err) {
+          toast({
+            title: 'Erreur',
+            description: 'Impossible de copier dans le presse-papier',
+            variant: 'destructive',
+          });
+        }
+      });
+    } catch (error) {
+      console.error('Erreur lors de la capture:', error);
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de capturer le tableau',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handlePrint = () => {
+    window.print();
+  };
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          {Icon && <Icon className="w-6 h-6" />}
-          {title}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="overflow-x-auto">
-        <Table>
+    <div className="space-y-3">
+      {/* Boutons d'action */}
+      <div className="flex justify-end gap-2 no-print">
+        <Button onClick={handleCopyAsImage} variant="outline" size="sm" className="gap-2">
+          <Copy className="w-4 h-4" />
+          Copier l'image
+        </Button>
+        <Button onClick={handlePrint} variant="outline" size="sm" className="gap-2">
+          <Printer className="w-4 h-4" />
+          Imprimer
+        </Button>
+      </div>
+
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg flex items-center gap-2">
+            {Icon && <Icon className="w-5 h-5" />}
+            {title}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="overflow-x-auto" ref={contentRef}>
+          <Table>
           <TableHeader>
             <TableRow>
               <TableHead className="sticky left-0 bg-background z-10 min-w-[150px]">Bénévole</TableHead>
@@ -237,6 +295,7 @@ const VolunteerSummaryTable = ({ title, volunteers, competitions, icon: Icon }) 
         </Table>
       </CardContent>
     </Card>
+    </div>
   );
 };
 
@@ -407,13 +466,13 @@ const AnnualSummary = () => {
       pageTitle="Récapitulatif annuel"
       message="Le récapitulatif annuel est réservé aux adhérents du club. Veuillez vous connecter avec un compte adhérent pour y accéder."
     >
-      <div className={`${activeTab === 'participation' ? 'space-y-4' : 'space-y-8'}`}>
+      <div className={`${(activeTab === 'participation' || activeTab === 'volunteers') ? 'space-y-4' : 'space-y-8'}`}>
         <Helmet>
           <title>Récapitulatif Annuel et Financier - ALJ Escalade Jonage</title>
           <meta name="description" content="Récapitulatif annuel des participations aux compétitions et suivi financier." />
         </Helmet>
 
-        {activeTab !== 'participation' && (
+        {(activeTab !== 'participation' && activeTab !== 'volunteers') && (
           <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="flex justify-between items-center">
             <div className="flex items-center gap-4">
               <Button variant="ghost" size="icon" onClick={() => navigate('/competitions')}><ArrowLeft /></Button>
@@ -623,14 +682,21 @@ const AnnualSummary = () => {
               <FinancialSummaryTable title="Groupe U15-U19" competitors={summaryData.u15_u19} competitions={competitions.u15_u19} />
             </motion.div>
           </TabsContent>
-          <TabsContent value="volunteers" className="pt-4">
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="space-y-8">
+          <TabsContent value="volunteers" className="pt-2">
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="space-y-4">
               <VolunteerSummaryTable title="Coachs" volunteers={volunteerData.coaches} competitions={competitions.all} icon={User} />
               <VolunteerSummaryTable title="Arbitres" volunteers={volunteerData.referees} competitions={competitions.all} icon={Shield} />
             </motion.div>
           </TabsContent>
         </Tabs>
       </div>
+      <style>{`
+        @media print {
+          .no-print {
+            display: none !important;
+          }
+        }
+      `}</style>
     </ProtectedRoute>
   );
 };
