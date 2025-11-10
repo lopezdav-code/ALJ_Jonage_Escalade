@@ -194,11 +194,20 @@ const VolunteerSection = ({ coaches, referees, competitions }) => {
     try {
       if (!contentRef.current) return;
 
+      // Attendre que les icônes soient rendues
+      await new Promise(resolve => {
+        requestAnimationFrame(() => {
+          setTimeout(resolve, 100);
+        });
+      });
+
       const canvas = await html2canvas(contentRef.current, {
         backgroundColor: '#ffffff',
         scale: 2,
         allowTaint: true,
         useCORS: true,
+        logging: false,
+        pixelRatio: window.devicePixelRatio || 1,
       });
 
       canvas.toBlob(async (blob) => {

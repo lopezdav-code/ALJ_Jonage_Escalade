@@ -28,12 +28,21 @@ const CompetitionGroupedTable = ({
     try {
       if (!contentRef.current) return;
 
+      // Attendre que les icônes soient rendues
+      await new Promise(resolve => {
+        requestAnimationFrame(() => {
+          setTimeout(resolve, 100);
+        });
+      });
+
       // Créer une version temporaire pour la capture (sans les boutons no-print)
       const canvas = await html2canvas(contentRef.current, {
         backgroundColor: '#ffffff',
         scale: 2,
         allowTaint: true,
         useCORS: true,
+        logging: false,
+        pixelRatio: window.devicePixelRatio || 1,
       });
 
       // Convertir en blob et copier dans le clipboard
