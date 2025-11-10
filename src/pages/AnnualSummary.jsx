@@ -317,8 +317,8 @@ const VolunteerSummaryTable = ({ title, volunteers, competitions, icon: Icon }) 
                   <TableRow key={member.id} className="h-auto">
                     <TableCell className="font-medium py-1 px-2 text-xs">{formatName(member.first_name, member.last_name, true)}</TableCell>
                     {competitions.map(comp => (
-                      <TableCell key={comp.id} className="text-center py-1 px-1">
-                        {participations[comp.id] && <CheckCircle2 className="w-3 h-3 text-green-500 mx-auto" />}
+                      <TableCell key={comp.id} className="text-center py-1 px-1 overflow-visible">
+                        {participations[comp.id] && <CheckCircle2 className="w-4 h-4 text-green-500 mx-auto inline-block align-middle" />}
                       </TableCell>
                     ))}
                     <TableCell className="text-right font-bold text-primary py-1 px-1 text-xs">

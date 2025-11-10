@@ -306,14 +306,14 @@ const CompetitionGroupedTable = ({
                                   )}
                                 </div>
                               </div>
-                              <div className="flex-shrink-0 ml-2">
+                              <div className="flex-shrink-0 ml-2 overflow-visible">
                                 {ranking ? (
                                   <div className="flex items-center gap-1 font-bold text-primary">
                                     <Medal className="w-3 h-3" />
                                     <span>{ranking}</span>
                                   </div>
                                 ) : (
-                                  <CheckCircle2 className="w-4 h-4 text-green-500" />
+                                  <CheckCircle2 className="w-4 h-4 text-green-500 inline-block align-middle" />
                                 )}
                               </div>
                             </div>
