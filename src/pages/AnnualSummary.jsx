@@ -186,11 +186,9 @@ const FinancialSummaryTable = ({ title, competitors, competitions }) => {
   );
 };
 
-const VolunteerSummaryTable = ({ title, volunteers, competitions, icon: Icon }) => {
+const VolunteerSection = ({ coaches, referees, competitions }) => {
   const { toast } = useToast();
   const contentRef = useRef(null);
-
-  if (competitions.length === 0 || volunteers.length === 0) return null;
 
   const handleCopyAsImage = async () => {
     try {
@@ -209,7 +207,7 @@ const VolunteerSummaryTable = ({ title, volunteers, competitions, icon: Icon }) 
           await navigator.clipboard.write([item]);
           toast({
             title: 'Succès',
-            description: 'Tableau copié dans le presse-papier',
+            description: 'Tableaux copiés dans le presse-papier',
           });
         } catch (err) {
           toast({
@@ -223,7 +221,7 @@ const VolunteerSummaryTable = ({ title, volunteers, competitions, icon: Icon }) 
       console.error('Erreur lors de la capture:', error);
       toast({
         title: 'Erreur',
-        description: 'Impossible de capturer le tableau',
+        description: 'Impossible de capturer les tableaux',
         variant: 'destructive',
       });
     }
@@ -234,7 +232,7 @@ const VolunteerSummaryTable = ({ title, volunteers, competitions, icon: Icon }) 
   };
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       {/* Boutons d'action */}
       <div className="flex justify-end gap-2 no-print">
         <Button onClick={handleCopyAsImage} variant="outline" size="sm" className="gap-2">
@@ -247,55 +245,69 @@ const VolunteerSummaryTable = ({ title, volunteers, competitions, icon: Icon }) 
         </Button>
       </div>
 
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg flex items-center gap-2">
-            {Icon && <Icon className="w-5 h-5" />}
-            {title}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="overflow-x-auto" ref={contentRef}>
-          <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="sticky left-0 bg-background z-10 min-w-[150px]">Bénévole</TableHead>
-              {competitions.map(comp => (
-                <TableHead key={comp.id} className="text-center min-w-[150px]">
-                  <div className="flex flex-col items-center">
-                    <span>{comp.short_title || comp.name}</span>
-                    <div className="text-xs text-muted-foreground font-normal">
-                      {new Date(comp.start_date).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })}
-                    </div>
-                  </div>
-                </TableHead>
-              ))}
-              <TableHead className="text-right font-bold sticky right-0 bg-background z-10 min-w-[100px]">Total</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {volunteers.map(({ member, participations }) => {
-              const total = Object.keys(participations).length;
-              if (total === 0) return null;
+      {/* Contenu à capturer */}
+      <div ref={contentRef} className="space-y-4">
+        <VolunteerSummaryTable title="Coachs" volunteers={coaches} competitions={competitions} icon={User} />
+        <VolunteerSummaryTable title="Arbitres" volunteers={referees} competitions={competitions} icon={Shield} />
+      </div>
+    </div>
+  );
+};
 
-              return (
-                <TableRow key={member.id}>
-                  <TableCell className="font-medium sticky left-0 bg-background z-10">{formatName(member.first_name, member.last_name, true)}</TableCell>
-                  {competitions.map(comp => (
-                    <TableCell key={comp.id} className="text-center">
-                      {participations[comp.id] && <CheckCircle2 className="w-5 h-5 text-green-500 mx-auto" />}
+const VolunteerSummaryTable = ({ title, volunteers, competitions, icon: Icon }) => {
+  if (competitions.length === 0 || volunteers.length === 0) return null;
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-lg flex items-center gap-2">
+          {Icon && <Icon className="w-5 h-5" />}
+          {title}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="p-3">
+        <div className="overflow-x-auto">
+          <Table className="text-xs">
+            <TableHeader>
+              <TableRow>
+                <TableHead className="h-auto py-2 px-2">Bénévole</TableHead>
+                {competitions.map(comp => (
+                  <TableHead key={comp.id} className="text-center h-auto py-2 px-1">
+                    <div className="flex flex-col items-center gap-0.5">
+                      <span className="text-xs leading-tight">{comp.short_title || comp.name}</span>
+                      <div className="text-xs text-muted-foreground font-normal leading-tight">
+                        {new Date(comp.start_date).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })}
+                      </div>
+                    </div>
+                  </TableHead>
+                ))}
+                <TableHead className="text-right font-bold h-auto py-2 px-1">T</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {volunteers.map(({ member, participations }) => {
+                const total = Object.keys(participations).length;
+                if (total === 0) return null;
+
+                return (
+                  <TableRow key={member.id} className="h-auto">
+                    <TableCell className="font-medium py-1 px-2 text-xs">{formatName(member.first_name, member.last_name, true)}</TableCell>
+                    {competitions.map(comp => (
+                      <TableCell key={comp.id} className="text-center py-1 px-1">
+                        {participations[comp.id] && <CheckCircle2 className="w-3 h-3 text-green-500 mx-auto" />}
+                      </TableCell>
+                    ))}
+                    <TableCell className="text-right font-bold text-primary py-1 px-1 text-xs">
+                      {total}
                     </TableCell>
-                  ))}
-                  <TableCell className="text-right font-bold sticky right-0 bg-background z-10 text-primary">
-                    {total}
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </div>
       </CardContent>
     </Card>
-    </div>
   );
 };
 
@@ -683,9 +695,8 @@ const AnnualSummary = () => {
             </motion.div>
           </TabsContent>
           <TabsContent value="volunteers" className="pt-2">
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="space-y-4">
-              <VolunteerSummaryTable title="Coachs" volunteers={volunteerData.coaches} competitions={competitions.all} icon={User} />
-              <VolunteerSummaryTable title="Arbitres" volunteers={volunteerData.referees} competitions={competitions.all} icon={Shield} />
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+              <VolunteerSection coaches={volunteerData.coaches} referees={volunteerData.referees} competitions={competitions.all} />
             </motion.div>
           </TabsContent>
         </Tabs>
