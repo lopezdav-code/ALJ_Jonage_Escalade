@@ -194,6 +194,18 @@ const VolunteerSection = ({ coaches, referees, competitions }) => {
     try {
       if (!contentRef.current) return;
 
+      // Créer un style temporaire pour éviter le clipping pendant la capture
+      const style = document.createElement('style');
+      style.innerHTML = `
+        div[style*="overflow-x-auto"] {
+          overflow: visible !important;
+        }
+        table td, table th {
+          overflow: visible !important;
+        }
+      `;
+      document.head.appendChild(style);
+
       // Attendre que tout soit rendu
       await new Promise(resolve => {
         requestAnimationFrame(() => {
@@ -209,6 +221,9 @@ const VolunteerSection = ({ coaches, referees, competitions }) => {
         logging: false,
         removeModal: true,
       });
+
+      // Nettoyer le style temporaire
+      document.head.removeChild(style);
 
       canvas.toBlob(async (blob) => {
         try {
