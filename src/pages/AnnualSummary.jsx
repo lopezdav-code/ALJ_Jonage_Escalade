@@ -194,21 +194,49 @@ const VolunteerSection = ({ coaches, referees, competitions }) => {
     try {
       if (!contentRef.current) return;
 
-      // Attendre que les icônes soient rendues
+      // Cloner l'élément et agrandir les icônes pour la capture
+      const clone = contentRef.current.cloneNode(true);
+
+      // Agrandir toutes les icônes SVG dans le clone pour une meilleure capture
+      const svgs = clone.querySelectorAll('svg');
+      svgs.forEach(svg => {
+        const currentWidth = svg.getAttribute('width') || svg.style.width || '';
+        const currentHeight = svg.getAttribute('height') || svg.style.height || '';
+
+        // Augmenter la taille des petites icônes
+        if (currentWidth.includes('3') || currentHeight.includes('3') || currentWidth.includes('4') || currentHeight.includes('4')) {
+          svg.setAttribute('width', '24');
+          svg.setAttribute('height', '24');
+          svg.style.width = '24px';
+          svg.style.height = '24px';
+        }
+      });
+
+      // Ajouter le clone au DOM temporairement
+      const tempContainer = document.createElement('div');
+      tempContainer.style.position = 'absolute';
+      tempContainer.style.left = '-9999px';
+      tempContainer.appendChild(clone);
+      document.body.appendChild(tempContainer);
+
+      // Attendre que les icônes agrandies soient rendues
       await new Promise(resolve => {
         requestAnimationFrame(() => {
-          setTimeout(resolve, 100);
+          setTimeout(resolve, 200);
         });
       });
 
-      const canvas = await html2canvas(contentRef.current, {
+      const canvas = await html2canvas(clone, {
         backgroundColor: '#ffffff',
-        scale: 2,
+        scale: 1.5,
         allowTaint: true,
         useCORS: true,
         logging: false,
-        pixelRatio: window.devicePixelRatio || 1,
+        removeModal: true,
       });
+
+      // Nettoyer le clone
+      document.body.removeChild(tempContainer);
 
       canvas.toBlob(async (blob) => {
         try {
