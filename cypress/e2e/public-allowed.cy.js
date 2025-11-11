@@ -1,0 +1,32 @@
+/**
+ * Tests E2E - Pages Publiques Autorisées
+ * Teste l'accès aux pages publiques sans authentification
+ */
+
+describe('📖 Pages Publiques Autorisées', () => {
+  // Liste des pages accessibles sans authentification
+  const allowedPages = [
+    { path: '/', name: 'Accueil' },
+    { path: '/news', name: 'Actualités' },
+    { path: '/agenda', name: 'Agenda' },
+    { path: '/contact', name: 'Contact' }
+  ];
+
+  allowedPages.forEach((page) => {
+    it(`devrait afficher "${page.name}" sur ${page.path}`, () => {
+      cy.log(`📄 Test: ${page.name} (${page.path})`);
+
+      cy.visit(page.path, { failOnStatusCode: false });
+      cy.get('body', { timeout: 5000 }).should('be.visible');
+      cy.wait(500);
+
+      // Vérifier qu'il y a du contenu
+      cy.get('h1, h2, main, nav, [role="main"]', { timeout: 5000 }).should('exist');
+
+      // Vérifier qu'il n'y a pas de message d'erreur d'accès
+      cy.contains(/accès restreint|access denied|forbidden|non autorisé/i).should('not.exist');
+
+      cy.log(`✅ ${page.name} accessible`);
+    });
+  });
+});
