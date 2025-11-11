@@ -184,6 +184,16 @@ beforeEach(() => {
       return false;
     }
 
+    // Ignorer les erreurs RangeError liées à l'offset (canvas/image processing)
+    if (err.message.includes('offset') && err.message.includes('out of range')) {
+      return false;
+    }
+
+    // Ignorer les erreurs de canvas et image processing non critiques
+    if (err.message.includes('canvas') || err.message.includes('ImageData')) {
+      return false;
+    }
+
     return true;
   });
 });

@@ -1,7 +1,9 @@
 const { defineConfig } = require('cypress');
 
 module.exports = defineConfig({
-  projectId: process.env.CYPRESS_PROJECT_ID || 'YOUR_PROJECT_ID',
+  projectId: 'moqv2f',
+  // projectId is only needed for cloud recording, not for local tests
+  // projectId: process.env.CYPRESS_PROJECT_ID || 'YOUR_PROJECT_ID',
   e2e: {
     baseUrl: 'http://localhost:3000/ALJ_Jonage_Escalade',
     specPattern: 'cypress/e2e/**/*.cy.js',
