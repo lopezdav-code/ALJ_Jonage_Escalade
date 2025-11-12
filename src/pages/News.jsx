@@ -128,14 +128,14 @@ const News = () => {
       setSignedDocUrls(docUrlsMap);
     }
     setLoadingNews(false);
-  }, [toast]);
+  }, []);
 
   useEffect(() => {
     // Only fetch news when authentication is ready
     if (!authLoading) {
       fetchNews();
     }
-  }, [fetchNews, authLoading]);
+  }, [authLoading]);
 
   const filteredAndSortedNews = useMemo(() => {
     let processedNews = [...news];
