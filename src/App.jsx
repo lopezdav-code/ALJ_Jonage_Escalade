@@ -27,6 +27,8 @@ const PedagogyEditor = lazy(() => import('@/pages/PedagogyEditor'));
 const SiteSettings = lazy(() => import('@/pages/SiteSettings'));
 const AnnualSummary = lazy(() => import('@/pages/AnnualSummary'));
 const AdminManagement = lazy(() => import('@/pages/AdminManagement'));
+const AdminDashboard = lazy(() => import('@/pages/AdminDashboard'));
+const DatabaseManagement = lazy(() => import('@/pages/DatabaseManagement'));
 const Inscriptions = lazy(() => import('@/pages/Inscriptions'));
 const ImageAdmin = lazy(() => import('@/pages/ImageAdmin'));
 const Setup = lazy(() => import('@/pages/Setup'));
@@ -140,6 +142,8 @@ const AppContent = () => {
           <Route path="/contact" element={<Contact />} />
           <Route path="/site-settings" element={<LazyRoute><SiteSettings /></LazyRoute>} />
           <Route path="/annual-summary" element={<LazyRoute><AnnualSummary /></LazyRoute>} />
+          <Route path="/admin-dashboard" element={<LazyRoute><AdminDashboard /></LazyRoute>} />
+          <Route path="/database-management" element={<LazyRoute><DatabaseManagement /></LazyRoute>} />
           <Route path="/admin-management" element={<LazyRoute><AdminManagement /></LazyRoute>} />
           <Route path="/user-roles" element={<LazyRoute><UserRoles /></LazyRoute>} />
           <Route path="/permissions" element={<LazyRoute><Permissions /></LazyRoute>} />

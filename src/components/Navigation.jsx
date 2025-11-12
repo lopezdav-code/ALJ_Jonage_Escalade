@@ -21,54 +21,6 @@ import {
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
 
-const AuthForm = ({ mode, setMode, onAuthSuccess }) => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
-  const { signIn, signUp } = useAuth();
-  const { toast } = useToast();
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    const { error } = mode === 'signIn' ? await signIn(email, password) : await signUp(email, password);
-    setLoading(false);
-    if (!error) {
-      onAuthSuccess();
-      toast({ title: mode === 'signIn' ? 'Connexion réussie' : 'Inscription réussie', description: 'Bienvenue !' });
-    }
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <DialogHeader>
-        <DialogTitle>{mode === 'signIn' ? 'Connexion' : 'Inscription'}</DialogTitle>
-        <DialogDescription>
-          {mode === 'signIn' ? 'Connectez-vous pour accéder à votre espace.' : 'Créez un compte pour rejoindre le club.'}
-        </DialogDescription>
-      </DialogHeader>
-      <div className="space-y-2">
-        <div>
-          <Label htmlFor="email">Email</Label>
-          <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-        </div>
-        <div>
-          <Label htmlFor="password">Mot de passe</Label>
-          <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-        </div>
-      </div>
-      <DialogFooter className="flex flex-col sm:flex-row sm:justify-between items-center">
-        <Button type="button" variant="link" onClick={() => setMode(mode === 'signIn' ? 'signUp' : 'signIn')}>
-          {mode === 'signIn' ? 'Pas de compte ? S\'inscrire' : 'Déjà un compte ? Se connecter'}
-        </Button>
-        <Button type="submit" disabled={loading}>
-          {loading ? 'Chargement...' : (mode === 'signIn' ? 'Se connecter' : 'S\'inscrire')}
-        </Button>
-      </DialogFooter>
-    </form>
-  );
-};
-
 const ChangePasswordDialog = ({ isOpen, onClose }) => {
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -173,15 +125,13 @@ const ChangePasswordDialog = ({ isOpen, onClose }) => {
 
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
-  const [authMode, setAuthMode] = useState('signIn');
   const { user, signOut, isAdmin, isEncadrant, isAdherent, isBureau, profile } = useAuth();
   const { config, loadingConfig } = useConfig();
   const navigate = useNavigate();
 
   const navLinksOrder = [
-    '/news', '/schedule', '/inscriptions', '/contact', '/volunteers', '/competitions', '/agenda', '/session-log', '/pedagogy'
+    '/news', '/schedule', '/inscriptions', '/contact', '/volunteers', '/competitions', '/agenda', '/session-log', '/pedagogy', '/admin-dashboard'
   ];
 
   const defaultNavLinks = [
@@ -205,6 +155,7 @@ const Navigation = () => {
       ]
     },
     { to: '/pedagogy', text: 'Support Pédagogique', roles: ['adherent', 'encadrant', 'admin'] },
+    { to: '/admin-dashboard', text: 'Administration', roles: ['admin', 'bureau'] },
   ];
   
   const [navLinks, setNavLinks] = useState(defaultNavLinks);
@@ -343,10 +294,10 @@ const Navigation = () => {
               </DropdownMenu>
             ) : (
               <>
-                <Button onClick={() => { setAuthMode('signIn'); setIsAuthModalOpen(true); }} variant="ghost" size="sm" className="hidden sm:inline-flex">
+                <Button onClick={() => navigate('/login')} variant="ghost" size="sm" className="hidden sm:inline-flex">
                   <LogIn className="w-4 h-4 mr-2" /> Connexion
                 </Button>
-                <Button onClick={() => { setAuthMode('signUp'); setIsAuthModalOpen(true); }} size="sm">
+                <Button onClick={() => navigate('/login')} size="sm">
                   <UserPlus className="w-4 h-4 mr-2" /> Inscription
                 </Button>
               </>
@@ -373,16 +324,16 @@ const Navigation = () => {
                 if (link.subMenu) {
                   const filteredSubMenu = link.subMenu.filter(subLink => subLink.roles.includes(userRole));
                   if (filteredSubMenu.length === 0) return null;
-                  
+
                   return (
                     <div key={link.to} className="space-y-2">
                       <p className="text-lg font-semibold text-primary">{link.text}</p>
                       <div className="pl-4 space-y-2">
                         {filteredSubMenu.map(subLink => (
-                          <NavLink 
-                            key={subLink.to} 
-                            to={subLink.to} 
-                            onClick={closeMenu} 
+                          <NavLink
+                            key={subLink.to}
+                            to={subLink.to}
+                            onClick={closeMenu}
                             className={({ isActive }) => `block text-md font-medium transition-colors hover:text-primary ${isActive ? 'text-primary' : 'text-muted-foreground'}`}
                           >
                             {subLink.text}
@@ -392,24 +343,18 @@ const Navigation = () => {
                     </div>
                   );
                 }
-                
+
                 return (
                   <NavLink key={link.to} to={link.to} onClick={closeMenu} className={({ isActive }) => `text-lg font-medium transition-colors hover:text-primary ${isActive ? 'text-primary' : 'text-muted-foreground'}`}>
                     {link.text}
                   </NavLink>
                 );
               })}
-               {!user && <Button onClick={() => { closeMenu(); setAuthMode('signIn'); setIsAuthModalOpen(true); }} variant="outline">Connexion</Button>}
+               {!user && <Button onClick={() => { closeMenu(); navigate('/login'); }} variant="outline">Connexion</Button>}
             </div>
           </motion.div>
         )}
       </AnimatePresence>
-
-      <Dialog open={isAuthModalOpen} onOpenChange={setIsAuthModalOpen}>
-        <DialogContent>
-          <AuthForm mode={authMode} setMode={setAuthMode} onAuthSuccess={() => setIsAuthModalOpen(false)} />
-        </DialogContent>
-      </Dialog>
 
       <ChangePasswordDialog 
         isOpen={isChangePasswordOpen} 

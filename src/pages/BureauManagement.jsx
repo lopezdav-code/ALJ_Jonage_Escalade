@@ -180,7 +180,7 @@ const BureauManagement = () => {
   }
 
   return (
-    <ProtectedRoute pageTitle="Gestion du Bureau" message="Cette page est réservée aux administrateurs.">
+    <ProtectedRoute pageTitle="Gestion du Bureau" message="Cette page est réservée aux administrateurs et aux membres du bureau.">
       <div className="space-y-6">
         <Helmet>
           <title>Gestion du Bureau</title>

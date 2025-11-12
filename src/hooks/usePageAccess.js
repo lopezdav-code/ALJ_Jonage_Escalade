@@ -54,6 +54,8 @@ export const usePageAccess = (pagePath = null) => {
     // Even if the database config is wrong, these pages must be admin-only
     const criticalAdminPages = {
       '/site-settings': ['admin'],
+      '/admin-dashboard': ['admin', 'bureau'],
+      '/database-management': ['admin'],
       '/admin-management': ['admin'],
       '/image-admin': ['admin'],
       '/user-roles': ['admin'],
