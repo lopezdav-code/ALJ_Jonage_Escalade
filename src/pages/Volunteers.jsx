@@ -34,7 +34,7 @@ const VolunteerRow = React.memo(({ member, onEdit, onView, isEmergencyContact, s
         <td className="p-2">{member.first_name}</td>
         <td className="p-2">{member.last_name}</td>
         {showSubGroup && <td className="p-2">{member.sub_group}</td>}
-        {showCategory && <td className="p-2">{member.category || ''}</td>}
+        {showCategory && <td className="p-2">{member.groupe_sous_category || ''}</td>}
         <td className="p-2">
           <div className="flex items-center gap-2">
             {hasEmergencyContact && <Shield className="h-5 w-5 text-blue-500" title="A un contact d'urgence" />}
@@ -319,8 +319,9 @@ const Volunteers = () => {
           if (title.includes('Compétition')) {
             const currentTabMembers = membersForDisplay.filter(m => m.title === title); // Use membersForDisplay
 
+            // Group by groupe_sous_category from groupe table (e.g., "U11-U15", "U15-U19")
             const membersByCategory = currentTabMembers.reduce((acc, member) => {
-              const category = member.category || 'Sans catégorie'; // Default category if missing
+              const category = member.groupe_sous_category || 'Sans groupe'; // Use groupe_sous_category instead of member.category
               if (!acc[category]) {
                 acc[category] = [];
               }
@@ -329,7 +330,7 @@ const Volunteers = () => {
             }, {});
             const categories = Object.keys(membersByCategory).sort();
 
-            const showCategoryColumn = currentTabMembers.some(m => m.category && m.category.trim() !== '');
+            const showCategoryColumn = currentTabMembers.some(m => m.groupe_sous_category && m.groupe_sous_category.trim() !== '');
             const showSubGroupColumn = currentTabMembers.some(m => m.sub_group && m.sub_group.trim() !== ''); // Check if subgroup is relevant
 
             const isShowingAll = showAllInGroup[title];
@@ -344,7 +345,7 @@ const Volunteers = () => {
                     {isShowingAll ? (
                       <>
                         <List className="w-4 h-4 mr-2" />
-                        Vue par catégories
+                        Vue par groupes
                       </>
                     ) : (
                       <>
