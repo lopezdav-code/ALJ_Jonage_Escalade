@@ -7,7 +7,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Loader2, ShieldCheck, UserCog, Settings, Save, PlusCircle, Link as LinkIcon, X, UserPlus, Search, Trash2, MailCheck } from 'lucide-react';
+import { Loader2, ShieldCheck, UserCog, Settings, Save, PlusCircle, Link as LinkIcon, X, UserPlus, Search, Trash2, MailCheck, ArrowLeft } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Link } from 'react-router-dom';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -129,28 +129,15 @@ const AdminManagement = () => {
             </h1>
             <p className="text-muted-foreground mt-2">Gérez les accès aux différentes pages du site.</p>
         </div>
+        <Link to="/admin-dashboard">
+          <Button variant="outline" size="sm">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Retour
+          </Button>
+        </Link>
       </motion.div>
 
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-        <Card>
-          <CardHeader>
-            <CardTitle>Gestion des Rôles Utilisateurs</CardTitle>
-            <CardDescription>
-              La gestion des rôles a été déplacée vers une page dédiée pour plus de clarté.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Link to="/user-roles">
-              <Button variant="outline">
-                <UserCog className="mr-2 h-4 w-4" />
-                Aller à la Gestion des Rôles
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
-      </motion.div>
-
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
         <Card>
           <CardHeader>
             <CardTitle>Accès aux Pages du Menu</CardTitle>
