@@ -8,7 +8,8 @@ describe('📖 Pages Publiques Autorisées', () => {
   const allowedPages = [
     { path: '/', name: 'Accueil' },
     { path: '/news', name: 'Actualités' },
-    { path: '/agenda', name: 'Agenda' },
+    { path: '/inscriptions', name: 'Inscriptions' },
+    { path: '/schedule', name: 'Emploi du Temps' },
     { path: '/contact', name: 'Contact' }
   ];
 
