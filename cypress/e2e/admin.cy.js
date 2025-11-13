@@ -49,29 +49,40 @@ describe('3️⃣  Mode Admin - Pages Accessibles', () => {
 
     /*cy.screenshot('admin-site-settings');*/
   });
-  /*
-  // À décommenter après validation de la connexion
-  it('devrait afficher /admin-management', () => {
+  it('devrait afficher /admin-management (Gestion Admin)', () => {
     cy.visit('/admin-management', { failOnStatusCode: false });
     cy.get('body', { timeout: 5000 }).should('be.visible');
     cy.wait(1000);
 
+    // Vérifier qu'on n'a pas été redirigé
+    cy.url().should('include', '/admin-management');
+
     // Vérifier qu'il y a du contenu
     cy.get('h1, h2, main', { timeout: 5000 }).should('exist');
+    cy.contains('h1', /gestion|management|admin/i).should('be.visible');
 
-    cy.screenshot('admin-admin-management');
+    // Vérifier pas d'erreur d'accès
+    cy.contains('h1', /Accès restreint/i).should('not.exist');
+
+    cy.log('✅ /admin-management accessible');
   });
 
   it('devrait afficher /user-roles (Gestion des rôles)', () => {
     cy.visit('/user-roles', { failOnStatusCode: false });
+    cy.get('body', { timeout: 5000 }).should('be.visible');
+    cy.wait(1000);
 
-    // waitForPageLoad gère automatiquement le reload si la page est bloquée
-    cy.waitForPageLoad();
+    // Vérifier qu'on n'a pas été redirigé
+    cy.url().should('include', '/user-roles');
 
-    // Vérifier qu'il y a du contenu après le chargement
-    cy.get('h1, h2, main', { timeout: 10000 }).should('exist');
+    // Vérifier qu'il y a du contenu
+    cy.get('h1, h2, main', { timeout: 5000 }).should('exist');
+    cy.contains('h1', /rôle|role/i).should('be.visible');
 
-    cy.screenshot('admin-user-roles');
+    // Vérifier pas d'erreur d'accès
+    cy.contains('h1', /Accès restreint/i).should('not.exist');
+
+    cy.log('✅ /user-roles accessible');
   });
 
   it('devrait afficher /permissions (Gestion des permissions)', () => {
@@ -79,22 +90,35 @@ describe('3️⃣  Mode Admin - Pages Accessibles', () => {
     cy.get('body', { timeout: 5000 }).should('be.visible');
     cy.wait(1000);
 
+    // Vérifier qu'on n'a pas été redirigé
+    cy.url().should('include', '/permissions');
+
     // Vérifier qu'il y a du contenu
     cy.get('h1, h2, main', { timeout: 5000 }).should('exist');
+    cy.contains('h1', /permission/i).should('be.visible');
 
-    cy.screenshot('admin-permissions');
+    // Vérifier pas d'erreur d'accès
+    cy.contains('h1', /Accès restreint/i).should('not.exist');
+
+    cy.log('✅ /permissions accessible');
   });
 
   it('devrait afficher /access-logs (Logs d\'accès)', () => {
     cy.visit('/access-logs', { failOnStatusCode: false });
+    cy.get('body', { timeout: 5000 }).should('be.visible');
+    cy.wait(1000);
 
-    // waitForPageLoad gère automatiquement le reload si la page est bloquée
-    cy.waitForPageLoad();
+    // Vérifier qu'on n'a pas été redirigé
+    cy.url().should('include', '/access-logs');
 
-    // Vérifier qu'il y a du contenu après le chargement
-    cy.get('h1, h2, main', { timeout: 10000 }).should('exist');
+    // Vérifier qu'il y a du contenu
+    cy.get('h1, h2, main', { timeout: 5000 }).should('exist');
+    cy.contains('h1', /log|accès|access/i).should('be.visible');
 
-    cy.screenshot('admin-access-logs');
+    // Vérifier pas d'erreur d'accès
+    cy.contains('h1', /Accès restreint/i).should('not.exist');
+
+    cy.log('✅ /access-logs accessible');
   });
 
   it('devrait afficher /volunteers (Adhérents)', () => {
@@ -102,10 +126,16 @@ describe('3️⃣  Mode Admin - Pages Accessibles', () => {
     cy.get('body', { timeout: 6000 }).should('be.visible');
     cy.wait(1000);
 
+    // Vérifier qu'on n'a pas été redirigé
+    cy.url().should('include', '/volunteers');
+
     // Vérifier qu'il y a du contenu
     cy.get('h1, h2, main, [role="main"]', { timeout: 5000 }).should('exist');
+    cy.contains('h1', /adhérent|volunteer|member/i).should('be.visible');
 
-    cy.screenshot('admin-volunteers');
+    // Vérifier pas d'erreur d'accès
+    cy.contains('h1', /Accès restreint/i).should('not.exist');
+
+    cy.log('✅ /volunteers accessible');
   });
-  */
 });

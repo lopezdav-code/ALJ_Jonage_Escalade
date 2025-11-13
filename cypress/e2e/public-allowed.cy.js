@@ -26,11 +26,14 @@ describe('📖 Pages Publiques Autorisées', () => {
       cy.url().should('not.include', '/auth');
       cy.url().should('not.include', '/signin');
 
-      // Vérifier qu'il y a du contenu
+      // Vérifier qu'il y a du contenu visible
       cy.get('h1, h2, main, nav, [role="main"]', { timeout: 5000 }).should('exist');
 
       // Vérifier qu'il n'y a pas de formulaire de connexion
       cy.get('input[type="password"]').should('not.exist');
+
+      // Vérifier qu'il n'y a pas de message d'accès restreint
+      cy.contains('h1', /Accès restreint/i).should('not.exist');
 
       cy.log(`✅ ${page.name} accessible`);
     });
