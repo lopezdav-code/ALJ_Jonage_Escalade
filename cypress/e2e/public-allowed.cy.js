@@ -9,7 +9,7 @@ describe('📖 Pages Publiques Autorisées', () => {
     { path: '/', name: 'Accueil' },
     { path: '/news', name: 'Actualités' },
     { path: '/inscriptions', name: 'Inscriptions' },
-    { path: '/schedule', name: 'Emploi du Temps' },
+    { path: '/schedule', name: 'Planning des cours' },
     { path: '/contact', name: 'Contact' }
   ];
 
@@ -21,11 +21,16 @@ describe('📖 Pages Publiques Autorisées', () => {
       cy.get('body', { timeout: 5000 }).should('be.visible');
       cy.wait(500);
 
+      // Vérifier qu'on n'a pas été redirigé vers une page d'authentification
+      cy.url().should('not.include', '/login');
+      cy.url().should('not.include', '/auth');
+      cy.url().should('not.include', '/signin');
+
       // Vérifier qu'il y a du contenu
       cy.get('h1, h2, main, nav, [role="main"]', { timeout: 5000 }).should('exist');
 
-      // Vérifier qu'il n'y a pas de message d'erreur d'accès
-      cy.contains(/accès restreint|access denied|forbidden|non autorisé/i).should('not.exist');
+      // Vérifier qu'il n'y a pas de formulaire de connexion
+      cy.get('input[type="password"]').should('not.exist');
 
       cy.log(`✅ ${page.name} accessible`);
     });

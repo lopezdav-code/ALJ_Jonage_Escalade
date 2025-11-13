@@ -49,8 +49,11 @@ describe('🔒 Bureau - Pages Bloquées', () => {
     cy.get('body', { timeout: 5000 }).should('be.visible');
     cy.wait(500);
 
-    // Devrait avoir un message d'accès restreint
-    cy.contains(/accès restreint/i).should('be.visible');
+    // Vérifier qu'on n'a pas été redirigé
+    cy.url().should('include', '/site-settings');
+
+    // Vérifier que l'accès est bien restreint (affichage du composant ProtectedRoute)
+    cy.contains('h1', /Accès restreint/i).should('be.visible');
 
     cy.log('✅ Accès correctement bloqué à /site-settings');
   });
@@ -62,8 +65,11 @@ describe('🔒 Bureau - Pages Bloquées', () => {
     cy.get('body', { timeout: 5000 }).should('be.visible');
     cy.wait(500);
 
-    // Devrait avoir un message d'accès restreint
-    cy.contains(/accès restreint/i).should('be.visible');
+    // Vérifier qu'on n'a pas été redirigé
+    cy.url().should('include', '/admin-management');
+
+    // Vérifier que l'accès est bien restreint (affichage du composant ProtectedRoute)
+    cy.contains('h1', /Accès restreint/i).should('be.visible');
 
     cy.log('✅ Accès correctement bloqué à /admin-management');
   });

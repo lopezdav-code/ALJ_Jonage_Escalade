@@ -49,11 +49,15 @@ describe('✅ Bureau - Pages Autorisées', () => {
     cy.get('body', { timeout: 5000 }).should('be.visible');
     cy.wait(1000);
 
+    // Vérifier qu'on n'a pas été redirigé vers une page d'erreur d'accès
+    cy.url().should('not.include', '/login');
+    cy.url().should('not.include', '/auth');
+
     // Vérifier qu'il y a du contenu
     cy.get('h1, h2, main, [role="main"]', { timeout: 5000 }).should('exist');
 
-    // Vérifier qu'il n'y a pas de message d'accès restreint
-    cy.contains(/accès restreint|access denied|forbidden/i).should('not.exist');
+    // Vérifier qu'il n'y a pas de message d'accès restreint (titre du composant ProtectedRoute)
+    cy.contains('h1', /Accès restreint/i).should('not.exist');
 
     cy.log('✅ Page /volunteers accessible');
   });
@@ -65,11 +69,15 @@ describe('✅ Bureau - Pages Autorisées', () => {
     cy.get('body', { timeout: 5000 }).should('be.visible');
     cy.wait(1000);
 
+    // Vérifier qu'on n'a pas été redirigé vers une page d'erreur d'accès
+    cy.url().should('not.include', '/login');
+    cy.url().should('not.include', '/auth');
+
     // Vérifier qu'il y a du contenu ou un titre
     cy.get('h1, h2, main, [role="main"]', { timeout: 5000 }).should('exist');
 
-    // Vérifier qu'il n'y a pas de message d'accès restreint
-    cy.contains(/accès restreint/i).should('not.exist');
+    // Vérifier qu'il n'y a pas de message d'accès restreint (titre du composant ProtectedRoute)
+    cy.contains('h1', /Accès restreint/i).should('not.exist');
 
     cy.log('✅ Page /bureau-management accessible');
   });

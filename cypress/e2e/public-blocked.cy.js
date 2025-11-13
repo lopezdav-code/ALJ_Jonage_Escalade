@@ -22,8 +22,8 @@ describe('🔒 Pages Publiques Bloquées', () => {
       cy.get('body', { timeout: 5000 }).should('be.visible');
       cy.wait(500);
 
-      // Vérifier qu'un message d'accès restreint s'affiche
-      cy.contains(/accès restreint/i).should('be.visible');
+      // Vérifier qu'un message d'accès restreint s'affiche (dans le h1)
+      cy.contains('h1', /Accès restreint/i).should('be.visible');
 
       cy.log(`✅ ${page.name} correctement bloquée`);
     });

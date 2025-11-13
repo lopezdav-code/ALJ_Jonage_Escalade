@@ -26,8 +26,8 @@ describe('3️⃣  Mode Admin - Pages Accessibles', () => {
     cy.visit('/', { failOnStatusCode: false });
     cy.get('body', { timeout: 5000 }).should('be.visible');
 
-    // Vérifier qu'on est bien connecté (pas de message d'accès restreint)
-    cy.contains(/accès restreint/i).should('not.exist');
+    // Vérifier qu'on n'a pas de message d'accès restreint (titre du composant ProtectedRoute)
+    cy.contains('h1', /Accès restreint/i).should('not.exist');
 
     /*cy.screenshot('admin-homepage');*/
   });
@@ -38,11 +38,14 @@ describe('3️⃣  Mode Admin - Pages Accessibles', () => {
     cy.get('body', { timeout: 5000 }).should('be.visible');
     cy.wait(1500);
 
+    // Vérifier qu'on n'a pas été redirigé
+    cy.url().should('include', '/site-settings');
+
     // Vérifier le titre
     cy.contains(/réglages du site|site settings|configuration/i).should('be.visible');
 
-    // Vérifier qu'il n'y a pas de message d'erreur d'accès restreint
-    cy.contains(/accès restreint/i).should('not.exist');
+    // Vérifier qu'il n'y a pas de message d'erreur d'accès restreint (titre du composant ProtectedRoute)
+    cy.contains('h1', /Accès restreint/i).should('not.exist');
 
     /*cy.screenshot('admin-site-settings');*/
   });
