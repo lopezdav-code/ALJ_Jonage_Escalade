@@ -7,7 +7,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Loader2, ShieldCheck, UserCog, Settings, Save, PlusCircle, Link as LinkIcon, X, UserPlus, Search, Trash2, MailCheck, ArrowLeft } from 'lucide-react';
+import { Loader2, ShieldCheck, UserCog, Settings, Save, PlusCircle, Link as LinkIcon, X, UserPlus, Search, Trash2, MailCheck, ArrowLeft, FileText } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Link } from 'react-router-dom';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -241,6 +241,30 @@ const AdminManagement = () => {
               </div>
             </div>
           </CardContent>
+        </Card>
+      </motion.div>
+
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
+        <Card>
+          <CardHeader>
+            <CardTitle>Spécifications Techniques</CardTitle>
+            <CardDescription>
+              Documentation complète du système de gestion du club
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Link to="/specifications">
+              <Button variant="outline">
+                <FileText className="mr-2 h-4 w-4" />
+                Consulter les Spécifications
+              </Button>
+            </Link>
+          </CardContent>
+          <CardFooter>
+            <div className="text-sm text-muted-foreground">
+              <strong>Contenu :</strong> Vue d'ensemble du système, documentation de toutes les pages (50), schéma de la base de données (19 tables), flux utilisateur, architecture technique, et mécanismes de sécurité.
+            </div>
+          </CardFooter>
         </Card>
       </motion.div>
       </div>
