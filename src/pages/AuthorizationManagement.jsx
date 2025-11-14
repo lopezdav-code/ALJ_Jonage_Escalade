@@ -21,7 +21,7 @@ import {
   Loader2, ShieldCheck, UserCog, Users, Save, PlusCircle, X, Search,
   Trash2, MailCheck, Link as LinkIcon, Settings, ArrowLeft, Info
 } from 'lucide-react';
-import { formatName } from '@/lib/utils.jsx';
+import { formatName } from '@/lib/utils.js';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { Link } from 'react-router-dom';
 
