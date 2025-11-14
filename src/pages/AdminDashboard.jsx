@@ -14,34 +14,15 @@ const AdminDashboard = () => {
 
   const adminActions = [
     {
-      id: 'user-roles',
-      title: '🔐 Gestion des Logins',
-      description: 'Créer et gérer les comptes utilisateurs, attribuer les rôles de base',
-      route: '/user-roles',
-      roles: ['admin'],
-      icon: Users,
-      color: 'bg-blue-50 border-blue-200 hover:bg-blue-100',
-      iconColor: 'text-blue-600',
-    },
-    {
-      id: 'admin-management',
-      title: '🎯 Gestion des Accès Profils',
-      description: 'Gérer les accès aux pages du menu selon les rôles, configuration globale du site',
-      route: '/admin-management',
-      roles: ['admin'],
-      icon: Settings,
-      color: 'bg-purple-50 border-purple-200 hover:bg-purple-100',
-      iconColor: 'text-purple-600',
-    },
-    {
-      id: 'permissions',
-      title: '🔑 Gestion Accès Détaillés',
-      description: 'Configurer les permissions fines (créer, éditer) pour chaque type de ressource par rôle',
-      route: '/permissions',
+      id: 'authorization',
+      title: '🔐 Gestion des Autorisations',
+      description: 'Gérer les utilisateurs, rôles bureau, accès aux pages et permissions détaillées',
+      route: '/authorization',
       roles: ['admin'],
       icon: Shield,
-      color: 'bg-green-50 border-green-200 hover:bg-green-100',
-      iconColor: 'text-green-600',
+      color: 'bg-gradient-to-br from-blue-50 to-purple-50 border-blue-300 hover:from-blue-100 hover:to-purple-100',
+      iconColor: 'text-blue-600',
+      badge: 'Nouvelle Interface',
     },
     {
       id: 'groupe-admin',
@@ -52,16 +33,6 @@ const AdminDashboard = () => {
       icon: Users2,
       color: 'bg-orange-50 border-orange-200 hover:bg-orange-100',
       iconColor: 'text-orange-600',
-    },
-    {
-      id: 'bureau-management',
-      title: '🎖️ Gestion du Bureau',
-      description: 'Attribuer les rôles du bureau (Président, Trésorier, Secrétaire, etc.)',
-      route: '/bureau-management',
-      roles: ['admin', 'bureau'],
-      icon: Lock,
-      color: 'bg-red-50 border-red-200 hover:bg-red-100',
-      iconColor: 'text-red-600',
     },
     {
       id: 'member-group-test',
@@ -140,7 +111,14 @@ const AdminDashboard = () => {
                     <CardHeader>
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
-                          <CardTitle className="text-lg">{action.title}</CardTitle>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <CardTitle className="text-lg">{action.title}</CardTitle>
+                            {action.badge && (
+                              <Badge variant="default" className="text-xs bg-blue-600">
+                                {action.badge}
+                              </Badge>
+                            )}
+                          </div>
                           <CardDescription className="mt-2">{action.description}</CardDescription>
                         </div>
                         <IconComponent className={`w-6 h-6 ${action.iconColor} ml-2 flex-shrink-0`} />

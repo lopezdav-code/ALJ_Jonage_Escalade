@@ -7,6 +7,16 @@ import { PERFORMANCE_CONFIG, performanceUtils } from '@/config/performance';
 
 const AuthContext = createContext(undefined);
 
+/**
+ * Role Determination Logic:
+ * 1. Admin: profiles.role = 'admin'
+ * 2. Bureau: exists in bureau table with role != 'Bénévole'
+ * 3. Encadrant: exists in bureau table with role = 'Bénévole'
+ * 4. Adhérent: exists in members table with groupe_id NOT EMPTY
+ * 5. User: authenticated but none of the above
+ * 6. Public: not authenticated
+ */
+
 export const AuthProvider = ({ children }) => {
   const { toast } = useToast();
   const { logConnection, logDisconnection } = useConnectionLogger();
@@ -15,10 +25,67 @@ export const AuthProvider = ({ children }) => {
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState(null);
-  
+
   // Cache pour les profils avec Map pour de meilleures performances
   const profileCache = useMemo(() => new Map(), []);
   const pendingProfileRequests = useMemo(() => new Map(), []);
+
+  /**
+   * Détermine le rôle de l'utilisateur selon la nouvelle logique:
+   * - Check admin dans profiles
+   * - Check bureau (role != 'Bénévole') pour Bureau
+   * - Check bureau (role = 'Bénévole') pour Encadrant
+   * - Check membres (groupe_id not null) pour Adhérent
+   * - Sinon: user
+   */
+  const determineUserRole = useCallback(async (profileData) => {
+    if (!profileData) return 'user';
+
+    // 1. Priority 1: Admin role in profiles table
+    if (profileData.role === 'admin') {
+      return 'admin';
+    }
+
+    // 2. Check bureau table if member_id exists
+    if (profileData.member_id) {
+      try {
+        // Check bureau table
+        const { data: bureauData, error: bureauError } = await supabase
+          .from('bureau')
+          .select('id, role, members_id')
+          .eq('members_id', profileData.member_id)
+          .maybeSingle();
+
+        if (!bureauError && bureauData) {
+          // Priority 2: Bureau (role != 'Bénévole')
+          if (bureauData.role && bureauData.role !== 'Bénévole') {
+            return 'bureau';
+          }
+          // Priority 3: Encadrant (role = 'Bénévole')
+          if (bureauData.role === 'Bénévole') {
+            return 'encadrant';
+          }
+        }
+
+        // 3. Check membres table for adherent status
+        const { data: memberData, error: memberError } = await supabase
+          .from('membres')
+          .select('id, groupe_id')
+          .eq('id', profileData.member_id)
+          .maybeSingle();
+
+        // Priority 4: Adhérent (has groupe_id)
+        if (!memberError && memberData && memberData.groupe_id) {
+          return 'adherent';
+        }
+      } catch (error) {
+        console.error('Error determining user role:', error);
+      }
+    }
+
+    // Priority 5: Default to 'user' for authenticated users
+    return 'user';
+  }, []);
 
   // Fonction pour récupérer le profil avec cache et éviter les requêtes simultanées
   const fetchUserProfile = useCallback(async (userId) => {
@@ -41,38 +108,35 @@ export const AuthProvider = ({ children }) => {
       try {
         const { data, error } = await supabase
           .from('profiles')
-          .select('role, member_id, members(id, first_name, last_name)')
+          .select('id, role, member_id, members(id, first_name, last_name, groupe_id)')
           .eq('id', userId)
-          .single();
+          .maybeSingle();
 
         if (error && error.code !== 'PGRST116') {
           console.error("Error fetching user profile:", error);
           return null;
         }
 
-        // Si le profil existe, vérifier si l'utilisateur est dans la table bureau
         let profileData = data;
-        if (profileData && profileData.member_id) {
-          // Ne vérifier la table bureau que si le rôle ne est pas déjà admin ou encadrant
-          // Les admins et encadrants gardent leur rôle explicite
-          if (!profileData.role || (profileData.role !== 'admin' && profileData.role !== 'encadrant')) {
-            try {
-              const { data: bureauData, error: bureauError } = await supabase
-                .from('bureau')
-                .select('id, role')
-                .eq('members_id', profileData.member_id)
-                .single();
 
-              // Si l'utilisateur a un rôle dans la table bureau ET n'a pas de rôle explicite, assigner 'bureau'
-              if (bureauData && !bureauError && !profileData.role) {
-                profileData.role = 'bureau';
-              }
-            } catch (bureauCheckError) {
-              // Pas dans la table bureau, garder le rôle original
-              console.debug('User not found in bureau table, using profile role');
-            }
+        // If no profile exists, create a default one
+        if (!profileData) {
+          const { data: newProfile, error: createError } = await supabase
+            .from('profiles')
+            .insert([{ id: userId, role: null, member_id: null }])
+            .select()
+            .single();
+
+          if (createError) {
+            console.error("Error creating profile:", createError);
+            return { id: userId, role: 'user', member_id: null };
           }
+          profileData = newProfile;
         }
+
+        // Determine role based on new logic
+        const determinedRole = await determineUserRole(profileData);
+        profileData.computed_role = determinedRole;
 
         // Mettre en cache le résultat
         profileCache.set(userId, {
@@ -94,7 +158,7 @@ export const AuthProvider = ({ children }) => {
     pendingProfileRequests.set(userId, profilePromise);
 
     return profilePromise;
-  }, [profileCache, pendingProfileRequests]);
+  }, [profileCache, pendingProfileRequests, determineUserRole]);
 
   const handleSession = useCallback(async (session, isNewLogin = false) => {
     try {
@@ -102,11 +166,11 @@ export const AuthProvider = ({ children }) => {
       setSession(session);
       const currentUser = session?.user ?? null;
       setUser(currentUser);
-      
+
       if (currentUser) {
         // Version simplifiée : profil par défaut pour éviter les requêtes excessives
-        let profileData = { role: 'member', member_id: null };
-        
+        let profileData = { id: currentUser.id, computed_role: 'user', member_id: null };
+
         // Toujours essayer de récupérer le profil pour s'assurer d'avoir les bonnes données
         try {
           const data = await fetchUserProfile(currentUser.id);
@@ -148,7 +212,7 @@ export const AuthProvider = ({ children }) => {
       console.error("Error in handleSession:", error);
       // En cas d'erreur, au moins définir les états de base
       setUser(session?.user ?? null);
-      setProfile(session?.user ? { role: 'member' } : null);
+      setProfile(session?.user ? { id: session.user.id, computed_role: 'user' } : null);
     } finally {
       setLoading(false);
     }
@@ -264,24 +328,32 @@ export const AuthProvider = ({ children }) => {
     return { error };
   }, [toast, handleSession]);
 
-  const isAdmin = useMemo(() => profile?.role === 'admin', [profile]);
-  const isEncadrant = useMemo(() => ['encadrant', 'admin'].includes(profile?.role), [profile]);
-  const isAdherent = useMemo(() => ['adherent', 'encadrant', 'admin'].includes(profile?.role), [profile]);
-  const isBureau = useMemo(() => ['bureau', 'admin'].includes(profile?.role), [profile]);
+  // Role helpers based on computed_role
+  const userRole = useMemo(() => {
+    if (!user) return 'public';
+    return profile?.computed_role || 'user';
+  }, [user, profile]);
+
+  const isAdmin = useMemo(() => userRole === 'admin', [userRole]);
+  const isBureau = useMemo(() => ['bureau', 'admin'].includes(userRole), [userRole]);
+  const isEncadrant = useMemo(() => ['encadrant', 'admin'].includes(userRole), [userRole]);
+  const isAdherent = useMemo(() => ['adherent', 'encadrant', 'admin'].includes(userRole), [userRole]);
 
   const value = useMemo(() => ({
     user,
     session,
     loading,
     profile,
+    userRole,
     isAdmin,
+    isBureau,
     isEncadrant,
     isAdherent,
-    isBureau,
     signUp,
     signIn,
     signOut,
-  }), [user, session, loading, profile, isAdmin, isEncadrant, isAdherent, isBureau, signUp, signIn, signOut]);
+    refreshProfile: () => fetchUserProfile(user?.id),
+  }), [user, session, loading, profile, userRole, isAdmin, isBureau, isEncadrant, isAdherent, signUp, signIn, signOut, fetchUserProfile]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

@@ -58,6 +58,7 @@ const ScheduleEdit = lazy(() => import('@/pages/ScheduleEdit'));
 const MemberGroupTest = lazy(() => import('@/pages/MemberGroupTest'));
 const BureauManagement = lazy(() => import('@/pages/BureauManagement'));
 const ExerciseProgress = lazy(() => import('@/pages/ExerciseProgress'));
+const AuthorizationManagement = lazy(() => import('@/pages/AuthorizationManagement'));
 
 import { AuthProvider, useAuth } from '@/contexts/SupabaseAuthContext';
 import { ConfigProvider } from '@/contexts/ConfigContext';
@@ -144,6 +145,8 @@ const AppContent = () => {
           <Route path="/annual-summary" element={<LazyRoute><AnnualSummary /></LazyRoute>} />
           <Route path="/admin-dashboard" element={<LazyRoute><AdminDashboard /></LazyRoute>} />
           <Route path="/database-management" element={<LazyRoute><DatabaseManagement /></LazyRoute>} />
+          <Route path="/authorization" element={<LazyRoute><AuthorizationManagement /></LazyRoute>} />
+          {/* Legacy routes - deprecated, use /authorization instead */}
           <Route path="/admin-management" element={<LazyRoute><AdminManagement /></LazyRoute>} />
           <Route path="/user-roles" element={<LazyRoute><UserRoles /></LazyRoute>} />
           <Route path="/permissions" element={<LazyRoute><Permissions /></LazyRoute>} />
