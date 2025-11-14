@@ -9,7 +9,7 @@ import { useLocation } from 'react-router-dom';
  * @returns {Object} { hasAccess: boolean, loading: boolean, userRole: string }
  */
 export const usePageAccess = (pagePath = null) => {
-  const { profile, loading: authLoading, user } = useAuth();
+  const { userRole: contextUserRole, loading: authLoading } = useAuth();
   const { config, loadingConfig } = useConfig();
   const location = useLocation();
 
@@ -21,14 +21,8 @@ export const usePageAccess = (pagePath = null) => {
       return { hasAccess: false, loading: true, userRole: null };
     }
 
-    // Déterminer le rôle de l'utilisateur
-    let userRole = 'public'; // Par défaut, utilisateur non connecté = public
-
-    if (user && profile) {
-      userRole = profile.role || 'user'; // Utiliser le rôle du profil ou 'user' par défaut
-    } else if (user) {
-      userRole = 'user'; // Connecté mais pas de profil = user
-    }
+    // Use the computed userRole from auth context
+    const userRole = contextUserRole || 'public';
 
     // Récupérer la configuration des pages depuis la config
     let navConfig = [];
@@ -97,7 +91,7 @@ export const usePageAccess = (pagePath = null) => {
       userRole,
       allowedRoles: pageConfig?.roles || []
     };
-  }, [authLoading, loadingConfig, user, profile, currentPath, config.nav_config]);
+  }, [authLoading, loadingConfig, contextUserRole, currentPath, config.nav_config]);
 
   return result;
 };
