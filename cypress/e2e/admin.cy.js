@@ -5,7 +5,7 @@
 
 describe('3️⃣  Mode Admin - Pages Accessibles', () => {
   // Connexion avec cy.session() pour persister la session entre les tests
-  before(() => {
+  beforeEach(() => {
     const adminEmail = Cypress.env('TEST_ADMIN_EMAIL') || '';
     const adminPassword = Cypress.env('TEST_ADMIN_PASSWORD') || '';
 
@@ -13,13 +13,36 @@ describe('3️⃣  Mode Admin - Pages Accessibles', () => {
       throw new Error('❌ Variables manquantes: TEST_ADMIN_EMAIL ou TEST_ADMIN_PASSWORD');
     }
 
-    // Utiliser cy.session() pour sauvegarder et réutiliser la session
+    // Utiliser cy.session() avec validation pour sauvegarder et réutiliser la session
     cy.session('admin-login', () => {
       cy.log(`📧 Connexion Admin: ${adminEmail}`);
       cy.visit('/', { failOnStatusCode: false });
       cy.loginWithCredentials(adminEmail, adminPassword);
       cy.wait(2000);
+    }, {
+      // Valider que la session est toujours active
+      validate() {
+        cy.window().then((win) => {
+          const keys = Object.keys(win.localStorage);
+          const hasAuthToken = keys.some(key =>
+            key.includes('auth-token') ||
+            key.includes('session') ||
+            key.includes('sb-')
+          );
+
+          if (!hasAuthToken) {
+            cy.log('⚠️ Pas de token trouvé, session invalidée');
+            throw new Error('Session invalide');
+          }
+
+          cy.log('✅ Token trouvé, session valide');
+        });
+      }
     });
+
+    // Naviguer vers l'accueil pour s'assurer que la session est active
+    cy.visit('/', { failOnStatusCode: false });
+    cy.get('body', { timeout: 5000 }).should('be.visible');
   });
 
   it('devrait afficher la page d\'accueil après connexion', () => {
