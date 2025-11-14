@@ -1,7 +1,6 @@
 import React from 'react';
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { appConfig } from "@/config";
 import { ShieldCheck, User } from 'lucide-react';
 
 export function cn(...inputs) {
