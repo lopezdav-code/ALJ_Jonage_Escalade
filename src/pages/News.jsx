@@ -100,30 +100,38 @@ const News = () => {
 
   const fetchNews = useCallback(async () => {
     setLoadingNews(true);
-    // Fetch all relevant columns, including theme and is_pinned
-    const { data, error } = await supabase.from('news').select('*');
+    // Fetch articles with pagination (limit to 10)
+    const { data, error } = await supabase
+      .from('news')
+      .select('*')
+      .order('is_pinned', { ascending: false })
+      .order('date', { ascending: false })
+      .range(0, 9); // Limit to 10 articles (0-indexed, so 0-9 = 10 items)
+
     if (error) {
       toast({ title: "Erreur", description: "Impossible de charger les actualités.", variant: "destructive" });
     } else {
       setNews(data);
 
-      // Générer les signed URLs pour toutes les images et documents
+      // Générer les signed URLs (getSignedUrl est synchrone, donc c'est instantané)
       const urlsMap = {};
       const docUrlsMap = {};
+
       for (const item of data) {
         if (item.image_url) {
-          const signedUrl = await getSignedUrl(item.image_url);
+          const signedUrl = getSignedUrl(item.image_url);
           if (signedUrl) {
             urlsMap[item.id] = signedUrl;
           }
         }
         if (item.document_url) {
-          const signedDocUrl = await getSignedUrl(item.document_url);
+          const signedDocUrl = getSignedUrl(item.document_url);
           if (signedDocUrl) {
             docUrlsMap[item.id] = signedDocUrl;
           }
         }
       }
+
       setSignedUrls(urlsMap);
       setSignedDocUrls(docUrlsMap);
     }
@@ -135,7 +143,7 @@ const News = () => {
     if (!authLoading) {
       fetchNews();
     }
-  }, [authLoading]);
+  }, [authLoading, fetchNews]);
 
   const filteredAndSortedNews = useMemo(() => {
     let processedNews = [...news];
