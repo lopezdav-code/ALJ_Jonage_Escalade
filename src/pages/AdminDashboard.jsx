@@ -3,7 +3,7 @@ import { Helmet } from 'react-helmet';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
-import { Loader2, Lock, Users, Shield, Users2, GitBranch, LogIn, Settings, ArrowRight, Database } from 'lucide-react';
+import { Loader2, Lock, Users, Shield, Users2, GitBranch, LogIn, Settings, ArrowRight, Database, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -63,6 +63,16 @@ const AdminDashboard = () => {
       icon: Database,
       color: 'bg-indigo-50 border-indigo-200 hover:bg-indigo-100',
       iconColor: 'text-indigo-600',
+    },
+    {
+      id: 'specifications',
+      title: '📄 Spécifications Techniques',
+      description: 'Documentation complète des pages, architecture et flux utilisateur',
+      route: '/specifications',
+      roles: ['admin'],
+      icon: FileText,
+      color: 'bg-teal-50 border-teal-200 hover:bg-teal-100',
+      iconColor: 'text-teal-600',
     },
   ];
 
