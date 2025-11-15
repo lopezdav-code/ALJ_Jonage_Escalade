@@ -8,13 +8,14 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
-import { CheckCircle2, Calendar, User as UserIcon, FileText, Loader2, Award, ArrowLeft, Search, Filter, TrendingUp, Download, X, Eye, Edit, Printer } from 'lucide-react';
+import { CheckCircle2, Calendar, User as UserIcon, FileText, Loader2, Award, Search, Filter, TrendingUp, Download, X, Eye, Edit, Printer } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { formatName } from '@/lib/utils';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { usePageAccess } from '@/hooks/usePageAccess';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
+import { BackButton } from '@/components/ui/back-button';
 
 const PasseportViewer = () => {
   const { isAdmin, isAdherent } = useAuth();
@@ -956,14 +957,13 @@ const PasseportViewer = () => {
       >
         <div className="max-w-4xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
-          <Button variant="outline" onClick={() => {
+          <BackButton variant="outline" onClick={() => {
             setSelectedValidation(null);
             setIsEditing(false);
             setEditedValidation(null);
           }}>
-            <ArrowLeft className="w-4 h-4 mr-2" />
             Retour à la liste
-          </Button>
+          </BackButton>
 
           <div className="flex gap-2">
             {!isEditing && (

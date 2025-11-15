@@ -19,8 +19,9 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import {
   Loader2, ShieldCheck, UserCog, Users, Save, PlusCircle, X, Search,
-  Trash2, MailCheck, Link as LinkIcon, Settings, ArrowLeft, Info
+  Trash2, MailCheck, Link as LinkIcon, Settings, Info
 } from 'lucide-react';
+import { BackButton } from '@/components/ui/back-button';
 import { formatName } from '@/lib/utils.js';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { Link } from 'react-router-dom';
@@ -612,12 +613,7 @@ const AuthorizationManagement = () => {
             </h1>
             <p className="text-muted-foreground mt-2">Gérez les utilisateurs, rôles, accès aux pages et permissions.</p>
           </div>
-          <Link to="/admin-dashboard">
-            <Button variant="outline" size="sm">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Retour
-            </Button>
-          </Link>
+          <BackButton to="/admin-dashboard" variant="outline" size="sm" />
         </motion.div>
 
         {/* Role Logic Info Banner */}

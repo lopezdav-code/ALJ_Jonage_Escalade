@@ -2,9 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { PlusCircle, Edit, Trash2, ArrowLeft, Save, Loader2, ArrowUpDown, ArrowUp, ArrowDown, Filter } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, Save, Loader2, ArrowUpDown, ArrowUp, ArrowDown, Filter } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { BackButton } from '@/components/ui/back-button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -226,9 +227,7 @@ const GroupeAdmin = () => {
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" onClick={() => navigate(-1)}>
-              <ArrowLeft className="w-4 h-4 mr-2" /> Retour
-            </Button>
+            <BackButton />
             <h1 className="text-3xl font-bold">Gestion des groupes</h1>
           </div>
           <div className="flex gap-2">

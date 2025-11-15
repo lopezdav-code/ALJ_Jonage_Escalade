@@ -4,11 +4,12 @@ import { Helmet } from 'react-helmet';
 import { supabase } from '@/lib/customSupabaseClient';
 import MemberForm from '@/components/MemberForm';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { uploadMemberPhoto } from '@/lib/memberStorageUtils';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
+import { BackButton } from '@/components/ui/back-button';
 
 const MemberEdit = () => {
   const { id } = useParams();
@@ -169,14 +170,9 @@ const MemberEdit = () => {
       </Helmet>
 
       <div className="mb-4">
-        <Button
-          variant="ghost"
-          onClick={() => navigateToVolunteers()}
-          className="mb-2"
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
+        <BackButton onClick={() => navigateToVolunteers()} className="mb-2">
           Retour aux adhérents
-        </Button>
+        </BackButton>
         <h1 className="text-xl font-bold">
           Modifier {member.first_name} {member.last_name}
         </h1>

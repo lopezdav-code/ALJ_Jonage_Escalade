@@ -11,9 +11,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, ArrowLeft, PlusCircle, Trash2, Calendar, Users, Clock, Pencil, Settings, FileText, Upload } from 'lucide-react';
+import { Loader2, PlusCircle, Trash2, Calendar, Users, Clock, Pencil, Settings, FileText, Upload } from 'lucide-react';
 import { Input, Textarea } from '@/components/ui/input'; // Ensure Input and Textarea are imported
 import { Label } from '@/components/ui/label';
+import { BackButton } from '@/components/ui/back-button';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { supabaseUrl } from '@/lib/customSupabaseClient';
 
@@ -504,14 +505,9 @@ const CycleDetail = () => {
         >
           {/* Header */}
           <div className="mb-8">
-            <Button
-              variant="ghost"
-              onClick={() => navigate('/cycles')}
-              className="mb-4"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
+            <BackButton to="/cycles" className="mb-4">
               Retour aux cycles
-            </Button>
+            </BackButton>
 
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
               <div className="flex-1">
