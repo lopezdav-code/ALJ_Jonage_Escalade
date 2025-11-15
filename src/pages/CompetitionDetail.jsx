@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
-  ArrowLeft, Edit, Save, X, Calendar, MapPin, Euro, ExternalLink,
+  Edit, Save, X, Calendar, MapPin, Euro, ExternalLink,
   Info, Trophy, Award, Users, Settings, Plus, ChevronLeft, ChevronRight,
   ZoomIn, Upload, Loader2
 } from 'lucide-react';
@@ -9,6 +9,7 @@ import { supabase } from '@/lib/customSupabaseClient';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { BackButton } from '@/components/ui/back-button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -383,10 +384,9 @@ const CompetitionDetail = () => {
       <div className="max-w-6xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <Button variant="outline" onClick={() => navigate('/competitions')}>
-          <ArrowLeft className="w-4 h-4 mr-2" />
+        <BackButton to="/competitions" variant="outline">
           Retour à la liste
-        </Button>
+        </BackButton>
 
         <div className="flex gap-2">
           {canEdit && !isEditMode ? (

@@ -3,9 +3,10 @@ import { Helmet } from 'react-helmet';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
-import { Loader2, Database, Cloud, Key, Eye, ArrowLeft } from 'lucide-react';
+import { Loader2, Database, Cloud, Key, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { BackButton } from '@/components/ui/back-button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
@@ -29,12 +30,9 @@ const DatabaseManagement = () => {
 
         {/* Bouton Retour */}
         <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
-          <Button asChild variant="outline" className="mb-4">
-            <Link to="/admin-dashboard">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Retour au Tableau de Bord
-            </Link>
-          </Button>
+          <BackButton to="/admin-dashboard" variant="outline" className="mb-4">
+            Retour au Tableau de Bord
+          </BackButton>
         </motion.div>
 
         {/* En-tête */}

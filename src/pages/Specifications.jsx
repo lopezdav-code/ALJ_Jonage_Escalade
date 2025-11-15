@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { Helmet } from 'react-helmet';
 import { motion } from 'framer-motion';
-import { ArrowLeft, FileText, Database, GitBranch, Users, Settings, Shield, Search } from 'lucide-react';
+import { FileText, Database, GitBranch, Users, Settings, Shield, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { BackButton } from '@/components/ui/back-button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -744,12 +745,7 @@ const Specifications = () => {
               Documentation complète du système de gestion du club d'escalade
             </p>
           </div>
-          <Link to="/admin-dashboard">
-            <Button variant="outline" size="sm">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Retour
-            </Button>
-          </Link>
+          <BackButton to="/admin-dashboard" variant="outline" size="sm" />
         </motion.div>
 
         {/* Main content with tabs */}

@@ -6,8 +6,9 @@ import { Button } from '../components/ui/button';
 import { Label } from '../components/ui/label';
 import { Textarea } from '../components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
-import { ArrowLeft, Save, Trash2 } from 'lucide-react';
+import { Save, Trash2 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { BackButton } from '../components/ui/back-button';
 
 const SessionCommentsEdit = () => {
   const { id } = useParams(); // session ID
@@ -178,13 +179,9 @@ const SessionCommentsEdit = () => {
       className="container mx-auto p-4 max-w-4xl"
     >
       <div className="mb-4 flex items-center justify-between">
-        <Button
-          variant="ghost"
-          onClick={() => navigate(`/session-log/${id}`)}
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" />
+        <BackButton onClick={() => navigate(`/session-log/${id}`)}>
           Retour à la séance
-        </Button>
+        </BackButton>
         <Button onClick={handleSave} disabled={saving}>
           <Save className="mr-2 h-4 w-4" />
           {saving ? 'Sauvegarde...' : 'Enregistrer'}

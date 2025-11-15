@@ -5,7 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
 import { Helmet } from '../components/ui/helmet';
-import { ExternalLink, FileText, Calendar, Clock, Users, Target, Package, MessageSquare, ArrowLeft, Edit } from 'lucide-react';
+import { ExternalLink, FileText, Calendar, Clock, Users, Target, Package, MessageSquare, Edit } from 'lucide-react';
+import { BackButton } from '../components/ui/back-button';
 
 const SessionLogDetail = () => {
   const { id } = useParams(); // Correctly extract 'id' from URL parameters
@@ -268,10 +269,7 @@ const SessionLogDetail = () => {
       {/* En-tête avec boutons retour et modifier */}
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-4">
-          <Button variant="outline" onClick={() => navigate('/session-log')}>
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Retour
-          </Button>
+          <BackButton to="/session-log" variant="outline" />
           <h1 className="text-3xl font-bold">Détail de la séance</h1>
         </div>
         <Button onClick={() => navigate(`/session-log/edit/${id}`)}> {/* Use 'id' here */}

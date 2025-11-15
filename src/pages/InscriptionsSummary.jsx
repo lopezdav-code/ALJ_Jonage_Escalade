@@ -2,9 +2,10 @@
 import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet';
 import { motion } from 'framer-motion';
-import { ArrowLeft, CheckCircle2, Users, Mountain, GitBranch, Loader2 } from 'lucide-react';
+import { CheckCircle2, Users, Mountain, GitBranch, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { BackButton } from '@/components/ui/back-button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { supabase } from '@/lib/customSupabaseClient';
 import { formatName } from '@/lib/utils';
@@ -156,14 +157,7 @@ const InscriptionsSummary = () => {
         transition={{ duration: 0.6 }}
         className="flex items-center gap-4"
       >
-        <Button 
-          variant="ghost" 
-          onClick={() => window.history.back()}
-          className="flex items-center gap-2"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Retour
-        </Button>
+        <BackButton className="flex items-center gap-2" />
         <div>
           <h1 className="text-4xl font-bold headline">Inscriptions par Compétiteur</h1>
           <p className="text-xl text-muted-foreground mt-2">

@@ -4,9 +4,10 @@ import { useParams, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/lib/customSupabaseClient';
-import { Loader2, Calendar, ExternalLink, Download, ArrowLeft, Share2, ImagePlus, X, Lock, AlertCircle } from 'lucide-react';
+import { Loader2, Calendar, ExternalLink, Download, Share2, ImagePlus, X, Lock, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { BackButton } from '@/components/ui/back-button';
 import { useToast } from '@/components/ui/use-toast';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
@@ -193,9 +194,9 @@ const NewsDetail = () => {
       <div className="text-center py-16">
         <h1 className="text-2xl font-bold">Actualité non trouvée</h1>
         <p className="text-muted-foreground">Cette actualité n'existe pas ou a été supprimée.</p>
-        <Button asChild className="mt-4">
-          <Link to="/news"><ArrowLeft className="mr-2 h-4 w-4" /> Retour aux actualités</Link>
-        </Button>
+        <BackButton to="/news" className="mt-4">
+          Retour aux actualités
+        </BackButton>
       </div>
     );
   }
@@ -223,9 +224,9 @@ const NewsDetail = () => {
             Cette actualité est réservée aux adhérents du club. Veuillez vous connecter avec un compte adhérent pour y accéder.
           </p>
           <div className="flex gap-4 justify-center">
-            <Button asChild variant="outline">
-              <Link to="/news"><ArrowLeft className="mr-2 h-4 w-4" /> Retour aux actualités</Link>
-            </Button>
+            <BackButton to="/news" variant="outline">
+              Retour aux actualités
+            </BackButton>
             <Button asChild>
               <Link to="/login">Se connecter</Link>
             </Button>
@@ -251,9 +252,9 @@ const NewsDetail = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <Button asChild variant="outline" className="mb-8">
-          <Link to="/news"><ArrowLeft className="mr-2 h-4 w-4" /> Retour aux actualités</Link>
-        </Button>
+        <BackButton to="/news" variant="outline" className="mb-8">
+          Retour aux actualités
+        </BackButton>
         <Card>
           {signedImageUrl && (
             <img src={signedImageUrl} alt={newsItem.title} className="w-full h-64 md:h-96 object-cover rounded-t-lg" />

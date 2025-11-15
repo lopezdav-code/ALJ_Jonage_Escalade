@@ -3,13 +3,14 @@ import { Helmet } from 'react-helmet';
 import { motion } from 'framer-motion';
 import { supabase } from '@/lib/customSupabaseClient';
 import { useToast } from '@/components/ui/use-toast';
-import { Loader2, ListChecks, ArrowLeft, CheckCircle2, Euro, Shield, User, Medal, Calendar, Filter, Users, Printer, Copy } from 'lucide-react';
+import { Loader2, ListChecks, CheckCircle2, Euro, Shield, User, Medal, Calendar, Filter, Users, Printer, Copy } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { formatName } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { BackButton } from '@/components/ui/back-button';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from '@/components/ui/input';
@@ -511,7 +512,7 @@ const AnnualSummary = () => {
         {(activeTab !== 'participation' && activeTab !== 'volunteers') && (
           <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="flex justify-between items-center">
             <div className="flex items-center gap-4">
-              <Button variant="ghost" size="icon" onClick={() => navigate('/competitions')}><ArrowLeft /></Button>
+              <BackButton to="/competitions" size="icon" />
               <h1 className="text-4xl font-bold headline flex items-center gap-3">
                 <ListChecks className="w-10 h-10 text-primary" />
                 Récapitulatif Annuel et Financier

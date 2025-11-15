@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Save, Loader2, Trophy, UserCheck, X } from 'lucide-react';
+import { Save, Loader2, Trophy, UserCheck, X } from 'lucide-react';
 import { supabase } from '@/lib/customSupabaseClient';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { BackButton } from '@/components/ui/back-button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
@@ -156,10 +157,9 @@ const CompetitionResultsEditor = () => {
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <Button variant="outline" onClick={() => navigate(`/competitions/detail/${id}`)}>
-          <ArrowLeft className="w-4 h-4 mr-2" />
+        <BackButton to={`/competitions/detail/${id}`} variant="outline">
           Retour à la compétition
-        </Button>
+        </BackButton>
         <div>
           <h1 className="text-2xl font-bold">
             Résultats de la compétition: {competition.name}

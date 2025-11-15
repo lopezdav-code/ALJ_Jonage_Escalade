@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Calendar, MapPin, Euro, ExternalLink, Info, Save, ArrowLeft, Plus, X, Upload, Loader2 } from 'lucide-react';
+import { Calendar, MapPin, Euro, ExternalLink, Info, Save, Plus, X, Upload, Loader2 } from 'lucide-react';
 import { supabase } from '@/lib/customSupabaseClient';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { BackButton } from '@/components/ui/back-button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -376,10 +377,7 @@ const CompetitionEditor = () => {
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center gap-4">
-        <Button variant="outline" onClick={() => navigate('/competitions')}>
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Retour
-        </Button>
+        <BackButton to="/competitions" variant="outline" />
         <div>
           <h1 className="text-3xl font-bold">
             {isEdit ? 'Modifier la compétition' : 'Créer une compétition'}
