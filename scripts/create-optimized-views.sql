@@ -117,7 +117,7 @@ SELECT
   c.name as cycle_name,
   c.short_description as cycle_description,
   c.long_description as cycle_long_description,
-  c.active as cycle_active,
+  c.is_active as cycle_active,
 
   -- Informations du schedule
   sch.type as schedule_type,

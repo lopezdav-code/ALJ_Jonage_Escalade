@@ -92,7 +92,17 @@
 
 ---
 
-### 4. Colonne Incorrecte dans `schedules`
+### 4. Colonne Incorrecte dans `cycles`
+
+**Référence:** Vue `session_detail` ligne 120
+- ❌ `c.active` (inexistante)
+- ✅ `c.is_active` (correcte)
+
+**Action:** ✅ Corrrigée dans la vue `session_detail`
+
+---
+
+### 5. Colonne Incorrecte dans `schedules`
 
 **Problème:** Le rapport mentionne `instructors` comme colonne unique
 
@@ -106,7 +116,7 @@
 
 ---
 
-### 5. Table Manquante: `session_exercises`
+### 6. Table Manquante: `session_exercises`
 
 **Problème:** La vue `pedagogy_sheet_usage` référence `session_exercises` qui n'existe pas
 
@@ -136,9 +146,18 @@
 
 ## 📊 Détails des Colonnes par Table
 
-### `schedules` - Structu
+### `cycles` - Structure Réelle
 
-re Réelle
+```
+Colonnes trouvées:
+- id
+- name
+- short_description
+- long_description
+- is_active (NOM: "is_active" PAS "active")
+```
+
+### `schedules` - Structure Réelle
 
 ```
 Colonnes trouvées:
