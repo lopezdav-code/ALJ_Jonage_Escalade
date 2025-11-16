@@ -127,7 +127,7 @@ SELECT
   sch.end_time as schedule_end_time,
 
   -- Comptage des étudiants
-  jsonb_array_length(s.students) as student_count,
+  array_length(s.students, 1) as student_count,
 
   -- Comptage des commentaires
   (SELECT COUNT(*) FROM student_session_comments ssc WHERE ssc.session_id = s.id) as comment_count
@@ -167,7 +167,7 @@ SELECT
   c.name as cycle_name,
 
   -- Statistiques de présence
-  jsonb_array_length(s.students) as present_count,
+  array_length(s.students, 1) as present_count,
   s.students as present_students,
 
   -- Nombre de commentaires
@@ -282,7 +282,7 @@ LEFT JOIN LATERAL (
   SELECT s.*
   FROM sessions s
   WHERE m.id::text = ANY(
-    SELECT jsonb_array_elements_text(s.students)
+    SELECT unnest(s.students)
   )
 ) s ON true
 LEFT JOIN competition_participants cp ON cp.member_id = m.id

@@ -116,7 +116,21 @@
 
 ---
 
-### 6. Table Manquante: `session_exercises`
+### 6. Mauvaises Fonctions PostgreSQL pour les Arrays
+
+**Références:**
+- Ligne 130, 170 de create-optimized-views.sql: `jsonb_array_length()` sur colonne `text[]`
+- Ligne 285 de create-optimized-views.sql: `jsonb_array_elements_text()` sur colonne `text[]`
+
+**Problème:** La colonne `sessions.students` est de type `text[]` (array de texte), pas `jsonb`
+
+**Action:** ✅ Corrrigées:
+- `jsonb_array_length(s.students)` → `array_length(s.students, 1)`
+- `jsonb_array_elements_text(s.students)` → `unnest(s.students)`
+
+---
+
+### 7. Table Manquante: `session_exercises`
 
 **Problème:** La vue `pedagogy_sheet_usage` référence `session_exercises` qui n'existe pas
 
@@ -130,8 +144,14 @@
 
 ### 1. `scripts/create-optimized-views.sql`
 - ✅ Vue `session_detail` - Colonnes manquantes supprimées
+- ✅ Vue `session_detail` - Colonne `c.active` → `c.is_active`
+- ✅ Vue `session_detail` - `jsonb_array_length()` → `array_length(..., 1)`
 - ✅ Vue `member_summary` - Colonnes manquantes supprimées
+- ✅ Vue `member_summary` - Index invalides supprimés
 - ✅ Vue `competition_summary` - Colonne manquante supprimée
+- ✅ Vue `competition_summary` - Index invalides supprimés
+- ✅ Vue `attendance_summary` - `jsonb_array_length()` → `array_length(..., 1)`
+- ✅ Vue `member_statistics` - `jsonb_array_elements_text()` → `unnest()`
 - ✅ Vue `pedagogy_sheet_usage` - Table manquante corrigée
 
 ### 2. `scripts/add-performance-indexes.sql`
