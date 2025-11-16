@@ -30,9 +30,6 @@ SELECT
   m.licence,
   m.brevet_federaux,
   m.groupe_id,
-  m.address,
-  m.zip_code,
-  m.city,
 
   -- Contact d'urgence 1 (JSON object)
   CASE
@@ -114,11 +111,8 @@ SELECT
   s.start_time,
   s.schedule_id,
   s.cycle_id,
-  s.operational_objective,
   s.students,
-  s.comments,
   s.created_at,
-  s.updated_at,
 
   -- Informations du cycle
   c.name as cycle_name,
@@ -132,7 +126,6 @@ SELECT
   sch.day as schedule_day,
   sch.start_time as schedule_start_time,
   sch.end_time as schedule_end_time,
-  sch.instructors as schedule_instructors,
 
   -- Comptage des étudiants
   jsonb_array_length(s.students) as student_count,
@@ -221,7 +214,6 @@ SELECT
   c.nature,
   c.niveau,
   c.image_url,
-  c.description,
 
   -- Statistiques de participation
   COUNT(DISTINCT cp.id) FILTER (WHERE cp.role = 'Competiteur') as nb_competitors,
@@ -328,16 +320,13 @@ SELECT
   -- Comptage des exercices utilisant cette fiche
   COUNT(DISTINCT e.id) as nb_exercises_using_sheet,
 
-  -- Comptage des sessions utilisant ces exercices
-  COUNT(DISTINCT se.session_id) as nb_sessions_using_sheet,
-
-  -- Date de dernière utilisation
-  MAX(s.date) as last_used_date
+  -- REMARQUE: session_exercises n'existe pas dans le schéma actuel
+  -- Cette vue ne compte donc que les exercices utilisant cette fiche
+  0 as nb_sessions_using_sheet,
+  NULL::date as last_used_date
 
 FROM pedagogy_sheets ps
 LEFT JOIN exercises e ON e.pedagogy_sheet_id = ps.id
-LEFT JOIN session_exercises se ON se.exercise_id = e.id
-LEFT JOIN sessions s ON s.id = se.session_id
 GROUP BY ps.id, ps.title, ps.sheet_type, ps.type, ps.categories;
 
 -- Index pour performance
