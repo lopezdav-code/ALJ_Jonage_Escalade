@@ -272,7 +272,7 @@ SELECT
 
   -- Dates de dernière activité
   MAX(s.date) as last_session_date,
-  MAX(pv.validation_date) as last_validation_date,
+  MAX(pv.date_validation) as last_validation_date,
 
   -- Nombre de commentaires reçus
   COUNT(DISTINCT ssc.id) as total_comments_received

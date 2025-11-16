@@ -130,7 +130,23 @@
 
 ---
 
-### 7. Table Manquante: `session_exercises`
+### 7. Colonne Incorrecte dans `passeport_validations`
+
+**Références:**
+- Ligne 275 de create-optimized-views.sql: `pv.validation_date` (inexistante)
+- Ligne 189 de add-performance-indexes.sql: `validation_date` (inexistante)
+
+**Problème:** Le nom correct de la colonne est `date_validation` (pas `validation_date`)
+
+**Action:** ✅ Corrigées:
+- `MAX(pv.validation_date)` → `MAX(pv.date_validation)` dans member_statistics
+- Index sur `validation_date` → `date_validation` dans add-performance-indexes.sql
+
+Confirmé par référence dans PasseportViewer.jsx (ligne 57)
+
+---
+
+### 8. Table Manquante: `session_exercises`
 
 **Problème:** La vue `pedagogy_sheet_usage` référence `session_exercises` qui n'existe pas
 
@@ -152,11 +168,12 @@
 - ✅ Vue `competition_summary` - Index invalides supprimés
 - ✅ Vue `attendance_summary` - `jsonb_array_length()` → `array_length(..., 1)`
 - ✅ Vue `member_statistics` - `jsonb_array_elements_text()` → `unnest()`
+- ✅ Vue `member_statistics` - Colonne `pv.validation_date` → `pv.date_validation`
 - ✅ Vue `pedagogy_sheet_usage` - Table manquante corrigée
 
 ### 2. `scripts/add-performance-indexes.sql`
-- ✅ Tous les index sont valides
-- ✅ Aucun changement requis
+- ✅ Index sur `passeport_validations(validation_date)` → `(date_validation)`
+- ✅ Tous les autres index sont valides
 
 ### 3. `docs/database-optimization-report.md`
 - ⚠️ Contient des références à des colonnes qui n'existent pas
@@ -194,6 +211,16 @@ Colonnes trouvées:
 - start_time
 - type
 - updated_at
+```
+
+### `passeport_validations` - Structure Réelle
+
+```
+Colonnes trouvées (via PasseportViewer.jsx):
+- id
+- member_id (clé étrangère)
+- passeport_type
+- date_validation (NOM: "date_validation" PAS "validation_date")
 ```
 
 ### `bureau` - Structure Réelle

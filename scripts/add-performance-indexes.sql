@@ -183,10 +183,10 @@ CREATE INDEX IF NOT EXISTS idx_schedules_type_age
 CREATE INDEX IF NOT EXISTS idx_passeport_validations_member
   ON passeport_validations(member_id);
 
--- Index sur validation_date pour le tri chronologique
+-- Index sur date_validation pour le tri chronologique
 -- Utilisé dans: PasseportHistory.jsx
 CREATE INDEX IF NOT EXISTS idx_passeport_validations_date
-  ON passeport_validations(validation_date DESC);
+  ON passeport_validations(date_validation DESC);
 
 -- Index composite pour les requêtes de passeport spécifique
 -- Utilisé dans: PasseportHistory.jsx
