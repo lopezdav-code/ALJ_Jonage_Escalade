@@ -27,16 +27,18 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_pedagogy_usage_unique
 -- ============================================================================
 
 CREATE OR REPLACE FUNCTION refresh_materialized_views_concurrent()
-RETURNS void AS $$
+RETURNS trigger AS $$
 BEGIN
   REFRESH MATERIALIZED VIEW CONCURRENTLY attendance_summary;
   REFRESH MATERIALIZED VIEW CONCURRENTLY member_statistics;
   REFRESH MATERIALIZED VIEW CONCURRENTLY pedagogy_sheet_usage;
+  RETURN NULL;
 EXCEPTION WHEN OTHERS THEN
   -- Si le rafraîchissement concurrent échoue, faire un refresh normal
   REFRESH MATERIALIZED VIEW attendance_summary;
   REFRESH MATERIALIZED VIEW member_statistics;
   REFRESH MATERIALIZED VIEW pedagogy_sheet_usage;
+  RETURN NULL;
 END;
 $$ LANGUAGE plpgsql;
 
