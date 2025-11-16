@@ -1,8 +1,8 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { User, Medal, CheckCircle2, Printer, Copy } from 'lucide-react';
+import { User, Medal, CheckCircle2, Printer, Copy, ArrowUpDown } from 'lucide-react';
 import { formatName } from '@/lib/utils';
 import { useToast } from '@/components/ui/use-toast';
 import html2canvas from 'html2canvas';
@@ -22,6 +22,7 @@ const CompetitionGroupedTable = ({
 }) => {
   const { toast } = useToast();
   const contentRef = useRef(null);
+  const [sortByRanking, setSortByRanking] = useState(false);
 
   // Fonction pour copier le tableau en tant qu'image
   const handleCopyAsImage = async () => {
@@ -36,6 +37,11 @@ const CompetitionGroupedTable = ({
         }
         table td, table th {
           overflow: visible !important;
+        }
+        .truncate {
+          overflow: visible !important;
+          text-overflow: clip !important;
+          white-space: normal !important;
         }
       `;
       document.head.appendChild(style);
@@ -127,9 +133,22 @@ const CompetitionGroupedTable = ({
     // Trier les membres dans chaque sexe
     Object.values(structure).forEach(compData => {
       Object.values(compData.sexes).forEach(sex => {
-        sex.members.sort((a, b) =>
-          a.member.first_name.localeCompare(b.member.first_name)
-        );
+        sex.members.sort((a, b) => {
+          if (sortByRanking) {
+            // Tri par classement : classés d'abord (par ordre croissant), puis non-classés par ordre alphabétique
+            const rankingA = a.ranking || Infinity;
+            const rankingB = b.ranking || Infinity;
+
+            if (rankingA !== rankingB) {
+              return rankingA - rankingB;
+            }
+            // Si même classement (ou pas de classement), trier par nom
+            return a.member.first_name.localeCompare(b.member.first_name);
+          } else {
+            // Tri alphabétique par défaut
+            return a.member.first_name.localeCompare(b.member.first_name);
+          }
+        });
       });
     });
 
@@ -187,15 +206,26 @@ const CompetitionGroupedTable = ({
   return (
     <div className="space-y-4">
       {/* Boutons d'action */}
-      <div className="flex justify-end gap-2 no-print">
-        <Button onClick={handleCopyAsImage} variant="outline" size="sm" className="gap-2">
-          <Copy className="w-4 h-4" />
-          Copier l'image
+      <div className="flex justify-between items-center gap-2 no-print flex-wrap">
+        <Button
+          onClick={() => setSortByRanking(!sortByRanking)}
+          variant={sortByRanking ? "default" : "outline"}
+          size="sm"
+          className="gap-2"
+        >
+          <ArrowUpDown className="w-4 h-4" />
+          {sortByRanking ? "Tri par résultat" : "Tri alphabétique"}
         </Button>
-        <Button onClick={handlePrint} variant="outline" size="sm" className="gap-2">
-          <Printer className="w-4 h-4" />
-          Imprimer
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={handleCopyAsImage} variant="outline" size="sm" className="gap-2">
+            <Copy className="w-4 h-4" />
+            Copier l'image
+          </Button>
+          <Button onClick={handlePrint} variant="outline" size="sm" className="gap-2">
+            <Printer className="w-4 h-4" />
+            Imprimer
+          </Button>
+        </div>
       </div>
 
       {/* Contenu principal à capturer */}
