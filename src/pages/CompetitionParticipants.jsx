@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, Trash2, Users, Trophy, UserCheck, Search, Filter, Save, X } from 'lucide-react';
+import { Plus, Trash2, Users, Trophy, UserCheck, Search, Filter, Save, X } from 'lucide-react';
 import { supabase } from '@/lib/customSupabaseClient';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { BackButton } from '@/components/ui/back-button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -258,10 +259,9 @@ const CompetitionParticipants = () => {
     <div className="space-y-6">
       {/* En-tête */}
       <div className="flex items-center gap-4">
-        <Button variant="ghost" onClick={() => navigate('/competitions')}>
-          <ArrowLeft className="w-4 h-4 mr-2" />
+        <BackButton to="/competitions">
           Retour aux compétitions
-        </Button>
+        </BackButton>
         <div>
           <h1 className="text-2xl font-bold">{competition.name}</h1>
           <p className="text-muted-foreground">Gestion des participants</p>

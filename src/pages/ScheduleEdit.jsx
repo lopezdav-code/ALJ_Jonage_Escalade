@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet';
 import { motion } from 'framer-motion';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Calendar, ArrowLeft, Save, Loader2 } from 'lucide-react';
+import { Calendar, Save, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { BackButton } from '@/components/ui/back-button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -243,10 +244,7 @@ const ScheduleEdit = () => {
         transition={{ duration: 0.5 }}
       >
         <div className="flex items-center gap-4">
-          <Button variant="ghost" onClick={() => navigate('/schedule/admin')}>
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Retour
-          </Button>
+          <BackButton to="/schedule/admin" />
           <h1 className="text-4xl font-bold headline flex items-center gap-3">
             <Calendar className="w-10 h-10 text-primary" />
             {id ? 'Modifier le créneau' : 'Nouveau créneau'}

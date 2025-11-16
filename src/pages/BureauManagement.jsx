@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
+import { BackButton } from '@/components/ui/back-button';
 import { supabase } from '@/lib/customSupabaseClient';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
@@ -186,13 +187,13 @@ const BureauManagement = () => {
           <title>Gestion du Bureau</title>
         </Helmet>
 
-        <div className="flex justify-between items-center">
-          <h1 className="text-4xl font-bold flex items-center gap-3">
-            <Users className="w-10 h-10 text-primary" /> Gestion des membres du Bureau
-          </h1>
-          <Button variant="outline" onClick={() => window.history.back()}>
-            Retour
-          </Button>
+        <div className="space-y-4">
+          <BackButton to="/admin-dashboard" variant="outline" />
+          <div className="flex justify-between items-center">
+            <h1 className="text-4xl font-bold flex items-center gap-3">
+              <Users className="w-10 h-10 text-primary" /> Gestion des membres du Bureau
+            </h1>
+          </div>
         </div>
 
       <Card>

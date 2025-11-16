@@ -5,13 +5,14 @@ import { supabase } from '@/lib/customSupabaseClient';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { ArrowLeft, Loader2, User, Mail, Phone, Award, Shield, FileText, Calendar, Users, Eye, Trophy, Medal, MapPin, Euro, Pencil, GraduationCap, Clock, MessageSquare, BookOpen } from 'lucide-react';
+import { Loader2, User, Mail, Phone, Award, Shield, FileText, Calendar, Users, Eye, Trophy, Medal, MapPin, Euro, Pencil, GraduationCap, Clock, MessageSquare, BookOpen } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { useMemberViewPermissions } from '@/hooks/useMemberViewPermissions';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { getMemberPhotoUrl } from '@/lib/memberStorageUtils';
 import { Badge } from '@/components/ui/badge';
+import { BackButton } from '@/components/ui/back-button';
 
 const InfoRow = ({ icon: Icon, label, value }) => {
   if (!value) return null;
@@ -346,10 +347,9 @@ const MemberView = () => {
     return (
       <div className="text-center p-8">
         <p className="text-lg text-muted-foreground mb-4">Membre non trouvé</p>
-        <Button onClick={() => navigateToVolunteers()}>
-          <ArrowLeft className="h-4 w-4 mr-2" />
+        <BackButton onClick={() => navigateToVolunteers()}>
           Retour aux adhérents
-        </Button>
+        </BackButton>
       </div>
     );
   }
@@ -361,13 +361,9 @@ const MemberView = () => {
       </Helmet>
 
       <div className="mb-6 flex items-center justify-between gap-4">
-        <Button
-          variant="ghost"
-          onClick={() => navigateToVolunteers()}
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
+        <BackButton onClick={() => navigateToVolunteers()}>
           Retour aux adhérents
-        </Button>
+        </BackButton>
         {canEdit && (
           <Button
             onClick={() => navigate(`/member-edit/${id}`, { state: { fromTab } })}

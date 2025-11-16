@@ -6,6 +6,7 @@ import { supabase } from '@/lib/customSupabaseClient';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { BackButton } from '@/components/ui/back-button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -213,27 +214,30 @@ const ConnectionLogs = () => {
           <meta name="description" content="Suivi des connexions et déconnexions des membres" />
         </Helmet>
 
-      <motion.div 
-        initial={{ opacity: 0, y: -20 }} 
-        animate={{ opacity: 1, y: 0 }} 
-        className="flex justify-between items-center"
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="space-y-4"
       >
-        <div className="flex items-center gap-3">
-          <Users className="w-8 h-8 text-primary" />
-          <div>
-            <h1 className="text-3xl font-bold">Logs de Connexion</h1>
-            <p className="text-muted-foreground">Suivi des connexions des membres</p>
+        <BackButton to="/admin-dashboard" />
+        <div className="flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <Users className="w-8 h-8 text-primary" />
+            <div>
+              <h1 className="text-3xl font-bold">Logs de Connexion</h1>
+              <p className="text-muted-foreground">Suivi des connexions des membres</p>
+            </div>
           </div>
-        </div>
-        <div className="flex gap-2">
-          <Button onClick={exportLogs} variant="outline" size="sm">
-            <Download className="w-4 h-4 mr-2" />
-            Exporter
-          </Button>
-          <Button onClick={cleanOldLogs} variant="outline" size="sm">
-            <Trash2 className="w-4 h-4 mr-2" />
-            Nettoyer
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={exportLogs} variant="outline" size="sm">
+              <Download className="w-4 h-4 mr-2" />
+              Exporter
+            </Button>
+            <Button onClick={cleanOldLogs} variant="outline" size="sm">
+              <Trash2 className="w-4 h-4 mr-2" />
+              Nettoyer
+            </Button>
+          </div>
         </div>
       </motion.div>
 

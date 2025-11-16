@@ -4,12 +4,13 @@ import { Helmet } from 'react-helmet';
 import { motion } from 'framer-motion';
 import { supabase } from '@/lib/customSupabaseClient';
 import { useToast } from '@/components/ui/use-toast';
-import { Loader2, ArrowLeft, Trophy, Calendar, MapPin, Medal } from 'lucide-react';
+import { Loader2, Trophy, Calendar, MapPin, Medal } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { formatName } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { BackButton } from '@/components/ui/back-button';
 import SafeMemberAvatar from '@/components/SafeMemberAvatar';
 
 const DISCIPLINE_COLORS = {
@@ -84,7 +85,7 @@ const CompetitorSummary = () => {
 
       <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="flex justify-between items-start">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}><ArrowLeft /></Button>
+          <BackButton size="icon" />
           <div className="flex items-center gap-4">
             <SafeMemberAvatar 
               member={member} 

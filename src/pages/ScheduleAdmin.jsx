@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, Edit, Trash2, PlusCircle, ArrowLeft, Loader2, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { Calendar, Edit, Trash2, PlusCircle, Loader2, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { BackButton } from '@/components/ui/back-button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
@@ -215,10 +216,9 @@ const ScheduleAdmin = () => {
       >
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" onClick={() => navigate('/schedule')}>
-              <ArrowLeft className="w-4 h-4 mr-2" />
+            <BackButton to="/schedule">
               Retour au planning
-            </Button>
+            </BackButton>
             <h1 className="text-4xl font-bold headline flex items-center gap-3">
               <Calendar className="w-10 h-10 text-primary" />
               Gestion du Planning

@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Helmet } from 'react-helmet';
 import { motion } from 'framer-motion';
-import { BookMarked, Loader2, ArrowLeft, Save, UploadCloud } from 'lucide-react';
+import { BookMarked, Loader2, Save, UploadCloud } from 'lucide-react';
 import { supabase } from '@/lib/customSupabaseClient';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { usePageAccess } from '@/hooks/usePageAccess';
 import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
+import { BackButton } from '@/components/ui/back-button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -383,14 +384,9 @@ const PedagogyEditor = () => {
         >
           {/* Header */}
           <div className="mb-8">
-            <Button
-              variant="ghost"
-              onClick={() => navigate('/pedagogy')}
-              className="mb-4"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
+            <BackButton to="/pedagogy" className="mb-4">
               Retour à la pédagogie
-            </Button>
+            </BackButton>
 
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-2">
               {id ? 'Modifier la fiche pédagogique' : 'Nouvelle fiche pédagogique'}

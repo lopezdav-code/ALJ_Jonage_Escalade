@@ -59,6 +59,7 @@ const MemberGroupTest = lazy(() => import('@/pages/__dev__/MemberGroupTest'));
 const BureauManagement = lazy(() => import('@/pages/BureauManagement'));
 const ExerciseProgress = lazy(() => import('@/pages/ExerciseProgress'));
 const AuthorizationManagement = lazy(() => import('@/pages/AuthorizationManagement'));
+const Specifications = lazy(() => import('@/pages/Specifications'));
 
 import { AuthProvider, useAuth } from '@/contexts/SupabaseAuthContext';
 import { ConfigProvider } from '@/contexts/ConfigContext';
@@ -165,6 +166,7 @@ const AppContent = () => {
           <Route path="/groupes/admin" element={<LazyRoute><GroupeAdmin /></LazyRoute>} />
           <Route path="/attendance-recap" element={<LazyRoute><AttendanceRecap /></LazyRoute>} />
           <Route path="/exercise-progress" element={<LazyRoute><ExerciseProgress /></LazyRoute>} />
+          <Route path="/specifications" element={<LazyRoute><Specifications /></LazyRoute>} />
         </Routes>
       </main>
       <Footer />
