@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { Users, Save, Loader2, Filter, CheckSquare, Square, Settings } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { BackButton } from '@/components/ui/back-button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -298,8 +299,10 @@ const MemberGroupTest = () => {
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
+        className="space-y-4"
       >
-          <div className="flex justify-between items-center">
+        <BackButton to="/admin-dashboard" />
+        <div className="flex justify-between items-center">
           <h1 className="text-4xl font-bold headline flex items-center gap-3">
             <Users className="w-10 h-10 text-primary" />
             Gestion des Groupes
