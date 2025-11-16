@@ -89,9 +89,8 @@ LEFT JOIN competition_participants cp ON cp.member_id = m.id
 LEFT JOIN competitions c ON c.id = cp.competition_id
 GROUP BY m.id, ec1.id, ec2.id;
 
--- Index pour performance
-CREATE INDEX IF NOT EXISTS idx_member_summary_title ON member_summary(title);
-CREATE INDEX IF NOT EXISTS idx_member_summary_groupe ON member_summary(groupe_id);
+-- REMARQUE: Index non créés sur VIEW normales (créer des index sur les tables de base à la place)
+-- Les index sur les tables de base (members, competition_participants) améliorent les performances de cette vue
 
 COMMENT ON VIEW member_summary IS 'Vue optimisée des membres avec leurs relations pré-jointes (contacts urgence, compétitions)';
 
@@ -137,9 +136,8 @@ FROM sessions s
 LEFT JOIN cycles c ON c.id = s.cycle_id
 LEFT JOIN schedules sch ON sch.id = s.schedule_id;
 
--- Index pour performance
-CREATE INDEX IF NOT EXISTS idx_session_detail_schedule_date ON session_detail(schedule_id, date DESC);
-CREATE INDEX IF NOT EXISTS idx_session_detail_cycle_date ON session_detail(cycle_id, date DESC);
+-- REMARQUE: Index non créés sur VIEW normales (créer des index sur les tables de base à la place)
+-- Les index sur sessions.schedule_id, sessions.cycle_id améliorent les performances de cette vue
 
 COMMENT ON VIEW session_detail IS 'Vue optimisée des sessions avec cycles et schedules pré-joints';
 
@@ -236,9 +234,8 @@ LEFT JOIN competition_participants cp ON cp.competition_id = c.id
 LEFT JOIN members m ON m.id = cp.member_id
 GROUP BY c.id;
 
--- Index pour performance
-CREATE INDEX IF NOT EXISTS idx_competition_summary_date ON competition_summary(start_date DESC);
-CREATE INDEX IF NOT EXISTS idx_competition_summary_status ON competition_summary(status);
+-- REMARQUE: Index non créés sur VIEW normales (créer des index sur les tables de base à la place)
+-- Les index sur competitions.start_date, competitions.status améliorent les performances de cette vue
 
 COMMENT ON VIEW competition_summary IS 'Vue optimisée des compétitions avec statistiques de participation';
 
