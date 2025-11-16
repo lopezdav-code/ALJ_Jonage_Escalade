@@ -153,9 +153,9 @@ const MemberView = () => {
       setSessionHistoryLoaded(false);
 
       try {
-        // Fetch member data
+        // Fetch member data with pre-joined emergency contacts and competitions using optimized view
         const { data, error } = await supabase
-          .from('secure_members')
+          .from('member_summary')
           .select('*')
           .eq('id', id)
           .single();
@@ -173,20 +173,10 @@ const MemberView = () => {
 
         setMember(data);
 
-        // Fetch emergency contacts if they exist
-        if (data.emergency_contact_1_id || data.emergency_contact_2_id) {
-          const contactIds = [data.emergency_contact_1_id, data.emergency_contact_2_id].filter(Boolean);
-          const { data: contacts } = await supabase
-            .from('secure_members')
-            .select('id, first_name, last_name, phone, email')
-            .in('id', contactIds);
-
-          if (contacts) {
-            const contact1 = contacts.find(c => c.id === data.emergency_contact_1_id);
-            const contact2 = contacts.find(c => c.id === data.emergency_contact_2_id);
-            setEmergencyContacts({ contact1, contact2 });
-          }
-        }
+        // Emergency contacts are now pre-joined in the view as JSON fields
+        const contact1 = data.emergency_contact_1 || null;
+        const contact2 = data.emergency_contact_2 || null;
+        setEmergencyContacts({ contact1, contact2 });
 
         // Fetch members for whom this person is an emergency contact
         const { data: contactFor } = await supabase
@@ -204,33 +194,30 @@ const MemberView = () => {
           setPhotoUrl(url);
         }
 
-        // Fetch competition participations
-        const { data: participations } = await supabase
-          .from('competition_participants')
-          .select(`
-            id,
-            role,
-            ranking,
-            nb_competitor,
-            competitions (
-              id,
-              name,
-              short_title,
-              start_date,
-              location,
-              prix,
-              disciplines,
-              nature,
-              niveau
-            )
-          `)
-          .eq('member_id', id)
-          .order('start_date', { foreignTable: 'competitions', ascending: false });
+        // Competitions are now pre-joined in the view as JSON array
+        // Transform the flat structure from the view to match the expected nested structure
+        const competitions = (data.competitions || []).map(c => ({
+          id: c.participation_id,
+          role: c.role,
+          ranking: c.ranking,
+          nb_competitor: c.nb_competitor,
+          competitions: {
+            id: c.competition_id,
+            name: c.competition_name,
+            short_title: c.short_title,
+            start_date: c.start_date,
+            location: c.location,
+            prix: c.prix,
+            disciplines: c.disciplines,
+            nature: c.nature,
+            niveau: c.niveau
+          }
+        }));
 
-        if (participations) {
+        if (competitions.length > 0) {
           // Separate results (with ranking) from simple inscriptions
-          const results = participations.filter(p => p.role === 'Competiteur' && p.ranking);
-          const inscriptions = participations.filter(p => p.role === 'Competiteur');
+          const results = competitions.filter(c => c.role === 'Competiteur' && c.ranking);
+          const inscriptions = competitions.filter(c => c.role === 'Competiteur');
 
           setCompetitionResults(results);
           setCompetitionInscriptions(inscriptions);

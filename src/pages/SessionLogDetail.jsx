@@ -18,6 +18,7 @@ const SessionLogDetail = () => {
   useEffect(() => {
     const fetchSessionDetail = async () => {
       try {
+        // OPTIMIZED: Fetch session with all related data in a single query
         const { data, error } = await supabase
           .from('sessions')
           .select(`
@@ -25,6 +26,15 @@ const SessionLogDetail = () => {
             cycles (
               name,
               short_description
+            ),
+            schedules:schedule_id (
+              id,
+              type,
+              age_category,
+              day,
+              start_time,
+              end_time,
+              Groupe
             ),
             exercises (
               id,
@@ -48,23 +58,8 @@ const SessionLogDetail = () => {
           throw error;
         }
 
-        // Récupérer les informations de l'emploi du temps si schedule_id existe
-        let scheduleData = null;
-        if (data.schedule_id) {
-          try {
-            const { data: schedule, error: scheduleError } = await supabase
-              .from('schedules')
-              .select('id, type, age_category, day, start_time, end_time')
-              .eq('id', data.schedule_id)
-              .single();
-
-            if (!scheduleError && schedule) {
-              scheduleData = schedule;
-            }
-          } catch (err) {
-            // Erreur lors de la récupération du schedule
-          }
-        }
+        // Schedule is now pre-joined in the query above
+        const scheduleData = data.schedules || null;
 
         // Récupérer les informations des membres
         const allMemberIds = [
@@ -140,22 +135,11 @@ const SessionLogDetail = () => {
           }, {});
         }
 
-        // Récupérer les membres du groupe associé au schedule de la session
+        // OPTIMIZED: Récupérer les membres du groupe associé au schedule de la session
+        // Le groupe_id est maintenant disponible directement dans scheduleData
         let lyceeMembers = [];
         try {
-          // Récupérer d'abord le groupe_id du schedule
-          let groupeId = null;
-          if (data.schedule_id) {
-            const { data: scheduleDataForGroupe, error: scheduleError } = await supabase
-              .from('schedules')
-              .select('Groupe')
-              .eq('id', data.schedule_id)
-              .single();
-
-            if (!scheduleError && scheduleDataForGroupe) {
-              groupeId = scheduleDataForGroupe.Groupe;
-            }
-          }
+          const groupeId = scheduleData?.Groupe || null;
 
           // Récupérer les membres filtrés par groupe_id (avec sexe et category)
           let query = supabase
