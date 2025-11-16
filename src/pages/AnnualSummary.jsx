@@ -371,6 +371,7 @@ const AnnualSummary = () => {
           member_id,
           competition_id,
           ranking,
+          nb_competitor,
           members ( id, first_name, last_name, title, category, sexe ),
           competitions ( id, name, short_title, start_date, disciplines, nature, prix )
         `);
@@ -396,7 +397,7 @@ const AnnualSummary = () => {
             if (!groupMembers[memberId]) {
               groupMembers[memberId] = { member: p.members, participations: {} };
             }
-            groupMembers[memberId].participations[compId] = { ranking: p.ranking };
+            groupMembers[memberId].participations[compId] = { ranking: p.ranking, nb_competitor: p.nb_competitor };
 
             if (!groupComps[compId]) {
               groupComps[compId] = p.competitions;
@@ -461,7 +462,7 @@ const AnnualSummary = () => {
           if (!otherCompetitors[memberId]) {
             otherCompetitors[memberId] = { member: p.members, participations: {} };
           }
-          otherCompetitors[memberId].participations[compId] = { ranking: p.ranking };
+          otherCompetitors[memberId].participations[compId] = { ranking: p.ranking, nb_competitor: p.nb_competitor };
         });
       const otherMembers = Object.values(otherCompetitors).sort((a, b) => {
         return a.member.first_name.localeCompare(b.member.first_name);

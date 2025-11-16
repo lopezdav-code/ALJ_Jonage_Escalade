@@ -43,6 +43,10 @@ const CompetitionGroupedTable = ({
           text-overflow: clip !important;
           white-space: normal !important;
         }
+        /* Forcer l'affichage en deux colonnes pour la capture */
+        .md\\:grid-cols-2 {
+          grid-template-columns: repeat(2, 1fr) !important;
+        }
       `;
       document.head.appendChild(style);
 
@@ -148,7 +152,8 @@ const CompetitionGroupedTable = ({
         // Ajouter le compétiteur
         structure[compId].categories[categoryKey].sexes[sexKey].members.push({
           member,
-          ranking: participation.ranking
+          ranking: participation.ranking,
+          nb_competitor: participation.nb_competitor
         });
       });
     });
@@ -352,8 +357,8 @@ const CompetitionGroupedTable = ({
                             </span>
                           </div>
 
-                          {/* Groupes par sexe */}
-                          <div className="space-y-3 pl-2">
+                          {/* Groupes par sexe - Affichage en deux colonnes */}
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pl-2">
                             {Object.entries(category.sexes)
                               .sort(([keyA], [keyB]) => keyA.localeCompare(keyB))
                               .map(([sexKey, sex]) => (
@@ -365,7 +370,7 @@ const CompetitionGroupedTable = ({
                                     </span>
                                   </div>
                                   <div className="space-y-1 pl-4">
-                                    {sex.members.map(({ member, ranking }) => (
+                                    {sex.members.map(({ member, ranking, nb_competitor }) => (
                                       <div
                                         key={member.id}
                                         className="flex items-center justify-between text-sm py-1"
@@ -395,7 +400,7 @@ const CompetitionGroupedTable = ({
                                           {ranking ? (
                                             <div className="flex items-center gap-1 font-bold text-primary">
                                               <Medal className="w-3 h-3" />
-                                              <span>{ranking}/{sex.members.length}</span>
+                                              <span>{ranking}{nb_competitor ? `/${nb_competitor}` : ''}</span>
                                             </div>
                                           ) : (
                                             <CheckCircle2 className="w-4 h-4 text-green-500 inline-block align-middle" />
