@@ -93,7 +93,21 @@ const CompetitionGroupedTable = ({
     }
   };
 
-  // Restructurer les données par compétition → sexe
+  // Extraire la catégorie d'âge depuis member.category
+  const extractAgeCategory = (category) => {
+    if (!category) return 'Autre';
+    // Extraire U13, U15, U17, U19, etc.
+    const match = category.match(/U(\d+)/);
+    if (match) {
+      return `U${match[1]}`;
+    }
+    return 'Autre';
+  };
+
+  // Ordre de tri des catégories
+  const categoryOrder = ['U13', 'U15', 'U17', 'U19', 'Autre'];
+
+  // Restructurer les données par compétition → catégorie d'âge → sexe
   const buildCompetitionHierarchy = () => {
     const structure = {};
 
@@ -101,7 +115,7 @@ const CompetitionGroupedTable = ({
     competitions.forEach(comp => {
       structure[comp.id] = {
         competition: comp,
-        sexes: {}
+        categories: {}
       };
     });
 
@@ -112,42 +126,53 @@ const CompetitionGroupedTable = ({
       Object.entries(participations).forEach(([compId, participation]) => {
         if (!structure[compId]) return;
 
+        const categoryKey = extractAgeCategory(member.category);
         const sexKey = member.sexe || 'Non spécifié';
 
-        // Initialiser le sexe
-        if (!structure[compId].sexes[sexKey]) {
-          structure[compId].sexes[sexKey] = {
+        // Initialiser la catégorie d'âge
+        if (!structure[compId].categories[categoryKey]) {
+          structure[compId].categories[categoryKey] = {
+            title: categoryKey,
+            sexes: {}
+          };
+        }
+
+        // Initialiser le sexe dans cette catégorie
+        if (!structure[compId].categories[categoryKey].sexes[sexKey]) {
+          structure[compId].categories[categoryKey].sexes[sexKey] = {
             title: sexKey === 'H' ? 'Hommes' : sexKey === 'F' ? 'Femmes' : sexKey,
             members: []
           };
         }
 
         // Ajouter le compétiteur
-        structure[compId].sexes[sexKey].members.push({
+        structure[compId].categories[categoryKey].sexes[sexKey].members.push({
           member,
           ranking: participation.ranking
         });
       });
     });
 
-    // Trier les membres dans chaque sexe
+    // Trier les membres dans chaque sexe de chaque catégorie
     Object.values(structure).forEach(compData => {
-      Object.values(compData.sexes).forEach(sex => {
-        sex.members.sort((a, b) => {
-          if (sortByRanking) {
-            // Tri par classement : classés d'abord (par ordre croissant), puis non-classés par ordre alphabétique
-            const rankingA = a.ranking || Infinity;
-            const rankingB = b.ranking || Infinity;
+      Object.values(compData.categories).forEach(category => {
+        Object.values(category.sexes).forEach(sex => {
+          sex.members.sort((a, b) => {
+            if (sortByRanking) {
+              // Tri par classement : classés d'abord (par ordre croissant), puis non-classés par ordre alphabétique
+              const rankingA = a.ranking || Infinity;
+              const rankingB = b.ranking || Infinity;
 
-            if (rankingA !== rankingB) {
-              return rankingA - rankingB;
+              if (rankingA !== rankingB) {
+                return rankingA - rankingB;
+              }
+              // Si même classement (ou pas de classement), trier par nom
+              return a.member.first_name.localeCompare(b.member.first_name);
+            } else {
+              // Tri alphabétique par défaut
+              return a.member.first_name.localeCompare(b.member.first_name);
             }
-            // Si même classement (ou pas de classement), trier par nom
-            return a.member.first_name.localeCompare(b.member.first_name);
-          } else {
-            // Tri alphabétique par défaut
-            return a.member.first_name.localeCompare(b.member.first_name);
-          }
+          });
         });
       });
     });
@@ -185,11 +210,13 @@ const CompetitionGroupedTable = ({
       const compHierarchy = hierarchy[comp.id];
       if (!compHierarchy) return;
 
-      Object.entries(compHierarchy.sexes).forEach(([sexKey, sex]) => {
-        const count = sex.members.length;
-        if (sexKey === 'H') menCount += count;
-        else if (sexKey === 'F') womenCount += count;
-        totalCompetitors += count;
+      Object.values(compHierarchy.categories).forEach(category => {
+        Object.entries(category.sexes).forEach(([sexKey, sex]) => {
+          const count = sex.members.length;
+          if (sexKey === 'H') menCount += count;
+          else if (sexKey === 'F') womenCount += count;
+          totalCompetitors += count;
+        });
       });
     });
 
@@ -260,10 +287,13 @@ const CompetitionGroupedTable = ({
       <div className="space-y-4">
         {filteredCompetitions.map(comp => {
           const compHierarchy = hierarchy[comp.id];
-          if (!compHierarchy || Object.keys(compHierarchy.sexes).length === 0) return null;
+          if (!compHierarchy || Object.keys(compHierarchy.categories).length === 0) return null;
 
-          const totalParticipants = Object.values(compHierarchy.sexes).reduce(
-            (sum, sex) => sum + sex.members.length,
+          const totalParticipants = Object.values(compHierarchy.categories).reduce(
+            (sum, category) => sum + Object.values(category.sexes).reduce(
+              (sexSum, sex) => sexSum + sex.members.length,
+              0
+            ),
             0
           );
 
@@ -298,59 +328,88 @@ const CompetitionGroupedTable = ({
               </CardHeader>
 
               <CardContent>
-                <div className="space-y-4">
-                  {Object.entries(compHierarchy.sexes)
-                    .sort(([keyA], [keyB]) => keyA.localeCompare(keyB))
-                    .map(([sexKey, sex]) => (
-                      <div key={`${comp.id}-${sexKey}`} className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="font-semibold">{sex.title}</span>
-                          <span className="text-xs bg-muted px-2 py-1 rounded">
-                            {sex.members.length} {sex.members.length > 1 ? 'compétiteurs' : 'compétiteur'}
-                          </span>
-                        </div>
-                        <div className="space-y-1 pl-4">
-                          {sex.members.map(({ member, ranking }) => (
-                            <div
-                              key={member.id}
-                              className="flex items-center justify-between text-sm py-1"
-                            >
-                              <div className="flex items-center gap-2 min-w-0 flex-1">
-                                <User
-                                  className={`w-3 h-3 flex-shrink-0 ${
-                                    member.sexe === 'H' ? 'text-blue-600' : 'text-pink-600'
-                                  }`}
-                                />
-                                <div className="truncate flex-1">
-                                  <span
-                                    className={`${
-                                      member.sexe === 'H' ? 'text-blue-600' : 'text-pink-600'
-                                    }`}
-                                  >
-                                    {formatName(member.first_name, member.last_name, true)}
-                                  </span>
-                                  {member.category && (
-                                    <span className="text-muted-foreground text-xs ml-2">
-                                      ({member.category})
+                <div className="space-y-6">
+                  {/* Trier les catégories selon l'ordre défini */}
+                  {Object.entries(compHierarchy.categories)
+                    .sort(([keyA], [keyB]) => {
+                      const indexA = categoryOrder.indexOf(keyA);
+                      const indexB = categoryOrder.indexOf(keyB);
+                      return indexA - indexB;
+                    })
+                    .map(([categoryKey, category]) => {
+                      const categoryTotal = Object.values(category.sexes).reduce(
+                        (sum, sex) => sum + sex.members.length,
+                        0
+                      );
+
+                      return (
+                        <div key={`${comp.id}-${categoryKey}`} className="space-y-3">
+                          {/* En-tête de catégorie d'âge */}
+                          <div className="flex items-center justify-between border-b pb-2">
+                            <span className="font-bold text-base text-primary">{category.title}</span>
+                            <span className="text-xs bg-primary/10 text-primary px-3 py-1 rounded-full font-semibold">
+                              {categoryTotal} {categoryTotal > 1 ? 'participants' : 'participant'}
+                            </span>
+                          </div>
+
+                          {/* Groupes par sexe */}
+                          <div className="space-y-3 pl-2">
+                            {Object.entries(category.sexes)
+                              .sort(([keyA], [keyB]) => keyA.localeCompare(keyB))
+                              .map(([sexKey, sex]) => (
+                                <div key={`${comp.id}-${categoryKey}-${sexKey}`} className="space-y-2">
+                                  <div className="flex items-center justify-between">
+                                    <span className="font-semibold text-sm">{sex.title}</span>
+                                    <span className="text-xs bg-muted px-2 py-1 rounded">
+                                      {sex.members.length} {sex.members.length > 1 ? 'compétiteurs' : 'compétiteur'}
                                     </span>
-                                  )}
-                                </div>
-                              </div>
-                              <div className="flex-shrink-0 ml-2 overflow-visible">
-                                {ranking ? (
-                                  <div className="flex items-center gap-1 font-bold text-primary">
-                                    <Medal className="w-3 h-3" />
-                                    <span>{ranking}/{sex.members.length}</span>
                                   </div>
-                                ) : (
-                                  <CheckCircle2 className="w-4 h-4 text-green-500 inline-block align-middle" />
-                                )}
-                              </div>
-                            </div>
-                          ))}
+                                  <div className="space-y-1 pl-4">
+                                    {sex.members.map(({ member, ranking }) => (
+                                      <div
+                                        key={member.id}
+                                        className="flex items-center justify-between text-sm py-1"
+                                      >
+                                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                                          <User
+                                            className={`w-3 h-3 flex-shrink-0 ${
+                                              member.sexe === 'H' ? 'text-blue-600' : 'text-pink-600'
+                                            }`}
+                                          />
+                                          <div className="truncate flex-1">
+                                            <span
+                                              className={`${
+                                                member.sexe === 'H' ? 'text-blue-600' : 'text-pink-600'
+                                              }`}
+                                            >
+                                              {formatName(member.first_name, member.last_name, true)}
+                                            </span>
+                                            {member.category && (
+                                              <span className="text-muted-foreground text-xs ml-2">
+                                                ({member.category})
+                                              </span>
+                                            )}
+                                          </div>
+                                        </div>
+                                        <div className="flex-shrink-0 ml-2 overflow-visible">
+                                          {ranking ? (
+                                            <div className="flex items-center gap-1 font-bold text-primary">
+                                              <Medal className="w-3 h-3" />
+                                              <span>{ranking}/{sex.members.length}</span>
+                                            </div>
+                                          ) : (
+                                            <CheckCircle2 className="w-4 h-4 text-green-500 inline-block align-middle" />
+                                          )}
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              ))}
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                 </div>
               </CardContent>
             </Card>
