@@ -340,7 +340,7 @@ const CompetitionGroupedTable = ({
                                 {ranking ? (
                                   <div className="flex items-center gap-1 font-bold text-primary">
                                     <Medal className="w-3 h-3" />
-                                    <span>{ranking}</span>
+                                    <span>{ranking}/{sex.members.length}</span>
                                   </div>
                                 ) : (
                                   <CheckCircle2 className="w-4 h-4 text-green-500 inline-block align-middle" />
