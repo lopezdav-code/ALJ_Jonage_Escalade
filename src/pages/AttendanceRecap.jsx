@@ -101,73 +101,57 @@ const AttendanceRecap = () => {
 
       console.log('Schedule sélectionné:', selectedSchedule);
 
-      // 1. Récupérer toutes les sessions (même sans schedule_id)
-      // On va les filtrer ensuite en fonction du jour et de l'heure du schedule
-      const { data: allSessions, error: sessionsError } = await supabase
+      // 1. OPTIMIZED: Récupérer uniquement les sessions du schedule avec limite et date range
+      // Limite aux 3 derniers mois et 50 sessions max pour éviter les requêtes non bornées
+      const threeMonthsAgo = new Date();
+      threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+      const threeMonthsAgoStr = threeMonthsAgo.toISOString().split('T')[0];
+
+      const { data: sessionsData, error: sessionsError } = await supabase
         .from('sessions')
         .select('id, date, start_time, students, schedule_id')
+        .eq('schedule_id', selectedScheduleId)
         .not('date', 'is', null)
-        .order('date', { ascending: true })
-        .order('start_time', { ascending: true });
+        .gte('date', threeMonthsAgoStr)
+        .order('date', { ascending: false })
+        .order('start_time', { ascending: false })
+        .limit(50);
 
       if (sessionsError) throw sessionsError;
 
-      console.log('Toutes les sessions récupérées:', allSessions);
+      console.log('Sessions récupérées pour le schedule (optimisé):', sessionsData);
 
-      // Filtrer les sessions qui correspondent au schedule
-      // Soit par schedule_id direct, soit par correspondance de jour/heure
-      const sessionsData = allSessions.filter(session => {
-        // Si la session a un schedule_id qui correspond, on la garde
-        if (session.schedule_id === selectedScheduleId) {
-          return true;
-        }
+      // Reverse to show oldest first in the table
+      const reversedSessions = (sessionsData || []).reverse();
+      setSessions(reversedSessions);
 
-        // Sinon, on vérifie si le jour de la semaine et l'heure correspondent
-        if (session.date && session.start_time) {
-          const sessionDate = new Date(session.date);
-          const daysOfWeek = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
-          const sessionDay = daysOfWeek[sessionDate.getDay()];
-          const sessionTime = session.start_time.substring(0, 5); // Format HH:MM
+      // 2. OPTIMIZED: Récupérer directement les membres inscrits à ce schedule via member_schedule
+      const { data: memberScheduleData, error: memberScheduleError } = await supabase
+        .from('member_schedule')
+        .select(`
+          member_id,
+          members:member_id (
+            id,
+            first_name,
+            last_name,
+            title
+          )
+        `)
+        .eq('schedule_id', selectedScheduleId);
 
-          return sessionDay === selectedSchedule.day &&
-                 sessionTime === selectedSchedule.start_time.substring(0, 5);
-        }
-
-        return false;
-      });
-
-      console.log('Sessions filtrées pour le schedule:', sessionsData);
-      setSessions(sessionsData || []);
-
-      // 2. Récupérer tous les membres du schedule sélectionné
-
-      // Récupérer tous les titles disponibles
-      const { data: allMembersWithTitle } = await supabase
-        .from('secure_members')
-        .select('id, first_name, last_name, title')
-        .not('title', 'is', null);
-
-      const availableTitles = [...new Set(allMembersWithTitle?.map(m => m.title) || [])];
-      console.log('Titles disponibles:', availableTitles);
-
-      // Trouver le title correspondant au schedule
-      const matchingTitle = findMatchingTitle(
-        selectedSchedule.type,
-        selectedSchedule.age_category,
-        availableTitles
-      );
-
-      console.log('Title correspondant trouvé:', matchingTitle);
-
-      let membersData = [];
-      if (matchingTitle) {
-        membersData = allMembersWithTitle.filter(m => m.title === matchingTitle);
+      if (memberScheduleError) {
+        console.error('Erreur récupération members via member_schedule:', memberScheduleError);
       }
 
-      console.log('Membres trouvés:', membersData);
+      // Extract members from the join
+      const membersData = (memberScheduleData || [])
+        .map(ms => ms.members)
+        .filter(Boolean);
 
-      // 3. Récupérer les commentaires pour toutes les sessions
-      const sessionIds = sessionsData.map(s => s.id);
+      console.log('Membres trouvés (optimisé via member_schedule):', membersData);
+
+      // 3. OPTIMIZED: Récupérer les commentaires uniquement pour les sessions et membres concernés
+      const sessionIds = reversedSessions.map(s => s.id);
       const memberIds = membersData.map(m => m.id);
 
       let commentsData = [];
@@ -194,7 +178,7 @@ const AttendanceRecap = () => {
         };
 
         // Pour chaque session, vérifier si l'élève était présent et s'il a un commentaire
-        (sessionsData || []).forEach(session => {
+        reversedSessions.forEach(session => {
           const isPresent = session.students && session.students.includes(member.id);
           memberAttendance.sessions[session.id] = isPresent;
 
