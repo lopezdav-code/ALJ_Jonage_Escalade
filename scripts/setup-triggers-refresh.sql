@@ -46,37 +46,37 @@ $$ LANGUAGE plpgsql;
 
 -- Trigger sur sessions (affecte : attendance_summary, member_statistics)
 CREATE TRIGGER trg_refresh_views_after_sessions
-  AFTER INSERT, UPDATE, DELETE ON sessions
+  AFTER INSERT OR UPDATE OR DELETE ON sessions
   FOR EACH STATEMENT
   EXECUTE FUNCTION refresh_materialized_views_concurrent();
 
 -- Trigger sur members (affecte : member_statistics)
 CREATE TRIGGER trg_refresh_views_after_members
-  AFTER INSERT, UPDATE, DELETE ON members
+  AFTER INSERT OR UPDATE OR DELETE ON members
   FOR EACH STATEMENT
   EXECUTE FUNCTION refresh_materialized_views_concurrent();
 
 -- Trigger sur competition_participants (affecte : member_statistics)
 CREATE TRIGGER trg_refresh_views_after_comp_participants
-  AFTER INSERT, UPDATE, DELETE ON competition_participants
+  AFTER INSERT OR UPDATE OR DELETE ON competition_participants
   FOR EACH STATEMENT
   EXECUTE FUNCTION refresh_materialized_views_concurrent();
 
 -- Trigger sur passeport_validations (affecte : member_statistics)
 CREATE TRIGGER trg_refresh_views_after_passeport
-  AFTER INSERT, UPDATE, DELETE ON passeport_validations
+  AFTER INSERT OR UPDATE OR DELETE ON passeport_validations
   FOR EACH STATEMENT
   EXECUTE FUNCTION refresh_materialized_views_concurrent();
 
 -- Trigger sur pedagogy_sheets (affecte : pedagogy_sheet_usage)
 CREATE TRIGGER trg_refresh_views_after_pedagogy
-  AFTER INSERT, UPDATE, DELETE ON pedagogy_sheets
+  AFTER INSERT OR UPDATE OR DELETE ON pedagogy_sheets
   FOR EACH STATEMENT
   EXECUTE FUNCTION refresh_materialized_views_concurrent();
 
 -- Trigger sur exercises (affecte : pedagogy_sheet_usage)
 CREATE TRIGGER trg_refresh_views_after_exercises
-  AFTER INSERT, UPDATE, DELETE ON exercises
+  AFTER INSERT OR UPDATE OR DELETE ON exercises
   FOR EACH STATEMENT
   EXECUTE FUNCTION refresh_materialized_views_concurrent();
 
