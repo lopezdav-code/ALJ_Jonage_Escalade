@@ -3,7 +3,7 @@ import { Helmet } from 'react-helmet';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
-import { Loader2, Lock, Users, Shield, Users2, GitBranch, LogIn, Settings, ArrowRight, Database, FileText } from 'lucide-react';
+import { Loader2, Lock, Users, Shield, Users2, GitBranch, LogIn, Settings, ArrowRight, Database, FileText, FileSpreadsheet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { BackButton } from '@/components/ui/back-button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -74,6 +74,17 @@ const AdminDashboard = () => {
       icon: FileText,
       color: 'bg-teal-50 border-teal-200 hover:bg-teal-100',
       iconColor: 'text-teal-600',
+    },
+    {
+      id: 'competition-management',
+      title: '🏆 Gestion de Compétition',
+      description: 'Importer les inscriptions Excel, gérer les dossards et imprimer les feuilles de score',
+      route: '/competition-management',
+      roles: ['admin'],
+      icon: FileSpreadsheet,
+      color: 'bg-green-50 border-green-200 hover:bg-green-100',
+      iconColor: 'text-green-600',
+      badge: 'Nouveau',
     },
   ];
 

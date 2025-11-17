@@ -52,6 +52,7 @@
     "dotenv": "^17.2.3",
     "framer-motion": "^10.16.4",
     "html2canvas": "^1.4.1",
+    "jspdf": "^3.0.3",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.292.0",
     "pdf-image": "^2.0.0",
@@ -66,7 +67,8 @@
     "sharp": "^0.34.4",
     "tailwind-merge": "^1.14.0",
     "tailwindcss-animate": "^1.0.7",
-    "tesseract.js": "^6.0.1"
+    "tesseract.js": "^6.0.1",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@babel/generator": "^7.27.0",
