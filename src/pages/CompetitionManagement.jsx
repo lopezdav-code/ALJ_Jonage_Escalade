@@ -25,7 +25,8 @@ import {
   Download,
   Plus,
   Edit2,
-  X as IconX
+  X as IconX,
+  RotateCw
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { jsPDF } from 'jspdf';
@@ -226,6 +227,50 @@ const CompetitionManagement = () => {
     } catch (error) {
       console.error('Error deleting mapping:', error);
       toast({ title: "Erreur", description: "Impossible de supprimer le mapping", variant: "destructive" });
+    }
+  };
+
+  // Réappliquer la matrice de correspondance à toutes les inscriptions
+  const reapplyClubMappings = async () => {
+    if (!window.confirm('Êtes-vous sûr de vouloir réappliquer la matrice de correspondance des clubs à toutes les inscriptions ?')) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+      let updatedCount = 0;
+
+      for (const reg of registrations) {
+        // Chercher si le club actuel correspond à un original_name dans les mappings
+        const mapping = clubMappings.find(m => m.original_name === reg.club);
+
+        if (mapping && mapping.mapped_name !== reg.club) {
+          // Mettre à jour l'inscription avec le club mappé
+          const { error } = await supabase
+            .from('competition_registrations')
+            .update({ club: mapping.mapped_name })
+            .eq('id', reg.id);
+
+          if (error) throw error;
+          updatedCount++;
+        }
+      }
+
+      toast({
+        title: "Succès",
+        description: `Matrice appliquée: ${updatedCount} inscription(s) mise(s) à jour.`
+      });
+
+      fetchRegistrations();
+    } catch (error) {
+      console.error('Error reapplying club mappings:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de réappliquer la matrice de correspondance.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -1678,14 +1723,26 @@ const CompetitionManagement = () => {
                   <CardTitle>Gestion du mapping des clubs</CardTitle>
                   <CardDescription>Gérez la correspondance des noms de clubs</CardDescription>
                 </div>
-                <Button
-                  onClick={() => setShowAddMappingModal(true)}
-                  size="sm"
-                  className="gap-1"
-                >
-                  <Plus className="w-4 h-4" />
-                  Ajouter un mapping
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={reapplyClubMappings}
+                    size="sm"
+                    variant="outline"
+                    className="gap-1"
+                    title="Réappliquer la matrice de correspondance à toutes les inscriptions"
+                  >
+                    <RotateCw className="w-4 h-4" />
+                    Réappliquer
+                  </Button>
+                  <Button
+                    onClick={() => setShowAddMappingModal(true)}
+                    size="sm"
+                    className="gap-1"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Ajouter un mapping
+                  </Button>
+                </div>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
