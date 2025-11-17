@@ -52,6 +52,15 @@ const CompetitionManagement = () => {
   const [editingSexeId, setEditingSexeId] = useState(null);
   const [editingSexeValue, setEditingSexeValue] = useState('');
 
+  // Statistiques des compétiteurs
+  const [competitorStats, setCompetitorStats] = useState({
+    bySexe: [],
+    byAgeCategory: [],
+    byHoraire: [],
+    combined: null
+  });
+  const [statsLoading, setStatsLoading] = useState(false);
+
   // Mappings dynamiques depuis la BDD
   const [clubMappings, setClubMappings] = useState([]);
   const [mappingsLoading, setMappingsLoading] = useState(true);
@@ -108,6 +117,88 @@ const CompetitionManagement = () => {
       });
     } finally {
       setMappingsLoading(false);
+    }
+  };
+
+  // Charger les statistiques des compétiteurs
+  const loadCompetitorStats = async () => {
+    setStatsLoading(true);
+    try {
+      // Statistiques par sexe
+      const { data: sexeData, error: sexeError } = await supabase
+        .from('competition_registrations')
+        .select('sexe')
+        .eq('type_inscription', 'Compétition');
+
+      if (sexeError) throw sexeError;
+
+      // Statistiques par catégorie d'âge
+      const { data: ageData, error: ageError } = await supabase
+        .from('competition_registrations')
+        .select('categorie_age')
+        .eq('type_inscription', 'Compétition');
+
+      if (ageError) throw ageError;
+
+      // Statistiques par horaire
+      const { data: horaireData, error: horaireError } = await supabase
+        .from('competition_registrations')
+        .select('horaire')
+        .eq('type_inscription', 'Compétition');
+
+      if (horaireError) throw horaireError;
+
+      // Traiter les données de sexe
+      const sexeMap = {};
+      sexeData?.forEach(reg => {
+        const label = reg.sexe === 'H' ? 'Homme' : reg.sexe === 'F' ? 'Femme' : 'Vide';
+        sexeMap[label] = (sexeMap[label] || 0) + 1;
+      });
+      const sexeStats = [
+        { label: 'Homme', count: sexeMap['Homme'] || 0 },
+        { label: 'Femme', count: sexeMap['Femme'] || 0 },
+        { label: 'Vide', count: sexeMap['Vide'] || 0 }
+      ];
+
+      // Traiter les données de catégorie d'âge
+      const ageOrder = ['U11', 'U13', 'U15', 'U17', 'U19', 'Sénior', 'Vétéran 1', 'Vétéran 2'];
+      const ageMap = {};
+      ageData?.forEach(reg => {
+        const label = reg.categorie_age || 'Vide';
+        ageMap[label] = (ageMap[label] || 0) + 1;
+      });
+      const ageStats = ageOrder.map(cat => ({
+        label: cat,
+        count: ageMap[cat] || 0
+      })).concat(ageMap['Vide'] ? [{ label: 'Vide', count: ageMap['Vide'] }] : []);
+
+      // Traiter les données d'horaire
+      const horaireMap = {};
+      horaireData?.forEach(reg => {
+        const label = reg.horaire === 'matin' ? 'Matin' : reg.horaire === 'après-midi' ? 'Après-midi' : 'Vide';
+        horaireMap[label] = (horaireMap[label] || 0) + 1;
+      });
+      const horaireStats = [
+        { label: 'Matin', count: horaireMap['Matin'] || 0 },
+        { label: 'Après-midi', count: horaireMap['Après-midi'] || 0 },
+        { label: 'Vide', count: horaireMap['Vide'] || 0 }
+      ];
+
+      setCompetitorStats({
+        bySexe: sexeStats,
+        byAgeCategory: ageStats,
+        byHoraire: horaireStats,
+        total: (sexeData?.length || 0)
+      });
+    } catch (error) {
+      console.error('Error loading competitor statistics:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de charger les statistiques.",
+        variant: "destructive"
+      });
+    } finally {
+      setStatsLoading(false);
     }
   };
 
@@ -322,7 +413,15 @@ const CompetitionManagement = () => {
   useEffect(() => {
     fetchRegistrations();
     loadClubMappings();
+    loadCompetitorStats();
   }, []);
+
+  // Recharger les statistiques quand les inscriptions changent
+  useEffect(() => {
+    if (registrations.length > 0) {
+      loadCompetitorStats();
+    }
+  }, [registrations]);
 
   // Fonction pour convertir un numéro de série Excel en date
   const excelDateToJsDate = (excelDate) => {
@@ -1927,6 +2026,85 @@ const CompetitionManagement = () => {
             </CardContent>
           </Card>
         </motion.div>
+
+        {/* Statistiques des compétiteurs */}
+        {registrations.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+          >
+            <Card>
+              <CardHeader>
+                <CardTitle>Statistiques des Compétiteurs</CardTitle>
+                <CardDescription>
+                  Répartition des compétiteurs (type_inscription = "Compétition")
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {statsLoading ? (
+                  <div className="flex justify-center items-center py-8">
+                    <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {/* Statistiques par Sexe */}
+                    <div className="border rounded-lg p-4 bg-gradient-to-br from-blue-50 to-blue-100">
+                      <h3 className="font-bold text-lg mb-4 text-blue-900">Par Sexe</h3>
+                      <div className="space-y-2">
+                        {competitorStats.bySexe && competitorStats.bySexe.map((stat) => (
+                          <div key={stat.label} className="flex justify-between items-center">
+                            <span className="text-sm font-medium">{stat.label}</span>
+                            <span className="bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-bold">
+                              {stat.count}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                      {competitorStats.total > 0 && (
+                        <div className="mt-3 pt-3 border-t border-blue-200">
+                          <div className="text-xs text-blue-700">
+                            Total: {competitorStats.total} compétiteur(s)
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Statistiques par Catégorie d'Âge */}
+                    <div className="border rounded-lg p-4 bg-gradient-to-br from-green-50 to-green-100">
+                      <h3 className="font-bold text-lg mb-4 text-green-900">Par Catégorie d'Âge</h3>
+                      <div className="space-y-2 max-h-64 overflow-y-auto">
+                        {competitorStats.byAgeCategory && competitorStats.byAgeCategory.map((stat) => (
+                          <div key={stat.label} className="flex justify-between items-center">
+                            <span className="text-sm font-medium">{stat.label}</span>
+                            <span className="bg-green-600 text-white px-3 py-1 rounded-full text-sm font-bold">
+                              {stat.count}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Statistiques par Horaire */}
+                    <div className="border rounded-lg p-4 bg-gradient-to-br from-orange-50 to-orange-100">
+                      <h3 className="font-bold text-lg mb-4 text-orange-900">Par Horaire</h3>
+                      <div className="space-y-2">
+                        {competitorStats.byHoraire && competitorStats.byHoraire.map((stat) => (
+                          <div key={stat.label} className="flex justify-between items-center">
+                            <span className="text-sm font-medium">{stat.label}</span>
+                            <span className="bg-orange-600 text-white px-3 py-1 rounded-full text-sm font-bold">
+                              {stat.count}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
 
         {/* Tableau des règles de catégorisation */}
         <motion.div
