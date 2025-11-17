@@ -886,10 +886,10 @@ const CompetitionManagement = () => {
 
     try {
       const selectedRegs = registrations.filter(r => selectedIds.includes(r.id));
-      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a5' });
       const pageHeight = doc.internal.pageSize.height;
       const pageWidth = doc.internal.pageSize.width;
-      const margin = 10;
+      const margin = 7;
       const cellHeight = 5;
       let currentY = margin;
 
@@ -941,16 +941,16 @@ const CompetitionManagement = () => {
 
         // === NUMÉRO DE DOSSARD en gros au-dessus du nom ===
         doc.setFont('helvetica', 'bold');
-        doc.setFontSize(36);
-        doc.text(String(reg.numero_dossart || '-'), margin + 10, margin + 15);
+        doc.setFontSize(26);
+        doc.text(String(reg.numero_dossart || '-'), margin + 8, margin + 12);
 
         // Initialiser currentY pour le texte "Nom"
-        currentY = margin + 35;
+        currentY = margin + 28;
 
         // === LOGO en haut à droite ===
         if (logoImage) {
           try {
-            doc.addImage(logoImage, 'JPEG', pageWidth - margin - 30, currentY - 5, 30, 30);
+            doc.addImage(logoImage, 'JPEG', pageWidth - margin - 22, currentY - 5, 22, 22);
           } catch (error) {
             console.warn('Erreur lors de l\'ajout du logo:', error);
           }
@@ -958,57 +958,57 @@ const CompetitionManagement = () => {
 
         // === HEADER: Informations participant ===
         const colWidth = (pageWidth - 2 * margin) / 2;
-        const fieldHeight = 5;
+        const fieldHeight = 4;
 
         // Ligne: Nom
         doc.setFont('helvetica', 'bold');
-        doc.setFontSize(10);
+        doc.setFontSize(9);
         doc.text('Nom', margin, currentY);
         doc.setFont('helvetica', 'normal');
-        doc.text(reg.nom_participant?.toUpperCase() || '', margin + 35, currentY);
-        doc.line(margin + 35, currentY + 1, margin + colWidth, currentY + 1);
-        currentY += fieldHeight + 1;
+        doc.text(reg.nom_participant?.toUpperCase() || '', margin + 30, currentY);
+        doc.line(margin + 30, currentY + 0.8, margin + colWidth, currentY + 0.8);
+        currentY += fieldHeight;
 
         // Ligne: Prénom
         doc.setFont('helvetica', 'bold');
         doc.text('Prénom', margin, currentY);
         doc.setFont('helvetica', 'normal');
-        doc.text(reg.prenom_participant || '', margin + 35, currentY);
-        doc.line(margin + 35, currentY + 1, margin + colWidth, currentY + 1);
-        currentY += fieldHeight + 1;
+        doc.text(reg.prenom_participant || '', margin + 30, currentY);
+        doc.line(margin + 30, currentY + 0.8, margin + colWidth, currentY + 0.8);
+        currentY += fieldHeight;
 
         // Ligne: Sexe
         doc.setFont('helvetica', 'bold');
         doc.text('Sexe', margin, currentY);
         doc.setFont('helvetica', 'normal');
         const sexeDisplay = reg.sexe === 'H' ? 'Homme' : reg.sexe === 'F' ? 'Femme' : '';
-        doc.text(sexeDisplay, margin + 35, currentY);
-        doc.line(margin + 35, currentY + 1, margin + colWidth, currentY + 1);
-        currentY += fieldHeight + 1;
+        doc.text(sexeDisplay, margin + 30, currentY);
+        doc.line(margin + 30, currentY + 0.8, margin + colWidth, currentY + 0.8);
+        currentY += fieldHeight;
 
         // Ligne: Club
         doc.setFont('helvetica', 'bold');
         doc.text('Club', margin, currentY);
         doc.setFont('helvetica', 'normal');
-        doc.text(reg.club || '', margin + 35, currentY);
-        doc.line(margin + 35, currentY + 1, margin + colWidth, currentY + 1);
-        currentY += fieldHeight + 1;
+        doc.text(reg.club || '', margin + 30, currentY);
+        doc.line(margin + 30, currentY + 0.8, margin + colWidth, currentY + 0.8);
+        currentY += fieldHeight;
 
         // Ligne: Catégorie
         doc.setFont('helvetica', 'bold');
         doc.text('Catégorie', margin, currentY);
         doc.setFont('helvetica', 'normal');
-        doc.text(getCategory(reg.date_naissance) || '', margin + 35, currentY);
-        doc.line(margin + 35, currentY + 1, margin + colWidth, currentY + 1);
-        currentY += fieldHeight + 1;
+        doc.text(getCategory(reg.date_naissance) || '', margin + 30, currentY);
+        doc.line(margin + 30, currentY + 0.8, margin + colWidth, currentY + 0.8);
+        currentY += fieldHeight;
 
         // Espace
-        currentY += 3;
+        currentY += 2;
 
         // === TABLEAU DE SCORING - IMAGE ===
         if (scoringTableImage) {
           try {
-            doc.addImage(scoringTableImage, 'PNG', margin, currentY, pageWidth - 2 * margin, 60);
+            doc.addImage(scoringTableImage, 'PNG', margin, currentY, pageWidth - 2 * margin, 40);
           } catch (error) {
             console.warn('Erreur lors de l\'ajout de l\'image au PDF:', error);
           }
