@@ -2,10 +2,11 @@
 -- Date: 2025-11-17
 -- Description: Empêche la modification du numero_dossart après sa création initiale
 
--- Étape 1: Ajouter une contrainte UNIQUE sur numero_dossart (si nécessaire)
--- Cette contrainte empêche les doublons
-ALTER TABLE competition_registrations
-ADD CONSTRAINT unique_numero_dossart UNIQUE (numero_dossart) WHERE numero_dossart IS NOT NULL;
+-- Étape 1: Ajouter un index partiel UNIQUE sur numero_dossart
+-- Cette index empêche les doublons (en ignorant les NULL)
+CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_numero_dossart
+ON competition_registrations(numero_dossart)
+WHERE numero_dossart IS NOT NULL;
 
 -- Étape 2: Créer un trigger pour empêcher la modification du numero_dossart
 CREATE OR REPLACE FUNCTION prevent_dossard_update()
