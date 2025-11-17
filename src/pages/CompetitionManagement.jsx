@@ -1142,8 +1142,17 @@ const CompetitionManagement = () => {
         }
       }
 
-      // Sauvegarder le PDF
-      doc.save(`dossards_competition_${new Date().toISOString().split('T')[0]}.pdf`);
+      // Sauvegarder le PDF avec un nom informatif
+      const now = new Date();
+      const dateStr = now.toISOString().slice(0, 10).replace(/-/g, ''); // YYYYMMDD
+      const timeStr = now.toTimeString().slice(0, 8).replace(/:/g, ''); // HHmmss
+      const numFiches = selectedIds.length;
+      const formatLabel = pdfFormat.toUpperCase(); // A4 ou A5
+      const orientationLabel = pdfOrientation === 'portrait' ? 'portrait' : 'paysage';
+      const cardsPerPageLabel = `${pdfCardsPerPage}page`;
+
+      const filename = `dossards_${dateStr}_${timeStr}_${numFiches}fiches_${formatLabel}_${orientationLabel}_${cardsPerPageLabel}.pdf`;
+      doc.save(filename);
 
       // Marquer comme imprimées
       const { error } = await supabase
