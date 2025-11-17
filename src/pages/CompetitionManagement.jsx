@@ -1095,14 +1095,29 @@ const CompetitionManagement = () => {
         y += 2;
 
         // === TABLEAU DE SCORING - IMAGE ===
+        // Titre
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(10);
+        doc.text('Niveau des voies effectuées et bareme de points', x + cardMargin, y);
+        y += 5;
+
+        // Image
         if (scoringTableImage) {
           try {
             const imageHeight = (cardsPerPage === 2 && orientation === 'portrait') ? 30 : 40;
             doc.addImage(scoringTableImage, 'PNG', x + cardMargin, y, actualCardWidth - 2 * cardMargin, imageHeight);
+            y += imageHeight + 3; // Espacement après l'image
           } catch (error) {
             console.warn('Erreur lors de l\'ajout de l\'image au PDF:', error);
           }
         }
+
+        // Consignes
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8);
+        doc.text('Consignes : Cocher une case du niveau de difficulté pour chaque voie différente réalisée', x + cardMargin, y, { maxWidth: actualCardWidth - 2 * cardMargin });
+        y += 4;
+        doc.text('Pour les U15 et plus, Pas de différence entre les voies faites en moulinette ou en tete.', x + cardMargin, y, { maxWidth: actualCardWidth - 2 * cardMargin });
       };
 
       // Ajouter les fiches
