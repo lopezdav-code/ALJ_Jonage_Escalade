@@ -58,6 +58,7 @@ const CompetitionManagement = () => {
   const [editingMappingId, setEditingMappingId] = useState(null);
   const [editingMappingOriginal, setEditingMappingOriginal] = useState('');
   const [editingMappingMapped, setEditingMappingMapped] = useState('');
+  const [filterUnknownMappings, setFilterUnknownMappings] = useState(false);
 
   // Charger les inscriptions
   const fetchRegistrations = async () => {
@@ -191,6 +192,35 @@ const CompetitionManagement = () => {
     } catch (error) {
       console.error('Error deleting mapping:', error);
       toast({ title: "Erreur", description: "Impossible de supprimer le mapping", variant: "destructive" });
+    }
+  };
+
+  // Ajouter automatiquement les clubs non mappés avec la valeur "INCONNU"
+  const addUnknownMappingsForUnmappedClubs = async (unmappedClubs) => {
+    if (unmappedClubs.length === 0) return;
+
+    try {
+      // Préparer les mappings INCONNU
+      const newMappings = unmappedClubs.map(club => ({
+        original_name: club.trim(),
+        mapped_name: 'INCONNU'
+      }));
+
+      // Insérer les mappings (on ignore les conflits si la ligne existe déjà)
+      const { error } = await supabase
+        .from('club_mapping')
+        .insert(newMappings)
+        .select();
+
+      if (error && error.code !== '23505') { // 23505 = unique constraint violation
+        throw error;
+      }
+
+      // Recharger les mappings pour rafraîchir la liste
+      await loadClubMappings();
+    } catch (error) {
+      console.error('Error adding unknown mappings:', error);
+      // Ne pas afficher d'erreur toast ici car c'est une action automatique
     }
   };
 
@@ -356,6 +386,11 @@ const CompetitionManagement = () => {
       );
       const unmappedClubs = Array.from(clubsFromFile).filter(club => !isClubMapped(club));
       setUnmappedClubsFromImport(unmappedClubs);
+
+      // Ajouter automatiquement les clubs non mappés avec la valeur "INCONNU"
+      if (unmappedClubs.length > 0) {
+        await addUnknownMappingsForUnmappedClubs(unmappedClubs);
+      }
 
       // Insérer seulement les nouvelles inscriptions
       if (newRegistrations.length > 0) {
@@ -1542,17 +1577,39 @@ const CompetitionManagement = () => {
                         Aucun mapping configuré. Commencez par en ajouter un.
                       </div>
                     ) : (
-                      <div className="overflow-x-auto mt-4">
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead>Nom original</TableHead>
-                              <TableHead>Nom mappé</TableHead>
-                              <TableHead className="text-center w-24">Actions</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {clubMappings.map((mapping) => (
+                      <>
+                        {/* Filtres */}
+                        <div className="flex gap-2 mb-4">
+                          <Button
+                            variant={!filterUnknownMappings ? 'default' : 'outline'}
+                            size="sm"
+                            onClick={() => setFilterUnknownMappings(false)}
+                          >
+                            Tous les mappings
+                          </Button>
+                          <Button
+                            variant={filterUnknownMappings ? 'default' : 'outline'}
+                            size="sm"
+                            onClick={() => setFilterUnknownMappings(true)}
+                            className={filterUnknownMappings ? 'bg-amber-600 hover:bg-amber-700' : ''}
+                          >
+                            ⚠️ INCONNU ({clubMappings.filter(m => m.mapped_name === 'INCONNU').length})
+                          </Button>
+                        </div>
+
+                        <div className="overflow-x-auto mt-4">
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>Nom original</TableHead>
+                                <TableHead>Nom mappé</TableHead>
+                                <TableHead className="text-center w-24">Actions</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {clubMappings
+                                .filter(mapping => !filterUnknownMappings || mapping.mapped_name === 'INCONNU')
+                                .map((mapping) => (
                               <TableRow key={mapping.id}>
                                 <TableCell>
                                   {editingMappingId === mapping.id ? (
@@ -1631,7 +1688,8 @@ const CompetitionManagement = () => {
                             ))}
                           </TableBody>
                         </Table>
-                      </div>
+                        </div>
+                      </>
                     )}
                   </AccordionContent>
                 </AccordionItem>
