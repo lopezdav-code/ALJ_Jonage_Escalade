@@ -2016,6 +2016,7 @@ const CompetitionManagement = () => {
                                 value={editingSexeValue}
                                 onChange={(e) => setEditingSexeValue(e.target.value)}
                                 onBlur={() => updateSexe(reg.id, editingSexeValue)}
+                                onClick={(e) => e.stopPropagation()}
                                 onKeyDown={(e) => {
                                   if (e.key === 'Enter') {
                                     updateSexe(reg.id, editingSexeValue);
