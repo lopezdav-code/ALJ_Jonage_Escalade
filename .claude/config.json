@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "supabase": {
+      "command": "node",
+      "args": [
+        "C:\\Users\\VotreNom\\AppData\\Roaming\\npm\\node_modules\\@modelcontextprotocol\\server-postgres\\dist\\index.js"
+      ],
+      "env": {
+        "POSTGRES_CONNECTION_STRING": "postgresql://postgres.hvugiirundpxynozxxnd:wiFUFPzlPaLuroU7@aws-0-eu-central-1.pooler.supabase.com:6543/postgres"
+      }
+    }
+  }
+}

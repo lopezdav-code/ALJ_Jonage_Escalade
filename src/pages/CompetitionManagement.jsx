@@ -59,6 +59,7 @@ const CompetitionManagement = () => {
   const [editingMappingOriginal, setEditingMappingOriginal] = useState('');
   const [editingMappingMapped, setEditingMappingMapped] = useState('');
   const [filterUnknownMappings, setFilterUnknownMappings] = useState(false);
+  const [isEditingMode, setIsEditingMode] = useState(false);
 
   // Charger les inscriptions
   const fetchRegistrations = async () => {
@@ -121,32 +122,63 @@ const CompetitionManagement = () => {
     return clubMappings.some(m => m.original_name === trimmed);
   };
 
-  // Ajouter un nouveau mapping
-  const addClubMapping = async (originalName, mappedName) => {
+  // Ajouter ou modifier un mapping
+  const saveClubMapping = async (originalName, mappedName) => {
     if (!originalName.trim() || !mappedName.trim()) {
       toast({ title: "Erreur", description: "Veuillez remplir tous les champs", variant: "destructive" });
       return;
     }
 
     try {
-      const { error } = await supabase
-        .from('club_mapping')
-        .insert({
-          original_name: originalName.trim(),
-          mapped_name: mappedName.trim()
-        });
+      if (isEditingMode && editingMappingId) {
+        // Mode édition: mettre à jour le mapping
+        const { error } = await supabase
+          .from('club_mapping')
+          .update({ mapped_name: mappedName.trim() })
+          .eq('id', editingMappingId);
 
-      if (error) throw error;
+        if (error) throw error;
 
-      toast({ title: "Succès", description: "Mapping ajouté avec succès" });
-      setNewMappingOriginal('');
-      setNewMappingMapped('');
-      setShowAddMappingModal(false);
+        toast({ title: "Succès", description: "Mapping mis à jour avec succès" });
+      } else {
+        // Mode création: insérer un nouveau mapping
+        const { error } = await supabase
+          .from('club_mapping')
+          .insert({
+            original_name: originalName.trim(),
+            mapped_name: mappedName.trim()
+          });
+
+        if (error) throw error;
+
+        toast({ title: "Succès", description: "Mapping ajouté avec succès" });
+      }
+
+      // Réinitialiser et fermer
+      closeMappingModal();
       loadClubMappings();
     } catch (error) {
-      console.error('Error adding mapping:', error);
-      toast({ title: "Erreur", description: "Impossible d'ajouter le mapping", variant: "destructive" });
+      console.error('Error saving mapping:', error);
+      toast({ title: "Erreur", description: "Impossible de sauvegarder le mapping", variant: "destructive" });
     }
+  };
+
+  // Ouvrir le modal en mode édition
+  const openEditMappingModal = (mapping) => {
+    setIsEditingMode(true);
+    setEditingMappingId(mapping.id);
+    setNewMappingOriginal(mapping.original_name);
+    setNewMappingMapped(mapping.mapped_name);
+    setShowAddMappingModal(true);
+  };
+
+  // Fermer le modal et réinitialiser
+  const closeMappingModal = () => {
+    setShowAddMappingModal(false);
+    setIsEditingMode(false);
+    setEditingMappingId(null);
+    setNewMappingOriginal('');
+    setNewMappingMapped('');
   };
 
   // Mettre à jour un mapping
@@ -1113,12 +1145,14 @@ const CompetitionManagement = () => {
           </Card>
         </motion.div>
 
-        {/* Modal d'ajout de mapping */}
+        {/* Modal d'ajout/modification de mapping */}
         {showAddMappingModal && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
             <Card className="w-full max-w-md">
               <CardHeader>
-                <CardTitle>Ajouter un nouveau mapping</CardTitle>
+                <CardTitle>
+                  {isEditingMode ? 'Modifier le mapping' : 'Ajouter un nouveau mapping'}
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
@@ -1128,6 +1162,7 @@ const CompetitionManagement = () => {
                     value={newMappingOriginal}
                     onChange={(e) => setNewMappingOriginal(e.target.value)}
                     placeholder="ex: Corb'alp"
+                    disabled={isEditingMode}
                   />
                 </div>
                 <div>
@@ -1163,18 +1198,14 @@ const CompetitionManagement = () => {
               <CardFooter className="gap-2">
                 <Button
                   variant="outline"
-                  onClick={() => {
-                    setShowAddMappingModal(false);
-                    setNewMappingOriginal('');
-                    setNewMappingMapped('');
-                  }}
+                  onClick={() => closeMappingModal()}
                 >
                   Annuler
                 </Button>
                 <Button
-                  onClick={() => addClubMapping(newMappingOriginal, newMappingMapped)}
+                  onClick={() => saveClubMapping(newMappingOriginal, newMappingMapped)}
                 >
-                  Ajouter
+                  {isEditingMode ? 'Enregistrer' : 'Ajouter'}
                 </Button>
               </CardFooter>
             </Card>
@@ -1632,77 +1663,29 @@ const CompetitionManagement = () => {
                                 .map((mapping) => (
                               <TableRow key={mapping.id}>
                                 <TableCell>
-                                  {editingMappingId === mapping.id ? (
-                                    <Input
-                                      value={editingMappingOriginal}
-                                      onChange={(e) => setEditingMappingOriginal(e.target.value)}
-                                      disabled
-                                      className="bg-muted"
-                                    />
-                                  ) : (
-                                    <span className="font-medium">{mapping.original_name}</span>
-                                  )}
+                                  <span className="font-medium">{mapping.original_name}</span>
                                 </TableCell>
                                 <TableCell>
-                                  {editingMappingId === mapping.id ? (
-                                    <Input
-                                      value={editingMappingMapped}
-                                      onChange={(e) => setEditingMappingMapped(e.target.value)}
-                                      placeholder="Nom mappé"
-                                    />
-                                  ) : (
-                                    mapping.mapped_name
-                                  )}
+                                  {mapping.mapped_name}
                                 </TableCell>
                                 <TableCell className="text-center space-x-1">
-                                  {editingMappingId === mapping.id ? (
-                                    <>
-                                      <Button
-                                        size="sm"
-                                        variant="ghost"
-                                        onClick={() => updateClubMapping(mapping.id, mapping.original_name, editingMappingMapped)}
-                                        title="Enregistrer"
-                                      >
-                                        ✓
-                                      </Button>
-                                      <Button
-                                        size="sm"
-                                        variant="ghost"
-                                        onClick={() => {
-                                          setEditingMappingId(null);
-                                          setEditingMappingOriginal('');
-                                          setEditingMappingMapped('');
-                                        }}
-                                        title="Annuler"
-                                      >
-                                        ✗
-                                      </Button>
-                                    </>
-                                  ) : (
-                                    <>
-                                      <Button
-                                        size="sm"
-                                        variant="ghost"
-                                        onClick={() => {
-                                          setEditingMappingId(mapping.id);
-                                          setEditingMappingOriginal(mapping.original_name);
-                                          setEditingMappingMapped(mapping.mapped_name);
-                                        }}
-                                        title="Éditer"
-                                      >
-                                        <Edit2 className="w-4 h-4" />
-                                      </Button>
-                                      <Button
-                                        size="sm"
-                                        variant="ghost"
-                                        onClick={() => deleteClubMapping(mapping.id)}
-                                        title="Supprimer"
-                                        className="text-red-600 hover:text-red-700"
-                                      >
-                                        <IconX className="w-4 h-4" />
-                                      </Button>
-                                    </>
-                                  )}
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => openEditMappingModal(mapping)}
+                                    title="Éditer"
+                                  >
+                                    <Edit2 className="w-4 h-4" />
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => deleteClubMapping(mapping.id)}
+                                    title="Supprimer"
+                                    className="text-red-600 hover:text-red-700"
+                                  >
+                                    <IconX className="w-4 h-4" />
+                                  </Button>
                                 </TableCell>
                               </TableRow>
                             ))}
