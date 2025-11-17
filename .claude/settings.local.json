@@ -1,23 +1,13 @@
 {
   "permissions": {
     "allow": [
-      "Bash(__NEW_LINE__ for file in \"c:\\Users\\a138672\\Downloads\\club-escalade-app\\src\\pages/AccessLogs.jsx\" \"c:\\Users\\a138672\\Downloads\\club-escalade-app\\src\\pages/AdminManagement.jsx\" \"c:\\Users\\a138672\\Downloads\\club-escalade-app\\src\\pages/AttendanceRecap.jsx\" \"c:\\Users\\a138672\\Downloads\\club-escalade-app\\src\\pages/BureauManagement.jsx\")",
-      "Bash(npm run dev:*)",
-      "Bash(npm run build:*)",
+      "Bash(git fetch:*)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
+      "Bash(git merge:*)",
       "Bash(git push:*)",
-      "Bash(npm install:*)",
-      "Bash(node scripts/generate-tests.js:*)",
-      "Bash(node scripts/generate-tests.cjs:*)",
-      "Bash(npm run test:e2e:*)",
-      "Bash(cat:*)",
-      "Bash(npm run test:generate:*)",
-      "Bash(node -c:*)",
-      "Bash(gh workflow:*)",
-      "Bash(timeout 30 npm run dev:*)",
-      "Bash(netstat:*)",
-      "Bash(findstr:*)"
+      "Bash(git rebase:*)",
+      "Bash(git stash:*)"
     ],
     "deny": [],
     "ask": []

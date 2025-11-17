@@ -36,6 +36,8 @@ const CompetitionManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedIds, setSelectedIds] = useState([]);
   const [filterPrinted, setFilterPrinted] = useState('all'); // 'all', 'printed', 'notPrinted'
+  const [filterHoraire, setFilterHoraire] = useState('all'); // 'all', 'matin', 'après-midi'
+  const [filterTypeInscription, setFilterTypeInscription] = useState('all'); // 'all', 'Compétition', 'Buvette'
 
   // Charger les inscriptions
   const fetchRegistrations = async () => {
@@ -64,6 +66,39 @@ const CompetitionManagement = () => {
     fetchRegistrations();
   }, []);
 
+  // Fonction pour convertir un numéro de série Excel en date
+  const excelDateToJsDate = (excelDate) => {
+    if (typeof excelDate !== 'number') {
+      return null;
+    }
+    // Excel stocke les dates comme nombre de jours depuis 1900-01-01
+    // Mais il y a un bug historique: Excel suppose que 1900 est une année bissextile
+    const date = new Date((excelDate - 25569) * 86400 * 1000);
+    return date;
+  };
+
+  // Fonction pour extraire horaire et type_inscription du tarif
+  const extractInscriptionDetails = (tarif) => {
+    let horaire = null;
+    let type_inscription = 'Compétition';
+
+    if (tarif) {
+      const tarifStr = String(tarif).toLowerCase();
+
+      if (tarifStr.includes('précommande buvette')) {
+        type_inscription = 'Buvette';
+      } else if (tarifStr.includes('dimanche matin enfants')) {
+        horaire = 'matin';
+        type_inscription = 'Compétition';
+      } else if (tarifStr.includes('après-midi')) {
+        horaire = 'après-midi';
+        type_inscription = 'Compétition';
+      }
+    }
+
+    return { horaire, type_inscription };
+  };
+
   // Parser le fichier Excel
   const handleFileUpload = async (event) => {
     const file = event.target.files[0];
@@ -79,27 +114,60 @@ const CompetitionManagement = () => {
 
       // Convertir les données Excel en format de base de données
       const registrationsToInsert = jsonData.map((row) => {
-        // Parser la date de naissance (format DD/MM/YYYY)
+        // Parser la date de naissance - gérer les formats Excel et texte
         let dateNaissance = null;
         if (row['Date de naissance']) {
-          const dateParts = row['Date de naissance'].split('/');
-          if (dateParts.length === 3) {
-            dateNaissance = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`;
+          let dateObj;
+          if (typeof row['Date de naissance'] === 'number') {
+            // C'est un numéro de série Excel
+            dateObj = excelDateToJsDate(row['Date de naissance']);
+          } else {
+            // C'est une chaîne de caractères
+            const dateStr = String(row['Date de naissance']).trim();
+            const dateParts = dateStr.split('/');
+            if (dateParts.length === 3) {
+              dateNaissance = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`;
+            }
+          }
+          if (dateObj) {
+            const year = dateObj.getFullYear();
+            const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const day = String(dateObj.getDate()).padStart(2, '0');
+            dateNaissance = `${year}-${month}-${day}`;
           }
         }
 
-        // Parser la date de commande (format DD/MM/YYYY HH:MM)
+        // Parser la date de commande - gérer les formats Excel et texte
         let dateCommande = null;
         if (row['Date de la commande']) {
-          const dateTimeParts = row['Date de la commande'].split(' ');
-          if (dateTimeParts.length >= 1) {
-            const dateParts = dateTimeParts[0].split('/');
-            if (dateParts.length === 3) {
-              const timePart = dateTimeParts[1] || '00:00';
-              dateCommande = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]} ${timePart}`;
+          let dateObj;
+          if (typeof row['Date de la commande'] === 'number') {
+            // C'est un numéro de série Excel avec potentiellement une fraction pour l'heure
+            dateObj = excelDateToJsDate(row['Date de la commande']);
+          } else {
+            // C'est une chaîne de caractères
+            const dateStr = String(row['Date de la commande']).trim();
+            const dateTimeParts = dateStr.split(' ');
+            if (dateTimeParts.length >= 1) {
+              const dateParts = dateTimeParts[0].split('/');
+              if (dateParts.length === 3) {
+                const timePart = dateTimeParts[1] || '00:00';
+                dateCommande = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]} ${timePart}`;
+              }
             }
           }
+          if (dateObj) {
+            const year = dateObj.getFullYear();
+            const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const day = String(dateObj.getDate()).padStart(2, '0');
+            const hours = String(dateObj.getHours()).padStart(2, '0');
+            const minutes = String(dateObj.getMinutes()).padStart(2, '0');
+            dateCommande = `${year}-${month}-${day} ${hours}:${minutes}`;
+          }
         }
+
+        // Extraire horaire et type_inscription du tarif
+        const { horaire, type_inscription } = extractInscriptionDetails(row['Tarif']);
 
         return {
           reference_commande: row['Référence commande'] || row['Reference commande'] || null,
@@ -121,24 +189,57 @@ const CompetitionManagement = () => {
           date_naissance: dateNaissance,
           club: row['Club'] || null,
           numero_licence_ffme: row['Numéro de licence FFME'] || row['Numero de licence FFME'] || null,
+          horaire: horaire,
+          type_inscription: type_inscription,
           deja_imprimee: false
         };
       });
 
-      // Insérer dans la base de données
-      const { error: insertError } = await supabase
+      // Récupérer toutes les références de commande existantes
+      const { data: existingRefs, error: fetchError } = await supabase
         .from('competition_registrations')
-        .insert(registrationsToInsert);
+        .select('reference_commande');
 
-      if (insertError) throw insertError;
+      if (fetchError) throw fetchError;
 
-      // Assigner les numéros de dossards automatiquement
-      const { error: assignError } = await supabase.rpc('assign_dossard_numbers');
-      if (assignError) throw assignError;
+      // Créer un Set des références existantes pour une recherche rapide
+      const existingReferences = new Set(
+        existingRefs.map(ref => ref.reference_commande).filter(Boolean)
+      );
+
+      // Filtrer les inscriptions pour exclure les doublons
+      const newRegistrations = registrationsToInsert.filter(
+        reg => !existingReferences.has(reg.reference_commande)
+      );
+
+      const duplicateCount = registrationsToInsert.length - newRegistrations.length;
+
+      // Insérer seulement les nouvelles inscriptions
+      if (newRegistrations.length > 0) {
+        const { error: insertError } = await supabase
+          .from('competition_registrations')
+          .insert(newRegistrations);
+
+        if (insertError) throw insertError;
+
+        // Assigner les numéros de dossards automatiquement
+        const { error: assignError } = await supabase.rpc('assign_dossard_numbers');
+        if (assignError) throw assignError;
+      }
+
+      // Message de notification
+      let description = '';
+      if (newRegistrations.length > 0) {
+        description += `${newRegistrations.length} nouvelle(s) inscription(s) ajoutée(s)`;
+      }
+      if (duplicateCount > 0) {
+        if (description) description += '. ';
+        description += `${duplicateCount} doublon(s) ignoré(s)`;
+      }
 
       toast({
         title: "Succès",
-        description: `${registrationsToInsert.length} inscription(s) importée(s).`
+        description: description || "Aucune nouvelle inscription"
       });
 
       // Recharger les données
@@ -206,8 +307,18 @@ const CompetitionManagement = () => {
       filtered = filtered.filter(reg => reg.deja_imprimee === false);
     }
 
+    // Filtre par horaire
+    if (filterHoraire !== 'all') {
+      filtered = filtered.filter(reg => reg.horaire === filterHoraire);
+    }
+
+    // Filtre par type d'inscription
+    if (filterTypeInscription !== 'all') {
+      filtered = filtered.filter(reg => reg.type_inscription === filterTypeInscription);
+    }
+
     return filtered;
-  }, [registrations, searchTerm, filterPrinted]);
+  }, [registrations, searchTerm, filterPrinted, filterHoraire, filterTypeInscription]);
 
   // Sélection/désélection
   const toggleSelectAll = () => {
@@ -237,17 +348,21 @@ const CompetitionManagement = () => {
     return age;
   };
 
-  // Déterminer la catégorie en fonction de l'âge
+  // Déterminer la catégorie en fonction de l'année de naissance
   const getCategory = (dateNaissance) => {
-    const age = calculateAge(dateNaissance);
-    if (!age) return '';
+    if (!dateNaissance) return '';
+    const birthDate = new Date(dateNaissance);
+    const year = birthDate.getFullYear();
 
-    if (age < 13) return 'U13';
-    if (age < 15) return 'U15';
-    if (age < 17) return 'U17';
-    if (age < 19) return 'U19';
-    if (age < 40) return 'Sénior';
-    return 'Vétéran';
+    // Règles de catégorisation par année de naissance
+    if (year >= 2016) return 'U11';
+    if (year >= 2014) return 'U13';
+    if (year >= 2012) return 'U15';
+    if (year >= 2010) return 'U17';
+    if (year >= 2008) return 'U19';
+    if (year >= 1987) return 'Sénior';
+    if (year >= 1977) return 'Vétéran 1';
+    return 'Vétéran 2';
   };
 
   // Déterminer le sexe (simplifié - à adapter selon les données disponibles)
@@ -265,13 +380,43 @@ const CompetitionManagement = () => {
 
     try {
       const selectedRegs = registrations.filter(r => selectedIds.includes(r.id));
-      const doc = new jsPDF();
+      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
       const pageHeight = doc.internal.pageSize.height;
       const pageWidth = doc.internal.pageSize.width;
-      let currentY = 20;
-      let pageNumber = 0;
+      const margin = 10;
+      const cellHeight = 5;
+      let currentY = margin;
 
-      // Créer le tableau de scoring
+      // Fonction helper pour charger une image
+      const loadImage = async (filename) => {
+        try {
+          const imagePath = `${import.meta.env.BASE_URL}${filename}`;
+          const imageResponse = await fetch(imagePath);
+
+          if (!imageResponse.ok) {
+            throw new Error(`Erreur HTTP ${imageResponse.status}`);
+          }
+
+          const imageBlob = await imageResponse.blob();
+
+          // Convertir en base64
+          return await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = () => reject(reader.error);
+            reader.readAsDataURL(imageBlob);
+          });
+        } catch (error) {
+          console.error(`Impossible de charger ${filename}:`, error);
+          return null;
+        }
+      };
+
+      // Charger les images
+      const logoImage = await loadImage('logoALJ.jpg');
+      const scoringTableImage = await loadImage('Competition_Tableau_scoring.png');
+
+      // Données du tableau de scoring
       const difficultyLevels = [
         '4a', '4b', '4c', '5a', '5b', '5b+', '5c', '5c+', '6a', '6a+', '6b', '6b+', '6c', '6c+', '7a', '7a+', '7b', '7b+', '7c', '7c+', '8a', '8a+'
       ];
@@ -285,108 +430,76 @@ const CompetitionManagement = () => {
       selectedRegs.forEach((reg, index) => {
         if (index > 0) {
           doc.addPage();
-          currentY = 20;
+          currentY = margin;
         }
 
-        // En-tête
-        doc.setFontSize(16);
+        // Initialiser currentY pour le texte "Nom"
+        currentY = margin + 35;
+
+        // === LOGO en haut à droite ===
+        if (logoImage) {
+          try {
+            doc.addImage(logoImage, 'JPEG', pageWidth - margin - 30, currentY - 5, 30, 30);
+          } catch (error) {
+            console.warn('Erreur lors de l\'ajout du logo:', error);
+          }
+        }
+
+        // === HEADER: Informations participant ===
+        const colWidth = (pageWidth - 2 * margin) / 2;
+        const fieldHeight = 5;
+
+        // Ligne: Nom
         doc.setFont('helvetica', 'bold');
-        doc.text('FEUILLE DE SCORE', pageWidth / 2, currentY, { align: 'center' });
-        currentY += 10;
-
-        // Informations participant
-        doc.setFontSize(12);
-        doc.setFont('helvetica', 'normal');
-        doc.text(`Nom: ${reg.nom_participant?.toUpperCase() || ''}`, 15, currentY);
-        currentY += 7;
-        doc.text(`Prénom: ${reg.prenom_participant || ''}`, 15, currentY);
-        currentY += 7;
-        doc.text(`Homme / Femme: ${getSexe(reg)}`, 15, currentY);
-        currentY += 7;
-        doc.text(`Club: ${reg.club || ''}`, 15, currentY);
-        currentY += 7;
-        doc.text(`Catégorie: ${getCategory(reg.date_naissance)}`, 15, currentY);
-        currentY += 10;
-
-        // Tableau de difficulté et points
         doc.setFontSize(10);
-        doc.setFont('helvetica', 'bold');
-        doc.text('Difficulté', 15, currentY);
-        doc.text('Niveau des voies effectuées et barème de points', 60, currentY);
-        currentY += 7;
-
-        // En-têtes des niveaux de difficulté (première ligne)
-        doc.setFontSize(8);
-        let xPos = 15;
-        const columnWidth = 8;
-
-        for (let i = 0; i < 11; i++) {
-          doc.text(difficultyLevels[i], xPos, currentY, { align: 'center' });
-          xPos += columnWidth;
-        }
-        currentY += 5;
-
-        // Deuxième ligne des niveaux
-        xPos = 15;
-        for (let i = 11; i < 22; i++) {
-          doc.text(difficultyLevels[i], xPos, currentY, { align: 'center' });
-          xPos += columnWidth;
-        }
-        currentY += 5;
-
-        // Points ALJ
-        doc.text('Points ALJ', 15, currentY);
-        xPos = 35;
-        for (let i = 0; i < 11; i++) {
-          doc.text(pointsALJ[i].toString(), xPos, currentY, { align: 'center' });
-          xPos += columnWidth;
-        }
-        currentY += 5;
-
-        xPos = 35;
-        for (let i = 11; i < 22; i++) {
-          doc.text(pointsALJ[i].toString(), xPos, currentY, { align: 'center' });
-          xPos += columnWidth;
-        }
-        currentY += 5;
-
-        // Points Extérieur
-        doc.text('Points Extérieur', 15, currentY);
-        xPos = 35;
-        for (let i = 0; i < 11; i++) {
-          doc.text(pointsExterieur[i].toString(), xPos, currentY, { align: 'center' });
-          xPos += columnWidth;
-        }
-        currentY += 5;
-
-        xPos = 35;
-        for (let i = 11; i < 22; i++) {
-          doc.text(pointsExterieur[i].toString(), xPos, currentY, { align: 'center' });
-          xPos += columnWidth;
-        }
-        currentY += 10;
-
-        // Lignes pour marquer les voies
-        doc.text('1 fois Topée', 15, currentY);
-        doc.line(50, currentY, 190, currentY);
-        currentY += 7;
-
-        doc.text('2 fois Topée', 15, currentY);
-        doc.line(50, currentY, 190, currentY);
-        currentY += 7;
-
-        doc.text('3 fois Topée', 15, currentY);
-        doc.line(50, currentY, 190, currentY);
-        currentY += 10;
-
-        // Consignes
-        doc.setFont('helvetica', 'bold');
-        doc.text('Consignes :', 15, currentY);
-        currentY += 7;
+        doc.text('Nom', margin, currentY);
         doc.setFont('helvetica', 'normal');
-        doc.text('Cocher une case du niveau de difficulté pour chaque voie différente réalisée', 15, currentY);
-        currentY += 7;
-        doc.text('Pour les U15 et plus, pas de différence entre les voies faites en moulinette ou en tête.', 15, currentY);
+        doc.text(reg.nom_participant?.toUpperCase() || '', margin + 35, currentY);
+        doc.line(margin + 35, currentY + 1, margin + colWidth, currentY + 1);
+        currentY += fieldHeight + 1;
+
+        // Ligne: Prénom
+        doc.setFont('helvetica', 'bold');
+        doc.text('Prénom', margin, currentY);
+        doc.setFont('helvetica', 'normal');
+        doc.text(reg.prenom_participant || '', margin + 35, currentY);
+        doc.line(margin + 35, currentY + 1, margin + colWidth, currentY + 1);
+        currentY += fieldHeight + 1;
+
+        // Ligne: Homme / Femme
+        doc.setFont('helvetica', 'bold');
+        doc.text('Homme / Femme', margin, currentY);
+        doc.setFont('helvetica', 'normal');
+        doc.line(margin + 50, currentY + 1, margin + colWidth, currentY + 1);
+        currentY += fieldHeight + 1;
+
+        // Ligne: Club
+        doc.setFont('helvetica', 'bold');
+        doc.text('Club', margin, currentY);
+        doc.setFont('helvetica', 'normal');
+        doc.text(reg.club || '', margin + 35, currentY);
+        doc.line(margin + 35, currentY + 1, margin + colWidth, currentY + 1);
+        currentY += fieldHeight + 1;
+
+        // Ligne: Catégorie
+        doc.setFont('helvetica', 'bold');
+        doc.text('Catégorie', margin, currentY);
+        doc.setFont('helvetica', 'normal');
+        doc.text(getCategory(reg.date_naissance) || '', margin + 35, currentY);
+        doc.line(margin + 35, currentY + 1, margin + colWidth, currentY + 1);
+        currentY += fieldHeight + 1;
+
+        // Espace
+        currentY += 3;
+
+        // === TABLEAU DE SCORING - IMAGE ===
+        if (scoringTableImage) {
+          try {
+            doc.addImage(scoringTableImage, 'PNG', margin, currentY, pageWidth - 2 * margin, 60);
+          } catch (error) {
+            console.warn('Erreur lors de l\'ajout de l\'image au PDF:', error);
+          }
+        }
       });
 
       // Sauvegarder le PDF
@@ -408,6 +521,60 @@ const CompetitionManagement = () => {
       toast({
         title: "Erreur",
         description: "Impossible de générer le PDF.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Basculer le statut d'impression
+  const togglePrintStatus = async (registrationId, currentStatus) => {
+    try {
+      const { error } = await supabase
+        .from('competition_registrations')
+        .update({ deja_imprimee: !currentStatus })
+        .eq('id', registrationId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Succès",
+        description: `Statut d'impression mis à jour.`
+      });
+      fetchRegistrations();
+    } catch (error) {
+      console.error('Error updating print status:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de mettre à jour le statut d'impression.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Supprimer une inscription
+  const deleteRegistration = async (registrationId, participantName) => {
+    if (!window.confirm(`Êtes-vous sûr de vouloir supprimer l'inscription de ${participantName} ? Cette action est irréversible.`)) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('competition_registrations')
+        .delete()
+        .eq('id', registrationId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Succès",
+        description: `L'inscription a été supprimée.`
+      });
+      fetchRegistrations();
+    } catch (error) {
+      console.error('Error deleting registration:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de supprimer l'inscription.",
         variant: "destructive"
       });
     }
@@ -548,30 +715,83 @@ const CompetitionManagement = () => {
                     className="pl-10"
                   />
                 </div>
-                <div className="flex gap-2">
-                  <Button
-                    variant={filterPrinted === 'all' ? 'default' : 'outline'}
-                    onClick={() => setFilterPrinted('all')}
-                    size="sm"
-                  >
-                    Tous
-                  </Button>
-                  <Button
-                    variant={filterPrinted === 'printed' ? 'default' : 'outline'}
-                    onClick={() => setFilterPrinted('printed')}
-                    size="sm"
-                  >
-                    <CheckCircle2 className="w-4 h-4 mr-1" />
-                    Imprimés
-                  </Button>
-                  <Button
-                    variant={filterPrinted === 'notPrinted' ? 'default' : 'outline'}
-                    onClick={() => setFilterPrinted('notPrinted')}
-                    size="sm"
-                  >
-                    <XCircle className="w-4 h-4 mr-1" />
-                    Non imprimés
-                  </Button>
+                <div className="flex gap-2 flex-wrap">
+                  {/* Filtres d'impression */}
+                  <div className="flex gap-2">
+                    <Button
+                      variant={filterPrinted === 'all' ? 'default' : 'outline'}
+                      onClick={() => setFilterPrinted('all')}
+                      size="sm"
+                    >
+                      Tous
+                    </Button>
+                    <Button
+                      variant={filterPrinted === 'printed' ? 'default' : 'outline'}
+                      onClick={() => setFilterPrinted('printed')}
+                      size="sm"
+                    >
+                      <CheckCircle2 className="w-4 h-4 mr-1" />
+                      Imprimés
+                    </Button>
+                    <Button
+                      variant={filterPrinted === 'notPrinted' ? 'default' : 'outline'}
+                      onClick={() => setFilterPrinted('notPrinted')}
+                      size="sm"
+                    >
+                      <XCircle className="w-4 h-4 mr-1" />
+                      Non imprimés
+                    </Button>
+                  </div>
+
+                  {/* Filtres d'horaire */}
+                  <div className="flex gap-2">
+                    <Button
+                      variant={filterHoraire === 'all' ? 'default' : 'outline'}
+                      onClick={() => setFilterHoraire('all')}
+                      size="sm"
+                    >
+                      Tous horaires
+                    </Button>
+                    <Button
+                      variant={filterHoraire === 'matin' ? 'default' : 'outline'}
+                      onClick={() => setFilterHoraire('matin')}
+                      size="sm"
+                    >
+                      Matin
+                    </Button>
+                    <Button
+                      variant={filterHoraire === 'après-midi' ? 'default' : 'outline'}
+                      onClick={() => setFilterHoraire('après-midi')}
+                      size="sm"
+                    >
+                      Après-midi
+                    </Button>
+                  </div>
+
+                  {/* Filtres type d'inscription */}
+                  <div className="flex gap-2">
+                    <Button
+                      variant={filterTypeInscription === 'all' ? 'default' : 'outline'}
+                      onClick={() => setFilterTypeInscription('all')}
+                      size="sm"
+                    >
+                      Tous types
+                    </Button>
+                    <Button
+                      variant={filterTypeInscription === 'Compétition' ? 'default' : 'outline'}
+                      onClick={() => setFilterTypeInscription('Compétition')}
+                      size="sm"
+                    >
+                      Compétition
+                    </Button>
+                    <Button
+                      variant={filterTypeInscription === 'Buvette' ? 'default' : 'outline'}
+                      onClick={() => setFilterTypeInscription('Buvette')}
+                      size="sm"
+                    >
+                      Buvette
+                    </Button>
+                  </div>
                 </div>
               </div>
 
@@ -626,11 +846,13 @@ const CompetitionManagement = () => {
                         <TableHead>Référence</TableHead>
                         <TableHead>Nom</TableHead>
                         <TableHead>Prénom</TableHead>
-                        <TableHead>Tarif</TableHead>
+                        <TableHead>Horaire</TableHead>
+                        <TableHead>Type d'inscription</TableHead>
                         <TableHead>Montant</TableHead>
                         <TableHead>Club</TableHead>
                         <TableHead>N° Licence FFME</TableHead>
                         <TableHead className="text-center">Imprimé</TableHead>
+                        <TableHead className="text-center">Action</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -655,16 +877,48 @@ const CompetitionManagement = () => {
                             {reg.nom_participant?.toUpperCase()}
                           </TableCell>
                           <TableCell>{reg.prenom_participant}</TableCell>
-                          <TableCell className="text-xs">{reg.tarif || '-'}</TableCell>
+                          <TableCell>
+                            {reg.horaire ? (
+                              <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-medium">
+                                {reg.horaire === 'matin' ? 'Matin' : 'Après-midi'}
+                              </span>
+                            ) : (
+                              '-'
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <span className={`px-2 py-1 rounded text-xs font-medium ${
+                              reg.type_inscription === 'Buvette'
+                                ? 'bg-orange-100 text-orange-700'
+                                : 'bg-green-100 text-green-700'
+                            }`}>
+                              {reg.type_inscription || 'Compétition'}
+                            </span>
+                          </TableCell>
                           <TableCell>{reg.montant_tarif ? `${reg.montant_tarif} €` : '-'}</TableCell>
                           <TableCell>{reg.club || '-'}</TableCell>
                           <TableCell>{reg.numero_licence_ffme || '-'}</TableCell>
-                          <TableCell className="text-center">
+                          <TableCell
+                            className="text-center cursor-pointer hover:bg-gray-100 transition-colors"
+                            onClick={() => togglePrintStatus(reg.id, reg.deja_imprimee)}
+                            title="Cliquer pour basculer le statut d'impression"
+                          >
                             {reg.deja_imprimee ? (
-                              <CheckCircle2 className="w-5 h-5 text-green-600 mx-auto" />
+                              <CheckCircle2 className="w-5 h-5 text-green-600 mx-auto hover:scale-110 transition-transform" />
                             ) : (
-                              <XCircle className="w-5 h-5 text-orange-600 mx-auto" />
+                              <XCircle className="w-5 h-5 text-orange-600 mx-auto hover:scale-110 transition-transform" />
                             )}
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => deleteRegistration(reg.id, `${reg.prenom_participant} ${reg.nom_participant}`)}
+                              className="text-red-600 hover:text-red-800 hover:bg-red-50"
+                              title="Supprimer cette inscription"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -672,6 +926,74 @@ const CompetitionManagement = () => {
                   </Table>
                 </div>
               )}
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* Tableau des règles de catégorisation */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+        >
+          <Card>
+            <CardHeader>
+              <CardTitle>Règles de Catégorisation par Année de Naissance</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse text-sm">
+                  <thead>
+                    <tr className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b-2 border-blue-200">
+                      <th className="border border-blue-200 px-4 py-3 text-left font-bold text-blue-900">Catégorie</th>
+                      <th className="border border-blue-200 px-4 py-3 text-left font-bold text-blue-900">Années de Naissance</th>
+                      <th className="border border-blue-200 px-4 py-3 text-left font-bold text-blue-900">Description</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr className="hover:bg-blue-50 border-b border-blue-100">
+                      <td className="border border-blue-100 px-4 py-3"><span className="font-bold text-green-700 bg-green-50 px-3 py-1 rounded">U11</span></td>
+                      <td className="border border-blue-100 px-4 py-3">2016, 2017</td>
+                      <td className="border border-blue-100 px-4 py-3">Enfants 11 ans</td>
+                    </tr>
+                    <tr className="hover:bg-blue-50 border-b border-blue-100">
+                      <td className="border border-blue-100 px-4 py-3"><span className="font-bold text-green-700 bg-green-50 px-3 py-1 rounded">U13</span></td>
+                      <td className="border border-blue-100 px-4 py-3">2014, 2015</td>
+                      <td className="border border-blue-100 px-4 py-3">Enfants 13 ans</td>
+                    </tr>
+                    <tr className="hover:bg-blue-50 border-b border-blue-100">
+                      <td className="border border-blue-100 px-4 py-3"><span className="font-bold text-blue-700 bg-blue-50 px-3 py-1 rounded">U15</span></td>
+                      <td className="border border-blue-100 px-4 py-3">2012, 2013</td>
+                      <td className="border border-blue-100 px-4 py-3">Jeunes 15 ans</td>
+                    </tr>
+                    <tr className="hover:bg-blue-50 border-b border-blue-100">
+                      <td className="border border-blue-100 px-4 py-3"><span className="font-bold text-blue-700 bg-blue-50 px-3 py-1 rounded">U17</span></td>
+                      <td className="border border-blue-100 px-4 py-3">2010, 2011</td>
+                      <td className="border border-blue-100 px-4 py-3">Jeunes 17 ans</td>
+                    </tr>
+                    <tr className="hover:bg-blue-50 border-b border-blue-100">
+                      <td className="border border-blue-100 px-4 py-3"><span className="font-bold text-indigo-700 bg-indigo-50 px-3 py-1 rounded">U19</span></td>
+                      <td className="border border-blue-100 px-4 py-3">2008, 2009</td>
+                      <td className="border border-blue-100 px-4 py-3">Jeunes 19 ans</td>
+                    </tr>
+                    <tr className="hover:bg-blue-50 border-b border-blue-100">
+                      <td className="border border-blue-100 px-4 py-3"><span className="font-bold text-purple-700 bg-purple-50 px-3 py-1 rounded">Sénior</span></td>
+                      <td className="border border-blue-100 px-4 py-3">1987 à 2007</td>
+                      <td className="border border-blue-100 px-4 py-3">Adultes</td>
+                    </tr>
+                    <tr className="hover:bg-blue-50 border-b border-blue-100">
+                      <td className="border border-blue-100 px-4 py-3"><span className="font-bold text-orange-700 bg-orange-50 px-3 py-1 rounded">Vétéran 1</span></td>
+                      <td className="border border-blue-100 px-4 py-3">1977 à 1986</td>
+                      <td className="border border-blue-100 px-4 py-3">Vétérans (47-46 ans)</td>
+                    </tr>
+                    <tr className="hover:bg-blue-50">
+                      <td className="border border-blue-100 px-4 py-3"><span className="font-bold text-red-700 bg-red-50 px-3 py-1 rounded">Vétéran 2</span></td>
+                      <td className="border border-blue-100 px-4 py-3">1976 et avant</td>
+                      <td className="border border-blue-100 px-4 py-3">Vétérans seniors (≥48 ans)</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </CardContent>
           </Card>
         </motion.div>

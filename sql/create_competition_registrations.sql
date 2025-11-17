@@ -64,33 +64,62 @@ CREATE TRIGGER trigger_update_competition_registrations_updated_at
   FOR EACH ROW
   EXECUTE FUNCTION update_competition_registrations_updated_at();
 
--- Fonction pour assigner automatiquement les numéros de dossards de manière incrémentale
+-- Fonction pour assigner automatiquement les numéros de dossards en fonction de l'horaire
+-- Logique:
+--   - MATIN (U9-U11-U13): numéros 1-500
+--   - APRÈS-MIDI (U15-U17-U19): numéros 501-999
+--   - BUVETTE: aucun numéro
 -- Cette fonction sera appelée lors de l'import des données
 CREATE OR REPLACE FUNCTION assign_dossard_numbers()
 RETURNS void AS $$
 DECLARE
-  next_number INTEGER := 1;
+  next_matin INTEGER := 1;        -- Matin: 1-500
+  next_apres_midi INTEGER := 501; -- Après-midi: 501-999
   reg RECORD;
 BEGIN
-  -- Parcourir toutes les inscriptions sans numéro de dossard, triées par date de création
+  -- Assigner les numéros de dossards pour le MATIN (U9-U11-U13)
+  -- Range: 1-500
   FOR reg IN
     SELECT id
     FROM competition_registrations
     WHERE numero_dossart IS NULL
+      AND horaire = 'matin'
     ORDER BY created_at, id
   LOOP
-    -- Trouver le prochain numéro de dossard disponible
-    WHILE EXISTS (SELECT 1 FROM competition_registrations WHERE numero_dossart = next_number) LOOP
-      next_number := next_number + 1;
-    END LOOP;
+    -- Vérifier que nous ne dépassons pas 500
+    IF next_matin > 500 THEN
+      RAISE EXCEPTION 'Trop de participants pour le matin (max 500). Actuellement: %', next_matin;
+    END IF;
 
-    -- Assigner le numéro
     UPDATE competition_registrations
-    SET numero_dossart = next_number
+    SET numero_dossart = next_matin
     WHERE id = reg.id;
 
-    next_number := next_number + 1;
+    next_matin := next_matin + 1;
   END LOOP;
+
+  -- Assigner les numéros de dossards pour l'APRÈS-MIDI (U15-U17-U19)
+  -- Range: 501-999
+  FOR reg IN
+    SELECT id
+    FROM competition_registrations
+    WHERE numero_dossart IS NULL
+      AND horaire = 'après-midi'
+    ORDER BY created_at, id
+  LOOP
+    -- Vérifier que nous ne dépassons pas 999
+    IF next_apres_midi > 999 THEN
+      RAISE EXCEPTION 'Trop de participants pour l''après-midi (max 999). Actuellement: %', next_apres_midi;
+    END IF;
+
+    UPDATE competition_registrations
+    SET numero_dossart = next_apres_midi
+    WHERE id = reg.id;
+
+    next_apres_midi := next_apres_midi + 1;
+  END LOOP;
+
+  -- Les inscriptions Buvette (horaire IS NULL) ne reçoivent pas de numéro de dossard
 END;
 $$ LANGUAGE plpgsql;
 
