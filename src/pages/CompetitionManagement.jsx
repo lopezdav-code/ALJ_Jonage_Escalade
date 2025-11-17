@@ -1168,7 +1168,6 @@ const CompetitionManagement = () => {
                         </TableHead>
                         <TableHead>N° Dossard</TableHead>
                         <TableHead>Référence</TableHead>
-                        <TableHead>Fichier</TableHead>
                         <TableHead>Nom</TableHead>
                         <TableHead>Prénom</TableHead>
                         <TableHead>Horaire</TableHead>
@@ -1197,9 +1196,6 @@ const CompetitionManagement = () => {
                           </TableCell>
                           <TableCell className="text-xs">
                             {reg.reference_commande || '-'}
-                          </TableCell>
-                          <TableCell className="text-xs text-muted-foreground">
-                            {reg.file_name || '-'}
                           </TableCell>
                           <TableCell className="font-medium">
                             {reg.nom_participant?.toUpperCase()}
