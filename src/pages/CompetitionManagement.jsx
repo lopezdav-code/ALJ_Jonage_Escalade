@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { BackButton } from '@/components/ui/back-button';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import {
@@ -26,7 +27,8 @@ import {
   Plus,
   Edit2,
   X as IconX,
-  RotateCw
+  RotateCw,
+  Eye
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { jsPDF } from 'jspdf';
@@ -51,6 +53,7 @@ const CompetitionManagement = () => {
   const [editingClubValue, setEditingClubValue] = useState('');
   const [editingSexeId, setEditingSexeId] = useState(null);
   const [editingSexeValue, setEditingSexeValue] = useState('');
+  const [detailsId, setDetailsId] = useState(null);
 
   // Statistiques des compétiteurs
   const [competitorStats, setCompetitorStats] = useState({
@@ -1949,7 +1952,16 @@ const CompetitionManagement = () => {
                               <XCircle className="w-5 h-5 text-orange-600 mx-auto hover:scale-110 transition-transform" />
                             )}
                           </TableCell>
-                          <TableCell className="text-center">
+                          <TableCell className="text-center flex gap-2 justify-center">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setDetailsId(reg.id)}
+                              className="text-blue-600 hover:text-blue-800 hover:bg-blue-50"
+                              title="Voir plus de détails"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </Button>
                             <Button
                               variant="ghost"
                               size="sm"
@@ -1965,6 +1977,165 @@ const CompetitionManagement = () => {
                     </TableBody>
                   </Table>
                   </div>
+
+                  {/* Modal des détails */}
+                  {detailsId && registrations.length > 0 && (
+                    <Dialog open={!!detailsId} onOpenChange={(open) => !open && setDetailsId(null)}>
+                      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                        <DialogHeader>
+                          <DialogTitle>Détails de l'inscription</DialogTitle>
+                          <DialogDescription>
+                            Toutes les informations relatives à cette inscription
+                          </DialogDescription>
+                        </DialogHeader>
+                        {(() => {
+                          const registration = registrations.find(r => r.id === detailsId);
+                          if (!registration) return null;
+
+                          return (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              {/* Informations participant */}
+                              <div className="space-y-3">
+                                <h3 className="font-semibold text-md border-b pb-2">Participant</h3>
+                                <div>
+                                  <p className="text-sm text-gray-600">Prénom</p>
+                                  <p className="font-medium">{registration.prenom_participant || '-'}</p>
+                                </div>
+                                <div>
+                                  <p className="text-sm text-gray-600">Nom</p>
+                                  <p className="font-medium">{registration.nom_participant || '-'}</p>
+                                </div>
+                                <div>
+                                  <p className="text-sm text-gray-600">Date de naissance</p>
+                                  <p className="font-medium">{registration.date_naissance ? new Date(registration.date_naissance).toLocaleDateString('fr-FR') : '-'}</p>
+                                </div>
+                                <div>
+                                  <p className="text-sm text-gray-600">Catégorie d'âge</p>
+                                  <p className="font-medium">{registration.categorie_age || '-'}</p>
+                                </div>
+                                <div>
+                                  <p className="text-sm text-gray-600">Sexe</p>
+                                  <p className="font-medium">{registration.sexe === 'H' ? 'Homme' : registration.sexe === 'F' ? 'Femme' : '-'}</p>
+                                </div>
+                                <div>
+                                  <p className="text-sm text-gray-600">Club</p>
+                                  <p className="font-medium">{registration.club || '-'}</p>
+                                </div>
+                                <div>
+                                  <p className="text-sm text-gray-600">Numéro de licence FFME</p>
+                                  <p className="font-medium">{registration.numero_licence_ffme || '-'}</p>
+                                </div>
+                              </div>
+
+                              {/* Informations de la commande et paiement */}
+                              <div className="space-y-3">
+                                <h3 className="font-semibold text-md border-b pb-2">Commande & Paiement</h3>
+                                <div>
+                                  <p className="text-sm text-gray-600">Référence</p>
+                                  <p className="font-medium">{registration.reference_commande || '-'}</p>
+                                </div>
+                                <div>
+                                  <p className="text-sm text-gray-600">Date</p>
+                                  <p className="font-medium">{registration.date_commande ? new Date(registration.date_commande).toLocaleDateString('fr-FR') : '-'}</p>
+                                </div>
+                                <div>
+                                  <p className="text-sm text-gray-600">Statut</p>
+                                  <p className="font-medium">{registration.statut_commande || '-'}</p>
+                                </div>
+                                <div>
+                                  <p className="text-sm text-gray-600">Type d'inscription</p>
+                                  <p className="font-medium">{registration.type_inscription || '-'}</p>
+                                </div>
+                                <div>
+                                  <p className="text-sm text-gray-600">Tarif</p>
+                                  <p className="font-medium">{registration.tarif || '-'}</p>
+                                </div>
+                                <div>
+                                  <p className="text-sm text-gray-600">Montant</p>
+                                  <p className="font-medium">{registration.montant_tarif ? `${registration.montant_tarif}€` : '-'}</p>
+                                </div>
+                                <div>
+                                  <p className="text-sm text-gray-600">Code promo</p>
+                                  <p className="font-medium">{registration.code_promo || '-'}</p>
+                                </div>
+                                <div>
+                                  <p className="text-sm text-gray-600">Montant promo</p>
+                                  <p className="font-medium">{registration.montant_code_promo ? `${registration.montant_code_promo}€` : '-'}</p>
+                                </div>
+                              </div>
+
+                              {/* Informations payeur */}
+                              <div className="space-y-3">
+                                <h3 className="font-semibold text-md border-b pb-2">Payeur</h3>
+                                <div>
+                                  <p className="text-sm text-gray-600">Prénom</p>
+                                  <p className="font-medium">{registration.prenom_payeur || '-'}</p>
+                                </div>
+                                <div>
+                                  <p className="text-sm text-gray-600">Nom</p>
+                                  <p className="font-medium">{registration.nom_payeur || '-'}</p>
+                                </div>
+                                <div>
+                                  <p className="text-sm text-gray-600">Email</p>
+                                  <p className="font-medium text-blue-600 break-all">{registration.email_payeur || '-'}</p>
+                                </div>
+                                <div>
+                                  <p className="text-sm text-gray-600">Raison sociale</p>
+                                  <p className="font-medium">{registration.raison_sociale || '-'}</p>
+                                </div>
+                              </div>
+
+                              {/* Informations dossard et billet */}
+                              <div className="space-y-3">
+                                <h3 className="font-semibold text-md border-b pb-2">Horaire & Dossard</h3>
+                                <div>
+                                  <p className="text-sm text-gray-600">Horaire</p>
+                                  <p className="font-medium">{registration.horaire === 'matin' ? 'Matin' : registration.horaire === 'après-midi' ? 'Après-midi' : '-'}</p>
+                                </div>
+                                <div>
+                                  <p className="text-sm text-gray-600">Numéro de dossard</p>
+                                  <p className="font-medium">{registration.numero_dossart || '-'}</p>
+                                </div>
+                                <div>
+                                  <p className="text-sm text-gray-600">Imprimée</p>
+                                  <p className="font-medium">{registration.deja_imprimee ? 'Oui' : 'Non'}</p>
+                                </div>
+                                <div>
+                                  <p className="text-sm text-gray-600">Billet</p>
+                                  <p className="font-medium">{registration.billet || '-'}</p>
+                                </div>
+                                <div>
+                                  <p className="text-sm text-gray-600">Numéro de billet</p>
+                                  <p className="font-medium">{registration.numero_billet || '-'}</p>
+                                </div>
+                                <div>
+                                  <p className="text-sm text-gray-600">Moyen de paiement</p>
+                                  <p className="font-medium">{registration.moyen_paiement || '-'}</p>
+                                </div>
+                              </div>
+
+                              {/* Informations système */}
+                              <div className="space-y-3">
+                                <h3 className="font-semibold text-md border-b pb-2">Système</h3>
+                                <div>
+                                  <p className="text-sm text-gray-600">Fichier source</p>
+                                  <p className="font-medium">{registration.file_name || '-'}</p>
+                                </div>
+                                <div>
+                                  <p className="text-sm text-gray-600">Créé le</p>
+                                  <p className="font-medium">{registration.created_at ? new Date(registration.created_at).toLocaleString('fr-FR') : '-'}</p>
+                                </div>
+                                <div>
+                                  <p className="text-sm text-gray-600">Modifié le</p>
+                                  <p className="font-medium">{registration.updated_at ? new Date(registration.updated_at).toLocaleString('fr-FR') : '-'}</p>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })()}
+                      </DialogContent>
+                    </Dialog>
+                  )}
                 </>
               )}
             </CardContent>
