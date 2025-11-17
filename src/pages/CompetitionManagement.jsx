@@ -38,6 +38,7 @@ const CompetitionManagement = () => {
   const [filterPrinted, setFilterPrinted] = useState('all'); // 'all', 'printed', 'notPrinted'
   const [filterHoraire, setFilterHoraire] = useState('all'); // 'all', 'matin', 'après-midi'
   const [filterTypeInscription, setFilterTypeInscription] = useState('all'); // 'all', 'Compétition', 'Buvette'
+  const [filterFileName, setFilterFileName] = useState('all'); // 'all' ou nom du fichier
 
   // Charger les inscriptions
   const fetchRegistrations = async () => {
@@ -191,6 +192,7 @@ const CompetitionManagement = () => {
           numero_licence_ffme: row['Numéro de licence FFME'] || row['Numero de licence FFME'] || null,
           horaire: horaire,
           type_inscription: type_inscription,
+          file_name: file.name,
           deja_imprimee: false
         };
       });
@@ -317,8 +319,23 @@ const CompetitionManagement = () => {
       filtered = filtered.filter(reg => reg.type_inscription === filterTypeInscription);
     }
 
+    // Filtre par nom de fichier
+    if (filterFileName !== 'all') {
+      filtered = filtered.filter(reg => reg.file_name === filterFileName);
+    }
+
     return filtered;
-  }, [registrations, searchTerm, filterPrinted, filterHoraire, filterTypeInscription]);
+  }, [registrations, searchTerm, filterPrinted, filterHoraire, filterTypeInscription, filterFileName]);
+
+  // Calculer la liste des fichiers uniques uploadés
+  const uniqueFileNames = useMemo(() => {
+    const fileNames = new Set(
+      registrations
+        .filter(reg => reg.file_name)
+        .map(reg => reg.file_name)
+    );
+    return Array.from(fileNames).sort();
+  }, [registrations]);
 
   // Sélection/désélection
   const toggleSelectAll = () => {
@@ -712,13 +729,56 @@ const CompetitionManagement = () => {
                 Réinitialiser
               </Button>
             </CardContent>
-            <CardFooter className="text-sm text-muted-foreground">
-              <div>
-                <strong>Format attendu :</strong> Référence commande, Date de la commande, Statut, Nom participant,
-                Prénom participant, Nom payeur, Prénom payeur, Email payeur, Raison sociale, Moyen de paiement,
-                Billet, Numéro de billet, Tarif, Montant tarif, Code Promo, Montant code promo, Date de naissance,
-                Club, Numéro de licence FFME
+            <CardFooter className="flex flex-col gap-4">
+              <div className="w-full">
+                <strong className="text-sm">Format attendu :</strong>
+                <p className="text-sm text-muted-foreground">
+                  Référence commande, Date de la commande, Statut, Nom participant,
+                  Prénom participant, Nom payeur, Prénom payeur, Email payeur, Raison sociale, Moyen de paiement,
+                  Billet, Numéro de billet, Tarif, Montant tarif, Code Promo, Montant code promo, Date de naissance,
+                  Club, Numéro de licence FFME
+                </p>
               </div>
+
+              {uniqueFileNames.length > 0 && (
+                <div className="w-full border-t pt-4">
+                  <div className="mb-3">
+                    <Label htmlFor="file-filter" className="text-sm font-medium">
+                      Fichiers uploadés ({uniqueFileNames.length})
+                    </Label>
+                    <select
+                      id="file-filter"
+                      value={filterFileName}
+                      onChange={(e) => setFilterFileName(e.target.value)}
+                      className="mt-2 w-full px-3 py-2 border border-input rounded-md bg-background text-sm"
+                    >
+                      <option value="all">Tous les fichiers</option>
+                      {uniqueFileNames.map((fileName) => {
+                        const count = registrations.filter(reg => reg.file_name === fileName).length;
+                        return (
+                          <option key={fileName} value={fileName}>
+                            {fileName} ({count} inscriptions)
+                          </option>
+                        );
+                      })}
+                    </select>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {uniqueFileNames.map((fileName) => {
+                      const count = registrations.filter(reg => reg.file_name === fileName).length;
+                      return (
+                        <div
+                          key={fileName}
+                          className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded cursor-pointer hover:bg-blue-200 transition-colors"
+                          onClick={() => setFilterFileName(filterFileName === fileName ? 'all' : fileName)}
+                        >
+                          {fileName} ({count})
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </CardFooter>
           </Card>
         </motion.div>
@@ -985,6 +1045,7 @@ const CompetitionManagement = () => {
                         </TableHead>
                         <TableHead>N° Dossard</TableHead>
                         <TableHead>Référence</TableHead>
+                        <TableHead>Fichier</TableHead>
                         <TableHead>Nom</TableHead>
                         <TableHead>Prénom</TableHead>
                         <TableHead>Horaire</TableHead>
@@ -1013,6 +1074,9 @@ const CompetitionManagement = () => {
                           </TableCell>
                           <TableCell className="text-xs">
                             {reg.reference_commande || '-'}
+                          </TableCell>
+                          <TableCell className="text-xs text-muted-foreground">
+                            {reg.file_name || '-'}
                           </TableCell>
                           <TableCell className="font-medium">
                             {reg.nom_participant?.toUpperCase()}
