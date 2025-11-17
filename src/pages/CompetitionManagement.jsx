@@ -79,6 +79,7 @@ const CompetitionManagement = () => {
 
   // Options pour l'export PDF
   const [pdfFormat, setPdfFormat] = useState('a5'); // 'a4' ou 'a5'
+  const [pdfOrientation, setPdfOrientation] = useState('portrait'); // 'portrait' ou 'landscape'
   const [pdfCardsPerPage, setPdfCardsPerPage] = useState(1); // 1 ou 2
   const [showPdfOptions, setShowPdfOptions] = useState(false);
 
@@ -894,47 +895,85 @@ const CompetitionManagement = () => {
 
       // Déterminer les paramètres en fonction du format et du nombre de fiches par page
       const format = pdfFormat === 'a4' ? 'a4' : 'a5';
+      const orientation = pdfOrientation === 'landscape' ? 'landscape' : 'portrait';
       const cardsPerPage = pdfCardsPerPage === 2 ? 2 : 1;
 
-      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format });
+      const doc = new jsPDF({ orientation, unit: 'mm', format });
       const pageHeight = doc.internal.pageSize.height;
       const pageWidth = doc.internal.pageSize.width;
 
-      // Ajuster les paramètres en fonction du format et du nombre de fiches
+      // Ajuster les paramètres en fonction du format, orientation et du nombre de fiches
       let margin, cellHeight, cardHeight, headerSize, dossardSize, logoSize;
 
-      if (format === 'a4' && cardsPerPage === 1) {
-        // A4 - 1 fiche par page
-        margin = 10;
-        cellHeight = 5;
-        cardHeight = pageHeight - 2 * margin;
-        headerSize = 36;
-        dossardSize = 36;
-        logoSize = 30;
-      } else if (format === 'a4' && cardsPerPage === 2) {
-        // A4 - 2 fiches par page
-        margin = 8;
-        cellHeight = 4.5;
-        cardHeight = (pageHeight - 3 * margin) / 2;
-        headerSize = 26;
-        dossardSize = 26;
-        logoSize = 22;
-      } else if (format === 'a5' && cardsPerPage === 1) {
-        // A5 - 1 fiche par page
-        margin = 7;
-        cellHeight = 4;
-        cardHeight = pageHeight - 2 * margin;
-        headerSize = 26;
-        dossardSize = 26;
-        logoSize = 22;
+      if (orientation === 'portrait') {
+        if (format === 'a4' && cardsPerPage === 1) {
+          // A4 Portrait - 1 fiche par page
+          margin = 10;
+          cellHeight = 5;
+          cardHeight = pageHeight - 2 * margin;
+          headerSize = 36;
+          dossardSize = 36;
+          logoSize = 30;
+        } else if (format === 'a4' && cardsPerPage === 2) {
+          // A4 Portrait - 2 fiches par page
+          margin = 8;
+          cellHeight = 4.5;
+          cardHeight = (pageHeight - 3 * margin) / 2;
+          headerSize = 26;
+          dossardSize = 26;
+          logoSize = 22;
+        } else if (format === 'a5' && cardsPerPage === 1) {
+          // A5 Portrait - 1 fiche par page
+          margin = 7;
+          cellHeight = 4;
+          cardHeight = pageHeight - 2 * margin;
+          headerSize = 26;
+          dossardSize = 26;
+          logoSize = 22;
+        } else {
+          // A5 Portrait - 2 fiches par page
+          margin = 5;
+          cellHeight = 3.5;
+          cardHeight = (pageHeight - 3 * margin) / 2;
+          headerSize = 18;
+          dossardSize = 18;
+          logoSize = 16;
+        }
       } else {
-        // A5 - 2 fiches par page (non valide, mais gérer quand même)
-        margin = 5;
-        cellHeight = 3.5;
-        cardHeight = (pageHeight - 3 * margin) / 2;
-        headerSize = 18;
-        dossardSize = 18;
-        logoSize = 16;
+        // Mode Paysage
+        if (format === 'a4' && cardsPerPage === 1) {
+          // A4 Paysage - 1 fiche par page
+          margin = 10;
+          cellHeight = 5;
+          cardHeight = pageHeight - 2 * margin;
+          headerSize = 36;
+          dossardSize = 36;
+          logoSize = 30;
+        } else if (format === 'a4' && cardsPerPage === 2) {
+          // A4 Paysage - 2 fiches par page (côte à côte)
+          margin = 8;
+          cellHeight = 4.5;
+          cardHeight = pageHeight - 2 * margin;
+          headerSize = 28;
+          dossardSize = 28;
+          logoSize = 24;
+        } else if (format === 'a5' && cardsPerPage === 1) {
+          // A5 Paysage - 1 fiche par page
+          margin = 7;
+          cellHeight = 4;
+          cardHeight = pageHeight - 2 * margin;
+          headerSize = 28;
+          dossardSize = 28;
+          logoSize = 24;
+        } else {
+          // A5 Paysage - 2 fiches par page (côte à côte)
+          margin = 6;
+          cellHeight = 3.5;
+          cardHeight = pageHeight - 2 * margin;
+          headerSize = 20;
+          dossardSize = 20;
+          logoSize = 18;
+        }
       }
 
       let currentY = margin;
@@ -980,14 +1019,19 @@ const CompetitionManagement = () => {
       ];
 
       // Fonction pour ajouter une fiche
-      const addCard = (reg, cardStartY) => {
+      const addCard = (reg, cardStartY, cardStartX = margin, cardWidth = null) => {
         const cardMargin = margin;
         let y = cardStartY;
+        let x = cardStartX;
+
+        // Largeur de la fiche (pour le paysage avec 2 fiches côte à côte)
+        const actualCardWidth = cardWidth || (pageWidth - 2 * cardMargin);
+        const logoXPos = x + actualCardWidth - cardMargin - logoSize;
 
         // === NUMÉRO DE DOSSARD en gros au-dessus du nom ===
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(dossardSize);
-        doc.text(String(reg.numero_dossart || '-'), cardMargin + 8, y + 12);
+        doc.text(String(reg.numero_dossart || '-'), x + 8, y + 12);
 
         // Initialiser y pour le texte "Nom"
         y = cardStartY + 28;
@@ -995,56 +1039,56 @@ const CompetitionManagement = () => {
         // === LOGO en haut à droite ===
         if (logoImage) {
           try {
-            doc.addImage(logoImage, 'JPEG', pageWidth - cardMargin - logoSize, y - 5, logoSize, logoSize);
+            doc.addImage(logoImage, 'JPEG', logoXPos, y - 5, logoSize, logoSize);
           } catch (error) {
             console.warn('Erreur lors de l\'ajout du logo:', error);
           }
         }
 
         // === HEADER: Informations participant ===
-        const colWidth = (pageWidth - 2 * cardMargin) / 2;
+        const colWidth = (actualCardWidth - 2 * cardMargin) / 2;
         const fieldHeight = cellHeight;
 
         // Ligne: Nom
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(9);
-        doc.text('Nom', cardMargin, y);
+        doc.text('Nom', x + cardMargin, y);
         doc.setFont('helvetica', 'normal');
-        doc.text(reg.nom_participant?.toUpperCase() || '', cardMargin + 30, y);
-        doc.line(cardMargin + 30, y + 0.8, cardMargin + colWidth, y + 0.8);
+        doc.text(reg.nom_participant?.toUpperCase() || '', x + cardMargin + 30, y);
+        doc.line(x + cardMargin + 30, y + 0.8, x + cardMargin + colWidth, y + 0.8);
         y += fieldHeight;
 
         // Ligne: Prénom
         doc.setFont('helvetica', 'bold');
-        doc.text('Prénom', cardMargin, y);
+        doc.text('Prénom', x + cardMargin, y);
         doc.setFont('helvetica', 'normal');
-        doc.text(reg.prenom_participant || '', cardMargin + 30, y);
-        doc.line(cardMargin + 30, y + 0.8, cardMargin + colWidth, y + 0.8);
+        doc.text(reg.prenom_participant || '', x + cardMargin + 30, y);
+        doc.line(x + cardMargin + 30, y + 0.8, x + cardMargin + colWidth, y + 0.8);
         y += fieldHeight;
 
         // Ligne: Sexe
         doc.setFont('helvetica', 'bold');
-        doc.text('Sexe', cardMargin, y);
+        doc.text('Sexe', x + cardMargin, y);
         doc.setFont('helvetica', 'normal');
         const sexeDisplay = reg.sexe === 'H' ? 'Homme' : reg.sexe === 'F' ? 'Femme' : '';
-        doc.text(sexeDisplay, cardMargin + 30, y);
-        doc.line(cardMargin + 30, y + 0.8, cardMargin + colWidth, y + 0.8);
+        doc.text(sexeDisplay, x + cardMargin + 30, y);
+        doc.line(x + cardMargin + 30, y + 0.8, x + cardMargin + colWidth, y + 0.8);
         y += fieldHeight;
 
         // Ligne: Club
         doc.setFont('helvetica', 'bold');
-        doc.text('Club', cardMargin, y);
+        doc.text('Club', x + cardMargin, y);
         doc.setFont('helvetica', 'normal');
-        doc.text(reg.club || '', cardMargin + 30, y);
-        doc.line(cardMargin + 30, y + 0.8, cardMargin + colWidth, y + 0.8);
+        doc.text(reg.club || '', x + cardMargin + 30, y);
+        doc.line(x + cardMargin + 30, y + 0.8, x + cardMargin + colWidth, y + 0.8);
         y += fieldHeight;
 
         // Ligne: Catégorie
         doc.setFont('helvetica', 'bold');
-        doc.text('Catégorie', cardMargin, y);
+        doc.text('Catégorie', x + cardMargin, y);
         doc.setFont('helvetica', 'normal');
-        doc.text(getCategory(reg.date_naissance) || '', cardMargin + 30, y);
-        doc.line(cardMargin + 30, y + 0.8, cardMargin + colWidth, y + 0.8);
+        doc.text(getCategory(reg.date_naissance) || '', x + cardMargin + 30, y);
+        doc.line(x + cardMargin + 30, y + 0.8, x + cardMargin + colWidth, y + 0.8);
         y += fieldHeight;
 
         // Espace
@@ -1053,8 +1097,8 @@ const CompetitionManagement = () => {
         // === TABLEAU DE SCORING - IMAGE ===
         if (scoringTableImage) {
           try {
-            const imageHeight = cardsPerPage === 2 ? 30 : 40;
-            doc.addImage(scoringTableImage, 'PNG', cardMargin, y, pageWidth - 2 * cardMargin, imageHeight);
+            const imageHeight = (cardsPerPage === 2 && orientation === 'portrait') ? 30 : 40;
+            doc.addImage(scoringTableImage, 'PNG', x + cardMargin, y, actualCardWidth - 2 * cardMargin, imageHeight);
           } catch (error) {
             console.warn('Erreur lors de l\'ajout de l\'image au PDF:', error);
           }
@@ -1072,13 +1116,28 @@ const CompetitionManagement = () => {
         });
       } else {
         // 2 fiches par page
-        for (let i = 0; i < selectedRegs.length; i += 2) {
-          if (i > 0) {
-            doc.addPage();
+        if (orientation === 'portrait') {
+          // Portrait: 2 fiches l'une sous l'autre
+          for (let i = 0; i < selectedRegs.length; i += 2) {
+            if (i > 0) {
+              doc.addPage();
+            }
+            addCard(selectedRegs[i], margin);
+            if (i + 1 < selectedRegs.length) {
+              addCard(selectedRegs[i + 1], margin + cardHeight + margin);
+            }
           }
-          addCard(selectedRegs[i], margin);
-          if (i + 1 < selectedRegs.length) {
-            addCard(selectedRegs[i + 1], margin + cardHeight + margin);
+        } else {
+          // Paysage: 2 fiches côte à côte
+          const cardWidthLandscape = (pageWidth - 3 * margin) / 2;
+          for (let i = 0; i < selectedRegs.length; i += 2) {
+            if (i > 0) {
+              doc.addPage();
+            }
+            addCard(selectedRegs[i], margin, margin, cardWidthLandscape);
+            if (i + 1 < selectedRegs.length) {
+              addCard(selectedRegs[i + 1], margin, margin + cardWidthLandscape + margin, cardWidthLandscape);
+            }
           }
         }
       }
@@ -2233,6 +2292,27 @@ const CompetitionManagement = () => {
                               className="flex-1"
                             >
                               A5
+                            </Button>
+                          </div>
+                        </div>
+
+                        {/* Orientation */}
+                        <div className="space-y-3">
+                          <Label className="text-base font-semibold">Orientation</Label>
+                          <div className="flex gap-3">
+                            <Button
+                              variant={pdfOrientation === 'portrait' ? 'default' : 'outline'}
+                              onClick={() => setPdfOrientation('portrait')}
+                              className="flex-1"
+                            >
+                              Portrait
+                            </Button>
+                            <Button
+                              variant={pdfOrientation === 'landscape' ? 'default' : 'outline'}
+                              onClick={() => setPdfOrientation('landscape')}
+                              className="flex-1"
+                            >
+                              Paysage
                             </Button>
                           </div>
                         </div>
