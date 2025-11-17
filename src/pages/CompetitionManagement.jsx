@@ -60,6 +60,13 @@ const mapClubName = (clubName) => {
   return CLUB_MAPPING[trimmed] || trimmed;
 };
 
+// Fonction pour vérifier si un club est dans la matrice
+const isClubMapped = (clubName) => {
+  if (!clubName) return false;
+  const trimmed = String(clubName).trim();
+  return trimmed in CLUB_MAPPING;
+};
+
 const CompetitionManagement = () => {
   const { isAdmin, loading: authLoading } = useAuth();
   const { toast } = useToast();
@@ -74,6 +81,7 @@ const CompetitionManagement = () => {
   const [filterTypeInscription, setFilterTypeInscription] = useState('all'); // 'all', 'Compétition', 'Buvette'
   const [filterFileName, setFilterFileName] = useState('all'); // 'all' ou nom du fichier
   const [filterClub, setFilterClub] = useState('all'); // 'all' ou nom du club
+  const [filterUnmappedClubs, setFilterUnmappedClubs] = useState(false); // true pour voir seulement les clubs non mappés
   const [editingClubId, setEditingClubId] = useState(null);
   const [editingClubValue, setEditingClubValue] = useState('');
 
@@ -366,8 +374,13 @@ const CompetitionManagement = () => {
       filtered = filtered.filter(reg => reg.club === filterClub);
     }
 
+    // Filtre pour les clubs non mappés
+    if (filterUnmappedClubs) {
+      filtered = filtered.filter(reg => reg.club && !isClubMapped(reg.club));
+    }
+
     return filtered;
-  }, [registrations, searchTerm, filterPrinted, filterHoraire, filterTypeInscription, filterFileName, filterClub]);
+  }, [registrations, searchTerm, filterPrinted, filterHoraire, filterTypeInscription, filterFileName, filterClub, filterUnmappedClubs]);
 
   // Calculer la liste des fichiers uniques uploadés
   const uniqueFileNames = useMemo(() => {
@@ -960,24 +973,61 @@ const CompetitionManagement = () => {
         >
           <Card>
             <CardHeader>
-              <CardTitle>Participants par club ({uniqueClubs.length})</CardTitle>
-              <CardDescription>Nombre de personnes inscrites par club</CardDescription>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Participants par club ({uniqueClubs.length})</CardTitle>
+                  <CardDescription>Nombre de personnes inscrites par club</CardDescription>
+                </div>
+                <Button
+                  variant={filterUnmappedClubs ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setFilterUnmappedClubs(!filterUnmappedClubs)}
+                  className={filterUnmappedClubs ? 'bg-red-600 hover:bg-red-700' : ''}
+                >
+                  {filterUnmappedClubs ? '❌ Non mappés' : 'Voir les clubs non mappés'}
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                {uniqueClubs.map((club) => (
-                  <div
-                    key={club}
-                    className="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-lg cursor-pointer hover:bg-blue-100 transition-colors"
-                    onClick={() => setFilterClub(filterClub === club ? 'all' : club)}
-                  >
-                    <span className="font-medium text-sm">{club}</span>
-                    <span className="bg-blue-600 text-white px-2 py-1 rounded text-xs font-bold">
-                      {clubStats[club]}
-                    </span>
-                  </div>
-                ))}
+                {uniqueClubs.map((club) => {
+                  const isMapped = isClubMapped(club);
+                  return (
+                    <div
+                      key={club}
+                      className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors ${
+                        isMapped
+                          ? 'bg-blue-50 border border-blue-200 hover:bg-blue-100'
+                          : 'bg-red-50 border-2 border-red-300 hover:bg-red-100'
+                      }`}
+                      onClick={() => setFilterClub(filterClub === club ? 'all' : club)}
+                      title={isMapped ? 'Club mappé' : 'Club NON mappé - À vérifier!'}
+                    >
+                      <span className="font-medium text-sm">
+                        {club}
+                        {!isMapped && <span className="ml-1 text-red-600 font-bold">⚠</span>}
+                      </span>
+                      <span className={`px-2 py-1 rounded text-xs font-bold ${
+                        isMapped
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-red-600 text-white'
+                      }`}>
+                        {clubStats[club]}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
+              {uniqueClubs.filter(club => !isClubMapped(club)).length > 0 && (
+                <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-sm text-red-700 font-medium">
+                    ⚠ {uniqueClubs.filter(club => !isClubMapped(club)).length} club(s) non mappé(s):
+                  </p>
+                  <p className="text-xs text-red-600 mt-1">
+                    {uniqueClubs.filter(club => !isClubMapped(club)).join(', ')}
+                  </p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </motion.div>
