@@ -1419,6 +1419,85 @@ const CompetitionManagement = () => {
           </div>
         )}
 
+        {/* Statistiques des compétiteurs */}
+        {registrations.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.35 }}
+          >
+            <Card>
+              <CardHeader>
+                <CardTitle>Statistiques des Compétiteurs</CardTitle>
+                <CardDescription>
+                  Répartition des compétiteurs (type_inscription = "Compétition")
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {statsLoading ? (
+                  <div className="flex justify-center items-center py-8">
+                    <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {/* Statistiques par Sexe */}
+                    <div className="border rounded-lg p-4 bg-gradient-to-br from-blue-50 to-blue-100">
+                      <h3 className="font-bold text-lg mb-4 text-blue-900">Par Sexe</h3>
+                      <div className="space-y-2">
+                        {competitorStats.bySexe && competitorStats.bySexe.map((stat) => (
+                          <div key={stat.label} className="flex justify-between items-center">
+                            <span className="text-sm font-medium">{stat.label}</span>
+                            <span className="bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-bold">
+                              {stat.count}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                      {competitorStats.total > 0 && (
+                        <div className="mt-3 pt-3 border-t border-blue-200">
+                          <div className="text-xs text-blue-700">
+                            Total: {competitorStats.total} compétiteur(s)
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Statistiques par Catégorie d'Âge */}
+                    <div className="border rounded-lg p-4 bg-gradient-to-br from-green-50 to-green-100">
+                      <h3 className="font-bold text-lg mb-4 text-green-900">Par Catégorie d'Âge</h3>
+                      <div className="space-y-2 max-h-64 overflow-y-auto">
+                        {competitorStats.byAgeCategory && competitorStats.byAgeCategory.map((stat) => (
+                          <div key={stat.label} className="flex justify-between items-center">
+                            <span className="text-sm font-medium">{stat.label}</span>
+                            <span className="bg-green-600 text-white px-3 py-1 rounded-full text-sm font-bold">
+                              {stat.count}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Statistiques par Horaire */}
+                    <div className="border rounded-lg p-4 bg-gradient-to-br from-orange-50 to-orange-100">
+                      <h3 className="font-bold text-lg mb-4 text-orange-900">Par Horaire</h3>
+                      <div className="space-y-2">
+                        {competitorStats.byHoraire && competitorStats.byHoraire.map((stat) => (
+                          <div key={stat.label} className="flex justify-between items-center">
+                            <span className="text-sm font-medium">{stat.label}</span>
+                            <span className="bg-orange-600 text-white px-3 py-1 rounded-full text-sm font-bold">
+                              {stat.count}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+
         {/* Statistiques par club */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -2026,85 +2105,6 @@ const CompetitionManagement = () => {
             </CardContent>
           </Card>
         </motion.div>
-
-        {/* Statistiques des compétiteurs */}
-        {registrations.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-          >
-            <Card>
-              <CardHeader>
-                <CardTitle>Statistiques des Compétiteurs</CardTitle>
-                <CardDescription>
-                  Répartition des compétiteurs (type_inscription = "Compétition")
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {statsLoading ? (
-                  <div className="flex justify-center items-center py-8">
-                    <Loader2 className="w-6 h-6 animate-spin text-primary" />
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {/* Statistiques par Sexe */}
-                    <div className="border rounded-lg p-4 bg-gradient-to-br from-blue-50 to-blue-100">
-                      <h3 className="font-bold text-lg mb-4 text-blue-900">Par Sexe</h3>
-                      <div className="space-y-2">
-                        {competitorStats.bySexe && competitorStats.bySexe.map((stat) => (
-                          <div key={stat.label} className="flex justify-between items-center">
-                            <span className="text-sm font-medium">{stat.label}</span>
-                            <span className="bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-bold">
-                              {stat.count}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                      {competitorStats.total > 0 && (
-                        <div className="mt-3 pt-3 border-t border-blue-200">
-                          <div className="text-xs text-blue-700">
-                            Total: {competitorStats.total} compétiteur(s)
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Statistiques par Catégorie d'Âge */}
-                    <div className="border rounded-lg p-4 bg-gradient-to-br from-green-50 to-green-100">
-                      <h3 className="font-bold text-lg mb-4 text-green-900">Par Catégorie d'Âge</h3>
-                      <div className="space-y-2 max-h-64 overflow-y-auto">
-                        {competitorStats.byAgeCategory && competitorStats.byAgeCategory.map((stat) => (
-                          <div key={stat.label} className="flex justify-between items-center">
-                            <span className="text-sm font-medium">{stat.label}</span>
-                            <span className="bg-green-600 text-white px-3 py-1 rounded-full text-sm font-bold">
-                              {stat.count}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Statistiques par Horaire */}
-                    <div className="border rounded-lg p-4 bg-gradient-to-br from-orange-50 to-orange-100">
-                      <h3 className="font-bold text-lg mb-4 text-orange-900">Par Horaire</h3>
-                      <div className="space-y-2">
-                        {competitorStats.byHoraire && competitorStats.byHoraire.map((stat) => (
-                          <div key={stat.label} className="flex justify-between items-center">
-                            <span className="text-sm font-medium">{stat.label}</span>
-                            <span className="bg-orange-600 text-white px-3 py-1 rounded-full text-sm font-bold">
-                              {stat.count}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </motion.div>
-        )}
 
         {/* Tableau des règles de catégorisation */}
         <motion.div
