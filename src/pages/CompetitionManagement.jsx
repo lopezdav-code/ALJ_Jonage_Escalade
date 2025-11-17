@@ -908,7 +908,7 @@ const CompetitionManagement = () => {
       if (orientation === 'portrait') {
         if (format === 'a4' && cardsPerPage === 1) {
           // A4 Portrait - 1 fiche par page
-          margin = 10;
+          margin = 5;
           cellHeight = 5;
           cardHeight = pageHeight - 2 * margin;
           headerSize = 36;
@@ -916,7 +916,7 @@ const CompetitionManagement = () => {
           logoSize = 30;
         } else if (format === 'a4' && cardsPerPage === 2) {
           // A4 Portrait - 2 fiches par page
-          margin = 8;
+          margin = 4;
           cellHeight = 4.5;
           cardHeight = (pageHeight - 3 * margin) / 2;
           headerSize = 26;
@@ -924,7 +924,7 @@ const CompetitionManagement = () => {
           logoSize = 22;
         } else if (format === 'a5' && cardsPerPage === 1) {
           // A5 Portrait - 1 fiche par page
-          margin = 7;
+          margin = 4;
           cellHeight = 4;
           cardHeight = pageHeight - 2 * margin;
           headerSize = 26;
@@ -932,7 +932,7 @@ const CompetitionManagement = () => {
           logoSize = 22;
         } else {
           // A5 Portrait - 2 fiches par page
-          margin = 5;
+          margin = 3;
           cellHeight = 3.5;
           cardHeight = (pageHeight - 3 * margin) / 2;
           headerSize = 18;
@@ -943,7 +943,7 @@ const CompetitionManagement = () => {
         // Mode Paysage
         if (format === 'a4' && cardsPerPage === 1) {
           // A4 Paysage - 1 fiche par page
-          margin = 10;
+          margin = 5;
           cellHeight = 5;
           cardHeight = pageHeight - 2 * margin;
           headerSize = 36;
@@ -951,7 +951,7 @@ const CompetitionManagement = () => {
           logoSize = 30;
         } else if (format === 'a4' && cardsPerPage === 2) {
           // A4 Paysage - 2 fiches par page (côte à côte)
-          margin = 8;
+          margin = 4;
           cellHeight = 4.5;
           cardHeight = pageHeight - 2 * margin;
           headerSize = 28;
@@ -959,7 +959,7 @@ const CompetitionManagement = () => {
           logoSize = 24;
         } else if (format === 'a5' && cardsPerPage === 1) {
           // A5 Paysage - 1 fiche par page
-          margin = 7;
+          margin = 4;
           cellHeight = 4;
           cardHeight = pageHeight - 2 * margin;
           headerSize = 28;
@@ -967,7 +967,7 @@ const CompetitionManagement = () => {
           logoSize = 24;
         } else {
           // A5 Paysage - 2 fiches par page (côte à côte)
-          margin = 6;
+          margin = 3;
           cellHeight = 3.5;
           cardHeight = pageHeight - 2 * margin;
           headerSize = 20;
