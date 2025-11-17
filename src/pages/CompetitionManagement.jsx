@@ -47,6 +47,8 @@ const CompetitionManagement = () => {
   const [filterUnmappedClubs, setFilterUnmappedClubs] = useState(false); // true pour voir seulement les clubs non mappés
   const [editingClubId, setEditingClubId] = useState(null);
   const [editingClubValue, setEditingClubValue] = useState('');
+  const [editingSexeId, setEditingSexeId] = useState(null);
+  const [editingSexeValue, setEditingSexeValue] = useState('');
 
   // Mappings dynamiques depuis la BDD
   const [clubMappings, setClubMappings] = useState([]);
@@ -611,6 +613,33 @@ const CompetitionManagement = () => {
     }
   };
 
+  // Mettre à jour le sexe
+  const updateSexe = async (registrationId, newSexe) => {
+    try {
+      const { error } = await supabase
+        .from('competition_registrations')
+        .update({ sexe: newSexe || null })
+        .eq('id', registrationId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Succès",
+        description: "Sexe mis à jour."
+      });
+      fetchRegistrations();
+      setEditingSexeId(null);
+      setEditingSexeValue('');
+    } catch (error) {
+      console.error('Error updating sexe:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de mettre à jour le sexe.",
+        variant: "destructive"
+      });
+    }
+  };
+
   // Réinitialiser tous les filtres
   const clearAllFilters = () => {
     setSearchTerm('');
@@ -736,6 +765,11 @@ const CompetitionManagement = () => {
           currentY = margin;
         }
 
+        // === NUMÉRO DE DOSSARD en gros au-dessus du nom ===
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(36);
+        doc.text(String(reg.numero_dossart || '-'), margin + 10, margin + 15);
+
         // Initialiser currentY pour le texte "Nom"
         currentY = margin + 35;
 
@@ -769,11 +803,13 @@ const CompetitionManagement = () => {
         doc.line(margin + 35, currentY + 1, margin + colWidth, currentY + 1);
         currentY += fieldHeight + 1;
 
-        // Ligne: Homme / Femme
+        // Ligne: Sexe
         doc.setFont('helvetica', 'bold');
-        doc.text('Homme / Femme', margin, currentY);
+        doc.text('Sexe', margin, currentY);
         doc.setFont('helvetica', 'normal');
-        doc.line(margin + 50, currentY + 1, margin + colWidth, currentY + 1);
+        const sexeDisplay = reg.sexe === 'H' ? 'Homme' : reg.sexe === 'F' ? 'Femme' : '';
+        doc.text(sexeDisplay, margin + 35, currentY);
+        doc.line(margin + 35, currentY + 1, margin + colWidth, currentY + 1);
         currentY += fieldHeight + 1;
 
         // Ligne: Club
@@ -1475,6 +1511,7 @@ const CompetitionManagement = () => {
                         <TableHead>Référence</TableHead>
                         <TableHead>Nom</TableHead>
                         <TableHead>Prénom</TableHead>
+                        <TableHead>Sexe</TableHead>
                         <TableHead>Horaire</TableHead>
                         <TableHead>Type d'inscription</TableHead>
                         <TableHead>Montant</TableHead>
@@ -1506,6 +1543,46 @@ const CompetitionManagement = () => {
                             {reg.nom_participant?.toUpperCase()}
                           </TableCell>
                           <TableCell>{reg.prenom_participant}</TableCell>
+                          <TableCell
+                            className="cursor-pointer hover:bg-blue-50 transition-colors"
+                            onClick={() => {
+                              setEditingSexeId(reg.id);
+                              setEditingSexeValue(reg.sexe || '');
+                            }}
+                            title="Cliquer pour éditer le sexe"
+                          >
+                            {editingSexeId === reg.id ? (
+                              <select
+                                value={editingSexeValue}
+                                onChange={(e) => setEditingSexeValue(e.target.value)}
+                                onBlur={() => updateSexe(reg.id, editingSexeValue)}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    updateSexe(reg.id, editingSexeValue);
+                                  } else if (e.key === 'Escape') {
+                                    setEditingSexeId(null);
+                                    setEditingSexeValue('');
+                                  }
+                                }}
+                                autoFocus
+                                className="w-full px-2 py-1 border border-blue-400 rounded text-sm"
+                              >
+                                <option value="">Non spécifié</option>
+                                <option value="H">Homme</option>
+                                <option value="F">Femme</option>
+                              </select>
+                            ) : (
+                              <span className={`px-2 py-1 rounded text-xs font-medium ${
+                                reg.sexe === 'H'
+                                  ? 'bg-blue-100 text-blue-700'
+                                  : reg.sexe === 'F'
+                                  ? 'bg-pink-100 text-pink-700'
+                                  : 'text-gray-500'
+                              }`}>
+                                {reg.sexe === 'H' ? 'Homme' : reg.sexe === 'F' ? 'Femme' : '-'}
+                              </span>
+                            )}
+                          </TableCell>
                           <TableCell>
                             {reg.horaire ? (
                               <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-medium">
