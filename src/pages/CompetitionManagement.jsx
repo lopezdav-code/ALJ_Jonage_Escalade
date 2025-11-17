@@ -694,6 +694,51 @@ const CompetitionManagement = () => {
           </Card>
         </motion.div>
 
+        {/* Statistiques par catégorie */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25 }}
+          className="grid grid-cols-1 md:grid-cols-4 gap-4"
+        >
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-2xl font-bold text-blue-600">
+                {registrations.filter(r => r.horaire === 'matin' && r.type_inscription === 'Compétition').length}
+              </div>
+              <p className="text-sm text-muted-foreground">Compétition le matin</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-2xl font-bold text-indigo-600">
+                {registrations.filter(r => r.horaire === 'après-midi' && r.type_inscription === 'Compétition').length}
+              </div>
+              <p className="text-sm text-muted-foreground">Compétition l'après-midi</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-2xl font-bold text-purple-600">
+                {registrations.filter(r => r.type_inscription === 'Buvette').length}
+              </div>
+              <p className="text-sm text-muted-foreground">Buvette</p>
+              <p className="text-lg font-bold text-purple-600 mt-2">
+                {registrations.filter(r => r.type_inscription === 'Buvette')
+                  .reduce((sum, r) => sum + (r.montant_tarif || 0), 0).toFixed(2)} €
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-2xl font-bold text-emerald-600">
+                {registrations.reduce((sum, r) => sum + (r.montant_tarif || 0), 0).toFixed(2)} €
+              </div>
+              <p className="text-sm text-muted-foreground">Total compétition</p>
+            </CardContent>
+          </Card>
+        </motion.div>
+
         {/* Filtres et recherche */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
