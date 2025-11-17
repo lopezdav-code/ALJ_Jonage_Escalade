@@ -213,17 +213,22 @@ const CompetitionManagement = () => {
 
   // Convertir le sexe depuis le format Excel au format BDD
   const convertSexeFormat = (sexeValue) => {
-    if (!sexeValue) return null;
-    const sexeStr = String(sexeValue).trim().toLowerCase();
+    try {
+      if (sexeValue === null || sexeValue === undefined || sexeValue === '') return null;
+      const sexeStr = String(sexeValue).trim().toLowerCase();
 
-    if (sexeStr === 'masculin' || sexeStr === 'homme' || sexeStr === 'h' || sexeStr === 'm') {
-      return 'H';
-    } else if (sexeStr === 'féminin' || sexeStr === 'feminin' || sexeStr === 'femme' || sexeStr === 'f') {
-      return 'F';
-    } else if (sexeStr === 'mixte' || sexeStr === 'mix' || sexeStr === 'autre') {
-      return null; // Pas de genre spécifié pour mixte
+      if (sexeStr === 'masculin' || sexeStr === 'homme' || sexeStr === 'h' || sexeStr === 'm') {
+        return 'H';
+      } else if (sexeStr === 'féminin' || sexeStr === 'feminin' || sexeStr === 'femme' || sexeStr === 'f') {
+        return 'F';
+      } else if (sexeStr === 'mixte' || sexeStr === 'mix' || sexeStr === 'autre') {
+        return null; // Pas de genre spécifié pour mixte
+      }
+      return null;
+    } catch (error) {
+      console.warn('Erreur lors de la conversion du sexe:', error);
+      return null;
     }
-    return null;
   };
 
   // Mapper un club selon la BDD
@@ -553,7 +558,7 @@ const CompetitionManagement = () => {
           code_promo: row['Code Promo'] || null,
           montant_code_promo: parseFloat(row['Montant code promo']) || null,
           date_naissance: dateNaissance,
-          sexe: convertSexeFormat(row['Sexe']),
+          sexe: convertSexeFormat(row['Sexe'] || row['sexe'] || null),
           club: mapClubName(row['Club']) || null,
           numero_licence_ffme: row['Numéro de licence FFME'] || row['Numero de licence FFME'] || null,
           horaire: horaire,
