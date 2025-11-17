@@ -580,6 +580,66 @@ const CompetitionManagement = () => {
     }
   };
 
+  // Supprimer les lignes sélectionnées
+  const bulkDeleteRegistrations = async () => {
+    if (selectedIds.length === 0) return;
+
+    if (!window.confirm(`Êtes-vous sûr de vouloir supprimer ${selectedIds.length} inscription(s) ? Cette action est irréversible.`)) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('competition_registrations')
+        .delete()
+        .in('id', selectedIds);
+
+      if (error) throw error;
+
+      toast({
+        title: "Succès",
+        description: `${selectedIds.length} inscription(s) supprimée(s).`
+      });
+      fetchRegistrations();
+      setSelectedIds([]);
+    } catch (error) {
+      console.error('Error deleting registrations:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de supprimer les inscriptions.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Marquer les sélectionnés comme non imprimés
+  const bulkMarkAsNotPrinted = async () => {
+    if (selectedIds.length === 0) return;
+
+    try {
+      const { error } = await supabase
+        .from('competition_registrations')
+        .update({ deja_imprimee: false })
+        .in('id', selectedIds);
+
+      if (error) throw error;
+
+      toast({
+        title: "Succès",
+        description: `${selectedIds.length} inscription(s) marquée(s) comme non imprimée(s).`
+      });
+      fetchRegistrations();
+      setSelectedIds([]);
+    } catch (error) {
+      console.error('Error updating registrations:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de mettre à jour les inscriptions.",
+        variant: "destructive"
+      });
+    }
+  };
+
   if (authLoading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -877,8 +937,44 @@ const CompetitionManagement = () => {
                     : 'Aucune inscription. Importez un fichier Excel pour commencer.'}
                 </div>
               ) : (
-                <div className="overflow-x-auto">
-                  <Table>
+                <>
+                  {/* Barre d'actions en masse */}
+                  {selectedIds.length > 0 && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-between"
+                    >
+                      <span className="text-sm font-medium text-blue-900">
+                        {selectedIds.length} inscription(s) sélectionnée(s)
+                      </span>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={bulkMarkAsNotPrinted}
+                          className="text-orange-600 hover:text-orange-700 border-orange-200 hover:bg-orange-50"
+                          title="Marquer comme non imprimé"
+                        >
+                          <XCircle className="w-4 h-4 mr-1" />
+                          Non imprimé
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={bulkDeleteRegistrations}
+                          title="Supprimer les sélectionnés"
+                        >
+                          <Trash2 className="w-4 h-4 mr-1" />
+                          Supprimer
+                        </Button>
+                      </div>
+                    </motion.div>
+                  )}
+
+                  <div className="overflow-x-auto">
+                    <Table>
                     <TableHeader>
                       <TableRow>
                         <TableHead className="w-12">
@@ -969,7 +1065,8 @@ const CompetitionManagement = () => {
                       ))}
                     </TableBody>
                   </Table>
-                </div>
+                  </div>
+                </>
               )}
             </CardContent>
           </Card>
