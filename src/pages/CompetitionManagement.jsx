@@ -243,7 +243,9 @@ const CompetitionManagement = () => {
   const isClubMapped = (clubName) => {
     if (!clubName) return false;
     const trimmed = String(clubName).trim();
-    return clubMappings.some(m => m.original_name === trimmed);
+    // Un club est mappé s'il existe comme original_name (non mappé mais dans la table)
+    // OU comme mapped_name (déjà mappé dans les inscriptions)
+    return clubMappings.some(m => m.original_name === trimmed || m.mapped_name === trimmed);
   };
 
   // Ajouter ou modifier un mapping
