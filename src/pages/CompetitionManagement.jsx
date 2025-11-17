@@ -1793,6 +1793,7 @@ const CompetitionManagement = () => {
                         <TableHead>Référence</TableHead>
                         <TableHead>Nom</TableHead>
                         <TableHead>Prénom</TableHead>
+                        <TableHead>Catégorie d'Âge</TableHead>
                         <TableHead>Sexe</TableHead>
                         <TableHead>Horaire</TableHead>
                         <TableHead>Type d'inscription</TableHead>
@@ -1825,6 +1826,29 @@ const CompetitionManagement = () => {
                             {reg.nom_participant?.toUpperCase()}
                           </TableCell>
                           <TableCell>{reg.prenom_participant}</TableCell>
+                          <TableCell>
+                            {reg.date_naissance ? (
+                              <span className={`px-2 py-1 rounded text-xs font-medium ${
+                                getCategory(reg.date_naissance) === 'U11'
+                                  ? 'bg-green-100 text-green-700'
+                                  : getCategory(reg.date_naissance) === 'U13'
+                                  ? 'bg-blue-100 text-blue-700'
+                                  : getCategory(reg.date_naissance) === 'U15'
+                                  ? 'bg-indigo-100 text-indigo-700'
+                                  : getCategory(reg.date_naissance) === 'U17'
+                                  ? 'bg-purple-100 text-purple-700'
+                                  : getCategory(reg.date_naissance) === 'U19'
+                                  ? 'bg-pink-100 text-pink-700'
+                                  : getCategory(reg.date_naissance) === 'Sénior'
+                                  ? 'bg-orange-100 text-orange-700'
+                                  : 'bg-gray-100 text-gray-700'
+                              }`}>
+                                {getCategory(reg.date_naissance)}
+                              </span>
+                            ) : (
+                              <span className="text-gray-400">-</span>
+                            )}
+                          </TableCell>
                           <TableCell
                             className="cursor-pointer hover:bg-blue-50 transition-colors"
                             onClick={() => {
