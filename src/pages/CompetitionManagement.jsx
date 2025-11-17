@@ -397,6 +397,20 @@ const CompetitionManagement = () => {
     return Array.from(fileNames).sort();
   }, [registrations]);
 
+  // Calculer les statistiques par club
+  const clubStats = useMemo(() => {
+    const stats = {};
+    registrations.forEach(reg => {
+      if (reg.club) {
+        if (!stats[reg.club]) {
+          stats[reg.club] = 0;
+        }
+        stats[reg.club]++;
+      }
+    });
+    return stats;
+  }, [registrations]);
+
   // Calculer la liste des clubs uniques
   const uniqueClubs = useMemo(() => {
     const clubs = new Set(
@@ -411,20 +425,6 @@ const CompetitionManagement = () => {
       return countB - countA;
     });
   }, [registrations, clubStats]);
-
-  // Calculer les statistiques par club
-  const clubStats = useMemo(() => {
-    const stats = {};
-    registrations.forEach(reg => {
-      if (reg.club) {
-        if (!stats[reg.club]) {
-          stats[reg.club] = 0;
-        }
-        stats[reg.club]++;
-      }
-    });
-    return stats;
-  }, [registrations]);
 
   // Fonction pour éditer un club
   const updateClub = async (registrationId, newClubName) => {
