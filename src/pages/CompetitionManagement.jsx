@@ -404,8 +404,13 @@ const CompetitionManagement = () => {
         .filter(reg => reg.club)
         .map(reg => reg.club)
     );
-    return Array.from(clubs).sort();
-  }, [registrations]);
+    // Trier les clubs par nombre de personnes (décroissant)
+    return Array.from(clubs).sort((a, b) => {
+      const countA = clubStats[a] || 0;
+      const countB = clubStats[b] || 0;
+      return countB - countA;
+    });
+  }, [registrations, clubStats]);
 
   // Calculer les statistiques par club
   const clubStats = useMemo(() => {
@@ -446,6 +451,18 @@ const CompetitionManagement = () => {
         variant: "destructive"
       });
     }
+  };
+
+  // Réinitialiser tous les filtres
+  const clearAllFilters = () => {
+    setSearchTerm('');
+    setFilterPrinted('all');
+    setFilterHoraire('all');
+    setFilterTypeInscription('all');
+    setFilterFileName('all');
+    setFilterClub('all');
+    setFilterUnmappedClubs(false);
+    setSelectedIds([]);
   };
 
   // Sélection/désélection
@@ -1048,7 +1065,7 @@ const CompetitionManagement = () => {
               <CardTitle>Recherche et Filtres</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex gap-4">
+              <div className="flex gap-4 items-start">
                 <div className="flex-1 relative">
                   <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
                   <Input
@@ -1058,6 +1075,14 @@ const CompetitionManagement = () => {
                     className="pl-10"
                   />
                 </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={clearAllFilters}
+                  title="Réinitialiser tous les filtres et recherches"
+                >
+                  Réinitialiser filtres
+                </Button>
                 <div className="flex gap-2 flex-wrap">
                   {/* Filtres d'impression */}
                   <div className="flex gap-2">
