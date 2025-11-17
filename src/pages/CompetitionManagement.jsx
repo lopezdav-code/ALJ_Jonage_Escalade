@@ -26,6 +26,40 @@ import {
 import * as XLSX from 'xlsx';
 import { jsPDF } from 'jspdf';
 
+// Matrice de correspondance des clubs
+const CLUB_MAPPING = {
+  "Corb'Alp": "Corb'Alp",
+  "Mousteclip": "Mousteclip",
+  "CORB'ALP": "Corb'Alp",
+  "CESV": "CESV ESCALADE",
+  "ALJ": "ALJ",
+  "lyon escalade": "lyon escalade",
+  "Amicale laïque d'Anse": "Amicale laïque d'Anse",
+  "AJJ": "ALJ",
+  "Lyon escalade sportive": "Lyon escalade sportive",
+  "Jonage": "ALJ",
+  "CESV ESCALADE": "CESV ESCALADE",
+  "AL Anse": "Amicale laïque d'Anse",
+  "AL Jonage": "ALJ",
+  "espace escalade": "espace escalade",
+  "Les 5 mousquetons": "Les 5 mousquetons",
+  "Meyzieu": "Meyzieu Escalade et Montagne",
+  "Meyzieu Escalade": "Meyzieu Escalade et Montagne",
+  "CHASSIEU AVENTURE": "CHASSIEU AVENTURE",
+  "Meyzieu Escalade et Montagne": "Meyzieu Escalade et Montagne",
+  "Vertige": "Vertige",
+  "Al Escalade Anse": "Amicale laïque d'Anse",
+  "Club vertige": "Club vertige",
+  "HORS CLUB": "HORS CLUB"
+};
+
+// Fonction pour mapper un club
+const mapClubName = (clubName) => {
+  if (!clubName) return clubName;
+  const trimmed = String(clubName).trim();
+  return CLUB_MAPPING[trimmed] || trimmed;
+};
+
 const CompetitionManagement = () => {
   const { isAdmin, loading: authLoading } = useAuth();
   const { toast } = useToast();
@@ -39,6 +73,9 @@ const CompetitionManagement = () => {
   const [filterHoraire, setFilterHoraire] = useState('all'); // 'all', 'matin', 'après-midi'
   const [filterTypeInscription, setFilterTypeInscription] = useState('all'); // 'all', 'Compétition', 'Buvette'
   const [filterFileName, setFilterFileName] = useState('all'); // 'all' ou nom du fichier
+  const [filterClub, setFilterClub] = useState('all'); // 'all' ou nom du club
+  const [editingClubId, setEditingClubId] = useState(null);
+  const [editingClubValue, setEditingClubValue] = useState('');
 
   // Charger les inscriptions
   const fetchRegistrations = async () => {
@@ -188,7 +225,7 @@ const CompetitionManagement = () => {
           code_promo: row['Code Promo'] || null,
           montant_code_promo: parseFloat(row['Montant code promo']) || null,
           date_naissance: dateNaissance,
-          club: row['Club'] || null,
+          club: mapClubName(row['Club']) || null,
           numero_licence_ffme: row['Numéro de licence FFME'] || row['Numero de licence FFME'] || null,
           horaire: horaire,
           type_inscription: type_inscription,
@@ -324,8 +361,13 @@ const CompetitionManagement = () => {
       filtered = filtered.filter(reg => reg.file_name === filterFileName);
     }
 
+    // Filtre par club
+    if (filterClub !== 'all') {
+      filtered = filtered.filter(reg => reg.club === filterClub);
+    }
+
     return filtered;
-  }, [registrations, searchTerm, filterPrinted, filterHoraire, filterTypeInscription, filterFileName]);
+  }, [registrations, searchTerm, filterPrinted, filterHoraire, filterTypeInscription, filterFileName, filterClub]);
 
   // Calculer la liste des fichiers uniques uploadés
   const uniqueFileNames = useMemo(() => {
@@ -336,6 +378,57 @@ const CompetitionManagement = () => {
     );
     return Array.from(fileNames).sort();
   }, [registrations]);
+
+  // Calculer la liste des clubs uniques
+  const uniqueClubs = useMemo(() => {
+    const clubs = new Set(
+      registrations
+        .filter(reg => reg.club)
+        .map(reg => reg.club)
+    );
+    return Array.from(clubs).sort();
+  }, [registrations]);
+
+  // Calculer les statistiques par club
+  const clubStats = useMemo(() => {
+    const stats = {};
+    registrations.forEach(reg => {
+      if (reg.club) {
+        if (!stats[reg.club]) {
+          stats[reg.club] = 0;
+        }
+        stats[reg.club]++;
+      }
+    });
+    return stats;
+  }, [registrations]);
+
+  // Fonction pour éditer un club
+  const updateClub = async (registrationId, newClubName) => {
+    try {
+      const { error } = await supabase
+        .from('competition_registrations')
+        .update({ club: newClubName })
+        .eq('id', registrationId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Succès",
+        description: "Club mis à jour."
+      });
+      fetchRegistrations();
+      setEditingClubId(null);
+      setEditingClubValue('');
+    } catch (error) {
+      console.error('Error updating club:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de mettre à jour le club.",
+        variant: "destructive"
+      });
+    }
+  };
 
   // Sélection/désélection
   const toggleSelectAll = () => {
@@ -859,6 +952,36 @@ const CompetitionManagement = () => {
           </Card>
         </motion.div>
 
+        {/* Statistiques par club */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.35 }}
+        >
+          <Card>
+            <CardHeader>
+              <CardTitle>Participants par club ({uniqueClubs.length})</CardTitle>
+              <CardDescription>Nombre de personnes inscrites par club</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {uniqueClubs.map((club) => (
+                  <div
+                    key={club}
+                    className="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-lg cursor-pointer hover:bg-blue-100 transition-colors"
+                    onClick={() => setFilterClub(filterClub === club ? 'all' : club)}
+                  >
+                    <span className="font-medium text-sm">{club}</span>
+                    <span className="bg-blue-600 text-white px-2 py-1 rounded text-xs font-bold">
+                      {clubStats[club]}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+
         {/* Filtres et recherche */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -1101,7 +1224,35 @@ const CompetitionManagement = () => {
                             </span>
                           </TableCell>
                           <TableCell>{reg.montant_tarif ? `${reg.montant_tarif} €` : '-'}</TableCell>
-                          <TableCell>{reg.club || '-'}</TableCell>
+                          <TableCell
+                            className="cursor-pointer hover:bg-blue-50 transition-colors relative"
+                            onClick={() => {
+                              setEditingClubId(reg.id);
+                              setEditingClubValue(reg.club || '');
+                            }}
+                            title="Cliquer pour éditer le club"
+                          >
+                            {editingClubId === reg.id ? (
+                              <input
+                                type="text"
+                                value={editingClubValue}
+                                onChange={(e) => setEditingClubValue(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    updateClub(reg.id, editingClubValue);
+                                  } else if (e.key === 'Escape') {
+                                    setEditingClubId(null);
+                                    setEditingClubValue('');
+                                  }
+                                }}
+                                onBlur={() => updateClub(reg.id, editingClubValue)}
+                                autoFocus
+                                className="w-full px-2 py-1 border border-blue-400 rounded text-sm"
+                              />
+                            ) : (
+                              <span>{reg.club || '-'}</span>
+                            )}
+                          </TableCell>
                           <TableCell>{reg.numero_licence_ffme || '-'}</TableCell>
                           <TableCell
                             className="text-center cursor-pointer hover:bg-gray-100 transition-colors"
