@@ -1132,12 +1132,32 @@ const CompetitionManagement = () => {
                 </div>
                 <div>
                   <Label htmlFor="mapped-name">Nom standardisé</Label>
-                  <Input
-                    id="mapped-name"
-                    value={newMappingMapped}
-                    onChange={(e) => setNewMappingMapped(e.target.value)}
-                    placeholder="ex: Corb'Alp"
-                  />
+                  <div className="flex gap-2">
+                    <Input
+                      id="mapped-name"
+                      value={newMappingMapped}
+                      onChange={(e) => setNewMappingMapped(e.target.value)}
+                      placeholder="ex: Corb'Alp"
+                      className="flex-1"
+                    />
+                    <select
+                      value=""
+                      onChange={(e) => {
+                        if (e.target.value) {
+                          setNewMappingMapped(e.target.value);
+                        }
+                      }}
+                      className="px-3 py-2 border border-input rounded-md bg-background text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <option value="">📋 Clubs</option>
+                      {Array.from(new Set(clubMappings.map(m => m.mapped_name))).sort().map((mappedName) => (
+                        <option key={mappedName} value={mappedName}>
+                          {mappedName}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">Sélectionnez un club ou saisissez un nouveau</p>
                 </div>
               </CardContent>
               <CardFooter className="gap-2">
