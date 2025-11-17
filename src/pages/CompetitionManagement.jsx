@@ -46,6 +46,7 @@ const CompetitionManagement = () => {
   const [filterFileName, setFilterFileName] = useState('all'); // 'all' ou nom du fichier
   const [filterClub, setFilterClub] = useState('all'); // 'all' ou nom du club
   const [filterUnmappedClubs, setFilterUnmappedClubs] = useState(false); // true pour voir seulement les clubs non mappés
+  const [filterSexe, setFilterSexe] = useState('all'); // 'all', 'H', 'F', 'empty'
   const [editingClubId, setEditingClubId] = useState(null);
   const [editingClubValue, setEditingClubValue] = useState('');
   const [editingSexeId, setEditingSexeId] = useState(null);
@@ -605,8 +606,17 @@ const CompetitionManagement = () => {
       filtered = filtered.filter(reg => reg.club && !isClubMapped(reg.club));
     }
 
+    // Filtre par sexe
+    if (filterSexe !== 'all') {
+      if (filterSexe === 'empty') {
+        filtered = filtered.filter(reg => !reg.sexe);
+      } else {
+        filtered = filtered.filter(reg => reg.sexe === filterSexe);
+      }
+    }
+
     return filtered;
-  }, [registrations, searchTerm, filterPrinted, filterHoraire, filterTypeInscription, filterFileName, filterClub, filterUnmappedClubs]);
+  }, [registrations, searchTerm, filterPrinted, filterHoraire, filterTypeInscription, filterFileName, filterClub, filterUnmappedClubs, filterSexe]);
 
   // Calculer la liste des fichiers uniques uploadés
   const uniqueFileNames = useMemo(() => {
@@ -710,6 +720,7 @@ const CompetitionManagement = () => {
     setFilterFileName('all');
     setFilterClub('all');
     setFilterUnmappedClubs(false);
+    setFilterSexe('all');
     setSelectedIds([]);
   };
 
@@ -1480,6 +1491,38 @@ const CompetitionManagement = () => {
                       size="sm"
                     >
                       Buvette
+                    </Button>
+                  </div>
+
+                  {/* Filtres par Sexe */}
+                  <div className="flex gap-2">
+                    <Button
+                      variant={filterSexe === 'all' ? 'default' : 'outline'}
+                      onClick={() => setFilterSexe('all')}
+                      size="sm"
+                    >
+                      Tous sexes
+                    </Button>
+                    <Button
+                      variant={filterSexe === 'H' ? 'default' : 'outline'}
+                      onClick={() => setFilterSexe('H')}
+                      size="sm"
+                    >
+                      👨 Homme ({registrations.filter(r => r.sexe === 'H').length})
+                    </Button>
+                    <Button
+                      variant={filterSexe === 'F' ? 'default' : 'outline'}
+                      onClick={() => setFilterSexe('F')}
+                      size="sm"
+                    >
+                      👩 Femme ({registrations.filter(r => r.sexe === 'F').length})
+                    </Button>
+                    <Button
+                      variant={filterSexe === 'empty' ? 'default' : 'outline'}
+                      onClick={() => setFilterSexe('empty')}
+                      size="sm"
+                    >
+                      ❓ Vide ({registrations.filter(r => !r.sexe).length})
                     </Button>
                   </div>
                 </div>
