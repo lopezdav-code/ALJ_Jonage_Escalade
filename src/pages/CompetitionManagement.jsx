@@ -1078,178 +1078,6 @@ const CompetitionManagement = () => {
           </Card>
         </motion.div>
 
-        {/* Gestion du mapping des clubs */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.32 }}
-        >
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle>Gestion du mapping des clubs</CardTitle>
-                  <CardDescription>Gérez la correspondance des noms de clubs</CardDescription>
-                </div>
-                <Button
-                  onClick={() => setShowAddMappingModal(true)}
-                  size="sm"
-                  className="gap-1"
-                >
-                  <Plus className="w-4 h-4" />
-                  Ajouter un mapping
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Accordion type="single" collapsible className="w-full" defaultValue={unmappedClubsFromImport.length > 0 ? "unmapped" : "mappings"}>
-                {/* Accordéon des mappings existants */}
-                <AccordionItem value="mappings">
-                  <AccordionTrigger className="text-base font-semibold">
-                    📋 Mappings existants ({clubMappings.length})
-                  </AccordionTrigger>
-                  <AccordionContent>
-                    {mappingsLoading ? (
-                      <div className="flex justify-center py-8">
-                        <Loader2 className="w-6 h-6 animate-spin" />
-                      </div>
-                    ) : clubMappings.length === 0 ? (
-                      <div className="text-center py-8 text-muted-foreground">
-                        Aucun mapping configuré. Commencez par en ajouter un.
-                      </div>
-                    ) : (
-                      <div className="overflow-x-auto mt-4">
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead>Nom original</TableHead>
-                              <TableHead>Nom mappé</TableHead>
-                              <TableHead className="text-center w-24">Actions</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {clubMappings.map((mapping) => (
-                              <TableRow key={mapping.id}>
-                                <TableCell>
-                                  {editingMappingId === mapping.id ? (
-                                    <Input
-                                      value={editingMappingOriginal}
-                                      onChange={(e) => setEditingMappingOriginal(e.target.value)}
-                                      disabled
-                                      className="bg-muted"
-                                    />
-                                  ) : (
-                                    <span className="font-medium">{mapping.original_name}</span>
-                                  )}
-                                </TableCell>
-                                <TableCell>
-                                  {editingMappingId === mapping.id ? (
-                                    <Input
-                                      value={editingMappingMapped}
-                                      onChange={(e) => setEditingMappingMapped(e.target.value)}
-                                      placeholder="Nom mappé"
-                                    />
-                                  ) : (
-                                    mapping.mapped_name
-                                  )}
-                                </TableCell>
-                                <TableCell className="text-center space-x-1">
-                                  {editingMappingId === mapping.id ? (
-                                    <>
-                                      <Button
-                                        size="sm"
-                                        variant="ghost"
-                                        onClick={() => updateClubMapping(mapping.id, mapping.original_name, editingMappingMapped)}
-                                        title="Enregistrer"
-                                      >
-                                        ✓
-                                      </Button>
-                                      <Button
-                                        size="sm"
-                                        variant="ghost"
-                                        onClick={() => {
-                                          setEditingMappingId(null);
-                                          setEditingMappingOriginal('');
-                                          setEditingMappingMapped('');
-                                        }}
-                                        title="Annuler"
-                                      >
-                                        ✗
-                                      </Button>
-                                    </>
-                                  ) : (
-                                    <>
-                                      <Button
-                                        size="sm"
-                                        variant="ghost"
-                                        onClick={() => {
-                                          setEditingMappingId(mapping.id);
-                                          setEditingMappingOriginal(mapping.original_name);
-                                          setEditingMappingMapped(mapping.mapped_name);
-                                        }}
-                                        title="Éditer"
-                                      >
-                                        <Edit2 className="w-4 h-4" />
-                                      </Button>
-                                      <Button
-                                        size="sm"
-                                        variant="ghost"
-                                        onClick={() => deleteClubMapping(mapping.id)}
-                                        title="Supprimer"
-                                        className="text-red-600 hover:text-red-700"
-                                      >
-                                        <IconX className="w-4 h-4" />
-                                      </Button>
-                                    </>
-                                  )}
-                                </TableCell>
-                              </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
-                      </div>
-                    )}
-                  </AccordionContent>
-                </AccordionItem>
-
-                {/* Accordéon des clubs non mappés */}
-                {unmappedClubsFromImport.length > 0 && (
-                  <AccordionItem value="unmapped">
-                    <AccordionTrigger className="text-base font-semibold text-amber-700">
-                      ⚠️ Clubs non mappés détectés ({unmappedClubsFromImport.length})
-                    </AccordionTrigger>
-                    <AccordionContent>
-                      <div className="space-y-2 mt-4">
-                        {unmappedClubsFromImport.map((club) => (
-                          <div
-                            key={club}
-                            className="flex items-center justify-between p-3 bg-amber-50 border border-amber-200 rounded-lg"
-                          >
-                            <span className="font-medium text-amber-900">{club}</span>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => {
-                                setNewMappingOriginal(club);
-                                setNewMappingMapped(club);
-                                setShowAddMappingModal(true);
-                              }}
-                              className="gap-1"
-                            >
-                              <Plus className="w-3 h-3" />
-                              Ajouter ce mapping
-                            </Button>
-                          </div>
-                        ))}
-                      </div>
-                    </AccordionContent>
-                  </AccordionItem>
-                )}
-              </Accordion>
-            </CardContent>
-          </Card>
-        </motion.div>
-
         {/* Modal d'ajout de mapping */}
         {showAddMappingModal && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -1670,6 +1498,178 @@ const CompetitionManagement = () => {
                   </div>
                 </>
               )}
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* Gestion du mapping des clubs */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.42 }}
+        >
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Gestion du mapping des clubs</CardTitle>
+                  <CardDescription>Gérez la correspondance des noms de clubs</CardDescription>
+                </div>
+                <Button
+                  onClick={() => setShowAddMappingModal(true)}
+                  size="sm"
+                  className="gap-1"
+                >
+                  <Plus className="w-4 h-4" />
+                  Ajouter un mapping
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Accordion type="single" collapsible className="w-full">
+                {/* Accordéon des mappings existants */}
+                <AccordionItem value="mappings">
+                  <AccordionTrigger className="text-base font-semibold">
+                    📋 Mappings existants ({clubMappings.length})
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    {mappingsLoading ? (
+                      <div className="flex justify-center py-8">
+                        <Loader2 className="w-6 h-6 animate-spin" />
+                      </div>
+                    ) : clubMappings.length === 0 ? (
+                      <div className="text-center py-8 text-muted-foreground">
+                        Aucun mapping configuré. Commencez par en ajouter un.
+                      </div>
+                    ) : (
+                      <div className="overflow-x-auto mt-4">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Nom original</TableHead>
+                              <TableHead>Nom mappé</TableHead>
+                              <TableHead className="text-center w-24">Actions</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {clubMappings.map((mapping) => (
+                              <TableRow key={mapping.id}>
+                                <TableCell>
+                                  {editingMappingId === mapping.id ? (
+                                    <Input
+                                      value={editingMappingOriginal}
+                                      onChange={(e) => setEditingMappingOriginal(e.target.value)}
+                                      disabled
+                                      className="bg-muted"
+                                    />
+                                  ) : (
+                                    <span className="font-medium">{mapping.original_name}</span>
+                                  )}
+                                </TableCell>
+                                <TableCell>
+                                  {editingMappingId === mapping.id ? (
+                                    <Input
+                                      value={editingMappingMapped}
+                                      onChange={(e) => setEditingMappingMapped(e.target.value)}
+                                      placeholder="Nom mappé"
+                                    />
+                                  ) : (
+                                    mapping.mapped_name
+                                  )}
+                                </TableCell>
+                                <TableCell className="text-center space-x-1">
+                                  {editingMappingId === mapping.id ? (
+                                    <>
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        onClick={() => updateClubMapping(mapping.id, mapping.original_name, editingMappingMapped)}
+                                        title="Enregistrer"
+                                      >
+                                        ✓
+                                      </Button>
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        onClick={() => {
+                                          setEditingMappingId(null);
+                                          setEditingMappingOriginal('');
+                                          setEditingMappingMapped('');
+                                        }}
+                                        title="Annuler"
+                                      >
+                                        ✗
+                                      </Button>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        onClick={() => {
+                                          setEditingMappingId(mapping.id);
+                                          setEditingMappingOriginal(mapping.original_name);
+                                          setEditingMappingMapped(mapping.mapped_name);
+                                        }}
+                                        title="Éditer"
+                                      >
+                                        <Edit2 className="w-4 h-4" />
+                                      </Button>
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        onClick={() => deleteClubMapping(mapping.id)}
+                                        title="Supprimer"
+                                        className="text-red-600 hover:text-red-700"
+                                      >
+                                        <IconX className="w-4 h-4" />
+                                      </Button>
+                                    </>
+                                  )}
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    )}
+                  </AccordionContent>
+                </AccordionItem>
+
+                {/* Accordéon des clubs non mappés */}
+                {unmappedClubsFromImport.length > 0 && (
+                  <AccordionItem value="unmapped">
+                    <AccordionTrigger className="text-base font-semibold text-amber-700">
+                      ⚠️ Clubs non mappés détectés ({unmappedClubsFromImport.length})
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <div className="space-y-2 mt-4">
+                        {unmappedClubsFromImport.map((club) => (
+                          <div
+                            key={club}
+                            className="flex items-center justify-between p-3 bg-amber-50 border border-amber-200 rounded-lg"
+                          >
+                            <span className="font-medium text-amber-900">{club}</span>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setNewMappingOriginal(club);
+                                setNewMappingMapped(club);
+                                setShowAddMappingModal(true);
+                              }}
+                              className="gap-1"
+                            >
+                              <Plus className="w-3 h-3" />
+                              Ajouter ce mapping
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                )}
+              </Accordion>
             </CardContent>
           </Card>
         </motion.div>
