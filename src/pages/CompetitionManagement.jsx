@@ -77,6 +77,11 @@ const CompetitionManagement = () => {
   const [filterUnknownMappings, setFilterUnknownMappings] = useState(false);
   const [isEditingMode, setIsEditingMode] = useState(false);
 
+  // Options pour l'export PDF
+  const [pdfFormat, setPdfFormat] = useState('a5'); // 'a4' ou 'a5'
+  const [pdfCardsPerPage, setPdfCardsPerPage] = useState(1); // 1 ou 2
+  const [showPdfOptions, setShowPdfOptions] = useState(false);
+
   // Charger les inscriptions
   const fetchRegistrations = async () => {
     setLoading(true);
@@ -886,11 +891,52 @@ const CompetitionManagement = () => {
 
     try {
       const selectedRegs = registrations.filter(r => selectedIds.includes(r.id));
-      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a5' });
+
+      // Déterminer les paramètres en fonction du format et du nombre de fiches par page
+      const format = pdfFormat === 'a4' ? 'a4' : 'a5';
+      const cardsPerPage = pdfCardsPerPage === 2 ? 2 : 1;
+
+      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format });
       const pageHeight = doc.internal.pageSize.height;
       const pageWidth = doc.internal.pageSize.width;
-      const margin = 7;
-      const cellHeight = 5;
+
+      // Ajuster les paramètres en fonction du format et du nombre de fiches
+      let margin, cellHeight, cardHeight, headerSize, dossardSize, logoSize;
+
+      if (format === 'a4' && cardsPerPage === 1) {
+        // A4 - 1 fiche par page
+        margin = 10;
+        cellHeight = 5;
+        cardHeight = pageHeight - 2 * margin;
+        headerSize = 36;
+        dossardSize = 36;
+        logoSize = 30;
+      } else if (format === 'a4' && cardsPerPage === 2) {
+        // A4 - 2 fiches par page
+        margin = 8;
+        cellHeight = 4.5;
+        cardHeight = (pageHeight - 3 * margin) / 2;
+        headerSize = 26;
+        dossardSize = 26;
+        logoSize = 22;
+      } else if (format === 'a5' && cardsPerPage === 1) {
+        // A5 - 1 fiche par page
+        margin = 7;
+        cellHeight = 4;
+        cardHeight = pageHeight - 2 * margin;
+        headerSize = 26;
+        dossardSize = 26;
+        logoSize = 22;
+      } else {
+        // A5 - 2 fiches par page (non valide, mais gérer quand même)
+        margin = 5;
+        cellHeight = 3.5;
+        cardHeight = (pageHeight - 3 * margin) / 2;
+        headerSize = 18;
+        dossardSize = 18;
+        logoSize = 16;
+      }
+
       let currentY = margin;
 
       // Fonction helper pour charger une image
@@ -933,87 +979,109 @@ const CompetitionManagement = () => {
         11, 11, 11, 13, 13, 13, 13, 13, 15, 15, 15, 15, 15, 15, 17, 17, 17, 17, 17, 17, 19, 19
       ];
 
-      selectedRegs.forEach((reg, index) => {
-        if (index > 0) {
-          doc.addPage();
-          currentY = margin;
-        }
+      // Fonction pour ajouter une fiche
+      const addCard = (reg, cardStartY) => {
+        const cardMargin = margin;
+        let y = cardStartY;
 
         // === NUMÉRO DE DOSSARD en gros au-dessus du nom ===
         doc.setFont('helvetica', 'bold');
-        doc.setFontSize(26);
-        doc.text(String(reg.numero_dossart || '-'), margin + 8, margin + 12);
+        doc.setFontSize(dossardSize);
+        doc.text(String(reg.numero_dossart || '-'), cardMargin + 8, y + 12);
 
-        // Initialiser currentY pour le texte "Nom"
-        currentY = margin + 28;
+        // Initialiser y pour le texte "Nom"
+        y = cardStartY + 28;
 
         // === LOGO en haut à droite ===
         if (logoImage) {
           try {
-            doc.addImage(logoImage, 'JPEG', pageWidth - margin - 22, currentY - 5, 22, 22);
+            doc.addImage(logoImage, 'JPEG', pageWidth - cardMargin - logoSize, y - 5, logoSize, logoSize);
           } catch (error) {
             console.warn('Erreur lors de l\'ajout du logo:', error);
           }
         }
 
         // === HEADER: Informations participant ===
-        const colWidth = (pageWidth - 2 * margin) / 2;
-        const fieldHeight = 4;
+        const colWidth = (pageWidth - 2 * cardMargin) / 2;
+        const fieldHeight = cellHeight;
 
         // Ligne: Nom
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(9);
-        doc.text('Nom', margin, currentY);
+        doc.text('Nom', cardMargin, y);
         doc.setFont('helvetica', 'normal');
-        doc.text(reg.nom_participant?.toUpperCase() || '', margin + 30, currentY);
-        doc.line(margin + 30, currentY + 0.8, margin + colWidth, currentY + 0.8);
-        currentY += fieldHeight;
+        doc.text(reg.nom_participant?.toUpperCase() || '', cardMargin + 30, y);
+        doc.line(cardMargin + 30, y + 0.8, cardMargin + colWidth, y + 0.8);
+        y += fieldHeight;
 
         // Ligne: Prénom
         doc.setFont('helvetica', 'bold');
-        doc.text('Prénom', margin, currentY);
+        doc.text('Prénom', cardMargin, y);
         doc.setFont('helvetica', 'normal');
-        doc.text(reg.prenom_participant || '', margin + 30, currentY);
-        doc.line(margin + 30, currentY + 0.8, margin + colWidth, currentY + 0.8);
-        currentY += fieldHeight;
+        doc.text(reg.prenom_participant || '', cardMargin + 30, y);
+        doc.line(cardMargin + 30, y + 0.8, cardMargin + colWidth, y + 0.8);
+        y += fieldHeight;
 
         // Ligne: Sexe
         doc.setFont('helvetica', 'bold');
-        doc.text('Sexe', margin, currentY);
+        doc.text('Sexe', cardMargin, y);
         doc.setFont('helvetica', 'normal');
         const sexeDisplay = reg.sexe === 'H' ? 'Homme' : reg.sexe === 'F' ? 'Femme' : '';
-        doc.text(sexeDisplay, margin + 30, currentY);
-        doc.line(margin + 30, currentY + 0.8, margin + colWidth, currentY + 0.8);
-        currentY += fieldHeight;
+        doc.text(sexeDisplay, cardMargin + 30, y);
+        doc.line(cardMargin + 30, y + 0.8, cardMargin + colWidth, y + 0.8);
+        y += fieldHeight;
 
         // Ligne: Club
         doc.setFont('helvetica', 'bold');
-        doc.text('Club', margin, currentY);
+        doc.text('Club', cardMargin, y);
         doc.setFont('helvetica', 'normal');
-        doc.text(reg.club || '', margin + 30, currentY);
-        doc.line(margin + 30, currentY + 0.8, margin + colWidth, currentY + 0.8);
-        currentY += fieldHeight;
+        doc.text(reg.club || '', cardMargin + 30, y);
+        doc.line(cardMargin + 30, y + 0.8, cardMargin + colWidth, y + 0.8);
+        y += fieldHeight;
 
         // Ligne: Catégorie
         doc.setFont('helvetica', 'bold');
-        doc.text('Catégorie', margin, currentY);
+        doc.text('Catégorie', cardMargin, y);
         doc.setFont('helvetica', 'normal');
-        doc.text(getCategory(reg.date_naissance) || '', margin + 30, currentY);
-        doc.line(margin + 30, currentY + 0.8, margin + colWidth, currentY + 0.8);
-        currentY += fieldHeight;
+        doc.text(getCategory(reg.date_naissance) || '', cardMargin + 30, y);
+        doc.line(cardMargin + 30, y + 0.8, cardMargin + colWidth, y + 0.8);
+        y += fieldHeight;
 
         // Espace
-        currentY += 2;
+        y += 2;
 
         // === TABLEAU DE SCORING - IMAGE ===
         if (scoringTableImage) {
           try {
-            doc.addImage(scoringTableImage, 'PNG', margin, currentY, pageWidth - 2 * margin, 40);
+            const imageHeight = cardsPerPage === 2 ? 30 : 40;
+            doc.addImage(scoringTableImage, 'PNG', cardMargin, y, pageWidth - 2 * cardMargin, imageHeight);
           } catch (error) {
             console.warn('Erreur lors de l\'ajout de l\'image au PDF:', error);
           }
         }
-      });
+      };
+
+      // Ajouter les fiches
+      if (cardsPerPage === 1) {
+        // 1 fiche par page
+        selectedRegs.forEach((reg, index) => {
+          if (index > 0) {
+            doc.addPage();
+          }
+          addCard(reg, margin);
+        });
+      } else {
+        // 2 fiches par page
+        for (let i = 0; i < selectedRegs.length; i += 2) {
+          if (i > 0) {
+            doc.addPage();
+          }
+          addCard(selectedRegs[i], margin);
+          if (i + 1 < selectedRegs.length) {
+            addCard(selectedRegs[i + 1], margin + cardHeight + margin);
+          }
+        }
+      }
 
       // Sauvegarder le PDF
       doc.save(`dossards_competition_${new Date().toISOString().split('T')[0]}.pdf`);
@@ -1714,7 +1782,7 @@ const CompetitionManagement = () => {
                   <span className="text-sm text-blue-700">
                     {selectedIds.length} inscription(s) sélectionnée(s)
                   </span>
-                  <Button onClick={generatePDF} size="sm">
+                  <Button onClick={() => setShowPdfOptions(true)} size="sm">
                     <Printer className="w-4 h-4 mr-2" />
                     Générer PDF
                   </Button>
@@ -2136,6 +2204,89 @@ const CompetitionManagement = () => {
                       </DialogContent>
                     </Dialog>
                   )}
+
+                  {/* Dialog Options PDF */}
+                  <Dialog open={showPdfOptions} onOpenChange={setShowPdfOptions}>
+                    <DialogContent className="max-w-md">
+                      <DialogHeader>
+                        <DialogTitle>Options d'export PDF</DialogTitle>
+                        <DialogDescription>
+                          Configurez le format et la disposition de vos dossards
+                        </DialogDescription>
+                      </DialogHeader>
+
+                      <div className="space-y-6">
+                        {/* Format du document */}
+                        <div className="space-y-3">
+                          <Label className="text-base font-semibold">Format du document</Label>
+                          <div className="flex gap-3">
+                            <Button
+                              variant={pdfFormat === 'a4' ? 'default' : 'outline'}
+                              onClick={() => setPdfFormat('a4')}
+                              className="flex-1"
+                            >
+                              A4
+                            </Button>
+                            <Button
+                              variant={pdfFormat === 'a5' ? 'default' : 'outline'}
+                              onClick={() => setPdfFormat('a5')}
+                              className="flex-1"
+                            >
+                              A5
+                            </Button>
+                          </div>
+                        </div>
+
+                        {/* Fiches par page */}
+                        <div className="space-y-3">
+                          <Label className="text-base font-semibold">Fiches par page</Label>
+                          <div className="flex gap-3">
+                            <Button
+                              variant={pdfCardsPerPage === 1 ? 'default' : 'outline'}
+                              onClick={() => setPdfCardsPerPage(1)}
+                              className="flex-1"
+                            >
+                              1 fiche
+                            </Button>
+                            <Button
+                              variant={pdfCardsPerPage === 2 ? 'default' : 'outline'}
+                              onClick={() => setPdfCardsPerPage(2)}
+                              className="flex-1"
+                            >
+                              2 fiches
+                            </Button>
+                          </div>
+                        </div>
+
+                        {/* Aperçu */}
+                        <div className="bg-gray-50 p-3 rounded border border-gray-200 text-sm">
+                          <p className="text-gray-700">
+                            📋 <span className="font-semibold">{pdfFormat.toUpperCase()}</span> - {pdfCardsPerPage} fiche{pdfCardsPerPage > 1 ? 's' : ''} par page
+                          </p>
+                        </div>
+
+                        {/* Boutons */}
+                        <div className="flex gap-2 pt-4">
+                          <Button
+                            variant="outline"
+                            onClick={() => setShowPdfOptions(false)}
+                            className="flex-1"
+                          >
+                            Annuler
+                          </Button>
+                          <Button
+                            onClick={() => {
+                              generatePDF();
+                              setShowPdfOptions(false);
+                            }}
+                            className="flex-1"
+                          >
+                            Générer PDF
+                          </Button>
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
                 </>
               )}
             </CardContent>
