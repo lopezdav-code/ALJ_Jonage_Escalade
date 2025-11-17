@@ -21,56 +21,13 @@ import {
   Printer,
   CheckCircle2,
   XCircle,
-  Download
+  Download,
+  Plus,
+  Edit2,
+  X as IconX
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { jsPDF } from 'jspdf';
-
-// Matrice de correspondance des clubs
-const CLUB_MAPPING = {
-  "Corb'Alp": "Corb'Alp",
-  "Mousteclip": "Mousteclip",
-  "CORB'ALP": "Corb'Alp",
-  "Corb'alp": "Corb'Alp",
-  "CESV": "CESV ESCALADE",
-  "ALJ": "ALJ",
-  "Alj": "ALJ",
-  "AL Jonage": "ALJ",
-  "lyon escalade": "lyon escalade",
-  "Amicale laïque d'Anse": "Amicale laïque d'Anse",
-  "Amicale laïque D'Anse": "Amicale laïque d'Anse",
-  "AJJ": "ALJ",
-  "Lyon escalade sportive": "Lyon escalade sportive",
-  "Jonage": "ALJ",
-  "CESV ESCALADE": "CESV ESCALADE",
-  "AL Anse": "Amicale laïque d'Anse",
-  "al anse": "Amicale laïque d'Anse",
-  "espace escalade": "espace escalade",
-  "Les 5 mousquetons": "Les 5 mousquetons",
-  "LES 5 MOUSQUETONS": "Les 5 mousquetons",
-  "Meyzieu": "Meyzieu Escalade et Montagne",
-  "Meyzieu Escalade": "Meyzieu Escalade et Montagne",
-  "CHASSIEU AVENTURE": "CHASSIEU AVENTURE",
-  "Meyzieu Escalade et Montagne": "Meyzieu Escalade et Montagne",
-  "Vertige": "Club vertige",
-  "Al Escalade Anse": "Amicale laïque d'Anse",
-  "Club vertige": "Club vertige",
-  "HORS CLUB": "HORS CLUB"
-};
-
-// Fonction pour mapper un club
-const mapClubName = (clubName) => {
-  if (!clubName) return clubName;
-  const trimmed = String(clubName).trim();
-  return CLUB_MAPPING[trimmed] || trimmed;
-};
-
-// Fonction pour vérifier si un club est dans la matrice
-const isClubMapped = (clubName) => {
-  if (!clubName) return false;
-  const trimmed = String(clubName).trim();
-  return trimmed in CLUB_MAPPING;
-};
 
 const CompetitionManagement = () => {
   const { isAdmin, loading: authLoading } = useAuth();
@@ -89,6 +46,17 @@ const CompetitionManagement = () => {
   const [filterUnmappedClubs, setFilterUnmappedClubs] = useState(false); // true pour voir seulement les clubs non mappés
   const [editingClubId, setEditingClubId] = useState(null);
   const [editingClubValue, setEditingClubValue] = useState('');
+
+  // Mappings dynamiques depuis la BDD
+  const [clubMappings, setClubMappings] = useState([]);
+  const [mappingsLoading, setMappingsLoading] = useState(true);
+  const [showAddMappingModal, setShowAddMappingModal] = useState(false);
+  const [newMappingOriginal, setNewMappingOriginal] = useState('');
+  const [newMappingMapped, setNewMappingMapped] = useState('');
+  const [unmappedClubsFromImport, setUnmappedClubsFromImport] = useState([]);
+  const [editingMappingId, setEditingMappingId] = useState(null);
+  const [editingMappingOriginal, setEditingMappingOriginal] = useState('');
+  const [editingMappingMapped, setEditingMappingMapped] = useState('');
 
   // Charger les inscriptions
   const fetchRegistrations = async () => {
@@ -113,8 +81,121 @@ const CompetitionManagement = () => {
     }
   };
 
+  // Charger les mappings de clubs depuis la BDD
+  const loadClubMappings = async () => {
+    setMappingsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('club_mapping')
+        .select('*')
+        .order('original_name', { ascending: true });
+
+      if (error) throw error;
+      setClubMappings(data || []);
+    } catch (error) {
+      console.error('Error loading club mappings:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de charger les mappings des clubs.",
+        variant: "destructive"
+      });
+    } finally {
+      setMappingsLoading(false);
+    }
+  };
+
+  // Mapper un club selon la BDD
+  const mapClubName = (clubName) => {
+    if (!clubName) return clubName;
+    const trimmed = String(clubName).trim();
+    const mapping = clubMappings.find(m => m.original_name === trimmed);
+    return mapping ? mapping.mapped_name : trimmed;
+  };
+
+  // Vérifier si un club est mappé
+  const isClubMapped = (clubName) => {
+    if (!clubName) return false;
+    const trimmed = String(clubName).trim();
+    return clubMappings.some(m => m.original_name === trimmed);
+  };
+
+  // Ajouter un nouveau mapping
+  const addClubMapping = async (originalName, mappedName) => {
+    if (!originalName.trim() || !mappedName.trim()) {
+      toast({ title: "Erreur", description: "Veuillez remplir tous les champs", variant: "destructive" });
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('club_mapping')
+        .insert({
+          original_name: originalName.trim(),
+          mapped_name: mappedName.trim()
+        });
+
+      if (error) throw error;
+
+      toast({ title: "Succès", description: "Mapping ajouté avec succès" });
+      setNewMappingOriginal('');
+      setNewMappingMapped('');
+      setShowAddMappingModal(false);
+      loadClubMappings();
+    } catch (error) {
+      console.error('Error adding mapping:', error);
+      toast({ title: "Erreur", description: "Impossible d'ajouter le mapping", variant: "destructive" });
+    }
+  };
+
+  // Mettre à jour un mapping
+  const updateClubMapping = async (id, originalName, mappedName) => {
+    if (!originalName.trim() || !mappedName.trim()) {
+      toast({ title: "Erreur", description: "Veuillez remplir tous les champs", variant: "destructive" });
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('club_mapping')
+        .update({ mapped_name: mappedName.trim() })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast({ title: "Succès", description: "Mapping mis à jour avec succès" });
+      setEditingMappingId(null);
+      setEditingMappingOriginal('');
+      setEditingMappingMapped('');
+      loadClubMappings();
+    } catch (error) {
+      console.error('Error updating mapping:', error);
+      toast({ title: "Erreur", description: "Impossible de mettre à jour le mapping", variant: "destructive" });
+    }
+  };
+
+  // Supprimer un mapping
+  const deleteClubMapping = async (id) => {
+    if (!window.confirm('Êtes-vous sûr de vouloir supprimer ce mapping ?')) return;
+
+    try {
+      const { error } = await supabase
+        .from('club_mapping')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast({ title: "Succès", description: "Mapping supprimé avec succès" });
+      loadClubMappings();
+    } catch (error) {
+      console.error('Error deleting mapping:', error);
+      toast({ title: "Erreur", description: "Impossible de supprimer le mapping", variant: "destructive" });
+    }
+  };
+
   useEffect(() => {
     fetchRegistrations();
+    loadClubMappings();
   }, []);
 
   // Fonction pour convertir un numéro de série Excel en date
@@ -265,6 +346,15 @@ const CompetitionManagement = () => {
       );
 
       const duplicateCount = registrationsToInsert.length - newRegistrations.length;
+
+      // Détecter les clubs non mappés du fichier original
+      const clubsFromFile = new Set(
+        jsonData
+          .map(row => String(row['Club']).trim())
+          .filter(club => club && club !== 'null')
+      );
+      const unmappedClubs = Array.from(clubsFromFile).filter(club => !isClubMapped(club));
+      setUnmappedClubsFromImport(unmappedClubs);
 
       // Insérer seulement les nouvelles inscriptions
       if (newRegistrations.length > 0) {
@@ -986,6 +1076,215 @@ const CompetitionManagement = () => {
             </CardContent>
           </Card>
         </motion.div>
+
+        {/* Gestion du mapping des clubs */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.32 }}
+        >
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Gestion du mapping des clubs</CardTitle>
+                  <CardDescription>Gérez la correspondance des noms de clubs</CardDescription>
+                </div>
+                <Button
+                  onClick={() => setShowAddMappingModal(true)}
+                  size="sm"
+                  className="gap-1"
+                >
+                  <Plus className="w-4 h-4" />
+                  Ajouter un mapping
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Tableau des mappings */}
+              {mappingsLoading ? (
+                <div className="flex justify-center py-8">
+                  <Loader2 className="w-6 h-6 animate-spin" />
+                </div>
+              ) : clubMappings.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  Aucun mapping configuré. Commencez par en ajouter un.
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Nom original</TableHead>
+                        <TableHead>Nom mappé</TableHead>
+                        <TableHead className="text-center w-24">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {clubMappings.map((mapping) => (
+                        <TableRow key={mapping.id}>
+                          <TableCell>
+                            {editingMappingId === mapping.id ? (
+                              <Input
+                                value={editingMappingOriginal}
+                                onChange={(e) => setEditingMappingOriginal(e.target.value)}
+                                disabled
+                                className="bg-muted"
+                              />
+                            ) : (
+                              <span className="font-medium">{mapping.original_name}</span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {editingMappingId === mapping.id ? (
+                              <Input
+                                value={editingMappingMapped}
+                                onChange={(e) => setEditingMappingMapped(e.target.value)}
+                                placeholder="Nom mappé"
+                              />
+                            ) : (
+                              mapping.mapped_name
+                            )}
+                          </TableCell>
+                          <TableCell className="text-center space-x-1">
+                            {editingMappingId === mapping.id ? (
+                              <>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => updateClubMapping(mapping.id, mapping.original_name, editingMappingMapped)}
+                                  title="Enregistrer"
+                                >
+                                  ✓
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => {
+                                    setEditingMappingId(null);
+                                    setEditingMappingOriginal('');
+                                    setEditingMappingMapped('');
+                                  }}
+                                  title="Annuler"
+                                >
+                                  ✗
+                                </Button>
+                              </>
+                            ) : (
+                              <>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => {
+                                    setEditingMappingId(mapping.id);
+                                    setEditingMappingOriginal(mapping.original_name);
+                                    setEditingMappingMapped(mapping.mapped_name);
+                                  }}
+                                  title="Éditer"
+                                >
+                                  <Edit2 className="w-4 h-4" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => deleteClubMapping(mapping.id)}
+                                  title="Supprimer"
+                                  className="text-red-600 hover:text-red-700"
+                                >
+                                  <IconX className="w-4 h-4" />
+                                </Button>
+                              </>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+
+              {/* Clubs non mappés depuis le dernier import */}
+              {unmappedClubsFromImport.length > 0 && (
+                <div className="mt-6 pt-6 border-t">
+                  <h3 className="font-semibold mb-3 text-amber-700">
+                    ⚠ Clubs non mappés du dernier import ({unmappedClubsFromImport.length})
+                  </h3>
+                  <div className="space-y-2">
+                    {unmappedClubsFromImport.map((club) => (
+                      <div
+                        key={club}
+                        className="flex items-center justify-between p-3 bg-amber-50 border border-amber-200 rounded-lg"
+                      >
+                        <span className="font-medium text-amber-900">{club}</span>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setNewMappingOriginal(club);
+                            setNewMappingMapped(club);
+                            setShowAddMappingModal(true);
+                          }}
+                          className="gap-1"
+                        >
+                          <Plus className="w-3 h-3" />
+                          Ajouter ce mapping
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* Modal d'ajout de mapping */}
+        {showAddMappingModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <Card className="w-full max-w-md">
+              <CardHeader>
+                <CardTitle>Ajouter un nouveau mapping</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label htmlFor="original-name">Nom original (depuis Excel)</Label>
+                  <Input
+                    id="original-name"
+                    value={newMappingOriginal}
+                    onChange={(e) => setNewMappingOriginal(e.target.value)}
+                    placeholder="ex: Corb'alp"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="mapped-name">Nom standardisé</Label>
+                  <Input
+                    id="mapped-name"
+                    value={newMappingMapped}
+                    onChange={(e) => setNewMappingMapped(e.target.value)}
+                    placeholder="ex: Corb'Alp"
+                  />
+                </div>
+              </CardContent>
+              <CardFooter className="gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setShowAddMappingModal(false);
+                    setNewMappingOriginal('');
+                    setNewMappingMapped('');
+                  }}
+                >
+                  Annuler
+                </Button>
+                <Button
+                  onClick={() => addClubMapping(newMappingOriginal, newMappingMapped)}
+                >
+                  Ajouter
+                </Button>
+              </CardFooter>
+            </Card>
+          </div>
+        )}
 
         {/* Statistiques par club */}
         <motion.div
