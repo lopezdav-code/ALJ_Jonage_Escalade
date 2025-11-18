@@ -80,11 +80,10 @@ const CommandSeparator = React.forwardRef(({ className, ...props }, ref) => (
 CommandSeparator.displayName = CommandPrimitive.Separator.displayName
 
 const CommandItem = React.forwardRef(({ className, onSelect, ...props }, ref) => {
-  const handleClick = (e) => {
-    e.preventDefault();
+  const handleMouseDown = (e) => {
     e.stopPropagation();
-    if (onSelect) {
-      onSelect(props.value || '');
+    if (onSelect && props.value !== undefined) {
+      onSelect(props.value);
     }
   };
 
@@ -96,7 +95,7 @@ const CommandItem = React.forwardRef(({ className, onSelect, ...props }, ref) =>
         className
       )}
       onSelect={onSelect}
-      onClick={handleClick}
+      onMouseDown={handleMouseDown}
       {...props}
     />
   );

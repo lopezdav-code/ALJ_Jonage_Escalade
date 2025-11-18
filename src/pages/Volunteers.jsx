@@ -7,10 +7,9 @@ import VolunteerQuiz from '@/components/VolunteerQuiz';
 import CompetitionTabs from '@/components/CompetitionTabs';
 import LeisureChildrenTabs from '@/components/LeisureChildrenTabs';
 import { Button } from '@/components/ui/button';
-import { Info, Loader2, Pencil, Eye, Shield, Star, Mail, Phone, Award, Gavel, Scale, Flag, Check, ChevronsUpDown, Users, List } from 'lucide-react';
+import { Info, Loader2, Pencil, Eye, Shield, Star, Mail, Phone, Award, Gavel, Scale, Flag, Check, Users, List } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Command, CommandInput, CommandEmpty, CommandGroup, CommandItem, CommandList } from '@/components/ui/command';
+import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
@@ -240,63 +239,57 @@ const Volunteers = () => {
         <h1 className="text-2xl font-bold mb-6">Gestion des Membres</h1>
 
       <div className="mb-6 flex items-center space-x-4">
-        <Popover open={openMemberSearch} onOpenChange={setOpenMemberSearch}>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              role="combobox"
-              aria-expanded={openMemberSearch}
-              className="w-[300px] justify-between"
-            >
-              <span className={cn(!selectedMember && "text-muted-foreground")}>
-                {selectedMember ? `${selectedMember.first_name} ${selectedMember.last_name}` : "Rechercher un membre..."}
-              </span>
-              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-[300px] p-0">
-            <Command>
-              <CommandInput
-                placeholder="Rechercher un membre..."
-                value={searchQuery}
-                onValueChange={setSearchQuery}
-              />
-              <CommandEmpty>
-                {loading ? "Chargement..." : "Aucun membre trouvé."}
-              </CommandEmpty>
-              <CommandList>
-                <CommandGroup>
-                  {filteredMembers.map((member) => (
-                    <CommandItem
-                      key={member.id}
-                      value={`${member.first_name} ${member.last_name}`}
-                      onSelect={() => {
-                        handleMemberSelect(member.id);
-                      }}
-                    >
+        <div className="relative w-[300px]">
+          <Input
+            placeholder="Rechercher un membre..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onFocus={() => setOpenMemberSearch(true)}
+            className="w-full"
+          />
+          {openMemberSearch && (
+            <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-md shadow-lg z-50 max-h-[300px] overflow-y-auto">
+              {filteredMembers.length === 0 ? (
+                <div className="p-4 text-center text-sm text-gray-500">
+                  {loading ? "Chargement..." : "Aucun membre trouvé."}
+                </div>
+              ) : (
+                filteredMembers.map((member) => (
+                  <div
+                    key={member.id}
+                    onMouseDown={() => {
+                      handleMemberSelect(member.id);
+                      setOpenMemberSearch(false);
+                    }}
+                    className={cn(
+                      "px-4 py-3 cursor-pointer hover:bg-gray-100 border-b last:border-b-0",
+                      selectedMember?.id === member.id && "bg-blue-50"
+                    )}
+                  >
+                    <div className="flex items-start gap-2">
                       <Check
                         className={cn(
-                          "mr-2 h-4 w-4",
+                          "h-4 w-4 mt-1 flex-shrink-0",
                           selectedMember?.id === member.id ? "opacity-100" : "opacity-0"
                         )}
                       />
-                      <div className="flex flex-col">
-                        <span className="font-medium">{member.first_name} {member.last_name}</span>
+                      <div className="flex-1">
+                        <div className="font-medium text-sm">{member.first_name} {member.last_name}</div>
                         {member.title && (
-                          <span className="text-xs text-muted-foreground">
+                          <div className="text-xs text-gray-500">
                             {member.title}
-                          </span>
+                          </div>
                         )}
                       </div>
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              </CommandList>
-            </Command>
-          </PopoverContent>
-        </Popover>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+        </div>
         {selectedMember && (
-          <Button variant="ghost" onClick={() => setSelectedMember(null)}>
+          <Button variant="ghost" onClick={() => { setSelectedMember(null); setSearchQuery(''); }}>
             Effacer la sélection
           </Button>
         )}
