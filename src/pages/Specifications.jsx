@@ -12,6 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Separator } from '@/components/ui/separator';
 import { Link } from 'react-router-dom';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
+import MermaidDiagram from '@/components/ui/mermaid-diagram';
 
 const Specifications = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -974,17 +975,7 @@ const Specifications = () => {
                 </CardHeader>
                 <CardContent className="space-y-6">
                   {/* Database diagram */}
-                  <div>
-                    <h3 className="text-lg font-semibold mb-4">Diagramme des Relations</h3>
-                    <div className="bg-muted p-4 rounded-lg">
-                      <pre className="text-xs overflow-x-auto">
-                        {databaseDiagram}
-                      </pre>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-2">
-                      Note: Ce diagramme utilise la syntaxe Mermaid. Vous pouvez le copier dans un éditeur Mermaid pour une visualisation graphique.
-                    </p>
-                  </div>
+                  <MermaidDiagram diagram={databaseDiagram} title="Diagramme des Relations" />
 
                   <Separator />
 
@@ -1099,17 +1090,7 @@ const Specifications = () => {
                 </CardHeader>
                 <CardContent className="space-y-6">
                   {/* Architecture diagram */}
-                  <div>
-                    <h3 className="text-lg font-semibold mb-4">Diagramme d'Architecture</h3>
-                    <div className="bg-muted p-4 rounded-lg">
-                      <pre className="text-xs overflow-x-auto">
-                        {architectureDiagram}
-                      </pre>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-2">
-                      Note: Ce diagramme utilise la syntaxe Mermaid. Vous pouvez le copier dans un éditeur Mermaid pour une visualisation graphique.
-                    </p>
-                  </div>
+                  <MermaidDiagram diagram={architectureDiagram} title="Diagramme d'Architecture" />
 
                   <Separator />
 
