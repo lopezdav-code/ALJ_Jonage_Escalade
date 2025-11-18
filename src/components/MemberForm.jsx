@@ -26,7 +26,7 @@ const categoryOptions = {
   "emergency_contact": [],
 };
 
-const ageCategoryOptions = ['U11', 'U13', 'U15', 'U17', 'U19'];
+const ageCategoryOptions = ['U11', 'U13', 'U15', 'U17', 'U19', 'Sénior', 'Vétéran 1'];
 const passeportOptions = ['Blanc', 'Jaune', 'Orange', 'Vert', 'Bleu', 'Violet', 'Rouge'];
 const brevetOptions = [
   'Initiateur SAE', 'Juge Bloc 1', 'Juge Bloc 2', 'Juge Bloc 3',
