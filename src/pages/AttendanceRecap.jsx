@@ -43,9 +43,20 @@ const AttendanceRecap = () => {
       if (error) throw error;
       setSchedules(data || []);
 
-      // Sélectionner le premier schedule par défaut
+      // Chercher et sélectionner "Loisir lycée - Mardi 18:30" par défaut
       if (data && data.length > 0 && !selectedScheduleId) {
-        setSelectedScheduleId(data[0].id);
+        const defaultSchedule = data.find(schedule =>
+          schedule.type?.toLowerCase() === 'loisir lycée' &&
+          schedule.day?.toLowerCase() === 'mardi' &&
+          (schedule.start_time?.startsWith('18:30') || schedule.start_time?.startsWith('18:h30'))
+        );
+
+        if (defaultSchedule) {
+          setSelectedScheduleId(defaultSchedule.id);
+        } else {
+          // Si pas trouvé, sélectionner le premier schedule
+          setSelectedScheduleId(data[0].id);
+        }
       }
     } catch (error) {
       console.error('Error fetching schedules:', error);
