@@ -8,6 +8,139 @@ import { Helmet } from '../components/ui/helmet';
 import { ExternalLink, FileText, Calendar, Clock, Users, Target, Package, MessageSquare, Edit } from 'lucide-react';
 import { BackButton } from '../components/ui/back-button';
 
+const BUCKET_NAME = 'pedagogy_files';
+
+// Fonction pour obtenir l'URL signée d'un fichier
+const getSignedUrl = async (fileNameOrUrl) => {
+  if (!fileNameOrUrl) return null;
+
+  try {
+    // Si c'est déjà une URL complète, on l'utilise directement
+    if (fileNameOrUrl.startsWith('http://') || fileNameOrUrl.startsWith('https://')) {
+      return fileNameOrUrl;
+    }
+
+    // Sinon, générer une URL signée depuis le nom du fichier
+    const { data, error } = await supabase.storage
+      .from(BUCKET_NAME)
+      .createSignedUrl(fileNameOrUrl, 3600); // URL valide 1 heure
+
+    if (error) throw error;
+    return data.signedUrl;
+  } catch (error) {
+    console.error('Erreur lors de la génération de l\'URL signée:', error);
+    return null;
+  }
+};
+
+const ExerciseDisplay = ({ exercise, index }) => {
+  const [imageUrl, setImageUrl] = useState(null);
+
+  useEffect(() => {
+    const loadImage = async () => {
+      if (exercise.image_url) {
+        const url = await getSignedUrl(exercise.image_url);
+        setImageUrl(url);
+      }
+    };
+    loadImage();
+  }, [exercise.image_url]);
+
+  return (
+    <div key={exercise.id} className="border rounded-lg p-4 space-y-3">
+      {/* En-tête de l'exercice */}
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex-1">
+          <div className="flex items-center gap-2 mb-1">
+            <Badge variant="outline" className="font-mono">#{index + 1}</Badge>
+            <h3 className="text-lg font-semibold">{exercise.operational_objective || 'Sans titre'}</h3>
+          </div>
+          {exercise.pedagogy_sheet && (
+            <div className="flex items-center gap-2 mt-2">
+              <FileText className="w-4 h-4 text-blue-500" />
+              <button
+                onClick={() => window.location.hash = `#sheet-${exercise.pedagogy_sheet_id}`}
+                className="text-sm text-blue-600 hover:underline flex items-center gap-1"
+              >
+                Fiche pédagogique: {exercise.pedagogy_sheet.title}
+                <ExternalLink className="w-3 h-3" />
+              </button>
+            </div>
+          )}
+        </div>
+        {exercise.time && (
+          <Badge variant="secondary" className="whitespace-nowrap">
+            <Clock className="w-3 h-3 mr-1" />
+            {exercise.time}
+          </Badge>
+        )}
+      </div>
+
+      {/* Image de l'exercice avec URL signée */}
+      {imageUrl && (
+        <div className="my-3">
+          <img
+            src={imageUrl}
+            alt={exercise.operational_objective || 'Image exercice'}
+            className="max-w-full h-auto rounded-lg border shadow-sm max-h-96 object-contain"
+            onError={(e) => {
+              e.target.style.display = 'none';
+            }}
+          />
+        </div>
+      )}
+
+      {/* Détails de l'exercice */}
+      <div className="grid gap-3 text-sm">
+        {exercise.situation && (
+          <div>
+            <p className="font-semibold text-muted-foreground mb-1">Situation</p>
+            <p className="text-foreground">{exercise.situation}</p>
+          </div>
+        )}
+        {exercise.organisation && (
+          <div>
+            <p className="font-semibold text-muted-foreground mb-1">Organisation</p>
+            <p className="text-foreground">{exercise.organisation}</p>
+          </div>
+        )}
+        {exercise.consigne && (
+          <div>
+            <p className="font-semibold text-muted-foreground mb-1">Consigne</p>
+            <p className="text-foreground">{exercise.consigne}</p>
+          </div>
+        )}
+        {exercise.success_criteria && (
+          <div>
+            <p className="font-semibold text-muted-foreground mb-1">Critères de réussite</p>
+            <p className="text-foreground">{exercise.success_criteria}</p>
+          </div>
+        )}
+        {exercise.regulation && (
+          <div>
+            <p className="font-semibold text-muted-foreground mb-1">Régulation</p>
+            <p className="text-foreground">{exercise.regulation}</p>
+          </div>
+        )}
+        {exercise.support_link && (
+          <div>
+            <p className="font-semibold text-muted-foreground mb-1">Lien de support</p>
+            <a
+              href={exercise.support_link}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:underline flex items-center gap-1"
+            >
+              {exercise.support_link}
+              <ExternalLink className="w-3 h-3" />
+            </a>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 const SessionLogDetail = () => {
   const { id } = useParams(); // Correctly extract 'id' from URL parameters
   const navigate = useNavigate();
@@ -460,97 +593,7 @@ const SessionLogDetail = () => {
           {session.exercises && session.exercises.length > 0 ? (
             <div className="space-y-6">
               {session.exercises.map((exercise, index) => (
-                <div key={exercise.id} className="border rounded-lg p-4 space-y-3">
-                  {/* En-tête de l'exercice */}
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <Badge variant="outline" className="font-mono">#{index + 1}</Badge>
-                        <h3 className="text-lg font-semibold">{exercise.operational_objective || 'Sans titre'}</h3>
-                      </div>
-                      {exercise.pedagogy_sheet && (
-                        <div className="flex items-center gap-2 mt-2">
-                          <FileText className="w-4 h-4 text-blue-500" />
-                          <button
-                            onClick={() => navigate(`/pedagogy-sheets/${exercise.pedagogy_sheet_id}`)}
-                            className="text-sm text-blue-600 hover:underline flex items-center gap-1"
-                          >
-                            Fiche pédagogique: {exercise.pedagogy_sheet.title}
-                            <ExternalLink className="w-3 h-3" />
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                    {exercise.time && (
-                      <Badge variant="secondary" className="whitespace-nowrap">
-                        <Clock className="w-3 h-3 mr-1" />
-                        {exercise.time}
-                      </Badge>
-                    )}
-                  </div>
-
-                  {/* Image de l'exercice */}
-                  {exercise.image_url && (
-                    <div className="my-3">
-                      <img
-                        src={exercise.image_url}
-                        alt={exercise.operational_objective || 'Image exercice'}
-                        className="max-w-full h-auto rounded-lg border shadow-sm max-h-96 object-contain"
-                        onError={(e) => {
-                          e.target.style.display = 'none';
-                        }}
-                      />
-                    </div>
-                  )}
-
-                  {/* Détails de l'exercice */}
-                  <div className="grid gap-3 text-sm">
-                    {exercise.situation && (
-                      <div>
-                        <p className="font-semibold text-muted-foreground mb-1">Situation</p>
-                        <p className="text-foreground">{exercise.situation}</p>
-                      </div>
-                    )}
-                    {exercise.organisation && (
-                      <div>
-                        <p className="font-semibold text-muted-foreground mb-1">Organisation</p>
-                        <p className="text-foreground">{exercise.organisation}</p>
-                      </div>
-                    )}
-                    {exercise.consigne && (
-                      <div>
-                        <p className="font-semibold text-muted-foreground mb-1">Consigne</p>
-                        <p className="text-foreground">{exercise.consigne}</p>
-                      </div>
-                    )}
-                    {exercise.success_criteria && (
-                      <div>
-                        <p className="font-semibold text-muted-foreground mb-1">Critères de réussite</p>
-                        <p className="text-foreground">{exercise.success_criteria}</p>
-                      </div>
-                    )}
-                    {exercise.regulation && (
-                      <div>
-                        <p className="font-semibold text-muted-foreground mb-1">Régulation</p>
-                        <p className="text-foreground">{exercise.regulation}</p>
-                      </div>
-                    )}
-                    {exercise.support_link && (
-                      <div>
-                        <p className="font-semibold text-muted-foreground mb-1">Lien de support</p>
-                        <a
-                          href={exercise.support_link}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-primary hover:underline flex items-center gap-1"
-                        >
-                          {exercise.support_link}
-                          <ExternalLink className="w-3 h-3" />
-                        </a>
-                      </div>
-                    )}
-                  </div>
-                </div>
+                <ExerciseDisplay key={exercise.id} exercise={exercise} index={index} />
               ))}
             </div>
           ) : (

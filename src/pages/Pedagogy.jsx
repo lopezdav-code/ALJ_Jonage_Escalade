@@ -211,6 +211,34 @@ const GameSheetDetails = ({ sheet, onEdit, onDelete, isAdmin }) => {
 };
 
 const SheetCard = ({ sheet, onEdit, onDelete, isAdmin }) => {
+  const [thumbnailUrl, setThumbnailUrl] = useState(null);
+  const [illustrationUrl, setIllustrationUrl] = useState(null);
+
+  useEffect(() => {
+    const loadImages = async () => {
+      // Charger l'image d'illustration si elle existe
+      if (sheet.illustration_image) {
+        const url = await getSignedUrl(sheet.illustration_image);
+        setIllustrationUrl(url);
+      }
+
+      // Charger la miniature
+      if (sheet.thumbnail_url) {
+        const url = await getSignedUrl(sheet.thumbnail_url);
+        setThumbnailUrl(url);
+      } else if (sheet.type === 'image_file') {
+        const url = await getSignedUrl(sheet.url);
+        setThumbnailUrl(url);
+      } else if (sheet.type === 'video_url') {
+        const videoId = sheet.url.split('v=')[1]?.split('&')[0] || sheet.url.split('/').pop();
+        if (sheet.url.includes('youtube.com') || sheet.url.includes('youtu.be')) {
+          setThumbnailUrl(`https://img.youtube.com/vi/${videoId}/mqdefault.jpg`);
+        }
+      }
+    };
+    loadImages();
+  }, [sheet.thumbnail_url, sheet.url, sheet.type, sheet.illustration_image]);
+
   const getIcon = () => {
     switch (sheet.type) {
       case 'video_url': return <Video className="w-8 h-8 text-red-500" />;
@@ -219,18 +247,6 @@ const SheetCard = ({ sheet, onEdit, onDelete, isAdmin }) => {
       case 'document_url': return <FileText className="w-8 h-8 text-green-500" />;
       default: return <LinkIcon className="w-8 h-8 text-gray-500" />;
     }
-  };
-  
-  const getThumbnail = () => {
-    if (sheet.thumbnail_url) return sheet.thumbnail_url;
-    if (sheet.type === 'image_file') return sheet.url;
-    if (sheet.type === 'video_url') {
-      const videoId = sheet.url.split('v=')[1]?.split('&')[0] || sheet.url.split('/').pop();
-      if (sheet.url.includes('youtube.com') || sheet.url.includes('youtu.be')) {
-        return `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
-      }
-    }
-    return null;
   };
 
   const getSheetTypeIcon = () => {
@@ -252,9 +268,16 @@ const SheetCard = ({ sheet, onEdit, onDelete, isAdmin }) => {
     <motion.div layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
       <Card className="h-full flex flex-col group relative">
         <CardHeader className="flex-row items-start gap-4">
-            {getThumbnail() ? (
+            {illustrationUrl || thumbnailUrl ? (
               <a href={sheet.url} target="_blank" rel="noopener noreferrer">
-                <img src={getThumbnail()} alt={sheet.title} className="w-32 h-20 object-cover rounded-md" />
+                <img
+                  src={illustrationUrl || thumbnailUrl}
+                  alt={sheet.title}
+                  className="w-32 h-20 object-cover rounded-md"
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                  }}
+                />
               </a>
             ) : (
                 <div className="w-32 h-20 flex items-center justify-center bg-muted rounded-md">{getIcon()}</div>
