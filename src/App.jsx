@@ -165,7 +165,7 @@ const AppContent = () => {
           <Route path="/member-group-test" element={<LazyRoute><MemberGroupTest /></LazyRoute>} />
           <Route path="/bureau-management" element={<LazyRoute><BureauManagement /></LazyRoute>} />
           <Route path="/groupes/admin" element={<LazyRoute><GroupeAdmin /></LazyRoute>} />
-          <Route path="/attendance-recap" element={<LazyRoute><AttendanceRecap /></LazyRoute>} />
+          <Route path="/attendance-recap/:scheduleId?" element={<LazyRoute><AttendanceRecap /></LazyRoute>} />
           <Route path="/exercise-progress" element={<LazyRoute><ExerciseProgress /></LazyRoute>} />
           <Route path="/specifications" element={<LazyRoute><Specifications /></LazyRoute>} />
           <Route path="/competition-management" element={<LazyRoute><CompetitionManagement /></LazyRoute>} />

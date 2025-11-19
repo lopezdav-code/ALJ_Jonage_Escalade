@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { formatName } from '@/lib/utils';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
@@ -21,8 +21,9 @@ import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
 const AttendanceRecap = () => {
   const { isAdmin, isEncadrant, loading: authLoading } = useAuth();
+  const { scheduleId: scheduleIdFromURL } = useParams();
   const [schedules, setSchedules] = useState([]);
-  const [selectedScheduleId, setSelectedScheduleId] = useState('');
+  const [selectedScheduleId, setSelectedScheduleId] = useState(scheduleIdFromURL || '');
   const [attendanceData, setAttendanceData] = useState([]);
   const [sessions, setSessions] = useState([]);
   const [onlyShowAbsent, setOnlyShowAbsent] = useState(false);
@@ -30,6 +31,18 @@ const AttendanceRecap = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const tableRef = useRef(null);
+
+  // Synchroniser l'URL avec le state initial
+  useEffect(() => {
+    if (scheduleIdFromURL && !selectedScheduleId) {
+      setSelectedScheduleId(scheduleIdFromURL);
+    }
+  }, [scheduleIdFromURL]);
+
+  // Handler pour le changement du dropdown - navigue vers la nouvelle URL
+  const handleScheduleChange = (scheduleId) => {
+    navigate(`/attendance-recap/${scheduleId}`, { replace: true });
+  };
 
   // Charger tous les schedules
   const fetchSchedules = useCallback(async () => {
@@ -43,12 +56,13 @@ const AttendanceRecap = () => {
       if (error) throw error;
       setSchedules(data || []);
 
-      // Chercher et sélectionner "Loisir lycée - Mardi 18:30" par défaut
+      // Si aucun schedule sélectionné, chercher le groupe par défaut
       if (data && data.length > 0 && !selectedScheduleId) {
+        // Chercher le groupe "Lycéens - Mardi 18:30" par défaut
         const defaultSchedule = data.find(schedule =>
-          schedule.type?.toLowerCase() === 'loisir lycée' &&
+          schedule.age_category?.toLowerCase() === 'lycéens' &&
           schedule.day?.toLowerCase() === 'mardi' &&
-          (schedule.start_time?.startsWith('18:30') || schedule.start_time?.startsWith('18:h30'))
+          (schedule.start_time?.startsWith('18:30') || schedule.start_time?.startsWith('18:00'))
         );
 
         if (defaultSchedule) {
@@ -66,7 +80,7 @@ const AttendanceRecap = () => {
         variant: 'destructive'
       });
     }
-  }, [selectedScheduleId, toast]);
+  }, [toast]);
 
   // Fonction pour trouver le title correspondant à un schedule
   const findMatchingTitle = (scheduleType, scheduleAgeCategory, availableTitles) => {
@@ -343,7 +357,7 @@ const AttendanceRecap = () => {
           <CardContent>
             <div className="flex gap-4 items-center">
               <div className="flex-1">
-                <Select value={selectedScheduleId} onValueChange={setSelectedScheduleId}>
+                <Select value={selectedScheduleId} onValueChange={handleScheduleChange}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Choisissez un planning..." />
               </SelectTrigger>
