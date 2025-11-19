@@ -65,14 +65,11 @@ const AttendanceRecap = () => {
       scheduleType
     ].map(term => term.toLowerCase().trim());
 
-    console.log('Termes de recherche:', searchTerms);
-
     // Chercher une correspondance exacte ou partielle
     for (const title of availableTitles) {
       const titleLower = title.toLowerCase();
       for (const term of searchTerms) {
         if (titleLower === term || titleLower.includes(term) || term.includes(titleLower)) {
-          console.log(`Match trouvé: "${title}" correspond à "${term}"`);
           return title;
         }
       }
@@ -99,8 +96,6 @@ const AttendanceRecap = () => {
         return;
       }
 
-      console.log('Schedule sélectionné:', selectedSchedule);
-
       // 1. OPTIMIZED: Récupérer uniquement les sessions du schedule avec limite et date range
       // Limite aux 3 derniers mois et 50 sessions max pour éviter les requêtes non bornées
       const threeMonthsAgo = new Date();
@@ -118,8 +113,6 @@ const AttendanceRecap = () => {
         .limit(50);
 
       if (sessionsError) throw sessionsError;
-
-      console.log('Sessions récupérées pour le schedule (optimisé):', sessionsData);
 
       // Reverse to show oldest first in the table
       const reversedSessions = (sessionsData || []).reverse();
@@ -148,8 +141,6 @@ const AttendanceRecap = () => {
         .map(ms => ms.members)
         .filter(Boolean);
 
-      console.log('Membres trouvés (optimisé via member_schedule):', membersData);
-
       // 3. OPTIMIZED: Récupérer les commentaires uniquement pour les sessions et membres concernés
       const sessionIds = reversedSessions.map(s => s.id);
       const memberIds = membersData.map(m => m.id);
@@ -166,8 +157,6 @@ const AttendanceRecap = () => {
           commentsData = comments || [];
         }
       }
-
-      console.log('Commentaires récupérés:', commentsData);
 
       // 4. Construire le tableau de présence
       const attendance = (membersData || []).map(member => {
@@ -190,7 +179,6 @@ const AttendanceRecap = () => {
         return memberAttendance;
       });
 
-      console.log('Données de présence construites:', attendance);
       setAttendanceData(attendance);
     } catch (error) {
       console.error('Error fetching attendance data:', error);

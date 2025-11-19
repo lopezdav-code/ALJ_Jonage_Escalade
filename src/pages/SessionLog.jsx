@@ -57,8 +57,6 @@ const SessionLog = () => {
       .order('start_time', { ascending: false, nullsFirst: true })
       .order('order', { foreignTable: 'exercises', ascending: true });
 
-    console.log('Données récupérées pour les séances :', data); // Log the fetched data
-
     if (error) {
       toast({ title: "Erreur", description: "Impossible de charger les séances.", variant: "destructive" });
     } else {
@@ -152,7 +150,6 @@ const SessionLog = () => {
       return true;
     });
 
-    console.log('Séances après filtrage :', result);
     return result;
   }, [sessions, searchTerm, filterCycleId, filterScheduleId, filterInstructorId, membersOptions]);
 
