@@ -5,8 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
 import { Helmet } from '../components/ui/helmet';
-import { ExternalLink, FileText, Calendar, Clock, Users, Target, Package, MessageSquare, Edit } from 'lucide-react';
+import { ExternalLink, FileText, Calendar, Clock, Users, Target, Package, MessageSquare, Edit, Copy } from 'lucide-react';
 import { BackButton } from '../components/ui/back-button';
+import { useToast } from '../components/ui/use-toast';
 
 const BUCKET_NAME = 'pedagogy_files';
 
@@ -35,6 +36,7 @@ const getSignedUrl = async (fileNameOrUrl) => {
 
 const ExerciseDisplay = ({ exercise, index }) => {
   const [imageUrl, setImageUrl] = useState(null);
+  const [pedagogyImageUrl, setPedagogyImageUrl] = useState(null);
 
   useEffect(() => {
     const loadImage = async () => {
@@ -45,6 +47,16 @@ const ExerciseDisplay = ({ exercise, index }) => {
     };
     loadImage();
   }, [exercise.image_url]);
+
+  useEffect(() => {
+    const loadPedagogyImage = async () => {
+      if (exercise.pedagogy_sheet?.illustration_image) {
+        const url = await getSignedUrl(exercise.pedagogy_sheet.illustration_image);
+        setPedagogyImageUrl(url);
+      }
+    };
+    loadPedagogyImage();
+  }, [exercise.pedagogy_sheet?.illustration_image]);
 
   return (
     <div key={exercise.id} className="border rounded-lg p-4 space-y-3">
@@ -58,13 +70,15 @@ const ExerciseDisplay = ({ exercise, index }) => {
           {exercise.pedagogy_sheet && (
             <div className="flex items-center gap-2 mt-2">
               <FileText className="w-4 h-4 text-blue-500" />
-              <button
-                onClick={() => window.location.hash = `#sheet-${exercise.pedagogy_sheet_id}`}
+              <a
+                href={`/pedagogy?tab=${exercise.pedagogy_sheet.sheet_type}`}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="text-sm text-blue-600 hover:underline flex items-center gap-1"
               >
                 Fiche pédagogique: {exercise.pedagogy_sheet.title}
                 <ExternalLink className="w-3 h-3" />
-              </button>
+              </a>
             </div>
           )}
         </div>
@@ -75,6 +89,23 @@ const ExerciseDisplay = ({ exercise, index }) => {
           </Badge>
         )}
       </div>
+
+      {/* Image d'illustration de la fiche pédagogique */}
+      {pedagogyImageUrl && (
+        <div className="my-3 bg-blue-50 dark:bg-blue-950 p-3 rounded-lg border border-blue-200 dark:border-blue-800">
+          <p className="text-xs font-semibold text-blue-700 dark:text-blue-300 mb-2">
+            Illustration - {exercise.pedagogy_sheet.title}
+          </p>
+          <img
+            src={pedagogyImageUrl}
+            alt={exercise.pedagogy_sheet.title}
+            className="max-w-full h-auto rounded-lg border shadow-sm max-h-96 object-contain"
+            onError={(e) => {
+              e.target.style.display = 'none';
+            }}
+          />
+        </div>
+      )}
 
       {/* Image de l'exercice avec URL signée */}
       {imageUrl && (
@@ -144,9 +175,127 @@ const ExerciseDisplay = ({ exercise, index }) => {
 const SessionLogDetail = () => {
   const { id } = useParams(); // Correctly extract 'id' from URL parameters
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Fonction pour générer le résumé de séance formaté pour les réseaux sociaux
+  const generateSessionSummary = (sessionData) => {
+    if (!sessionData) return '';
+
+    const lines = [];
+
+    // En-tête
+    lines.push('🧗 RÉSUMÉ DE SÉANCE\n');
+
+    // Date
+    if (sessionData.date) {
+      const dateObj = new Date(sessionData.date);
+      const formattedDate = dateObj.toLocaleDateString('fr-FR', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+      lines.push(`📅 ${formattedDate.charAt(0).toUpperCase() + formattedDate.slice(1)}\n`);
+    }
+
+    // Participants
+    const presentCount = sessionData.studentsData?.length || 0;
+    if (presentCount > 0) {
+      lines.push(`👥 Participants (${presentCount} présents)`);
+      sessionData.studentsData?.forEach(student => {
+        lines.push(`• ${student.fullName}`);
+      });
+      lines.push('');
+    }
+
+    // Cycle
+    if (sessionData.cycles?.name) {
+      lines.push(`🎯 Cycle: ${sessionData.cycles.name}`);
+      if (sessionData.cycles.short_description) {
+        lines.push(`   ${sessionData.cycles.short_description}`);
+      }
+      lines.push('');
+    }
+
+    // Objectif de séance
+    if (sessionData.session_objective) {
+      lines.push(`🎪 Objectif: ${sessionData.session_objective}\n`);
+    }
+
+    // Exercices
+    if (sessionData.exercises && sessionData.exercises.length > 0) {
+      lines.push('📋 Exercices réalisés:');
+      sessionData.exercises.forEach((exercise, index) => {
+        lines.push(`${index + 1}. ${exercise.operational_objective || 'Exercice sans titre'}`);
+      });
+      lines.push('');
+    }
+
+    // Séparateur et signature
+    lines.push('---');
+    lines.push('Séance du club d\'escalade');
+
+    return lines.join('\n');
+  };
+
+  // Fonction pour copier le résumé au presse-papier
+  const handleCopyToClipboard = () => {
+    const summary = generateSessionSummary(session);
+
+    // Méthode 1: Utiliser l'API Clipboard moderne
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(summary).then(() => {
+        toast({
+          title: 'Copié !',
+          description: 'Résumé de la séance copié dans le presse-papier',
+          duration: 2000
+        });
+      }).catch(() => {
+        // Fallback si Clipboard API échoue
+        copyWithFallback(summary);
+      });
+    } else {
+      // Fallback: utiliser la méthode textarea
+      copyWithFallback(summary);
+    }
+  };
+
+  // Méthode de fallback pour copier au presse-papier
+  const copyWithFallback = (text) => {
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    document.body.appendChild(textarea);
+
+    try {
+      textarea.select();
+      const success = document.execCommand('copy');
+
+      if (success) {
+        toast({
+          title: 'Copié !',
+          description: 'Résumé de la séance copié dans le presse-papier',
+          duration: 2000
+        });
+      } else {
+        throw new Error('execCommand failed');
+      }
+    } catch (err) {
+      console.error('Erreur copie:', err);
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de copier le résumé',
+        variant: 'destructive',
+        duration: 2000
+      });
+    } finally {
+      document.body.removeChild(textarea);
+    }
+  };
 
   useEffect(() => {
     const fetchSessionDetail = async () => {
@@ -255,7 +404,7 @@ const SessionLogDetail = () => {
         if (pedagogySheetIds.length > 0) {
           const { data: sheets, error: sheetsError } = await supabase
             .from('pedagogy_sheets')
-            .select('id, title, sheet_type')
+            .select('id, title, sheet_type, illustration_image')
             .in('id', pedagogySheetIds);
 
           if (sheetsError) {
@@ -389,9 +538,19 @@ const SessionLogDetail = () => {
           <BackButton to="/session-log" variant="outline" />
           <h1 className="text-3xl font-bold">Détail de la séance</h1>
         </div>
-        <Button onClick={() => navigate(`/session-log/edit/${id}`)}> {/* Use 'id' here */}
-          Modifier la séance
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={handleCopyToClipboard}
+            className="flex items-center gap-2"
+          >
+            <Copy className="w-4 h-4" />
+            Copier le résumé
+          </Button>
+          <Button onClick={() => navigate(`/session-log/edit/${id}`)}> {/* Use 'id' here */}
+            Modifier la séance
+          </Button>
+        </div>
       </div>
 
       {/* Informations principales */}
