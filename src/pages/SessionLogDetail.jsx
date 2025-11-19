@@ -5,7 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
 import { Helmet } from '../components/ui/helmet';
-import { ExternalLink, FileText, Calendar, Clock, Users, Target, Package, MessageSquare, Edit, Copy } from 'lucide-react';
+import { ExternalLink, FileText, Calendar, Clock, Users, Target, Package, MessageSquare, Edit, Copy, Download } from 'lucide-react';
+import html2canvas from 'html2canvas';
 import { BackButton } from '../components/ui/back-button';
 import { useToast } from '../components/ui/use-toast';
 
@@ -297,6 +298,87 @@ const SessionLogDetail = () => {
     }
   };
 
+  // Fonction pour télécharger le résumé en image PNG
+  const handleDownloadPNG = async () => {
+    try {
+      // Créer un div contenant le résumé avec un beau design
+      const element = document.createElement('div');
+      element.style.position = 'fixed';
+      element.style.left = '-9999px';
+      element.style.top = '-9999px';
+      element.style.width = '800px';
+      element.style.padding = '40px';
+      element.style.backgroundColor = '#ffffff';
+      element.style.fontFamily = '"Segoe UI", Tahoma, Geneva, Verdana, sans-serif';
+      element.style.lineHeight = '1.6';
+      element.style.color = '#1f2937';
+
+      // Contenu formaté
+      const summary = generateSessionSummary(session);
+      element.innerHTML = summary
+        .split('\n')
+        .map((line, i) => {
+          if (line.startsWith('🧗')) {
+            return `<div style="font-size: 28px; font-weight: bold; margin-bottom: 20px; text-align: center; color: #dc2626;">${line}</div>`;
+          } else if (line.startsWith('📅')) {
+            return `<div style="font-size: 18px; margin: 15px 0; font-weight: 600; color: #0369a1;">${line}</div>`;
+          } else if (line.startsWith('👥') || line.startsWith('🎯') || line.startsWith('🎪') || line.startsWith('📋')) {
+            return `<div style="font-size: 16px; margin: 12px 0; font-weight: 600; color: #2563eb;">${line}</div>`;
+          } else if (line.startsWith('•')) {
+            return `<div style="font-size: 14px; margin-left: 20px; margin: 6px 0 6px 20px;">${line}</div>`;
+          } else if (line.startsWith('---')) {
+            return `<div style="border-top: 2px solid #e5e7eb; margin: 20px 0;"></div>`;
+          } else if (line.trim() === '') {
+            return '<div style="height: 8px;"></div>';
+          } else if (line.match(/^\d+\./)) {
+            return `<div style="font-size: 14px; margin: 8px 0 8px 20px;">${line}</div>`;
+          } else {
+            return `<div style="font-size: 14px; margin: 8px 0;">${line}</div>`;
+          }
+        })
+        .join('');
+
+      document.body.appendChild(element);
+
+      // Convertir en image
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        backgroundColor: '#ffffff',
+        useCORS: true,
+        allowTaint: true
+      });
+
+      // Télécharger l'image
+      const link = document.createElement('a');
+      link.href = canvas.toDataURL('image/png');
+
+      // Nom du fichier avec date
+      const dateStr = session.date ? new Date(session.date).toLocaleDateString('fr-FR').replace(/\//g, '-') : 'seance';
+      link.download = `Resume_escalade_${dateStr}.png`;
+
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      // Nettoyer
+      document.body.removeChild(element);
+
+      toast({
+        title: 'Téléchargé !',
+        description: 'Résumé de la séance téléchargé en PNG',
+        duration: 2000
+      });
+    } catch (err) {
+      console.error('Erreur téléchargement PNG:', err);
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de télécharger le résumé',
+        variant: 'destructive',
+        duration: 2000
+      });
+    }
+  };
+
   useEffect(() => {
     const fetchSessionDetail = async () => {
       try {
@@ -546,6 +628,14 @@ const SessionLogDetail = () => {
           >
             <Copy className="w-4 h-4" />
             Copier le résumé
+          </Button>
+          <Button
+            variant="outline"
+            onClick={handleDownloadPNG}
+            className="flex items-center gap-2"
+          >
+            <Download className="w-4 h-4" />
+            Télécharger en PNG
           </Button>
           <Button onClick={() => navigate(`/session-log/edit/${id}`)}> {/* Use 'id' here */}
             Modifier la séance
