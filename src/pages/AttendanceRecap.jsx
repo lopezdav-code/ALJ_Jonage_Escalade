@@ -1,11 +1,12 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Helmet } from 'react-helmet';
 import { motion } from 'framer-motion';
 import { supabase } from '@/lib/customSupabaseClient';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { usePageAccess } from '@/hooks/usePageAccess';
 import { useToast } from '@/components/ui/use-toast';
-import { Loader2, CalendarCheck, CheckCircle2, X, User, Calendar, MessageSquare } from 'lucide-react';
+import { Loader2, CalendarCheck, CheckCircle2, X, User, Calendar, MessageSquare, Copy, Printer } from 'lucide-react';
+import html2canvas from 'html2canvas';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -28,6 +29,7 @@ const AttendanceRecap = () => {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const tableRef = useRef(null);
 
   // Charger tous les schedules
   const fetchSchedules = useCallback(async () => {
@@ -76,6 +78,71 @@ const AttendanceRecap = () => {
     }
 
     return null;
+  };
+
+  const handleCopyAsImage = async () => {
+    try {
+      if (!tableRef.current) return;
+
+      // Créer un style temporaire pour éviter le clipping pendant la capture
+      const style = document.createElement('style');
+      style.innerHTML = `
+        div[style*="overflow-x-auto"] {
+          overflow: visible !important;
+        }
+        table td, table th {
+          overflow: visible !important;
+        }
+      `;
+      document.head.appendChild(style);
+
+      // Attendre que tout soit rendu
+      await new Promise(resolve => {
+        requestAnimationFrame(() => {
+          setTimeout(resolve, 300);
+        });
+      });
+
+      const canvas = await html2canvas(tableRef.current, {
+        backgroundColor: '#ffffff',
+        scale: 3,
+        allowTaint: true,
+        useCORS: true,
+        logging: false,
+        removeModal: true,
+      });
+
+      // Nettoyer le style temporaire
+      document.head.removeChild(style);
+
+      canvas.toBlob(async (blob) => {
+        try {
+          const item = new ClipboardItem({ 'image/png': blob });
+          await navigator.clipboard.write([item]);
+          toast({
+            title: 'Succès',
+            description: 'Tableau copié dans le presse-papier',
+          });
+        } catch (err) {
+          toast({
+            title: 'Erreur',
+            description: 'Impossible de copier dans le presse-papier',
+            variant: 'destructive',
+          });
+        }
+      });
+    } catch (error) {
+      console.error('Erreur lors de la capture:', error);
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de capturer le tableau',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handlePrint = () => {
+    window.print();
   };
 
   // Charger les données de présence pour un schedule donné
@@ -304,55 +371,66 @@ const AttendanceRecap = () => {
           transition={{ delay: 0.2 }}
         >
           <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>
                 Présences - {selectedSchedule.type} {selectedSchedule.age_category}
               </CardTitle>
+              <div className="flex justify-end gap-2 no-print">
+                <Button onClick={handleCopyAsImage} variant="outline" size="sm" className="gap-2">
+                  <Copy className="w-4 h-4" />
+                  Copier l'image
+                </Button>
+                <Button onClick={handlePrint} variant="outline" size="sm" className="gap-2">
+                  <Printer className="w-4 h-4" />
+                  Imprimer
+                </Button>
+              </div>
             </CardHeader>
             <CardContent className="overflow-x-auto">
               {displayedAttendance.length > 0 ? (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="sticky left-0 bg-background z-10 min-w-[180px]">
-                        Élève
-                      </TableHead>
-                      {sessions.map(session => (
-                        <TableHead key={session.id} className="text-center min-w-[120px]">
-                          <Button
-                            variant="ghost"
-                            className="flex flex-col items-center h-auto p-2"
-                            onClick={() => navigate(`/session-log/${session.id}`)}
-                            title="Voir la fiche de séance"
-                          >
-                            <span className="font-semibold">
-                              {new Date(session.date).toLocaleDateString('fr-FR', {
-                                day: '2-digit',
-                                month: '2-digit',
-                                year: '2-digit'
-                              })}
-                            </span>
-                            <span className="text-xs text-muted-foreground font-normal">
-                              {session.start_time}
-                            </span>
-                          </Button>
+                <div ref={tableRef}>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="sticky left-0 bg-background z-10 min-w-[180px]">
+                          Élève
                         </TableHead>
-                      ))}
-                      <TableHead className="text-center font-bold sticky right-24 bg-background z-10 min-w-[100px]">
-                        Total
-                      </TableHead>
-                      <TableHead className="text-center font-bold sticky right-0 bg-background z-10 min-w-[100px]">
-                        Absences
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {displayedAttendance.map(({ member, sessions: memberSessions, comments: memberComments }) => {
-                      const totalPresent = Object.values(memberSessions).filter(Boolean).length;
+                        {sessions.map(session => (
+                            <TableHead key={session.id} className="text-center min-w-[120px]">
+                              <Button
+                                variant="ghost"
+                                className="flex flex-col items-center h-auto p-2"
+                                onClick={() => navigate(`/session-log/${session.id}`)}
+                                title="Voir la fiche de séance"
+                              >
+                                <span className="font-semibold">
+                                  {new Date(session.date).toLocaleDateString('fr-FR', {
+                                    day: '2-digit',
+                                    month: '2-digit',
+                                    year: '2-digit'
+                                  })}
+                                </span>
+                                <span className="text-xs text-muted-foreground font-normal">
+                                  {session.start_time}
+                                </span>
+                              </Button>
+                            </TableHead>
+                          ))}
+                        <TableHead className="text-center font-bold sticky right-24 bg-background z-10 min-w-[100px]">
+                          Total
+                        </TableHead>
+                        <TableHead className="text-center font-bold sticky right-0 bg-background z-10 min-w-[100px]">
+                          Absences
+                        </TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {displayedAttendance.map(({ member, sessions: memberSessions, comments: memberComments }) => {
+                        const totalPresent = Object.values(memberSessions).filter(Boolean).length;
 
-                      return (
-                        <TableRow key={member.id}>
-                          <TableCell className="font-medium sticky left-0 bg-background z-10">
+                        return (
+                          <TableRow key={member.id}>
+                            <TableCell className="font-medium sticky left-0 bg-background z-10">
                             <Button
                               variant="ghost"
                               className="flex items-center gap-2 h-auto p-2"
@@ -426,6 +504,7 @@ const AttendanceRecap = () => {
                     </TableRow>
                   </TableBody>
                 </Table>
+                </div>
               ) : (
                 <p className="text-muted-foreground text-center py-8">
                   Aucun élève trouvé pour ce planning.
