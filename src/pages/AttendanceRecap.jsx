@@ -338,8 +338,11 @@ const AttendanceRecap = () => {
                           </Button>
                         </TableHead>
                       ))}
-                      <TableHead className="text-center font-bold sticky right-0 bg-background z-10 min-w-[100px]">
+                      <TableHead className="text-center font-bold sticky right-24 bg-background z-10 min-w-[100px]">
                         Total
+                      </TableHead>
+                      <TableHead className="text-center font-bold sticky right-0 bg-background z-10 min-w-[100px]">
+                        Absences
                       </TableHead>
                     </TableRow>
                   </TableHeader>
@@ -393,12 +396,34 @@ const AttendanceRecap = () => {
                               </div>
                             </TableCell>
                           ))}
-                          <TableCell className="text-center font-bold sticky right-0 bg-background z-10 text-primary">
+                          <TableCell className="text-center font-bold sticky right-24 bg-background z-10 text-primary">
                             {totalPresent} / {sessions.length}
+                          </TableCell>
+                          <TableCell className="text-center font-bold sticky right-0 bg-background z-10 text-red-500">
+                            {sessions.length - totalPresent}
                           </TableCell>
                         </TableRow>
                       );
                     })}
+                    <TableRow className="bg-muted/50 font-bold">
+                      <TableCell className="font-bold sticky left-0 bg-muted/50 z-10">
+                        Total présences
+                      </TableCell>
+                      {sessions.map(session => {
+                        const sessionTotal = displayedAttendance.filter(({ sessions: memberSessions }) => memberSessions[session.id]).length;
+                        return (
+                          <TableCell key={session.id} className="text-center font-bold text-green-600">
+                            {sessionTotal}
+                          </TableCell>
+                        );
+                      })}
+                      <TableCell className="text-center font-bold sticky right-24 bg-muted/50 z-10">
+                        -
+                      </TableCell>
+                      <TableCell className="text-center font-bold sticky right-0 bg-muted/50 z-10">
+                        -
+                      </TableCell>
+                    </TableRow>
                   </TableBody>
                 </Table>
               ) : (
