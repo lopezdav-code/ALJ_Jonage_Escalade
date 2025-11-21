@@ -16,18 +16,17 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        node-version: [22]
+    # Use a fixed Node version for this job
+    # (matrix removed - using a single runner configuration)
 
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@v4
 
-      - name: 📦 Setup Node.js ${{ matrix.node-version }}
+      - name: 📦 Setup Node.js 22
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version: '22'
           cache: 'npm'
 
       - name: 🔍 Debug Node version
