@@ -570,21 +570,21 @@ const CompetitionManagement = () => {
         };
       });
 
-      // Récupérer toutes les références de commande existantes
-      const { data: existingRefs, error: fetchError } = await supabase
+      // Récupérer tous les numéros de billet existants
+      const { data: existingBillets, error: fetchError } = await supabase
         .from('competition_registrations')
-        .select('reference_commande');
+        .select('numero_billet');
 
       if (fetchError) throw fetchError;
 
-      // Créer un Set des références existantes pour une recherche rapide
-      const existingReferences = new Set(
-        existingRefs.map(ref => ref.reference_commande).filter(Boolean)
+      // Créer un Set des numéros de billet existants pour une recherche rapide
+      const existingTickets = new Set(
+        existingBillets.map(billet => billet.numero_billet).filter(Boolean)
       );
 
-      // Filtrer les inscriptions pour exclure les doublons
+      // Filtrer les inscriptions pour exclure les doublons (basé sur numéro_billet)
       const newRegistrations = registrationsToInsert.filter(
-        reg => !existingReferences.has(reg.reference_commande)
+        reg => !existingTickets.has(reg.numero_billet)
       );
 
       const duplicateCount = registrationsToInsert.length - newRegistrations.length;
