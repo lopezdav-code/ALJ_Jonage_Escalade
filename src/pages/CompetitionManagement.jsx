@@ -1098,6 +1098,14 @@ const CompetitionManagement = () => {
         doc.line(x + cardMargin + 30, y + 0.8, x + cardMargin + colWidth, y + 0.8);
         y += fieldHeight;
 
+        // Ligne: Tarif
+        doc.setFont('helvetica', 'bold');
+        doc.text('Tarif', x + cardMargin, y);
+        doc.setFont('helvetica', 'normal');
+        doc.text(reg.tarif || '', x + cardMargin + 30, y);
+        doc.line(x + cardMargin + 30, y + 0.8, x + cardMargin + colWidth, y + 0.8);
+        y += fieldHeight;
+
         // Espace
         y += 2;
 
@@ -1959,6 +1967,7 @@ const CompetitionManagement = () => {
                         <TableHead>Sexe</TableHead>
                         <TableHead>Horaire</TableHead>
                         <TableHead>Type d'inscription</TableHead>
+                        <TableHead>Tarif</TableHead>
                         <TableHead>Montant</TableHead>
                         <TableHead>Club</TableHead>
                         <TableHead>N° Licence FFME</TableHead>
@@ -2070,6 +2079,7 @@ const CompetitionManagement = () => {
                               {reg.type_inscription || 'Compétition'}
                             </span>
                           </TableCell>
+                          <TableCell className="text-sm">{reg.tarif || '-'}</TableCell>
                           <TableCell>{reg.montant_tarif ? `${reg.montant_tarif} €` : '-'}</TableCell>
                           <TableCell
                             className="cursor-pointer hover:bg-blue-50 transition-colors relative"
