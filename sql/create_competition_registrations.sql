@@ -73,10 +73,25 @@ CREATE TRIGGER trigger_update_competition_registrations_updated_at
 CREATE OR REPLACE FUNCTION assign_dossard_numbers()
 RETURNS void AS $$
 DECLARE
-  next_matin INTEGER := 1;        -- Matin: 1-500
-  next_apres_midi INTEGER := 501; -- Après-midi: 501-999
+  next_matin INTEGER;        -- Matin: 1-500
+  next_apres_midi INTEGER;   -- Après-midi: 501-999
+  max_matin INTEGER;
+  max_apres_midi INTEGER;
   reg RECORD;
 BEGIN
+  -- Trouver le plus grand numéro déjà assigné pour chaque horaire
+  SELECT COALESCE(MAX(numero_dossart), 0) INTO max_matin
+  FROM competition_registrations
+  WHERE horaire = 'matin' AND numero_dossart IS NOT NULL;
+
+  SELECT COALESCE(MAX(numero_dossart), 500) INTO max_apres_midi
+  FROM competition_registrations
+  WHERE horaire = 'après-midi' AND numero_dossart IS NOT NULL;
+
+  -- Définir les prochains numéros à partir des maxima existants
+  next_matin := GREATEST(1, max_matin + 1);
+  next_apres_midi := GREATEST(501, max_apres_midi + 1);
+
   -- Assigner les numéros de dossards pour le MATIN (U9-U11-U13)
   -- Range: 1-500
   FOR reg IN
