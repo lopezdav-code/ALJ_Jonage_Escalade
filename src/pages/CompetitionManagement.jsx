@@ -49,12 +49,15 @@ const CompetitionManagement = () => {
   const [filterClub, setFilterClub] = useState('all'); // 'all' ou nom du club
   const [filterUnmappedClubs, setFilterUnmappedClubs] = useState(false); // true pour voir seulement les clubs non mappés
   const [filterSexe, setFilterSexe] = useState('all'); // 'all', 'H', 'F', 'empty'
+  const [filterStatutCommande, setFilterStatutCommande] = useState('all'); // 'all', 'Validé', 'Annulé'
   const [editingClubId, setEditingClubId] = useState(null);
   const [editingClubValue, setEditingClubValue] = useState('');
   const [editingSexeId, setEditingSexeId] = useState(null);
   const [editingSexeValue, setEditingSexeValue] = useState('');
   const [editingDossardId, setEditingDossardId] = useState(null);
   const [editingDossardValue, setEditingDossardValue] = useState('');
+  const [editingStatutId, setEditingStatutId] = useState(null);
+  const [editingStatutValue, setEditingStatutValue] = useState('');
   const [detailsId, setDetailsId] = useState(null);
 
   // Statistiques des compétiteurs
@@ -139,7 +142,8 @@ const CompetitionManagement = () => {
       const { data: sexeData, error: sexeError } = await supabase
         .from('competition_registrations')
         .select('sexe')
-        .eq('type_inscription', 'Compétition');
+        .eq('type_inscription', 'Compétition')
+        .neq('statut_commande', 'Annulé');
 
       if (sexeError) throw sexeError;
 
@@ -147,7 +151,8 @@ const CompetitionManagement = () => {
       const { data: ageData, error: ageError } = await supabase
         .from('competition_registrations')
         .select('categorie_age')
-        .eq('type_inscription', 'Compétition');
+        .eq('type_inscription', 'Compétition')
+        .neq('statut_commande', 'Annulé');
 
       if (ageError) throw ageError;
 
@@ -155,7 +160,8 @@ const CompetitionManagement = () => {
       const { data: horaireData, error: horaireError } = await supabase
         .from('competition_registrations')
         .select('horaire')
-        .eq('type_inscription', 'Compétition');
+        .eq('type_inscription', 'Compétition')
+        .neq('statut_commande', 'Annulé');
 
       if (horaireError) throw horaireError;
 
@@ -783,8 +789,13 @@ const CompetitionManagement = () => {
       }
     }
 
+    // Filtre par statut de commande
+    if (filterStatutCommande !== 'all') {
+      filtered = filtered.filter(reg => reg.statut_commande === filterStatutCommande);
+    }
+
     return filtered;
-  }, [registrations, searchTerm, filterPrinted, filterHoraire, filterTypeInscription, filterFileName, filterClub, filterUnmappedClubs, filterSexe]);
+  }, [registrations, searchTerm, filterPrinted, filterHoraire, filterTypeInscription, filterFileName, filterClub, filterUnmappedClubs, filterSexe, filterStatutCommande]);
 
   // Calculer la liste des fichiers uniques uploadés
   const uniqueFileNames = useMemo(() => {
@@ -927,6 +938,33 @@ const CompetitionManagement = () => {
     }
   };
 
+  // Mettre à jour le statut de la commande
+  const updateStatutCommande = async (registrationId, newStatut) => {
+    try {
+      const { error } = await supabase
+        .from('competition_registrations')
+        .update({ statut_commande: newStatut || null })
+        .eq('id', registrationId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Succès",
+        description: "Statut de la commande mis à jour."
+      });
+      fetchRegistrations();
+      setEditingStatutId(null);
+      setEditingStatutValue('');
+    } catch (error) {
+      console.error('Error updating statut commande:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de mettre à jour le statut de la commande.",
+        variant: "destructive"
+      });
+    }
+  };
+
   // Réinitialiser tous les filtres
   const clearAllFilters = () => {
     setSearchTerm('');
@@ -937,6 +975,7 @@ const CompetitionManagement = () => {
     setFilterClub('all');
     setFilterUnmappedClubs(false);
     setFilterSexe('all');
+    setFilterStatutCommande('all');
     setSelectedIds([]);
   };
 
@@ -1949,6 +1988,31 @@ const CompetitionManagement = () => {
                       ❓ Vide ({registrations.filter(r => !r.sexe).length})
                     </Button>
                   </div>
+
+                  {/* Filtres par statut de commande */}
+                  <div className="flex gap-2">
+                    <Button
+                      variant={filterStatutCommande === 'all' ? 'default' : 'outline'}
+                      onClick={() => setFilterStatutCommande('all')}
+                      size="sm"
+                    >
+                      Tous statuts
+                    </Button>
+                    <Button
+                      variant={filterStatutCommande === 'Validé' ? 'default' : 'outline'}
+                      onClick={() => setFilterStatutCommande('Validé')}
+                      size="sm"
+                    >
+                      ✓ Validé ({registrations.filter(r => r.statut_commande === 'Validé' || !r.statut_commande).length})
+                    </Button>
+                    <Button
+                      variant={filterStatutCommande === 'Annulé' ? 'default' : 'outline'}
+                      onClick={() => setFilterStatutCommande('Annulé')}
+                      size="sm"
+                    >
+                      ✕ Annulé ({registrations.filter(r => r.statut_commande === 'Annulé').length})
+                    </Button>
+                  </div>
                 </div>
               </div>
 
@@ -2037,6 +2101,7 @@ const CompetitionManagement = () => {
                         </TableHead>
                         <TableHead>N° Dossard</TableHead>
                         <TableHead>Référence</TableHead>
+                        <TableHead>Statut Commande</TableHead>
                         <TableHead>Nom</TableHead>
                         <TableHead>Prénom</TableHead>
                         <TableHead>Catégorie d'Âge</TableHead>
@@ -2055,7 +2120,9 @@ const CompetitionManagement = () => {
                       {filteredRegistrations.map((reg) => (
                         <TableRow
                           key={reg.id}
-                          className={selectedIds.includes(reg.id) ? 'bg-blue-50' : ''}
+                          className={`${selectedIds.includes(reg.id) ? 'bg-blue-50' : ''} ${
+                            reg.statut_commande === 'Annulé' ? 'bg-gray-100 opacity-60' : ''
+                          }`}
                         >
                           <TableCell>
                             <Checkbox
@@ -2102,6 +2169,48 @@ const CompetitionManagement = () => {
                           </TableCell>
                           <TableCell className="text-xs">
                             {reg.reference_commande || '-'}
+                          </TableCell>
+                          <TableCell>
+                            {editingStatutId === reg.id ? (
+                              <div className="flex gap-1">
+                                <select
+                                  value={editingStatutValue}
+                                  onChange={(e) => setEditingStatutValue(e.target.value)}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                      updateStatutCommande(reg.id, editingStatutValue);
+                                    } else if (e.key === 'Escape') {
+                                      setEditingStatutId(null);
+                                    }
+                                  }}
+                                  autoFocus
+                                  className="h-8 px-2 border border-gray-300 rounded text-sm"
+                                >
+                                  <option value="Validé">Validé</option>
+                                  <option value="Annulé">Annulé</option>
+                                </select>
+                                <button
+                                  onClick={() => updateStatutCommande(reg.id, editingStatutValue)}
+                                  className="bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded text-sm"
+                                >
+                                  ✓
+                                </button>
+                              </div>
+                            ) : (
+                              <span
+                                className={`cursor-pointer px-2 py-1 rounded text-xs font-medium ${
+                                  reg.statut_commande === 'Annulé'
+                                    ? 'bg-red-100 text-red-700'
+                                    : 'bg-green-100 text-green-700'
+                                }`}
+                                onClick={() => {
+                                  setEditingStatutId(reg.id);
+                                  setEditingStatutValue(reg.statut_commande || 'Validé');
+                                }}
+                              >
+                                {reg.statut_commande || 'Validé'}
+                              </span>
+                            )}
                           </TableCell>
                           <TableCell className="font-medium">
                             {reg.nom_participant?.toUpperCase()}
