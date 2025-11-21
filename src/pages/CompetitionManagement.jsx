@@ -693,7 +693,7 @@ const CompetitionManagement = () => {
     if (filterPrinted === 'printed') {
       filtered = filtered.filter(reg => reg.deja_imprimee === true);
     } else if (filterPrinted === 'notPrinted') {
-      filtered = filtered.filter(reg => reg.deja_imprimee === false);
+      filtered = filtered.filter(reg => reg.deja_imprimee === false && !reg.tarif?.includes('Précommande Buvette'));
     }
 
     // Filtre par horaire
@@ -1445,82 +1445,6 @@ const CompetitionManagement = () => {
           </Card>
         </motion.div>
 
-        {/* Statistiques */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="grid grid-cols-1 md:grid-cols-3 gap-4"
-        >
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-2xl font-bold">{registrations.length}</div>
-              <p className="text-sm text-muted-foreground">Inscriptions totales</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-2xl font-bold text-green-600">
-                {registrations.filter(r => r.deja_imprimee).length}
-              </div>
-              <p className="text-sm text-muted-foreground">Dossards imprimés</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-2xl font-bold text-orange-600">
-                {registrations.filter(r => !r.deja_imprimee).length}
-              </div>
-              <p className="text-sm text-muted-foreground">En attente d'impression</p>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        {/* Statistiques par catégorie */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.25 }}
-          className="grid grid-cols-1 md:grid-cols-4 gap-4"
-        >
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-2xl font-bold text-blue-600">
-                {registrations.filter(r => r.horaire === 'matin' && r.type_inscription === 'Compétition').length}
-              </div>
-              <p className="text-sm text-muted-foreground">Compétition le matin</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-2xl font-bold text-indigo-600">
-                {registrations.filter(r => r.horaire === 'après-midi' && r.type_inscription === 'Compétition').length}
-              </div>
-              <p className="text-sm text-muted-foreground">Compétition l'après-midi</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-2xl font-bold text-purple-600">
-                {registrations.filter(r => r.type_inscription === 'Buvette').length}
-              </div>
-              <p className="text-sm text-muted-foreground">Buvette</p>
-              <p className="text-lg font-bold text-purple-600 mt-2">
-                {registrations.filter(r => r.type_inscription === 'Buvette')
-                  .reduce((sum, r) => sum + (r.montant_tarif || 0), 0).toFixed(2)} €
-              </p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-2xl font-bold text-emerald-600">
-                {registrations.reduce((sum, r) => sum + (r.montant_tarif || 0), 0).toFixed(2)} €
-              </div>
-              <p className="text-sm text-muted-foreground">Total compétition</p>
-            </CardContent>
-          </Card>
-        </motion.div>
-
         {/* Modal d'ajout/modification de mapping */}
         {showAddMappingModal && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -1608,9 +1532,60 @@ const CompetitionManagement = () => {
                     <Loader2 className="w-6 h-6 animate-spin text-primary" />
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="flex flex-wrap gap-6">
+                    {/* Statistiques générales */}
+                    <div className="border rounded-lg p-4 bg-gradient-to-br from-slate-50 to-slate-100 w-fit min-w-[300px]">
+                      <h3 className="font-bold text-lg mb-4 text-slate-900">Général</h3>
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm font-medium">Inscriptions totales</span>
+                          <span className="bg-slate-600 text-white px-3 py-1 rounded-full text-sm font-bold">
+                            {registrations.length}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm font-medium">Dossards imprimés</span>
+                          <span className="bg-emerald-600 text-white px-3 py-1 rounded-full text-sm font-bold">
+                            {registrations.filter(r => r.deja_imprimee).length}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center cursor-pointer hover:opacity-80 transition-opacity" onClick={() => setFilterPrinted(filterPrinted === 'notPrinted' ? 'all' : 'notPrinted')}>
+                          <span className="text-sm font-medium">En attente d'impression</span>
+                          <span className="bg-orange-600 text-white px-3 py-1 rounded-full text-sm font-bold">
+                            {registrations.filter(r => !r.deja_imprimee && !r.tarif?.includes('Précommande Buvette')).length}
+                          </span>
+                        </div>
+                        <div className="border-t border-slate-300 pt-2 mt-2">
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm font-medium">Compétition matin</span>
+                            <span className="bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-bold">
+                              {registrations.filter(r => r.horaire === 'matin' && r.type_inscription === 'Compétition').length}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center mt-1">
+                            <span className="text-sm font-medium">Compétition après-midi</span>
+                            <span className="bg-indigo-600 text-white px-3 py-1 rounded-full text-sm font-bold">
+                              {registrations.filter(r => r.horaire === 'après-midi' && r.type_inscription === 'Compétition').length}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center mt-1">
+                            <span className="text-sm font-medium">Buvette</span>
+                            <span className="bg-purple-600 text-white px-3 py-1 rounded-full text-sm font-bold">
+                              {registrations.filter(r => r.type_inscription === 'Buvette').length}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center mt-1">
+                            <span className="text-sm font-medium">Total compétition</span>
+                            <span className="bg-emerald-600 text-white px-3 py-1 rounded-full text-sm font-bold">
+                              {registrations.reduce((sum, r) => sum + (r.montant_tarif || 0), 0).toFixed(2)} €
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
                     {/* Statistiques par Sexe */}
-                    <div className="border rounded-lg p-4 bg-gradient-to-br from-blue-50 to-blue-100">
+                    <div className="border rounded-lg p-4 bg-gradient-to-br from-blue-50 to-blue-100 w-fit min-w-[300px]">
                       <h3 className="font-bold text-lg mb-4 text-blue-900">Par Sexe</h3>
                       <div className="space-y-2">
                         {competitorStats.bySexe && competitorStats.bySexe.map((stat) => (
@@ -1632,9 +1607,9 @@ const CompetitionManagement = () => {
                     </div>
 
                     {/* Statistiques par Catégorie d'Âge */}
-                    <div className="border rounded-lg p-4 bg-gradient-to-br from-green-50 to-green-100">
+                    <div className="border rounded-lg p-4 bg-gradient-to-br from-green-50 to-green-100 w-fit min-w-[300px]">
                       <h3 className="font-bold text-lg mb-4 text-green-900">Par Catégorie d'Âge</h3>
-                      <div className="space-y-2 max-h-64 overflow-y-auto">
+                      <div className="space-y-2">
                         {competitorStats.byAgeCategory && competitorStats.byAgeCategory.map((stat) => (
                           <div key={stat.label} className="flex justify-between items-center">
                             <span className="text-sm font-medium">{stat.label}</span>
@@ -1647,7 +1622,7 @@ const CompetitionManagement = () => {
                     </div>
 
                     {/* Statistiques par Horaire */}
-                    <div className="border rounded-lg p-4 bg-gradient-to-br from-orange-50 to-orange-100">
+                    <div className="border rounded-lg p-4 bg-gradient-to-br from-orange-50 to-orange-100 w-fit min-w-[300px]">
                       <h3 className="font-bold text-lg mb-4 text-orange-900">Par Horaire</h3>
                       <div className="space-y-2">
                         {competitorStats.byHoraire && competitorStats.byHoraire.map((stat) => (
@@ -1692,12 +1667,12 @@ const CompetitionManagement = () => {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                {uniqueClubs.map((club) => {
+                {uniqueClubs.filter(club => filterUnmappedClubs ? !isClubMapped(club) : true).map((club) => {
                   const isMapped = isClubMapped(club);
                   return (
                     <div
                       key={club}
-                      className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors ${
+                      className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors w-auto ${
                         isMapped
                           ? 'bg-blue-50 border border-blue-200 hover:bg-blue-100'
                           : 'bg-red-50 border-2 border-red-300 hover:bg-red-100'
@@ -2587,7 +2562,7 @@ const CompetitionManagement = () => {
             </CardHeader>
             <CardContent>
               <div className="overflow-x-auto">
-                <table className="w-full border-collapse text-sm">
+                <table className="w-auto border-collapse text-sm">
                   <thead>
                     <tr className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b-2 border-blue-200">
                       <th className="border border-blue-200 px-4 py-3 text-left font-bold text-blue-900">Catégorie</th>
