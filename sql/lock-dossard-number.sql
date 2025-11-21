@@ -14,8 +14,11 @@ RETURNS TRIGGER AS $$
 BEGIN
   -- Si le numero_dossart existait déjà et qu'on essaie de le modifier
   IF OLD.numero_dossart IS NOT NULL AND NEW.numero_dossart IS DISTINCT FROM OLD.numero_dossart THEN
-    RAISE EXCEPTION 'Le numéro de dossard ne peut pas être modifié après sa création. Ancien: %, Nouveau: %',
-      OLD.numero_dossart, NEW.numero_dossart;
+    -- Permettre la modification si elle vient de la fonction admin
+    IF current_setting('app.allow_dossard_update', true) != 'true' THEN
+      RAISE EXCEPTION 'Le numéro de dossard ne peut pas être modifié après sa création. Ancien: %, Nouveau: %',
+        OLD.numero_dossart, NEW.numero_dossart;
+    END IF;
   END IF;
   RETURN NEW;
 END;
