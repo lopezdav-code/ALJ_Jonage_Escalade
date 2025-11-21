@@ -905,7 +905,7 @@ const CompetitionManagement = () => {
       // Utiliser la fonction RPC pour contourner la restriction du trigger
       const { error } = await supabase.rpc('update_dossard_number_admin', {
         p_id: registrationId,
-        p_new_numero_dossart: newDossardNumber || null
+        p_new_numero_dossart: newDossardNumber ? parseInt(newDossardNumber, 10) : null
       });
 
       if (error) throw error;
