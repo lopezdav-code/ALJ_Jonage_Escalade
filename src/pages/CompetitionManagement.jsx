@@ -53,6 +53,8 @@ const CompetitionManagement = () => {
   const [editingClubValue, setEditingClubValue] = useState('');
   const [editingSexeId, setEditingSexeId] = useState(null);
   const [editingSexeValue, setEditingSexeValue] = useState('');
+  const [editingDossardId, setEditingDossardId] = useState(null);
+  const [editingDossardValue, setEditingDossardValue] = useState('');
   const [detailsId, setDetailsId] = useState(null);
 
   // Statistiques des compétiteurs
@@ -582,10 +584,29 @@ const CompetitionManagement = () => {
         existingBillets.map(billet => billet.numero_billet).filter(Boolean)
       );
 
-      // Filtrer les inscriptions pour exclure les doublons (basé sur numéro_billet)
-      const newRegistrations = registrationsToInsert.filter(
-        reg => !existingTickets.has(reg.numero_billet)
-      );
+      // Vérifier l'unicité au sein du fichier importé
+      const ticketsInFile = new Set();
+      let fileInternalDuplicates = 0;
+      const newRegistrations = registrationsToInsert.filter(reg => {
+        // Ignorer les lignes sans numéro de billet
+        if (!reg.numero_billet) {
+          return true;
+        }
+
+        // Vérifier si déjà dans la base de données
+        if (existingTickets.has(reg.numero_billet)) {
+          return false;
+        }
+
+        // Vérifier si déjà dans le fichier courant
+        if (ticketsInFile.has(reg.numero_billet)) {
+          fileInternalDuplicates++;
+          return false;
+        }
+
+        ticketsInFile.add(reg.numero_billet);
+        return true;
+      });
 
       const duplicateCount = registrationsToInsert.length - newRegistrations.length;
 
@@ -603,27 +624,48 @@ const CompetitionManagement = () => {
         await addUnknownMappingsForUnmappedClubs(unmappedClubs);
       }
 
-      // Insérer seulement les nouvelles inscriptions
+      // Insérer les nouvelles inscriptions une par une pour gérer les erreurs individuellement
+      let successCount = 0;
+      let uniqueConstraintErrors = 0;
+
       if (newRegistrations.length > 0) {
-        const { error: insertError } = await supabase
-          .from('competition_registrations')
-          .insert(newRegistrations);
+        for (const registration of newRegistrations) {
+          const { error: insertError } = await supabase
+            .from('competition_registrations')
+            .insert([registration]);
 
-        if (insertError) throw insertError;
+          if (insertError) {
+            // Vérifier si c'est une erreur d'unicité sur numero_billet
+            if (insertError.code === '23505' || insertError.message?.includes('unique_numero_billet')) {
+              uniqueConstraintErrors++;
+              // Continuer avec la prochaine ligne au lieu de lever une erreur
+            } else {
+              throw insertError;
+            }
+          } else {
+            successCount++;
+          }
+        }
 
-        // Assigner les numéros de dossards automatiquement
-        const { error: assignError } = await supabase.rpc('assign_dossard_numbers');
-        if (assignError) throw assignError;
+        // Assigner les numéros de dossards automatiquement si au moins une insertion a réussi
+        if (successCount > 0) {
+          const { error: assignError } = await supabase.rpc('assign_dossard_numbers');
+          if (assignError) throw assignError;
+        }
       }
 
       // Message de notification
       let description = '';
-      if (newRegistrations.length > 0) {
-        description += `${newRegistrations.length} nouvelle(s) inscription(s) ajoutée(s)`;
+      if (successCount > 0) {
+        description += `${successCount} nouvelle(s) inscription(s) ajoutée(s)`;
       }
       if (duplicateCount > 0) {
         if (description) description += '. ';
-        description += `${duplicateCount} doublon(s) ignoré(s)`;
+        description += `${duplicateCount} doublon(s) du fichier ignoré(s)`;
+      }
+      if (uniqueConstraintErrors > 0) {
+        if (description) description += '. ';
+        description += `${uniqueConstraintErrors} numéro(s) de billet déjà existant(s) - ignoré(s)`;
       }
 
       toast({
@@ -636,9 +678,20 @@ const CompetitionManagement = () => {
       event.target.value = ''; // Reset file input
     } catch (error) {
       console.error('Error uploading file:', error);
+
+      let errorMessage = "Impossible d'importer le fichier Excel. Vérifiez le format.";
+
+      // Détecter les erreurs d'unicité sur numero_billet
+      if (error.message && error.message.includes('unique_numero_billet')) {
+        errorMessage = "Un ou plusieurs numéros de billet existent déjà dans la base de données.";
+      } else if (error.code === '23505') {
+        // Code erreur PostgreSQL pour violation de contrainte unique
+        errorMessage = "Doublons détectés: un numéro de billet existe déjà.";
+      }
+
       toast({
         title: "Erreur",
-        description: "Impossible d'importer le fichier Excel. Vérifiez le format.",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
@@ -821,6 +874,54 @@ const CompetitionManagement = () => {
       toast({
         title: "Erreur",
         description: "Impossible de mettre à jour le sexe.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Mettre à jour le numéro de dossard
+  const updateDossardNumber = async (registrationId, newDossardNumber) => {
+    try {
+      // Vérifier que le nouveau numéro de dossard n'existe pas déjà
+      if (newDossardNumber) {
+        const { data: existingDossard, error: checkError } = await supabase
+          .from('competition_registrations')
+          .select('id')
+          .eq('numero_dossart', newDossardNumber)
+          .neq('id', registrationId);
+
+        if (checkError) throw checkError;
+
+        if (existingDossard && existingDossard.length > 0) {
+          toast({
+            title: "Erreur",
+            description: `Le numéro de dossard ${newDossardNumber} existe déjà.`,
+            variant: "destructive"
+          });
+          return;
+        }
+      }
+
+      // Utiliser la fonction RPC pour contourner la restriction du trigger
+      const { error } = await supabase.rpc('update_dossard_number_admin', {
+        p_id: registrationId,
+        p_new_numero_dossart: newDossardNumber || null
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Succès",
+        description: "Numéro de dossard mis à jour."
+      });
+      fetchRegistrations();
+      setEditingDossardId(null);
+      setEditingDossardValue('');
+    } catch (error) {
+      console.error('Error updating dossard number:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de mettre à jour le numéro de dossard.",
         variant: "destructive"
       });
     }
@@ -1963,7 +2064,41 @@ const CompetitionManagement = () => {
                             />
                           </TableCell>
                           <TableCell className="font-medium">
-                            {reg.numero_dossart || '-'}
+                            {editingDossardId === reg.id ? (
+                              <div className="flex gap-1">
+                                <Input
+                                  value={editingDossardValue}
+                                  onChange={(e) => setEditingDossardValue(e.target.value)}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                      updateDossardNumber(reg.id, editingDossardValue);
+                                    } else if (e.key === 'Escape') {
+                                      setEditingDossardId(null);
+                                    }
+                                  }}
+                                  autoFocus
+                                  className="h-8 w-24"
+                                />
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => updateDossardNumber(reg.id, editingDossardValue)}
+                                  className="h-8 w-8 p-0"
+                                >
+                                  ✓
+                                </Button>
+                              </div>
+                            ) : (
+                              <span
+                                className="cursor-pointer hover:bg-gray-200 px-1 py-0.5 rounded text-sm"
+                                onClick={() => {
+                                  setEditingDossardId(reg.id);
+                                  setEditingDossardValue(reg.numero_dossart || '');
+                                }}
+                              >
+                                {reg.numero_dossart || '-'}
+                              </span>
+                            )}
                           </TableCell>
                           <TableCell className="text-xs">
                             {reg.reference_commande || '-'}
@@ -2239,7 +2374,47 @@ const CompetitionManagement = () => {
                                 </div>
                                 <div>
                                   <p className="text-sm text-gray-600">Numéro de dossard</p>
-                                  <p className="font-medium">{registration.numero_dossart || '-'}</p>
+                                  {editingDossardId === registration.id ? (
+                                    <div className="flex gap-2">
+                                      <Input
+                                        value={editingDossardValue}
+                                        onChange={(e) => setEditingDossardValue(e.target.value)}
+                                        onKeyDown={(e) => {
+                                          if (e.key === 'Enter') {
+                                            updateDossardNumber(registration.id, editingDossardValue);
+                                          } else if (e.key === 'Escape') {
+                                            setEditingDossardId(null);
+                                          }
+                                        }}
+                                        autoFocus
+                                        className="flex-1 h-8"
+                                      />
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => updateDossardNumber(registration.id, editingDossardValue)}
+                                      >
+                                        ✓
+                                      </Button>
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => setEditingDossardId(null)}
+                                      >
+                                        ✕
+                                      </Button>
+                                    </div>
+                                  ) : (
+                                    <p
+                                      className="font-medium cursor-pointer hover:bg-gray-100 px-2 py-1 rounded"
+                                      onClick={() => {
+                                        setEditingDossardId(registration.id);
+                                        setEditingDossardValue(registration.numero_dossart || '');
+                                      }}
+                                    >
+                                      {registration.numero_dossart || '-'}
+                                    </p>
+                                  )}
                                 </div>
                                 <div>
                                   <p className="text-sm text-gray-600">Imprimée</p>
