@@ -107,7 +107,7 @@ const AppContent = () => {
         <meta name="description" content="Application web du club d'escalade ALJ Escalade Jonage - Compétitions, planning et adhérents" />
       </Helmet>
       <Navigation />
-      <main className="flex-grow container mx-auto px-4 py-8">
+      <main className="flex-grow w-full mx-auto px-4 py-8">
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/" element={<News />} />

@@ -1897,17 +1897,17 @@ const CompetitionManagement = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
         >
-          <Card>
+          <Card className="w-full">
             <CardHeader>
               <CardTitle>Inscriptions ({filteredRegistrations.length})</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="w-full p-0">
               {loading ? (
-                <div className="flex justify-center items-center py-8">
+                <div className="flex justify-center items-center py-8 px-6">
                   <Loader2 className="w-8 h-8 animate-spin" />
                 </div>
               ) : filteredRegistrations.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
+                <div className="text-center py-8 px-6 text-muted-foreground">
                   {searchTerm || filterPrinted !== 'all'
                     ? 'Aucune inscription trouvée avec ces critères.'
                     : 'Aucune inscription. Importez un fichier Excel pour commencer.'}
@@ -1920,7 +1920,7 @@ const CompetitionManagement = () => {
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -10 }}
-                      className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-between"
+                      className="mx-6 mt-6 mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-between"
                     >
                       <span className="text-sm font-medium text-blue-900">
                         {selectedIds.length} inscription(s) sélectionnée(s)
@@ -1949,8 +1949,8 @@ const CompetitionManagement = () => {
                     </motion.div>
                   )}
 
-                  <div className="overflow-x-auto">
-                    <Table>
+                  <div className="overflow-x-auto w-full px-6 pb-6">
+                    <Table className="w-full min-w-max">
                     <TableHeader>
                       <TableRow>
                         <TableHead className="w-12">
