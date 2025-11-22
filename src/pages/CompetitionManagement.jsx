@@ -1505,16 +1505,7 @@ const CompetitionManagement = () => {
       const filename = `listing_${dateStr}_${timeStr}_${sortedRegs.length}participants${filterSuffix}.pdf`;
       doc.save(filename);
 
-      // Marquer comme imprimées
-      const { error } = await supabase
-        .from('competition_registrations')
-        .update({ deja_imprimee: true })
-        .in('id', selectedIds);
-
-      if (error) throw error;
-
-      toast({ title: "Succès", description: `Listing généré avec ${sortedRegs.length} participant(s).` });
-      fetchRegistrations();
+      toast({ title: "Succès", description: `Listing PDF généré avec ${sortedRegs.length} participant(s).` });
       setSelectedIds([]);
     } catch (error) {
       console.error('Error generating listing PDF:', error);
@@ -1566,7 +1557,7 @@ const CompetitionManagement = () => {
         filtersDisplay.push(`Sexe: ${sexeLabel}`);
       }
 
-      // Créer le contenu CSV
+      // Créer le contenu CSV en UTF-8 BOM
       const now = new Date().toLocaleDateString('fr-FR');
       let csvContent = 'Listing de compétition\n';
       csvContent += `Date: ${now}\n`;
@@ -1602,8 +1593,10 @@ const CompetitionManagement = () => {
       const filterSuffix = filterParts.length > 0 ? `_${filterParts.join('-')}` : '';
       const filename = `listing_${dateStr}_${timeStr}_${sortedRegs.length}participants${filterSuffix}.csv`;
 
-      // Créer un blob et télécharger
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      // Créer un blob avec UTF-8 BOM et télécharger
+      const BOM = '\uFEFF';
+      const csvWithBOM = BOM + csvContent;
+      const blob = new Blob([csvWithBOM], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement('a');
       const url = URL.createObjectURL(blob);
       link.setAttribute('href', url);
@@ -1613,16 +1606,7 @@ const CompetitionManagement = () => {
       link.click();
       document.body.removeChild(link);
 
-      // Marquer comme imprimées
-      const { error } = await supabase
-        .from('competition_registrations')
-        .update({ deja_imprimee: true })
-        .in('id', selectedIds);
-
-      if (error) throw error;
-
       toast({ title: "Succès", description: `CSV généré avec ${sortedRegs.length} participant(s).` });
-      fetchRegistrations();
       setSelectedIds([]);
     } catch (error) {
       console.error('Error generating listing CSV:', error);
