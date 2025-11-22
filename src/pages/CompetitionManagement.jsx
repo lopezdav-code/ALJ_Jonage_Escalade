@@ -1383,12 +1383,6 @@ const CompetitionManagement = () => {
       const rowHeight = 8;
       const headerHeight = 10;
 
-      // Fonction pour tronquer le texte si trop long (basée sur nombre de caractères)
-      const truncateText = (text, maxChars) => {
-        if (!text || text.length <= maxChars) return text;
-        return text.substring(0, maxChars - 1) + '...';
-      };
-
       // Construire les filtres affichés
       const filtersDisplay = [];
       if (filterHoraire !== 'all') {
@@ -1477,14 +1471,13 @@ const CompetitionManagement = () => {
 
         // Contenu des cellules
         let xPosData = startX;
-        doc.text(truncateText((reg.nom_participant || '').toUpperCase(), 14), xPosData, currentY);
+        doc.text((reg.nom_participant || '').toUpperCase(), xPosData, currentY, { maxWidth: columnWidths.nom - 1 });
         xPosData += columnWidths.nom;
-        doc.text(truncateText(reg.prenom_participant || '', 12), xPosData, currentY);
+        doc.text(reg.prenom_participant || '', xPosData, currentY, { maxWidth: columnWidths.prenom - 1 });
         xPosData += columnWidths.prenom;
-        const catText = getCategory(reg.date_naissance) || '';
-        doc.text(truncateText(catText, 6), xPosData, currentY, { align: 'center' });
+        doc.text(getCategory(reg.date_naissance) || '', xPosData, currentY, { maxWidth: columnWidths.categorie - 1, align: 'center' });
         xPosData += columnWidths.categorie;
-        doc.text(truncateText(reg.club || '', 24), xPosData, currentY);
+        doc.text(reg.club || '', xPosData, currentY, { maxWidth: columnWidths.club - 1 });
         xPosData += columnWidths.club;
         doc.text(String(reg.numero_dossart || '-'), xPosData, currentY, { align: 'center' });
 
