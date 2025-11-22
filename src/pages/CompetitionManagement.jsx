@@ -1369,13 +1369,13 @@ const CompetitionManagement = () => {
       const pageHeight = doc.internal.pageSize.height;
       const pageWidth = doc.internal.pageSize.width;
 
-      const margin = 10;
+      const margin = 8;
       const columnWidths = {
-        nom: 38,
-        prenom: 33,
-        categorie: 20,
-        club: 70,
-        dossard: 18
+        nom: 35,
+        prenom: 30,
+        categorie: 18,
+        club: 60,
+        dossard: 16
       };
 
       const startX = margin;
