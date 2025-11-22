@@ -82,11 +82,11 @@ const CompetitionManagement = () => {
   const [filterUnknownMappings, setFilterUnknownMappings] = useState(false);
   const [isEditingMode, setIsEditingMode] = useState(false);
 
-  // Options pour l'export PDF
+  // Options pour l'export PDF/CSV
   const [pdfFormat, setPdfFormat] = useState('a5'); // 'a4' ou 'a5'
   const [pdfOrientation, setPdfOrientation] = useState('portrait'); // 'portrait' ou 'landscape'
   const [pdfCardsPerPage, setPdfCardsPerPage] = useState(1); // 1 ou 2
-  const [pdfExportType, setPdfExportType] = useState('dossards'); // 'dossards' ou 'listing'
+  const [pdfExportType, setPdfExportType] = useState('dossards'); // 'dossards', 'listing', ou 'csv'
   const [showPdfOptions, setShowPdfOptions] = useState(false);
 
   // Charger les inscriptions
@@ -1526,6 +1526,114 @@ const CompetitionManagement = () => {
     }
   };
 
+  // Générer CSV listing avec nom, prénom, club, catégorie, numéro du dossard
+  const generateListingCSV = async () => {
+    if (selectedIds.length === 0) {
+      toast({ title: "Attention", description: "Veuillez sélectionner au moins une inscription." });
+      return;
+    }
+
+    try {
+      const selectedRegs = registrations.filter(r => selectedIds.includes(r.id));
+
+      // Filtrer les inscriptions annulées et trier par nom
+      const sortedRegs = selectedRegs
+        .filter(r => r.statut_commande !== 'Annulé')
+        .sort((a, b) => {
+          const nomA = (a.nom_participant || '').toUpperCase();
+          const nomB = (b.nom_participant || '').toUpperCase();
+          return nomA.localeCompare(nomB, 'fr');
+        });
+
+      // Construire les données CSV
+      const headers = ['Nom', 'Prénom', 'Catégorie', 'Club', 'N° Dossard'];
+      const rows = sortedRegs.map(reg => [
+        reg.nom_participant || '',
+        reg.prenom_participant || '',
+        getCategory(reg.date_naissance) || '',
+        reg.club || '',
+        reg.numero_dossart || ''
+      ]);
+
+      // Construire les filtres affichés
+      const filtersDisplay = [];
+      if (filterHoraire !== 'all') {
+        const horaireLabel = filterHoraire === 'matin' ? 'Matin' : filterHoraire === 'après-midi' ? 'Après-midi' : filterHoraire;
+        filtersDisplay.push(`Horaire: ${horaireLabel}`);
+      }
+      if (filterSexe !== 'all') {
+        const sexeLabel = filterSexe === 'H' ? 'Homme' : filterSexe === 'F' ? 'Femme' : 'Non spécifié';
+        filtersDisplay.push(`Sexe: ${sexeLabel}`);
+      }
+
+      // Créer le contenu CSV
+      const now = new Date().toLocaleDateString('fr-FR');
+      let csvContent = 'Listing de compétition\n';
+      csvContent += `Date: ${now}\n`;
+      csvContent += `Participants: ${sortedRegs.length}\n`;
+      if (filtersDisplay.length > 0) {
+        csvContent += `Filtres: ${filtersDisplay.join(' | ')}\n`;
+      }
+      csvContent += '\n';
+
+      // En-têtes
+      csvContent += headers.map(h => `"${h}"`).join(',') + '\n';
+
+      // Données
+      rows.forEach(row => {
+        csvContent += row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',') + '\n';
+      });
+
+      // Créer et télécharger le fichier
+      const now_time = new Date();
+      const dateStr = now_time.toISOString().slice(0, 10).replace(/-/g, '');
+      const timeStr = now_time.toTimeString().slice(0, 8).replace(/:/g, '');
+
+      let filterParts = [];
+      if (filterHoraire !== 'all') {
+        filterParts.push(filterHoraire === 'matin' ? 'matin' : 'apm');
+      }
+      if (filterSexe !== 'all') {
+        if (filterSexe === 'H') filterParts.push('H');
+        else if (filterSexe === 'F') filterParts.push('F');
+        else filterParts.push('NS');
+      }
+
+      const filterSuffix = filterParts.length > 0 ? `_${filterParts.join('-')}` : '';
+      const filename = `listing_${dateStr}_${timeStr}_${sortedRegs.length}participants${filterSuffix}.csv`;
+
+      // Créer un blob et télécharger
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', filename);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      // Marquer comme imprimées
+      const { error } = await supabase
+        .from('competition_registrations')
+        .update({ deja_imprimee: true })
+        .in('id', selectedIds);
+
+      if (error) throw error;
+
+      toast({ title: "Succès", description: `CSV généré avec ${sortedRegs.length} participant(s).` });
+      fetchRegistrations();
+      setSelectedIds([]);
+    } catch (error) {
+      console.error('Error generating listing CSV:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de générer le CSV.",
+        variant: "destructive"
+      });
+    }
+  };
+
   // Basculer le statut d'impression
   const togglePrintStatus = async (registrationId, currentStatus) => {
     try {
@@ -2747,37 +2855,61 @@ const CompetitionManagement = () => {
                     </Dialog>
                   )}
 
-                  {/* Dialog Options PDF */}
+                  {/* Dialog Options d'export */}
                   <Dialog open={showPdfOptions} onOpenChange={setShowPdfOptions}>
                     <DialogContent className="max-w-md">
                       <DialogHeader>
-                        <DialogTitle>Options d'export PDF</DialogTitle>
+                        <DialogTitle>Options d'export</DialogTitle>
                         <DialogDescription>
-                          Choisissez le type et le format d'export
+                          Choisissez le format et le type d'export
                         </DialogDescription>
                       </DialogHeader>
 
                       <div className="space-y-6">
-                        {/* Type d'export */}
+                        {/* Format d'export */}
                         <div className="space-y-3">
-                          <Label className="text-base font-semibold">Type d'export</Label>
+                          <Label className="text-base font-semibold">Format d'export</Label>
                           <div className="flex gap-3">
                             <Button
-                              variant={pdfExportType === 'dossards' ? 'default' : 'outline'}
+                              variant={pdfExportType === 'dossards' || pdfExportType === 'listing' ? 'default' : 'outline'}
                               onClick={() => setPdfExportType('dossards')}
                               className="flex-1"
                             >
-                              Dossards
+                              PDF
                             </Button>
                             <Button
-                              variant={pdfExportType === 'listing' ? 'default' : 'outline'}
-                              onClick={() => setPdfExportType('listing')}
+                              variant={pdfExportType === 'csv' ? 'default' : 'outline'}
+                              onClick={() => setPdfExportType('csv')}
                               className="flex-1"
                             >
-                              Listing
+                              CSV
                             </Button>
                           </div>
                         </div>
+
+                        {/* Type de PDF */}
+                        {(pdfExportType === 'dossards' || pdfExportType === 'listing') && (
+                          <div className="space-y-3">
+                            <Label className="text-base font-semibold">Type de PDF</Label>
+                            <div className="flex gap-3">
+                              <Button
+                                variant={pdfExportType === 'dossards' ? 'default' : 'outline'}
+                                onClick={() => setPdfExportType('dossards')}
+                                className="flex-1"
+                              >
+                                Dossards
+                              </Button>
+                              <Button
+                                variant={pdfExportType === 'listing' ? 'default' : 'outline'}
+                                onClick={() => setPdfExportType('listing')}
+                                className="flex-1"
+                              >
+                                Listing
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+
                         {/* Format du document (seulement pour les dossards) */}
                         {pdfExportType === 'dossards' && (
                           <div className="space-y-3">
@@ -2850,10 +2982,12 @@ const CompetitionManagement = () => {
                         {/* Aperçu */}
                         <div className="bg-gray-50 p-3 rounded border border-gray-200 text-sm">
                           <p className="text-gray-700">
-                            {pdfExportType === 'dossards' ? (
+                            {pdfExportType === 'csv' ? (
+                              <>📊 <span className="font-semibold">CSV Listing</span> - Tableau avec filtres</>
+                            ) : pdfExportType === 'dossards' ? (
                               <>📋 <span className="font-semibold">{pdfFormat.toUpperCase()}</span> - {pdfCardsPerPage} fiche{pdfCardsPerPage > 1 ? 's' : ''} par page</>
                             ) : (
-                              <>📝 <span className="font-semibold">Listing</span> - Format A4 Portrait</>
+                              <>📝 <span className="font-semibold">PDF Listing</span> - Format A4 Portrait</>
                             )}
                           </p>
                         </div>
@@ -2869,7 +3003,9 @@ const CompetitionManagement = () => {
                           </Button>
                           <Button
                             onClick={() => {
-                              if (pdfExportType === 'listing') {
+                              if (pdfExportType === 'csv') {
+                                generateListingCSV();
+                              } else if (pdfExportType === 'listing') {
                                 generateListingPDF();
                               } else {
                                 generatePDF();
@@ -2878,7 +3014,7 @@ const CompetitionManagement = () => {
                             }}
                             className="flex-1"
                           >
-                            Générer PDF
+                            {pdfExportType === 'csv' ? 'Générer CSV' : 'Générer PDF'}
                           </Button>
                         </div>
                       </div>
