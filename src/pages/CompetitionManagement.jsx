@@ -1346,7 +1346,7 @@ const CompetitionManagement = () => {
     }
   };
 
-  // Générer PDF listing avec nom, prénom, club, numéro du dossard
+  // Générer PDF listing avec nom, prénom, club, catégorie, numéro du dossard
   const generateListingPDF = async () => {
     if (selectedIds.length === 0) {
       toast({ title: "Attention", description: "Veuillez sélectionner au moins une inscription." });
@@ -1371,17 +1371,28 @@ const CompetitionManagement = () => {
 
       const margin = 10;
       const columnWidths = {
-        nom: 60,
-        prenom: 50,
-        club: 50,
-        dossard: 20
+        nom: 50,
+        prenom: 45,
+        categorie: 28,
+        club: 40,
+        dossard: 18
       };
 
-      const totalWidth = columnWidths.nom + columnWidths.prenom + columnWidths.club + columnWidths.dossard;
       const startX = margin;
       let currentY = margin;
       const rowHeight = 8;
       const headerHeight = 12;
+
+      // Construire les filtres affichés
+      const filtersDisplay = [];
+      if (filterHoraire !== 'all') {
+        const horaireLabel = filterHoraire === 'matin' ? 'Matin' : filterHoraire === 'après-midi' ? 'Après-midi' : filterHoraire;
+        filtersDisplay.push(`Horaire: ${horaireLabel}`);
+      }
+      if (filterSexe !== 'all') {
+        const sexeLabel = filterSexe === 'H' ? 'Homme' : filterSexe === 'F' ? 'Femme' : 'Non spécifié';
+        filtersDisplay.push(`Sexe: ${sexeLabel}`);
+      }
 
       // En-tête du document
       doc.setFont('helvetica', 'bold');
@@ -1389,12 +1400,17 @@ const CompetitionManagement = () => {
       doc.text('Listing de compétition', pageWidth / 2, currentY, { align: 'center' });
       currentY += 8;
 
-      // Date et nombre de participants
+      // Date, participants et filtres
       doc.setFont('helvetica', 'normal');
-      doc.setFontSize(9);
+      doc.setFontSize(8);
       const now = new Date().toLocaleDateString('fr-FR');
       doc.text(`Date: ${now} | Participants: ${sortedRegs.length}`, pageWidth / 2, currentY, { align: 'center' });
-      currentY += 8;
+      currentY += 5;
+
+      if (filtersDisplay.length > 0) {
+        doc.text(`Filtres: ${filtersDisplay.join(' | ')}`, pageWidth / 2, currentY, { align: 'center' });
+        currentY += 5;
+      }
 
       // Ligne de séparation
       doc.line(margin, currentY, pageWidth - margin, currentY);
@@ -1402,11 +1418,17 @@ const CompetitionManagement = () => {
 
       // En-tête du tableau
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(10);
-      doc.text('Nom', startX, currentY);
-      doc.text('Prénom', startX + columnWidths.nom, currentY);
-      doc.text('Club', startX + columnWidths.nom + columnWidths.prenom, currentY);
-      doc.text('N° Dossard', startX + columnWidths.nom + columnWidths.prenom + columnWidths.club, currentY);
+      doc.setFontSize(9);
+      let xPos = startX;
+      doc.text('Nom', xPos, currentY);
+      xPos += columnWidths.nom;
+      doc.text('Prénom', xPos, currentY);
+      xPos += columnWidths.prenom;
+      doc.text('Catégorie', xPos, currentY);
+      xPos += columnWidths.categorie;
+      doc.text('Club', xPos, currentY);
+      xPos += columnWidths.club;
+      doc.text('N° Dossard', xPos, currentY);
 
       currentY += headerHeight;
 
@@ -1415,7 +1437,7 @@ const CompetitionManagement = () => {
 
       // Données du tableau
       doc.setFont('helvetica', 'normal');
-      doc.setFontSize(9);
+      doc.setFontSize(8);
 
       sortedRegs.forEach((reg, index) => {
         // Vérifier si on a besoin d'une nouvelle page
@@ -1425,16 +1447,22 @@ const CompetitionManagement = () => {
 
           // Répéter l'en-tête du tableau sur la nouvelle page
           doc.setFont('helvetica', 'bold');
-          doc.setFontSize(10);
-          doc.text('Nom', startX, currentY);
-          doc.text('Prénom', startX + columnWidths.nom, currentY);
-          doc.text('Club', startX + columnWidths.nom + columnWidths.prenom, currentY);
-          doc.text('N° Dossard', startX + columnWidths.nom + columnWidths.prenom + columnWidths.club, currentY);
+          doc.setFontSize(9);
+          let xPosHeader = startX;
+          doc.text('Nom', xPosHeader, currentY);
+          xPosHeader += columnWidths.nom;
+          doc.text('Prénom', xPosHeader, currentY);
+          xPosHeader += columnWidths.prenom;
+          doc.text('Catégorie', xPosHeader, currentY);
+          xPosHeader += columnWidths.categorie;
+          doc.text('Club', xPosHeader, currentY);
+          xPosHeader += columnWidths.club;
+          doc.text('N° Dossard', xPosHeader, currentY);
 
           currentY += headerHeight;
           doc.line(margin, currentY - 2, pageWidth - margin, currentY - 2);
           doc.setFont('helvetica', 'normal');
-          doc.setFontSize(9);
+          doc.setFontSize(8);
         }
 
         // Couleur alternée pour les lignes (gris clair sur deux)
@@ -1444,19 +1472,37 @@ const CompetitionManagement = () => {
         }
 
         // Contenu des cellules
-        doc.text((reg.nom_participant || '').toUpperCase(), startX, currentY, { maxWidth: columnWidths.nom - 2 });
-        doc.text(reg.prenom_participant || '', startX + columnWidths.nom, currentY, { maxWidth: columnWidths.prenom - 2 });
-        doc.text(reg.club || '', startX + columnWidths.nom + columnWidths.prenom, currentY, { maxWidth: columnWidths.club - 2 });
-        doc.text(String(reg.numero_dossart || '-'), startX + columnWidths.nom + columnWidths.prenom + columnWidths.club, currentY, { align: 'center' });
+        let xPosData = startX;
+        doc.text((reg.nom_participant || '').toUpperCase(), xPosData, currentY, { maxWidth: columnWidths.nom - 1 });
+        xPosData += columnWidths.nom;
+        doc.text(reg.prenom_participant || '', xPosData, currentY, { maxWidth: columnWidths.prenom - 1 });
+        xPosData += columnWidths.prenom;
+        doc.text(getCategory(reg.date_naissance) || '', xPosData, currentY, { maxWidth: columnWidths.categorie - 1, align: 'center' });
+        xPosData += columnWidths.categorie;
+        doc.text(reg.club || '', xPosData, currentY, { maxWidth: columnWidths.club - 1 });
+        xPosData += columnWidths.club;
+        doc.text(String(reg.numero_dossart || '-'), xPosData, currentY, { align: 'center' });
 
         currentY += rowHeight;
       });
 
-      // Sauvegarder le PDF
+      // Construire le nom du fichier avec filtres
       const now_time = new Date();
       const dateStr = now_time.toISOString().slice(0, 10).replace(/-/g, '');
       const timeStr = now_time.toTimeString().slice(0, 8).replace(/:/g, '');
-      const filename = `listing_${dateStr}_${timeStr}_${sortedRegs.length}participants.pdf`;
+
+      let filterParts = [];
+      if (filterHoraire !== 'all') {
+        filterParts.push(filterHoraire === 'matin' ? 'matin' : 'apm');
+      }
+      if (filterSexe !== 'all') {
+        if (filterSexe === 'H') filterParts.push('H');
+        else if (filterSexe === 'F') filterParts.push('F');
+        else filterParts.push('NS');
+      }
+
+      const filterSuffix = filterParts.length > 0 ? `_${filterParts.join('-')}` : '';
+      const filename = `listing_${dateStr}_${timeStr}_${sortedRegs.length}participants${filterSuffix}.pdf`;
       doc.save(filename);
 
       // Marquer comme imprimées
