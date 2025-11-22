@@ -86,6 +86,7 @@ const CompetitionManagement = () => {
   const [pdfFormat, setPdfFormat] = useState('a5'); // 'a4' ou 'a5'
   const [pdfOrientation, setPdfOrientation] = useState('portrait'); // 'portrait' ou 'landscape'
   const [pdfCardsPerPage, setPdfCardsPerPage] = useState(1); // 1 ou 2
+  const [pdfExportType, setPdfExportType] = useState('dossards'); // 'dossards' ou 'listing'
   const [showPdfOptions, setShowPdfOptions] = useState(false);
 
   // Charger les inscriptions
@@ -1345,6 +1346,140 @@ const CompetitionManagement = () => {
     }
   };
 
+  // Générer PDF listing avec nom, prénom, club, numéro du dossard
+  const generateListingPDF = async () => {
+    if (selectedIds.length === 0) {
+      toast({ title: "Attention", description: "Veuillez sélectionner au moins une inscription." });
+      return;
+    }
+
+    try {
+      const selectedRegs = registrations.filter(r => selectedIds.includes(r.id));
+
+      // Filtrer les inscriptions annulées et trier par nom
+      const sortedRegs = selectedRegs
+        .filter(r => r.statut_commande !== 'Annulé')
+        .sort((a, b) => {
+          const nomA = (a.nom_participant || '').toUpperCase();
+          const nomB = (b.nom_participant || '').toUpperCase();
+          return nomA.localeCompare(nomB, 'fr');
+        });
+
+      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const pageHeight = doc.internal.pageSize.height;
+      const pageWidth = doc.internal.pageSize.width;
+
+      const margin = 10;
+      const columnWidths = {
+        nom: 60,
+        prenom: 50,
+        club: 50,
+        dossard: 20
+      };
+
+      const totalWidth = columnWidths.nom + columnWidths.prenom + columnWidths.club + columnWidths.dossard;
+      const startX = margin;
+      let currentY = margin;
+      const rowHeight = 8;
+      const headerHeight = 12;
+
+      // En-tête du document
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(14);
+      doc.text('Listing de compétition', pageWidth / 2, currentY, { align: 'center' });
+      currentY += 8;
+
+      // Date et nombre de participants
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      const now = new Date().toLocaleDateString('fr-FR');
+      doc.text(`Date: ${now} | Participants: ${sortedRegs.length}`, pageWidth / 2, currentY, { align: 'center' });
+      currentY += 8;
+
+      // Ligne de séparation
+      doc.line(margin, currentY, pageWidth - margin, currentY);
+      currentY += 4;
+
+      // En-tête du tableau
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10);
+      doc.text('Nom', startX, currentY);
+      doc.text('Prénom', startX + columnWidths.nom, currentY);
+      doc.text('Club', startX + columnWidths.nom + columnWidths.prenom, currentY);
+      doc.text('N° Dossard', startX + columnWidths.nom + columnWidths.prenom + columnWidths.club, currentY);
+
+      currentY += headerHeight;
+
+      // Ligne de séparation
+      doc.line(margin, currentY - 2, pageWidth - margin, currentY - 2);
+
+      // Données du tableau
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+
+      sortedRegs.forEach((reg, index) => {
+        // Vérifier si on a besoin d'une nouvelle page
+        if (currentY + rowHeight > pageHeight - margin) {
+          doc.addPage();
+          currentY = margin;
+
+          // Répéter l'en-tête du tableau sur la nouvelle page
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(10);
+          doc.text('Nom', startX, currentY);
+          doc.text('Prénom', startX + columnWidths.nom, currentY);
+          doc.text('Club', startX + columnWidths.nom + columnWidths.prenom, currentY);
+          doc.text('N° Dossard', startX + columnWidths.nom + columnWidths.prenom + columnWidths.club, currentY);
+
+          currentY += headerHeight;
+          doc.line(margin, currentY - 2, pageWidth - margin, currentY - 2);
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(9);
+        }
+
+        // Couleur alternée pour les lignes (gris clair sur deux)
+        if (index % 2 === 1) {
+          doc.setFillColor(240, 240, 240);
+          doc.rect(margin, currentY - 6, pageWidth - 2 * margin, rowHeight, 'F');
+        }
+
+        // Contenu des cellules
+        doc.text((reg.nom_participant || '').toUpperCase(), startX, currentY, { maxWidth: columnWidths.nom - 2 });
+        doc.text(reg.prenom_participant || '', startX + columnWidths.nom, currentY, { maxWidth: columnWidths.prenom - 2 });
+        doc.text(reg.club || '', startX + columnWidths.nom + columnWidths.prenom, currentY, { maxWidth: columnWidths.club - 2 });
+        doc.text(String(reg.numero_dossart || '-'), startX + columnWidths.nom + columnWidths.prenom + columnWidths.club, currentY, { align: 'center' });
+
+        currentY += rowHeight;
+      });
+
+      // Sauvegarder le PDF
+      const now_time = new Date();
+      const dateStr = now_time.toISOString().slice(0, 10).replace(/-/g, '');
+      const timeStr = now_time.toTimeString().slice(0, 8).replace(/:/g, '');
+      const filename = `listing_${dateStr}_${timeStr}_${sortedRegs.length}participants.pdf`;
+      doc.save(filename);
+
+      // Marquer comme imprimées
+      const { error } = await supabase
+        .from('competition_registrations')
+        .update({ deja_imprimee: true })
+        .in('id', selectedIds);
+
+      if (error) throw error;
+
+      toast({ title: "Succès", description: `Listing généré avec ${sortedRegs.length} participant(s).` });
+      fetchRegistrations();
+      setSelectedIds([]);
+    } catch (error) {
+      console.error('Error generating listing PDF:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de générer le listing PDF.",
+        variant: "destructive"
+      });
+    }
+  };
+
   // Basculer le statut d'impression
   const togglePrintStatus = async (registrationId, currentStatus) => {
     try {
@@ -2572,78 +2707,108 @@ const CompetitionManagement = () => {
                       <DialogHeader>
                         <DialogTitle>Options d'export PDF</DialogTitle>
                         <DialogDescription>
-                          Configurez le format et la disposition de vos dossards
+                          Choisissez le type et le format d'export
                         </DialogDescription>
                       </DialogHeader>
 
                       <div className="space-y-6">
-                        {/* Format du document */}
+                        {/* Type d'export */}
                         <div className="space-y-3">
-                          <Label className="text-base font-semibold">Format du document</Label>
+                          <Label className="text-base font-semibold">Type d'export</Label>
                           <div className="flex gap-3">
                             <Button
-                              variant={pdfFormat === 'a4' ? 'default' : 'outline'}
-                              onClick={() => setPdfFormat('a4')}
+                              variant={pdfExportType === 'dossards' ? 'default' : 'outline'}
+                              onClick={() => setPdfExportType('dossards')}
                               className="flex-1"
                             >
-                              A4
+                              Dossards
                             </Button>
                             <Button
-                              variant={pdfFormat === 'a5' ? 'default' : 'outline'}
-                              onClick={() => setPdfFormat('a5')}
+                              variant={pdfExportType === 'listing' ? 'default' : 'outline'}
+                              onClick={() => setPdfExportType('listing')}
                               className="flex-1"
                             >
-                              A5
+                              Listing
                             </Button>
                           </div>
                         </div>
+                        {/* Format du document (seulement pour les dossards) */}
+                        {pdfExportType === 'dossards' && (
+                          <div className="space-y-3">
+                            <Label className="text-base font-semibold">Format du document</Label>
+                            <div className="flex gap-3">
+                              <Button
+                                variant={pdfFormat === 'a4' ? 'default' : 'outline'}
+                                onClick={() => setPdfFormat('a4')}
+                                className="flex-1"
+                              >
+                                A4
+                              </Button>
+                              <Button
+                                variant={pdfFormat === 'a5' ? 'default' : 'outline'}
+                                onClick={() => setPdfFormat('a5')}
+                                className="flex-1"
+                              >
+                                A5
+                              </Button>
+                            </div>
+                          </div>
+                        )}
 
-                        {/* Orientation */}
-                        <div className="space-y-3">
-                          <Label className="text-base font-semibold">Orientation</Label>
-                          <div className="flex gap-3">
-                            <Button
-                              variant={pdfOrientation === 'portrait' ? 'default' : 'outline'}
-                              onClick={() => setPdfOrientation('portrait')}
-                              className="flex-1"
-                            >
-                              Portrait
-                            </Button>
-                            <Button
-                              variant={pdfOrientation === 'landscape' ? 'default' : 'outline'}
-                              onClick={() => setPdfOrientation('landscape')}
-                              className="flex-1"
-                            >
-                              Paysage
-                            </Button>
+                        {/* Orientation (seulement pour les dossards) */}
+                        {pdfExportType === 'dossards' && (
+                          <div className="space-y-3">
+                            <Label className="text-base font-semibold">Orientation</Label>
+                            <div className="flex gap-3">
+                              <Button
+                                variant={pdfOrientation === 'portrait' ? 'default' : 'outline'}
+                                onClick={() => setPdfOrientation('portrait')}
+                                className="flex-1"
+                              >
+                                Portrait
+                              </Button>
+                              <Button
+                                variant={pdfOrientation === 'landscape' ? 'default' : 'outline'}
+                                onClick={() => setPdfOrientation('landscape')}
+                                className="flex-1"
+                              >
+                                Paysage
+                              </Button>
+                            </div>
                           </div>
-                        </div>
+                        )}
 
-                        {/* Fiches par page */}
-                        <div className="space-y-3">
-                          <Label className="text-base font-semibold">Fiches par page</Label>
-                          <div className="flex gap-3">
-                            <Button
-                              variant={pdfCardsPerPage === 1 ? 'default' : 'outline'}
-                              onClick={() => setPdfCardsPerPage(1)}
-                              className="flex-1"
-                            >
-                              1 fiche
-                            </Button>
-                            <Button
-                              variant={pdfCardsPerPage === 2 ? 'default' : 'outline'}
-                              onClick={() => setPdfCardsPerPage(2)}
-                              className="flex-1"
-                            >
-                              2 fiches
-                            </Button>
+                        {/* Fiches par page (seulement pour les dossards) */}
+                        {pdfExportType === 'dossards' && (
+                          <div className="space-y-3">
+                            <Label className="text-base font-semibold">Fiches par page</Label>
+                            <div className="flex gap-3">
+                              <Button
+                                variant={pdfCardsPerPage === 1 ? 'default' : 'outline'}
+                                onClick={() => setPdfCardsPerPage(1)}
+                                className="flex-1"
+                              >
+                                1 fiche
+                              </Button>
+                              <Button
+                                variant={pdfCardsPerPage === 2 ? 'default' : 'outline'}
+                                onClick={() => setPdfCardsPerPage(2)}
+                                className="flex-1"
+                              >
+                                2 fiches
+                              </Button>
+                            </div>
                           </div>
-                        </div>
+                        )}
 
                         {/* Aperçu */}
                         <div className="bg-gray-50 p-3 rounded border border-gray-200 text-sm">
                           <p className="text-gray-700">
-                            📋 <span className="font-semibold">{pdfFormat.toUpperCase()}</span> - {pdfCardsPerPage} fiche{pdfCardsPerPage > 1 ? 's' : ''} par page
+                            {pdfExportType === 'dossards' ? (
+                              <>📋 <span className="font-semibold">{pdfFormat.toUpperCase()}</span> - {pdfCardsPerPage} fiche{pdfCardsPerPage > 1 ? 's' : ''} par page</>
+                            ) : (
+                              <>📝 <span className="font-semibold">Listing</span> - Format A4 Portrait</>
+                            )}
                           </p>
                         </div>
 
@@ -2658,7 +2823,11 @@ const CompetitionManagement = () => {
                           </Button>
                           <Button
                             onClick={() => {
-                              generatePDF();
+                              if (pdfExportType === 'listing') {
+                                generateListingPDF();
+                              } else {
+                                generatePDF();
+                              }
                               setShowPdfOptions(false);
                             }}
                             className="flex-1"
