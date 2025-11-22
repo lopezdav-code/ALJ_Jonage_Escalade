@@ -12,7 +12,14 @@
       "Bash(npm run build:*)",
       "Bash(pkill:*)",
       "Bash(powershell -Command:*)",
-      "Bash(timeout 15 powershell -Command \"Start-Sleep -Seconds 3; (curl -s -I http://localhost:3000/ALJ_Jonage_Escalade/ | head -5) -or ''Server starting...''\")"
+      "Bash(timeout 15 powershell -Command \"Start-Sleep -Seconds 3; (curl -s -I http://localhost:3000/ALJ_Jonage_Escalade/ | head -5) -or ''Server starting...''\")",
+      "Bash(npm install:*)",
+      "Bash(timeout 15 powershell -Command \"Start-Job -ScriptBlock { npm run dev 2>&1 } | Out-Null; Start-Sleep -Seconds 3; (curl -s -I http://localhost:3000/ALJ_Jonage_Escalade/ | head -5) -or ''Server starting...''\")",
+      "Bash(find:*)",
+      "Bash(nul)",
+      "Bash(findstr /s /m \"alj_jonage_escalade\" src*.jsx src***.jsx)",
+      "Bash(findstr:*)",
+      "Bash(npm run dev:*)"
     ],
     "deny": [],
     "ask": []
