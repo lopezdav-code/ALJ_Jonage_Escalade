@@ -1203,7 +1203,6 @@ const CompetitionManagement = () => {
         doc.text('Nom', x + cardMargin, y);
         doc.setFont('helvetica', 'normal');
         doc.text(reg.nom_participant?.toUpperCase() || '', x + cardMargin + 30, y);
-        doc.line(x + cardMargin + 30, y + 0.8, x + cardMargin + colWidth, y + 0.8);
         y += fieldHeight;
 
         // Ligne: Prénom
@@ -1371,11 +1370,18 @@ const CompetitionManagement = () => {
 
       const margin = 8;
       const columnWidths = {
-        nom: 35,
-        prenom: 30,
-        categorie: 18,
+        nom: 45,
+        prenom: 32,
+        categorie: 20,
         club: 60,
-        dossard: 16
+        dossard: 8
+      };
+
+      // Fonction pour tronquer le texte si trop long
+      const truncateText = (text, maxWidth) => {
+        if (!text) return '';
+        const maxChars = Math.floor(maxWidth / 1.5);
+        return text.length > maxChars ? text.substring(0, maxChars - 1) + '...' : text;
       };
 
       const startX = margin;
@@ -1385,13 +1391,21 @@ const CompetitionManagement = () => {
 
       // Construire les filtres affichés
       const filtersDisplay = [];
-      if (filterHoraire !== 'all') {
-        const horaireLabel = filterHoraire === 'matin' ? 'Matin' : filterHoraire === 'après-midi' ? 'Après-midi' : filterHoraire;
-        filtersDisplay.push(`Horaire: ${horaireLabel}`);
-      }
-      if (filterSexe !== 'all') {
+
+      // Sexe
+      if (filterSexe === 'all') {
+        filtersDisplay.push('Sexe: Tous');
+      } else {
         const sexeLabel = filterSexe === 'H' ? 'Homme' : filterSexe === 'F' ? 'Femme' : 'Non spécifié';
         filtersDisplay.push(`Sexe: ${sexeLabel}`);
+      }
+
+      // Horaire
+      if (filterHoraire === 'all') {
+        filtersDisplay.push('Horaire: Tous');
+      } else {
+        const horaireLabel = filterHoraire === 'matin' ? 'Matin' : filterHoraire === 'après-midi' ? 'Après-midi' : filterHoraire;
+        filtersDisplay.push(`Horaire: ${horaireLabel}`);
       }
 
       // En-tête du document
@@ -1407,10 +1421,8 @@ const CompetitionManagement = () => {
       doc.text(`Date: ${now} | Participants: ${sortedRegs.length}`, pageWidth / 2, currentY, { align: 'center' });
       currentY += 5;
 
-      if (filtersDisplay.length > 0) {
-        doc.text(`Filtres: ${filtersDisplay.join(' | ')}`, pageWidth / 2, currentY, { align: 'center' });
-        currentY += 5;
-      }
+      doc.text(`Filtres: ${filtersDisplay.join(' | ')}`, pageWidth / 2, currentY, { align: 'center' });
+      currentY += 5;
 
       currentY += 2;
 
@@ -1426,12 +1438,9 @@ const CompetitionManagement = () => {
       xPos += columnWidths.categorie;
       doc.text('Club', xPos, currentY);
       xPos += columnWidths.club;
-      doc.text('N° Dossard', xPos, currentY);
+      doc.text('N° Dossard', xPos + columnWidths.dossard, currentY, { align: 'right' });
 
       currentY += headerHeight;
-
-      // Ligne de séparation
-      doc.line(margin, currentY - 2, pageWidth - margin, currentY - 2);
 
       // Données du tableau
       doc.setFont('helvetica', 'normal');
@@ -1455,10 +1464,9 @@ const CompetitionManagement = () => {
           xPosHeader += columnWidths.categorie;
           doc.text('Club', xPosHeader, currentY);
           xPosHeader += columnWidths.club;
-          doc.text('N° Dossard', xPosHeader, currentY);
+          doc.text('N° Dossard', xPosHeader + columnWidths.dossard, currentY, { align: 'right' });
 
           currentY += headerHeight;
-          doc.line(margin, currentY - 2, pageWidth - margin, currentY - 2);
           doc.setFont('helvetica', 'normal');
           doc.setFontSize(8);
         }
@@ -1475,11 +1483,11 @@ const CompetitionManagement = () => {
         xPosData += columnWidths.nom;
         doc.text(reg.prenom_participant || '', xPosData, currentY, { maxWidth: columnWidths.prenom - 1 });
         xPosData += columnWidths.prenom;
-        doc.text(getCategory(reg.date_naissance) || '', xPosData, currentY, { maxWidth: columnWidths.categorie - 1, align: 'center' });
+        doc.text(getCategory(reg.date_naissance) || '', xPosData, currentY);
         xPosData += columnWidths.categorie;
-        doc.text(reg.club || '', xPosData, currentY, { maxWidth: columnWidths.club - 1 });
+        doc.text(truncateText(reg.club || '', columnWidths.club), xPosData, currentY);
         xPosData += columnWidths.club;
-        doc.text(String(reg.numero_dossart || '-'), xPosData, currentY, { align: 'center' });
+        doc.text(String(reg.numero_dossart || '-'), xPosData + columnWidths.dossard, currentY, { align: 'right' });
 
         currentY += rowHeight;
       });
@@ -2083,11 +2091,10 @@ const CompetitionManagement = () => {
                   return (
                     <div
                       key={club}
-                      className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors w-auto ${
-                        isMapped
+                      className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors w-auto ${isMapped
                           ? 'bg-blue-50 border border-blue-200 hover:bg-blue-100'
                           : 'bg-red-50 border-2 border-red-300 hover:bg-red-100'
-                      }`}
+                        }`}
                       onClick={() => setFilterClub(filterClub === club ? 'all' : club)}
                       title={isMapped ? 'Club mappé' : 'Club NON mappé - À vérifier!'}
                     >
@@ -2095,11 +2102,10 @@ const CompetitionManagement = () => {
                         {club}
                         {!isMapped && <span className="ml-1 text-red-600 font-bold">⚠</span>}
                       </span>
-                      <span className={`px-2 py-1 rounded text-xs font-bold ${
-                        isMapped
+                      <span className={`px-2 py-1 rounded text-xs font-bold ${isMapped
                           ? 'bg-blue-600 text-white'
                           : 'bg-red-600 text-white'
-                      }`}>
+                        }`}>
                         {clubStats[club]}
                       </span>
                     </div>
@@ -2362,280 +2368,275 @@ const CompetitionManagement = () => {
 
                   <div className="overflow-x-auto w-full px-6 pb-6">
                     <Table className="w-full min-w-max">
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-12">
-                          <Checkbox
-                            checked={selectedIds.length === filteredRegistrations.length && filteredRegistrations.length > 0}
-                            onCheckedChange={toggleSelectAll}
-                          />
-                        </TableHead>
-                        <TableHead>N° Dossard</TableHead>
-                        <TableHead>Référence</TableHead>
-                        <TableHead>Statut Commande</TableHead>
-                        <TableHead>Nom</TableHead>
-                        <TableHead>Prénom</TableHead>
-                        <TableHead>Catégorie d'Âge</TableHead>
-                        <TableHead>Sexe</TableHead>
-                        <TableHead>Horaire</TableHead>
-                        <TableHead>Type d'inscription</TableHead>
-                        <TableHead>Tarif</TableHead>
-                        <TableHead>Montant</TableHead>
-                        <TableHead>Club</TableHead>
-                        <TableHead>N° Licence FFME</TableHead>
-                        <TableHead className="text-center">Imprimé</TableHead>
-                        <TableHead className="text-center">Action</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredRegistrations.map((reg) => (
-                        <TableRow
-                          key={reg.id}
-                          className={`${selectedIds.includes(reg.id) ? 'bg-blue-50' : ''} ${
-                            reg.statut_commande === 'Annulé' ? 'bg-gray-100 opacity-60' : ''
-                          }`}
-                        >
-                          <TableCell>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-12">
                             <Checkbox
-                              checked={selectedIds.includes(reg.id)}
-                              onCheckedChange={() => toggleSelect(reg.id)}
+                              checked={selectedIds.length === filteredRegistrations.length && filteredRegistrations.length > 0}
+                              onCheckedChange={toggleSelectAll}
                             />
-                          </TableCell>
-                          <TableCell className="font-medium">
-                            {editingDossardId === reg.id ? (
-                              <div className="flex gap-1">
-                                <Input
-                                  value={editingDossardValue}
-                                  onChange={(e) => setEditingDossardValue(e.target.value)}
-                                  onKeyDown={(e) => {
-                                    if (e.key === 'Enter') {
-                                      updateDossardNumber(reg.id, editingDossardValue);
-                                    } else if (e.key === 'Escape') {
-                                      setEditingDossardId(null);
-                                    }
-                                  }}
-                                  autoFocus
-                                  className="h-8 w-24"
-                                />
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => updateDossardNumber(reg.id, editingDossardValue)}
-                                  className="h-8 w-8 p-0"
-                                >
-                                  ✓
-                                </Button>
-                              </div>
-                            ) : (
-                              <span
-                                className="cursor-pointer hover:bg-gray-200 px-1 py-0.5 rounded text-sm"
-                                onClick={() => {
-                                  setEditingDossardId(reg.id);
-                                  setEditingDossardValue(reg.numero_dossart || '');
-                                }}
-                              >
-                                {reg.numero_dossart || '-'}
-                              </span>
-                            )}
-                          </TableCell>
-                          <TableCell className="text-xs">
-                            {reg.reference_commande || '-'}
-                          </TableCell>
-                          <TableCell>
-                            {editingStatutId === reg.id ? (
-                              <div className="flex gap-1">
-                                <select
-                                  value={editingStatutValue}
-                                  onChange={(e) => setEditingStatutValue(e.target.value)}
-                                  onKeyDown={(e) => {
-                                    if (e.key === 'Enter') {
-                                      updateStatutCommande(reg.id, editingStatutValue);
-                                    } else if (e.key === 'Escape') {
-                                      setEditingStatutId(null);
-                                    }
-                                  }}
-                                  autoFocus
-                                  className="h-8 px-2 border border-gray-300 rounded text-sm"
-                                >
-                                  <option value="Validé">Validé</option>
-                                  <option value="Annulé">Annulé</option>
-                                </select>
-                                <button
-                                  onClick={() => updateStatutCommande(reg.id, editingStatutValue)}
-                                  className="bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded text-sm"
-                                >
-                                  ✓
-                                </button>
-                              </div>
-                            ) : (
-                              <span
-                                className={`cursor-pointer px-2 py-1 rounded text-xs font-medium ${
-                                  reg.statut_commande === 'Annulé'
-                                    ? 'bg-red-100 text-red-700'
-                                    : 'bg-green-100 text-green-700'
-                                }`}
-                                onClick={() => {
-                                  setEditingStatutId(reg.id);
-                                  setEditingStatutValue(reg.statut_commande || 'Validé');
-                                }}
-                              >
-                                {reg.statut_commande || 'Validé'}
-                              </span>
-                            )}
-                          </TableCell>
-                          <TableCell className="font-medium">
-                            {reg.nom_participant?.toUpperCase()}
-                          </TableCell>
-                          <TableCell>{reg.prenom_participant}</TableCell>
-                          <TableCell>
-                            {reg.date_naissance ? (
-                              <span className={`px-2 py-1 rounded text-xs font-medium ${
-                                getCategory(reg.date_naissance) === 'U11'
-                                  ? 'bg-green-100 text-green-700'
-                                  : getCategory(reg.date_naissance) === 'U13'
-                                  ? 'bg-blue-100 text-blue-700'
-                                  : getCategory(reg.date_naissance) === 'U15'
-                                  ? 'bg-indigo-100 text-indigo-700'
-                                  : getCategory(reg.date_naissance) === 'U17'
-                                  ? 'bg-purple-100 text-purple-700'
-                                  : getCategory(reg.date_naissance) === 'U19'
-                                  ? 'bg-pink-100 text-pink-700'
-                                  : getCategory(reg.date_naissance) === 'Sénior'
-                                  ? 'bg-orange-100 text-orange-700'
-                                  : 'bg-gray-100 text-gray-700'
-                              }`}>
-                                {getCategory(reg.date_naissance)}
-                              </span>
-                            ) : (
-                              <span className="text-gray-400">-</span>
-                            )}
-                          </TableCell>
-                          <TableCell
-                            className="cursor-pointer hover:bg-blue-50 transition-colors"
-                            onClick={() => {
-                              setEditingSexeId(reg.id);
-                              setEditingSexeValue(reg.sexe || '');
-                            }}
-                            title="Cliquer pour éditer le sexe"
-                          >
-                            {editingSexeId === reg.id ? (
-                              <select
-                                value={editingSexeValue}
-                                onChange={(e) => setEditingSexeValue(e.target.value)}
-                                onBlur={() => updateSexe(reg.id, editingSexeValue)}
-                                onClick={(e) => e.stopPropagation()}
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter') {
-                                    updateSexe(reg.id, editingSexeValue);
-                                  } else if (e.key === 'Escape') {
-                                    setEditingSexeId(null);
-                                    setEditingSexeValue('');
-                                  }
-                                }}
-                                autoFocus
-                                className="w-full px-2 py-1 border border-blue-400 rounded text-sm"
-                              >
-                                <option value="">Non spécifié</option>
-                                <option value="H">Homme</option>
-                                <option value="F">Femme</option>
-                              </select>
-                            ) : (
-                              <span className={`px-2 py-1 rounded text-xs font-medium ${
-                                reg.sexe === 'H'
-                                  ? 'bg-blue-100 text-blue-700'
-                                  : reg.sexe === 'F'
-                                  ? 'bg-pink-100 text-pink-700'
-                                  : 'text-gray-500'
-                              }`}>
-                                {reg.sexe === 'H' ? 'Homme' : reg.sexe === 'F' ? 'Femme' : '-'}
-                              </span>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            {reg.horaire ? (
-                              <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-medium">
-                                {reg.horaire === 'matin' ? 'Matin' : 'Après-midi'}
-                              </span>
-                            ) : (
-                              '-'
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            <span className={`px-2 py-1 rounded text-xs font-medium ${
-                              reg.type_inscription === 'Buvette'
-                                ? 'bg-orange-100 text-orange-700'
-                                : 'bg-green-100 text-green-700'
-                            }`}>
-                              {reg.type_inscription || 'Compétition'}
-                            </span>
-                          </TableCell>
-                          <TableCell className="text-sm">{reg.tarif || '-'}</TableCell>
-                          <TableCell>{reg.montant_tarif ? `${reg.montant_tarif} €` : '-'}</TableCell>
-                          <TableCell
-                            className="cursor-pointer hover:bg-blue-50 transition-colors relative"
-                            onClick={() => {
-                              setEditingClubId(reg.id);
-                              setEditingClubValue(reg.club || '');
-                            }}
-                            title="Cliquer pour éditer le club"
-                          >
-                            {editingClubId === reg.id ? (
-                              <input
-                                type="text"
-                                value={editingClubValue}
-                                onChange={(e) => setEditingClubValue(e.target.value)}
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter') {
-                                    updateClub(reg.id, editingClubValue);
-                                  } else if (e.key === 'Escape') {
-                                    setEditingClubId(null);
-                                    setEditingClubValue('');
-                                  }
-                                }}
-                                onBlur={() => updateClub(reg.id, editingClubValue)}
-                                autoFocus
-                                className="w-full px-2 py-1 border border-blue-400 rounded text-sm"
-                              />
-                            ) : (
-                              <span>{reg.club || '-'}</span>
-                            )}
-                          </TableCell>
-                          <TableCell>{reg.numero_licence_ffme || '-'}</TableCell>
-                          <TableCell
-                            className="text-center cursor-pointer hover:bg-gray-100 transition-colors"
-                            onClick={() => togglePrintStatus(reg.id, reg.deja_imprimee)}
-                            title="Cliquer pour basculer le statut d'impression"
-                          >
-                            {reg.deja_imprimee ? (
-                              <CheckCircle2 className="w-5 h-5 text-green-600 mx-auto hover:scale-110 transition-transform" />
-                            ) : (
-                              <XCircle className="w-5 h-5 text-orange-600 mx-auto hover:scale-110 transition-transform" />
-                            )}
-                          </TableCell>
-                          <TableCell className="text-center flex gap-2 justify-center">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => setDetailsId(reg.id)}
-                              className="text-blue-600 hover:text-blue-800 hover:bg-blue-50"
-                              title="Voir plus de détails"
-                            >
-                              <Eye className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => deleteRegistration(reg.id, `${reg.prenom_participant} ${reg.nom_participant}`)}
-                              className="text-red-600 hover:text-red-800 hover:bg-red-50"
-                              title="Supprimer cette inscription"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </TableCell>
+                          </TableHead>
+                          <TableHead>N° Dossard</TableHead>
+                          <TableHead>Référence</TableHead>
+                          <TableHead>Statut Commande</TableHead>
+                          <TableHead>Nom</TableHead>
+                          <TableHead>Prénom</TableHead>
+                          <TableHead>Catégorie d'Âge</TableHead>
+                          <TableHead>Sexe</TableHead>
+                          <TableHead>Horaire</TableHead>
+                          <TableHead>Type d'inscription</TableHead>
+                          <TableHead>Tarif</TableHead>
+                          <TableHead>Montant</TableHead>
+                          <TableHead>Club</TableHead>
+                          <TableHead>N° Licence FFME</TableHead>
+                          <TableHead className="text-center">Imprimé</TableHead>
+                          <TableHead className="text-center">Action</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredRegistrations.map((reg) => (
+                          <TableRow
+                            key={reg.id}
+                            className={`${selectedIds.includes(reg.id) ? 'bg-blue-50' : ''} ${reg.statut_commande === 'Annulé' ? 'bg-gray-100 opacity-60' : ''
+                              }`}
+                          >
+                            <TableCell>
+                              <Checkbox
+                                checked={selectedIds.includes(reg.id)}
+                                onCheckedChange={() => toggleSelect(reg.id)}
+                              />
+                            </TableCell>
+                            <TableCell className="font-medium">
+                              {editingDossardId === reg.id ? (
+                                <div className="flex gap-1">
+                                  <Input
+                                    value={editingDossardValue}
+                                    onChange={(e) => setEditingDossardValue(e.target.value)}
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') {
+                                        updateDossardNumber(reg.id, editingDossardValue);
+                                      } else if (e.key === 'Escape') {
+                                        setEditingDossardId(null);
+                                      }
+                                    }}
+                                    autoFocus
+                                    className="h-8 w-24"
+                                  />
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => updateDossardNumber(reg.id, editingDossardValue)}
+                                    className="h-8 w-8 p-0"
+                                  >
+                                    ✓
+                                  </Button>
+                                </div>
+                              ) : (
+                                <span
+                                  className="cursor-pointer hover:bg-gray-200 px-1 py-0.5 rounded text-sm"
+                                  onClick={() => {
+                                    setEditingDossardId(reg.id);
+                                    setEditingDossardValue(reg.numero_dossart || '');
+                                  }}
+                                >
+                                  {reg.numero_dossart || '-'}
+                                </span>
+                              )}
+                            </TableCell>
+                            <TableCell className="text-xs">
+                              {reg.reference_commande || '-'}
+                            </TableCell>
+                            <TableCell>
+                              {editingStatutId === reg.id ? (
+                                <div className="flex gap-1">
+                                  <select
+                                    value={editingStatutValue}
+                                    onChange={(e) => setEditingStatutValue(e.target.value)}
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') {
+                                        updateStatutCommande(reg.id, editingStatutValue);
+                                      } else if (e.key === 'Escape') {
+                                        setEditingStatutId(null);
+                                      }
+                                    }}
+                                    autoFocus
+                                    className="h-8 px-2 border border-gray-300 rounded text-sm"
+                                  >
+                                    <option value="Validé">Validé</option>
+                                    <option value="Annulé">Annulé</option>
+                                  </select>
+                                  <button
+                                    onClick={() => updateStatutCommande(reg.id, editingStatutValue)}
+                                    className="bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded text-sm"
+                                  >
+                                    ✓
+                                  </button>
+                                </div>
+                              ) : (
+                                <span
+                                  className={`cursor-pointer px-2 py-1 rounded text-xs font-medium ${reg.statut_commande === 'Annulé'
+                                      ? 'bg-red-100 text-red-700'
+                                      : 'bg-green-100 text-green-700'
+                                    }`}
+                                  onClick={() => {
+                                    setEditingStatutId(reg.id);
+                                    setEditingStatutValue(reg.statut_commande || 'Validé');
+                                  }}
+                                >
+                                  {reg.statut_commande || 'Validé'}
+                                </span>
+                              )}
+                            </TableCell>
+                            <TableCell className="font-medium">
+                              {reg.nom_participant?.toUpperCase()}
+                            </TableCell>
+                            <TableCell>{reg.prenom_participant}</TableCell>
+                            <TableCell>
+                              {reg.date_naissance ? (
+                                <span className={`px-2 py-1 rounded text-xs font-medium ${getCategory(reg.date_naissance) === 'U11'
+                                    ? 'bg-green-100 text-green-700'
+                                    : getCategory(reg.date_naissance) === 'U13'
+                                      ? 'bg-blue-100 text-blue-700'
+                                      : getCategory(reg.date_naissance) === 'U15'
+                                        ? 'bg-indigo-100 text-indigo-700'
+                                        : getCategory(reg.date_naissance) === 'U17'
+                                          ? 'bg-purple-100 text-purple-700'
+                                          : getCategory(reg.date_naissance) === 'U19'
+                                            ? 'bg-pink-100 text-pink-700'
+                                            : getCategory(reg.date_naissance) === 'Sénior'
+                                              ? 'bg-orange-100 text-orange-700'
+                                              : 'bg-gray-100 text-gray-700'
+                                  }`}>
+                                  {getCategory(reg.date_naissance)}
+                                </span>
+                              ) : (
+                                <span className="text-gray-400">-</span>
+                              )}
+                            </TableCell>
+                            <TableCell
+                              className="cursor-pointer hover:bg-blue-50 transition-colors"
+                              onClick={() => {
+                                setEditingSexeId(reg.id);
+                                setEditingSexeValue(reg.sexe || '');
+                              }}
+                              title="Cliquer pour éditer le sexe"
+                            >
+                              {editingSexeId === reg.id ? (
+                                <select
+                                  value={editingSexeValue}
+                                  onChange={(e) => setEditingSexeValue(e.target.value)}
+                                  onBlur={() => updateSexe(reg.id, editingSexeValue)}
+                                  onClick={(e) => e.stopPropagation()}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                      updateSexe(reg.id, editingSexeValue);
+                                    } else if (e.key === 'Escape') {
+                                      setEditingSexeId(null);
+                                      setEditingSexeValue('');
+                                    }
+                                  }}
+                                  autoFocus
+                                  className="w-full px-2 py-1 border border-blue-400 rounded text-sm"
+                                >
+                                  <option value="">Non spécifié</option>
+                                  <option value="H">Homme</option>
+                                  <option value="F">Femme</option>
+                                </select>
+                              ) : (
+                                <span className={`px-2 py-1 rounded text-xs font-medium ${reg.sexe === 'H'
+                                    ? 'bg-blue-100 text-blue-700'
+                                    : reg.sexe === 'F'
+                                      ? 'bg-pink-100 text-pink-700'
+                                      : 'text-gray-500'
+                                  }`}>
+                                  {reg.sexe === 'H' ? 'Homme' : reg.sexe === 'F' ? 'Femme' : '-'}
+                                </span>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              {reg.horaire ? (
+                                <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-medium">
+                                  {reg.horaire === 'matin' ? 'Matin' : 'Après-midi'}
+                                </span>
+                              ) : (
+                                '-'
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <span className={`px-2 py-1 rounded text-xs font-medium ${reg.type_inscription === 'Buvette'
+                                  ? 'bg-orange-100 text-orange-700'
+                                  : 'bg-green-100 text-green-700'
+                                }`}>
+                                {reg.type_inscription || 'Compétition'}
+                              </span>
+                            </TableCell>
+                            <TableCell className="text-sm">{reg.tarif || '-'}</TableCell>
+                            <TableCell>{reg.montant_tarif ? `${reg.montant_tarif} €` : '-'}</TableCell>
+                            <TableCell
+                              className="cursor-pointer hover:bg-blue-50 transition-colors relative"
+                              onClick={() => {
+                                setEditingClubId(reg.id);
+                                setEditingClubValue(reg.club || '');
+                              }}
+                              title="Cliquer pour éditer le club"
+                            >
+                              {editingClubId === reg.id ? (
+                                <input
+                                  type="text"
+                                  value={editingClubValue}
+                                  onChange={(e) => setEditingClubValue(e.target.value)}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                      updateClub(reg.id, editingClubValue);
+                                    } else if (e.key === 'Escape') {
+                                      setEditingClubId(null);
+                                      setEditingClubValue('');
+                                    }
+                                  }}
+                                  onBlur={() => updateClub(reg.id, editingClubValue)}
+                                  autoFocus
+                                  className="w-full px-2 py-1 border border-blue-400 rounded text-sm"
+                                />
+                              ) : (
+                                <span>{reg.club || '-'}</span>
+                              )}
+                            </TableCell>
+                            <TableCell>{reg.numero_licence_ffme || '-'}</TableCell>
+                            <TableCell
+                              className="text-center cursor-pointer hover:bg-gray-100 transition-colors"
+                              onClick={() => togglePrintStatus(reg.id, reg.deja_imprimee)}
+                              title="Cliquer pour basculer le statut d'impression"
+                            >
+                              {reg.deja_imprimee ? (
+                                <CheckCircle2 className="w-5 h-5 text-green-600 mx-auto hover:scale-110 transition-transform" />
+                              ) : (
+                                <XCircle className="w-5 h-5 text-orange-600 mx-auto hover:scale-110 transition-transform" />
+                              )}
+                            </TableCell>
+                            <TableCell className="text-center flex gap-2 justify-center">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setDetailsId(reg.id)}
+                                className="text-blue-600 hover:text-blue-800 hover:bg-blue-50"
+                                title="Voir plus de détails"
+                              >
+                                <Eye className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => deleteRegistration(reg.id, `${reg.prenom_participant} ${reg.nom_participant}`)}
+                                className="text-red-600 hover:text-red-800 hover:bg-red-50"
+                                title="Supprimer cette inscription"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
                   </div>
 
                   {/* Modal des détails */}
@@ -3093,36 +3094,36 @@ const CompetitionManagement = () => {
                               {clubMappings
                                 .filter(mapping => !filterUnknownMappings || mapping.mapped_name === 'INCONNU')
                                 .map((mapping) => (
-                              <TableRow key={mapping.id}>
-                                <TableCell>
-                                  <span className="font-medium">{mapping.original_name}</span>
-                                </TableCell>
-                                <TableCell>
-                                  {mapping.mapped_name}
-                                </TableCell>
-                                <TableCell className="text-center space-x-1">
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    onClick={() => openEditMappingModal(mapping)}
-                                    title="Éditer"
-                                  >
-                                    <Edit2 className="w-4 h-4" />
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    onClick={() => deleteClubMapping(mapping.id)}
-                                    title="Supprimer"
-                                    className="text-red-600 hover:text-red-700"
-                                  >
-                                    <IconX className="w-4 h-4" />
-                                  </Button>
-                                </TableCell>
-                              </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
+                                  <TableRow key={mapping.id}>
+                                    <TableCell>
+                                      <span className="font-medium">{mapping.original_name}</span>
+                                    </TableCell>
+                                    <TableCell>
+                                      {mapping.mapped_name}
+                                    </TableCell>
+                                    <TableCell className="text-center space-x-1">
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        onClick={() => openEditMappingModal(mapping)}
+                                        title="Éditer"
+                                      >
+                                        <Edit2 className="w-4 h-4" />
+                                      </Button>
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        onClick={() => deleteClubMapping(mapping.id)}
+                                        title="Supprimer"
+                                        className="text-red-600 hover:text-red-700"
+                                      >
+                                        <IconX className="w-4 h-4" />
+                                      </Button>
+                                    </TableCell>
+                                  </TableRow>
+                                ))}
+                            </TableBody>
+                          </Table>
                         </div>
                       </>
                     )}
