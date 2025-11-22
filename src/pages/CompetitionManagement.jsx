@@ -1383,17 +1383,10 @@ const CompetitionManagement = () => {
       const rowHeight = 8;
       const headerHeight = 10;
 
-      // Fonction pour tronquer le texte si trop long
-      const truncateText = (text, maxWidth) => {
-        if (!text) return '';
-        const testWidth = doc.getTextWidth(text);
-        if (testWidth <= maxWidth) return text;
-
-        let truncated = text;
-        while (truncated.length > 0 && doc.getTextWidth(truncated + '...') > maxWidth) {
-          truncated = truncated.slice(0, -1);
-        }
-        return truncated + (truncated.length < text.length ? '...' : '');
+      // Fonction pour tronquer le texte si trop long (basée sur nombre de caractères)
+      const truncateText = (text, maxChars) => {
+        if (!text || text.length <= maxChars) return text;
+        return text.substring(0, maxChars - 1) + '...';
       };
 
       // Construire les filtres affichés
@@ -1484,13 +1477,14 @@ const CompetitionManagement = () => {
 
         // Contenu des cellules
         let xPosData = startX;
-        doc.text(truncateText((reg.nom_participant || '').toUpperCase(), columnWidths.nom - 2), xPosData, currentY);
+        doc.text(truncateText((reg.nom_participant || '').toUpperCase(), 14), xPosData, currentY);
         xPosData += columnWidths.nom;
-        doc.text(truncateText(reg.prenom_participant || '', columnWidths.prenom - 2), xPosData, currentY);
+        doc.text(truncateText(reg.prenom_participant || '', 12), xPosData, currentY);
         xPosData += columnWidths.prenom;
-        doc.text(truncateText(getCategory(reg.date_naissance) || '', columnWidths.categorie - 2), xPosData, currentY, { align: 'center' });
+        const catText = getCategory(reg.date_naissance) || '';
+        doc.text(truncateText(catText, 6), xPosData, currentY, { align: 'center' });
         xPosData += columnWidths.categorie;
-        doc.text(truncateText(reg.club || '', columnWidths.club - 2), xPosData, currentY);
+        doc.text(truncateText(reg.club || '', 24), xPosData, currentY);
         xPosData += columnWidths.club;
         doc.text(String(reg.numero_dossart || '-'), xPosData, currentY, { align: 'center' });
 
