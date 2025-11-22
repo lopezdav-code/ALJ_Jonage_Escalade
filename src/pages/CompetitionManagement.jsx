@@ -1371,17 +1371,30 @@ const CompetitionManagement = () => {
 
       const margin = 10;
       const columnWidths = {
-        nom: 50,
-        prenom: 45,
-        categorie: 28,
-        club: 40,
+        nom: 38,
+        prenom: 33,
+        categorie: 20,
+        club: 70,
         dossard: 18
       };
 
       const startX = margin;
       let currentY = margin;
       const rowHeight = 8;
-      const headerHeight = 12;
+      const headerHeight = 10;
+
+      // Fonction pour tronquer le texte si trop long
+      const truncateText = (text, maxWidth) => {
+        if (!text) return '';
+        const testWidth = doc.getTextWidth(text);
+        if (testWidth <= maxWidth) return text;
+
+        let truncated = text;
+        while (truncated.length > 0 && doc.getTextWidth(truncated + '...') > maxWidth) {
+          truncated = truncated.slice(0, -1);
+        }
+        return truncated + (truncated.length < text.length ? '...' : '');
+      };
 
       // Construire les filtres affichés
       const filtersDisplay = [];
@@ -1412,9 +1425,7 @@ const CompetitionManagement = () => {
         currentY += 5;
       }
 
-      // Ligne de séparation
-      doc.line(margin, currentY, pageWidth - margin, currentY);
-      currentY += 4;
+      currentY += 2;
 
       // En-tête du tableau
       doc.setFont('helvetica', 'bold');
@@ -1473,13 +1484,13 @@ const CompetitionManagement = () => {
 
         // Contenu des cellules
         let xPosData = startX;
-        doc.text((reg.nom_participant || '').toUpperCase(), xPosData, currentY, { maxWidth: columnWidths.nom - 1 });
+        doc.text(truncateText((reg.nom_participant || '').toUpperCase(), columnWidths.nom - 2), xPosData, currentY);
         xPosData += columnWidths.nom;
-        doc.text(reg.prenom_participant || '', xPosData, currentY, { maxWidth: columnWidths.prenom - 1 });
+        doc.text(truncateText(reg.prenom_participant || '', columnWidths.prenom - 2), xPosData, currentY);
         xPosData += columnWidths.prenom;
-        doc.text(getCategory(reg.date_naissance) || '', xPosData, currentY, { maxWidth: columnWidths.categorie - 1, align: 'center' });
+        doc.text(truncateText(getCategory(reg.date_naissance) || '', columnWidths.categorie - 2), xPosData, currentY, { align: 'center' });
         xPosData += columnWidths.categorie;
-        doc.text(reg.club || '', xPosData, currentY, { maxWidth: columnWidths.club - 1 });
+        doc.text(truncateText(reg.club || '', columnWidths.club - 2), xPosData, currentY);
         xPosData += columnWidths.club;
         doc.text(String(reg.numero_dossart || '-'), xPosData, currentY, { align: 'center' });
 
