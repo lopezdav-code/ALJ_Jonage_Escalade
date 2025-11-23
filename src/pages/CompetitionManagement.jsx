@@ -91,6 +91,7 @@ const CompetitionManagement = () => {
   const [newGenderMappingGender, setNewGenderMappingGender] = useState('Masculin');
   const [editingGenderMappingId, setEditingGenderMappingId] = useState(null);
   const [isEditingGenderMode, setIsEditingGenderMode] = useState(false);
+  const [filterUnknownGenderMappings, setFilterUnknownGenderMappings] = useState(false);
 
   // Options pour l'export PDF/CSV
   const [pdfFormat, setPdfFormat] = useState('a5'); // 'a4' ou 'a5'
@@ -601,6 +602,35 @@ const CompetitionManagement = () => {
     }
   };
 
+  // Ajouter les prénoms inconnus à la table firstname_gender_mapping
+  const addUnknownGenderMappingsForUnknownFirstNames = async (firstNames) => {
+    if (firstNames.length === 0) return;
+
+    try {
+      // Préparer les mappings INCONNU
+      const newMappings = firstNames.map(firstName => ({
+        first_name: firstName.trim(),
+        gender: 'INCONNU'
+      }));
+
+      // Insérer les mappings (on ignore les conflits si la ligne existe déjà)
+      const { error } = await supabase
+        .from('firstname_gender_mapping')
+        .insert(newMappings)
+        .select();
+
+      if (error && error.code !== '23505') { // 23505 = unique constraint violation
+        throw error;
+      }
+
+      // Recharger les mappings pour rafraîchir la liste
+      await loadGenderMappings();
+    } catch (error) {
+      console.error('Error adding unknown gender mappings:', error);
+      // Ne pas afficher d'erreur toast ici car c'est une action automatique
+    }
+  };
+
   useEffect(() => {
     fetchRegistrations();
     loadClubMappings();
@@ -796,6 +826,19 @@ const CompetitionManagement = () => {
       // Ajouter automatiquement les clubs non mappés avec la valeur "INCONNU"
       if (unmappedClubs.length > 0) {
         await addUnknownMappingsForUnmappedClubs(unmappedClubs);
+      }
+
+      // Détecter les prénoms inconnus du fichier original
+      const firstNamesFromFile = new Set(
+        jsonData
+          .map(row => String(row['Prénom participant'] || row['Prenom participant'] || '').trim())
+          .filter(firstName => firstName && firstName !== 'null')
+      );
+      const unknownFirstNames = Array.from(firstNamesFromFile).filter(firstName => !isFirstNameMapped(firstName));
+
+      // Ajouter automatiquement les prénoms inconnus avec la valeur "INCONNU"
+      if (unknownFirstNames.length > 0) {
+        await addUnknownGenderMappingsForUnknownFirstNames(unknownFirstNames);
       }
 
       // Insérer les nouvelles inscriptions une par une pour gérer les erreurs individuellement
@@ -1151,6 +1194,7 @@ const CompetitionManagement = () => {
     setFilterAgeCategory('all');
     setFilterStatutCommande('all');
     setSelectedIds([]);
+    setFilterUnknownGenderMappings(false);
   };
 
   // Sélection/désélection
@@ -3692,6 +3736,25 @@ const CompetitionManagement = () => {
                       </div>
                     ) : (
                       <>
+                        {/* Filtres */}
+                        <div className="flex gap-2 mb-4">
+                          <Button
+                            variant={!filterUnknownGenderMappings ? 'default' : 'outline'}
+                            size="sm"
+                            onClick={() => setFilterUnknownGenderMappings(false)}
+                          >
+                            Tous les mappings
+                          </Button>
+                          <Button
+                            variant={filterUnknownGenderMappings ? 'default' : 'outline'}
+                            size="sm"
+                            onClick={() => setFilterUnknownGenderMappings(true)}
+                            className={filterUnknownGenderMappings ? 'bg-amber-600 hover:bg-amber-700' : ''}
+                          >
+                            ⚠️ INCONNU ({genderMappings.filter(m => m.gender === 'INCONNU').length})
+                          </Button>
+                        </div>
+
                         <Button
                           size="sm"
                           className="mb-4"
@@ -3715,16 +3778,17 @@ const CompetitionManagement = () => {
                               </TableRow>
                             </TableHeader>
                             <TableBody>
-                              {genderMappings.map((mapping) => (
+                              {genderMappings.filter(mapping => !filterUnknownGenderMappings || mapping.gender === 'INCONNU').map((mapping) => (
                               <TableRow key={mapping.id}>
                                 <TableCell>
                                   <span className="font-medium">{mapping.first_name}</span>
                                 </TableCell>
                                 <TableCell>
                                   <span className={`px-2 py-1 rounded text-xs font-medium ${
-                                    mapping.gender === 'Masculin' ? 'bg-blue-100 text-blue-700' :
+mapping.gender === 'Masculin' ? 'bg-blue-100 text-blue-700' :
                                     mapping.gender === 'Féminin' ? 'bg-pink-100 text-pink-700' :
-                                    'bg-purple-100 text-purple-700'
+                                    mapping.gender === 'Mixte' ? 'bg-purple-100 text-purple-700' :
+                                    'bg-amber-100 text-amber-700'
                                   }`}>
                                     {mapping.gender}
                                   </span>
