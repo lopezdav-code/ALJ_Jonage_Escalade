@@ -3503,6 +3503,11 @@ const CompetitionManagement = () => {
                   </thead>
                   <tbody>
                     <tr className="hover:bg-blue-50 border-b border-blue-100">
+                      <td className="border border-blue-100 px-4 py-3"><span className="font-bold text-green-700 bg-green-50 px-3 py-1 rounded">U9</span></td>
+                      <td className="border border-blue-100 px-4 py-3">2018, 2019</td>
+                      <td className="border border-blue-100 px-4 py-3">Enfants 9 ans</td>
+                    </tr>
+                    <tr className="hover:bg-blue-50 border-b border-blue-100">
                       <td className="border border-blue-100 px-4 py-3"><span className="font-bold text-green-700 bg-green-50 px-3 py-1 rounded">U11</span></td>
                       <td className="border border-blue-100 px-4 py-3">2016, 2017</td>
                       <td className="border border-blue-100 px-4 py-3">Enfants 11 ans</td>
