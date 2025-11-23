@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import ReactDOM from 'react-dom/client';
 import { Helmet } from 'react-helmet';
 import { motion } from 'framer-motion';
 import { supabase } from '@/lib/customSupabaseClient';
@@ -18,6 +19,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import CompetitionGroupedTable from '@/components/CompetitionGroupedTable';
+import ParticipationPosterExport from '@/components/ParticipationPosterExport';
 
 const DISCIPLINE_COLORS = {
   'Bloc': 'bloc',
@@ -65,7 +67,7 @@ const ParticipationSummaryTable = ({ title, competitors, competitions, dateDebut
                         {new Date(comp.start_date).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })}
                       </div>
                       <div className="flex gap-1 mt-1">
-                        {comp.disciplines.map(d => <Badge key={d} variant={DISCIPLINE_COLORS[d] || 'default'}>{d.slice(0,4)}</Badge>)}
+                        {comp.disciplines.map(d => <Badge key={d} variant={DISCIPLINE_COLORS[d] || 'default'}>{d.slice(0, 4)}</Badge>)}
                         {comp.nature && <Badge variant="outline">{comp.nature}</Badge>}
                       </div>
                     </div>
@@ -128,18 +130,18 @@ const FinancialSummaryTable = ({ title, competitors, competitions }) => {
               <TableHead className="sticky left-0 bg-background z-10 min-w-[150px]">Compétiteur</TableHead>
               {competitions.map(comp => (
                 <TableHead key={comp.id} className="text-center min-w-[150px]">
-                    <div className="flex flex-col items-center">
-                      <span>{comp.short_title || comp.name}</span>
-                      <div className="text-xs text-muted-foreground font-normal">
-                        {new Date(comp.start_date).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })}
-                      </div>
-                      <div className="flex gap-1 mt-1">
-                        {comp.disciplines.map(d => <Badge key={d} variant={DISCIPLINE_COLORS[d] || 'default'}>{d.slice(0,4)}</Badge>)}
-                        {comp.nature && <Badge variant="outline">{comp.nature}</Badge>}
-                      </div>
+                  <div className="flex flex-col items-center">
+                    <span>{comp.short_title || comp.name}</span>
+                    <div className="text-xs text-muted-foreground font-normal">
+                      {new Date(comp.start_date).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })}
                     </div>
-                  </TableHead>
-                ))}
+                    <div className="flex gap-1 mt-1">
+                      {comp.disciplines.map(d => <Badge key={d} variant={DISCIPLINE_COLORS[d] || 'default'}>{d.slice(0, 4)}</Badge>)}
+                      {comp.nature && <Badge variant="outline">{comp.nature}</Badge>}
+                    </div>
+                  </div>
+                </TableHead>
+              ))}
               <TableHead className="text-right font-bold sticky right-0 bg-background z-10 min-w-[100px]">Total</TableHead>
             </TableRow>
           </TableHeader>
@@ -403,7 +405,7 @@ const AnnualSummary = () => {
               groupComps[compId] = p.competitions;
             }
           });
-        
+
         const sortedMembers = Object.values(groupMembers).sort((a, b) => {
           // Sort by category
           const categoryA = a.member.category || '';
@@ -420,7 +422,7 @@ const AnnualSummary = () => {
           // Then by first name
           return a.member.first_name.localeCompare(b.member.first_name);
         });
-        const sortedComps = Object.values(groupComps).sort((a,b) => new Date(a.start_date) - new Date(b.start_date));
+        const sortedComps = Object.values(groupComps).sort((a, b) => new Date(a.start_date) - new Date(b.start_date));
 
         return { members: sortedMembers, competitions: sortedComps };
       };
@@ -439,7 +441,7 @@ const AnnualSummary = () => {
             }
             volunteerMembers[memberId].participations[compId] = true;
           });
-        return Object.values(volunteerMembers).sort((a,b) => a.member.first_name.localeCompare(b.member.first_name));
+        return Object.values(volunteerMembers).sort((a, b) => a.member.first_name.localeCompare(b.member.first_name));
       };
 
       const u11_u15_data = processGroup('Compétition U11-U15');
@@ -490,6 +492,167 @@ const AnnualSummary = () => {
     }
   }, [toast]);
 
+  const handleExportParticipationPNG = async () => {
+    try {
+      // Créer un conteneur temporaire
+      const tempDiv = document.createElement('div');
+      tempDiv.style.position = 'fixed';
+      tempDiv.style.left = '-9999px';
+      tempDiv.style.top = '-9999px';
+      tempDiv.style.width = '900px';
+      document.body.appendChild(tempDiv);
+
+      // Déterminer les données à exporter avec filtres
+      let rawCompetitions = viewMode === 'by-group'
+        ? [...competitions.u11_u15, ...competitions.u15_u19]
+        : competitions.all;
+
+      // Filtrer les compétitions par date
+      const filteredCompetitions = rawCompetitions.filter(comp => {
+        const compDate = new Date(comp.start_date);
+        if (dateDebut && new Date(dateDebut) > compDate) return false;
+        if (dateFin && new Date(dateFin) < compDate) return false;
+        return true;
+      });
+
+      // Dédoublonner les compétitions
+      const uniqueCompetitions = filteredCompetitions.filter((v, i, a) => a.findIndex(t => t.id === v.id) === i);
+
+      const dataToExport = viewMode === 'by-group'
+        ? [...summaryData.u11_u15, ...summaryData.u15_u19]
+        : allCompetitors;
+
+      // Créer un élément React et le rendre
+      const root = ReactDOM.createRoot(tempDiv);
+      root.render(
+        <ParticipationPosterExport
+          competitors={dataToExport}
+          competitions={uniqueCompetitions}
+          title="ALJ Escalade"
+          subtitle="Résultat du week-end"
+        />
+      );
+
+      // Attendre que le rendu soit fait
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      const canvas = await html2canvas(tempDiv, {
+        backgroundColor: '#1a2a3a',
+        scale: 2,
+        allowTaint: true,
+        useCORS: true,
+        logging: false,
+        removeModal: true,
+      });
+
+      // Nettoyage
+      root.unmount();
+      document.body.removeChild(tempDiv);
+
+      // Télécharger
+      const link = document.createElement('a');
+      link.href = canvas.toDataURL('image/png');
+      link.download = `participation-${new Date().toISOString().split('T')[0]}.png`;
+      link.click();
+
+      toast({
+        title: 'Succès',
+        description: 'L\'affiche a été exportée en PNG',
+      });
+    } catch (error) {
+      console.error('Erreur lors de l\'export:', error);
+      toast({
+        title: 'Erreur',
+        description: 'Impossible d\'exporter l\'affiche',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleCopyParticipationAsImage = async () => {
+    try {
+      // Créer un conteneur temporaire
+      const tempDiv = document.createElement('div');
+      tempDiv.style.position = 'fixed';
+      tempDiv.style.left = '-9999px';
+      tempDiv.style.top = '-9999px';
+      tempDiv.style.width = '900px';
+      document.body.appendChild(tempDiv);
+
+      // Déterminer les données à exporter avec filtres
+      let rawCompetitions = viewMode === 'by-group'
+        ? [...competitions.u11_u15, ...competitions.u15_u19]
+        : competitions.all;
+
+      // Filtrer les compétitions par date
+      const filteredCompetitions = rawCompetitions.filter(comp => {
+        const compDate = new Date(comp.start_date);
+        if (dateDebut && new Date(dateDebut) > compDate) return false;
+        if (dateFin && new Date(dateFin) < compDate) return false;
+        return true;
+      });
+
+      // Dédoublonner les compétitions
+      const uniqueCompetitions = filteredCompetitions.filter((v, i, a) => a.findIndex(t => t.id === v.id) === i);
+
+      const dataToExport = viewMode === 'by-group'
+        ? [...summaryData.u11_u15, ...summaryData.u15_u19]
+        : allCompetitors;
+
+      // Créer un élément React et le rendre
+      const root = ReactDOM.createRoot(tempDiv);
+      root.render(
+        <ParticipationPosterExport
+          competitors={dataToExport}
+          competitions={uniqueCompetitions}
+          title="ALJ Escalade"
+          subtitle="Résultat du week-end"
+        />
+      );
+
+      // Attendre que le rendu soit fait
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      const canvas = await html2canvas(tempDiv, {
+        backgroundColor: '#1a2a3a',
+        scale: 2,
+        allowTaint: true,
+        useCORS: true,
+        logging: false,
+        removeModal: true,
+      });
+
+      // Nettoyage
+      root.unmount();
+      document.body.removeChild(tempDiv);
+
+      // Copier dans le presse-papier
+      canvas.toBlob(async (blob) => {
+        try {
+          const item = new ClipboardItem({ 'image/png': blob });
+          await navigator.clipboard.write([item]);
+          toast({
+            title: 'Succès',
+            description: 'L\'affiche a été copiée dans le presse-papier',
+          });
+        } catch (err) {
+          toast({
+            title: 'Erreur',
+            description: 'Impossible de copier dans le presse-papier',
+            variant: 'destructive',
+          });
+        }
+      });
+    } catch (error) {
+      console.error('Erreur lors de la capture:', error);
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de capturer l\'affiche',
+        variant: 'destructive',
+      });
+    }
+  };
+
   useEffect(() => {
     fetchData();
   }, [fetchData]);
@@ -530,6 +693,18 @@ const AnnualSummary = () => {
           </TabsList>
           <TabsContent value="participation" className="pt-2">
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="space-y-4">
+              {/* Boutons d'export */}
+              <div className="flex justify-end gap-2 flex-wrap no-print">
+                <Button onClick={handleCopyParticipationAsImage} variant="outline" size="sm" className="gap-2">
+                  <Copy className="w-4 h-4" />
+                  Copier l'image
+                </Button>
+                <Button onClick={handleExportParticipationPNG} variant="default" size="sm" className="gap-2 bg-primary hover:bg-primary/90">
+                  <Printer className="w-4 h-4" />
+                  Exporter PNG
+                </Button>
+              </div>
+
               {/* Filtres */}
               <Card className="border-l-4 border-l-primary">
                 <CardHeader className="pb-3">
@@ -696,15 +871,15 @@ const AnnualSummary = () => {
                   allCompetitors={
                     showOnlyWithParticipation
                       ? allCompetitors.filter(({ participations }) => {
-                          // Filtrer par compétitions dans la plage de dates
-                          const filteredComps = competitions.all.filter(comp => {
-                            const compDate = new Date(comp.start_date);
-                            if (dateDebut && new Date(dateDebut) > compDate) return false;
-                            if (dateFin && new Date(dateFin) < compDate) return false;
-                            return true;
-                          });
-                          return filteredComps.some(comp => participations[comp.id]);
-                        })
+                        // Filtrer par compétitions dans la plage de dates
+                        const filteredComps = competitions.all.filter(comp => {
+                          const compDate = new Date(comp.start_date);
+                          if (dateDebut && new Date(dateDebut) > compDate) return false;
+                          if (dateFin && new Date(dateFin) < compDate) return false;
+                          return true;
+                        });
+                        return filteredComps.some(comp => participations[comp.id]);
+                      })
                       : allCompetitors
                   }
                   dateDebut={dateDebut}
