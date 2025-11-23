@@ -50,6 +50,7 @@ const CompetitionManagement = () => {
   const [filterUnmappedClubs, setFilterUnmappedClubs] = useState(false); // true pour voir seulement les clubs non mappés
   const [filterSexe, setFilterSexe] = useState('all'); // 'all', 'H', 'F', 'empty'
   const [filterStatutCommande, setFilterStatutCommande] = useState('all'); // 'all', 'Validé', 'Annulé'
+  const [filterAgeCategory, setFilterAgeCategory] = useState('all'); // 'all' ou la catégorie d'âge sélectionnée
   const [editingClubId, setEditingClubId] = useState(null);
   const [editingClubValue, setEditingClubValue] = useState('');
   const [editingSexeId, setEditingSexeId] = useState(null);
@@ -88,6 +89,24 @@ const CompetitionManagement = () => {
   const [pdfCardsPerPage, setPdfCardsPerPage] = useState(1); // 1 ou 2
   const [pdfExportType, setPdfExportType] = useState('dossards'); // 'dossards', 'listing', ou 'csv'
   const [showPdfOptions, setShowPdfOptions] = useState(false);
+
+  // Déterminer la catégorie en fonction de l'année de naissance
+  const getCategory = (dateNaissance) => {
+    if (!dateNaissance) return '';
+    const birthDate = new Date(dateNaissance);
+    const year = birthDate.getFullYear();
+
+    // Règles de catégorisation par année de naissance
+    if (year >= 2018) return 'U9';
+    if (year >= 2016) return 'U11';
+    if (year >= 2014) return 'U13';
+    if (year >= 2012) return 'U15';
+    if (year >= 2010) return 'U17';
+    if (year >= 2008) return 'U19';
+    if (year >= 1987) return 'Sénior';
+    if (year >= 1977) return 'Vétéran 1';
+    return 'Vétéran 2';
+  };
 
   // Charger les inscriptions
   const fetchRegistrations = async () => {
@@ -179,7 +198,7 @@ const CompetitionManagement = () => {
       ];
 
       // Traiter les données de catégorie d'âge
-      const ageOrder = ['U11', 'U13', 'U15', 'U17', 'U19', 'Sénior', 'Vétéran 1', 'Vétéran 2'];
+      const ageOrder = ['U9', 'U11', 'U13', 'U15', 'U17', 'U19', 'Sénior', 'Vétéran 1', 'Vétéran 2'];
       const ageMap = {};
       ageData?.forEach(reg => {
         const label = reg.categorie_age || 'Vide';
@@ -790,13 +809,18 @@ const CompetitionManagement = () => {
       }
     }
 
+    // Filtre par catégorie d'âge
+    if (filterAgeCategory !== 'all') {
+      filtered = filtered.filter(reg => getCategory(reg.date_naissance) === filterAgeCategory);
+    }
+
     // Filtre par statut de commande
     if (filterStatutCommande !== 'all') {
       filtered = filtered.filter(reg => reg.statut_commande === filterStatutCommande);
     }
 
     return filtered;
-  }, [registrations, searchTerm, filterPrinted, filterHoraire, filterTypeInscription, filterFileName, filterClub, filterUnmappedClubs, filterSexe, filterStatutCommande]);
+  }, [registrations, searchTerm, filterPrinted, filterHoraire, filterTypeInscription, filterFileName, filterClub, filterUnmappedClubs, filterSexe, filterAgeCategory, filterStatutCommande]);
 
   // Calculer la liste des fichiers uniques uploadés
   const uniqueFileNames = useMemo(() => {
@@ -976,6 +1000,7 @@ const CompetitionManagement = () => {
     setFilterClub('all');
     setFilterUnmappedClubs(false);
     setFilterSexe('all');
+    setFilterAgeCategory('all');
     setFilterStatutCommande('all');
     setSelectedIds([]);
   };
@@ -1006,23 +1031,6 @@ const CompetitionManagement = () => {
       age--;
     }
     return age;
-  };
-
-  // Déterminer la catégorie en fonction de l'année de naissance
-  const getCategory = (dateNaissance) => {
-    if (!dateNaissance) return '';
-    const birthDate = new Date(dateNaissance);
-    const year = birthDate.getFullYear();
-
-    // Règles de catégorisation par année de naissance
-    if (year >= 2016) return 'U11';
-    if (year >= 2014) return 'U13';
-    if (year >= 2012) return 'U15';
-    if (year >= 2010) return 'U17';
-    if (year >= 2008) return 'U19';
-    if (year >= 1987) return 'Sénior';
-    if (year >= 1977) return 'Vétéran 1';
-    return 'Vétéran 2';
   };
 
   // Déterminer le sexe (simplifié - à adapter selon les données disponibles)
@@ -1543,10 +1551,11 @@ const CompetitionManagement = () => {
         });
 
       // Construire les données CSV
-      const headers = ['Nom', 'Prénom', 'Catégorie', 'Club', 'N° Dossard'];
+      const headers = ['Nom', 'Prénom', 'Date de naissance', 'Catégorie', 'Club', 'N° Dossard'];
       const rows = sortedRegs.map(reg => [
         reg.nom_participant || '',
         reg.prenom_participant || '',
+        reg.date_naissance || '',
         getCategory(reg.date_naissance) || '',
         reg.club || '',
         reg.numero_dossart || ''
@@ -1599,10 +1608,16 @@ const CompetitionManagement = () => {
       const filterSuffix = filterParts.length > 0 ? `_${filterParts.join('-')}` : '';
       const filename = `listing_${dateStr}_${timeStr}_${sortedRegs.length}participants${filterSuffix}.csv`;
 
+<<<<<<< HEAD
       // Créer un blob avec UTF-8 BOM et télécharger
       const BOM = '\uFEFF';
       const csvWithBOM = BOM + csvContent;
       const blob = new Blob([csvWithBOM], { type: 'text/csv;charset=utf-8;' });
+=======
+      // Créer un blob et télécharger (avec BOM UTF-8 pour Excel)
+      const bom = '\uFEFF';
+      const blob = new Blob([bom + csvContent], { type: 'text/csv;charset=utf-8' });
+>>>>>>> 23727a5 (feat: enhance competition management with age filtering and birth date display)
       const link = document.createElement('a');
       const url = URL.createObjectURL(blob);
       link.setAttribute('href', url);
@@ -2030,9 +2045,27 @@ const CompetitionManagement = () => {
                       <h3 className="font-bold text-lg mb-4 text-green-900">Par Catégorie d'Âge</h3>
                       <div className="space-y-2">
                         {competitorStats.byAgeCategory && competitorStats.byAgeCategory.map((stat) => (
-                          <div key={stat.label} className="flex justify-between items-center">
+                          <div
+                            key={stat.label}
+                            onClick={() => {
+                              if (filterAgeCategory === stat.label) {
+                                setFilterAgeCategory('all');
+                              } else {
+                                setFilterAgeCategory(stat.label);
+                              }
+                            }}
+                            className={`flex justify-between items-center cursor-pointer rounded px-3 py-2 transition-colors ${
+                              filterAgeCategory === stat.label
+                                ? 'bg-green-600 text-white'
+                                : 'hover:bg-green-200'
+                            }`}
+                          >
                             <span className="text-sm font-medium">{stat.label}</span>
-                            <span className="bg-green-600 text-white px-3 py-1 rounded-full text-sm font-bold">
+                            <span className={`${
+                              filterAgeCategory === stat.label
+                                ? 'bg-green-700 text-white'
+                                : 'bg-green-600 text-white'
+                            } px-3 py-1 rounded-full text-sm font-bold`}>
                               {stat.count}
                             </span>
                           </div>
@@ -2368,13 +2401,52 @@ const CompetitionManagement = () => {
 
                   <div className="overflow-x-auto w-full px-6 pb-6">
                     <Table className="w-full min-w-max">
+<<<<<<< HEAD
                       <TableHeader>
                         <TableRow>
                           <TableHead className="w-12">
+=======
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-12">
+                          <Checkbox
+                            checked={selectedIds.length === filteredRegistrations.length && filteredRegistrations.length > 0}
+                            onCheckedChange={toggleSelectAll}
+                          />
+                        </TableHead>
+                        <TableHead>N° Dossard</TableHead>
+                        <TableHead>Référence</TableHead>
+                        <TableHead>Statut Commande</TableHead>
+                        <TableHead>Nom</TableHead>
+                        <TableHead>Prénom</TableHead>
+                        <TableHead>Catégorie d'Âge</TableHead>
+                        <TableHead>Date de naissance</TableHead>
+                        <TableHead>Sexe</TableHead>
+                        <TableHead>Horaire</TableHead>
+                        <TableHead>Type d'inscription</TableHead>
+                        <TableHead>Tarif</TableHead>
+                        <TableHead>Montant</TableHead>
+                        <TableHead>Club</TableHead>
+                        <TableHead>N° Licence FFME</TableHead>
+                        <TableHead className="text-center">Imprimé</TableHead>
+                        <TableHead className="text-center">Action</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredRegistrations.map((reg) => (
+                        <TableRow
+                          key={reg.id}
+                          className={`${selectedIds.includes(reg.id) ? 'bg-blue-50' : ''} ${
+                            reg.statut_commande === 'Annulé' ? 'bg-gray-100 opacity-60' : ''
+                          }`}
+                        >
+                          <TableCell>
+>>>>>>> 23727a5 (feat: enhance competition management with age filtering and birth date display)
                             <Checkbox
                               checked={selectedIds.length === filteredRegistrations.length && filteredRegistrations.length > 0}
                               onCheckedChange={toggleSelectAll}
                             />
+<<<<<<< HEAD
                           </TableHead>
                           <TableHead>N° Dossard</TableHead>
                           <TableHead>Référence</TableHead>
@@ -2391,6 +2463,247 @@ const CompetitionManagement = () => {
                           <TableHead>N° Licence FFME</TableHead>
                           <TableHead className="text-center">Imprimé</TableHead>
                           <TableHead className="text-center">Action</TableHead>
+=======
+                          </TableCell>
+                          <TableCell className="font-medium">
+                            {editingDossardId === reg.id ? (
+                              <div className="flex gap-1">
+                                <Input
+                                  value={editingDossardValue}
+                                  onChange={(e) => setEditingDossardValue(e.target.value)}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                      updateDossardNumber(reg.id, editingDossardValue);
+                                    } else if (e.key === 'Escape') {
+                                      setEditingDossardId(null);
+                                    }
+                                  }}
+                                  autoFocus
+                                  className="h-8 w-24"
+                                />
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => updateDossardNumber(reg.id, editingDossardValue)}
+                                  className="h-8 w-8 p-0"
+                                >
+                                  ✓
+                                </Button>
+                              </div>
+                            ) : (
+                              <span
+                                className="cursor-pointer hover:bg-gray-200 px-1 py-0.5 rounded text-sm"
+                                onClick={() => {
+                                  setEditingDossardId(reg.id);
+                                  setEditingDossardValue(reg.numero_dossart || '');
+                                }}
+                              >
+                                {reg.numero_dossart || '-'}
+                              </span>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-xs">
+                            {reg.reference_commande || '-'}
+                          </TableCell>
+                          <TableCell>
+                            {editingStatutId === reg.id ? (
+                              <div className="flex gap-1">
+                                <select
+                                  value={editingStatutValue}
+                                  onChange={(e) => setEditingStatutValue(e.target.value)}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                      updateStatutCommande(reg.id, editingStatutValue);
+                                    } else if (e.key === 'Escape') {
+                                      setEditingStatutId(null);
+                                    }
+                                  }}
+                                  autoFocus
+                                  className="h-8 px-2 border border-gray-300 rounded text-sm"
+                                >
+                                  <option value="Validé">Validé</option>
+                                  <option value="Annulé">Annulé</option>
+                                </select>
+                                <button
+                                  onClick={() => updateStatutCommande(reg.id, editingStatutValue)}
+                                  className="bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded text-sm"
+                                >
+                                  ✓
+                                </button>
+                              </div>
+                            ) : (
+                              <span
+                                className={`cursor-pointer px-2 py-1 rounded text-xs font-medium ${
+                                  reg.statut_commande === 'Annulé'
+                                    ? 'bg-red-100 text-red-700'
+                                    : 'bg-green-100 text-green-700'
+                                }`}
+                                onClick={() => {
+                                  setEditingStatutId(reg.id);
+                                  setEditingStatutValue(reg.statut_commande || 'Validé');
+                                }}
+                              >
+                                {reg.statut_commande || 'Validé'}
+                              </span>
+                            )}
+                          </TableCell>
+                          <TableCell className="font-medium">
+                            {reg.nom_participant?.toUpperCase()}
+                          </TableCell>
+                          <TableCell>{reg.prenom_participant}</TableCell>
+                          <TableCell>
+                            {reg.date_naissance ? (
+                              <span className={`px-2 py-1 rounded text-xs font-medium ${
+                                getCategory(reg.date_naissance) === 'U11'
+                                  ? 'bg-green-100 text-green-700'
+                                  : getCategory(reg.date_naissance) === 'U13'
+                                  ? 'bg-blue-100 text-blue-700'
+                                  : getCategory(reg.date_naissance) === 'U15'
+                                  ? 'bg-indigo-100 text-indigo-700'
+                                  : getCategory(reg.date_naissance) === 'U17'
+                                  ? 'bg-purple-100 text-purple-700'
+                                  : getCategory(reg.date_naissance) === 'U19'
+                                  ? 'bg-pink-100 text-pink-700'
+                                  : getCategory(reg.date_naissance) === 'Sénior'
+                                  ? 'bg-orange-100 text-orange-700'
+                                  : 'bg-gray-100 text-gray-700'
+                              }`}>
+                                {getCategory(reg.date_naissance)}
+                              </span>
+                            ) : (
+                              <span className="text-gray-400">-</span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {reg.date_naissance ? (
+                              new Date(reg.date_naissance).toLocaleDateString('fr-FR')
+                            ) : (
+                              <span className="text-gray-400">-</span>
+                            )}
+                          </TableCell>
+                          <TableCell
+                            className="cursor-pointer hover:bg-blue-50 transition-colors"
+                            onClick={() => {
+                              setEditingSexeId(reg.id);
+                              setEditingSexeValue(reg.sexe || '');
+                            }}
+                            title="Cliquer pour éditer le sexe"
+                          >
+                            {editingSexeId === reg.id ? (
+                              <select
+                                value={editingSexeValue}
+                                onChange={(e) => setEditingSexeValue(e.target.value)}
+                                onBlur={() => updateSexe(reg.id, editingSexeValue)}
+                                onClick={(e) => e.stopPropagation()}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    updateSexe(reg.id, editingSexeValue);
+                                  } else if (e.key === 'Escape') {
+                                    setEditingSexeId(null);
+                                    setEditingSexeValue('');
+                                  }
+                                }}
+                                autoFocus
+                                className="w-full px-2 py-1 border border-blue-400 rounded text-sm"
+                              >
+                                <option value="">Non spécifié</option>
+                                <option value="H">Homme</option>
+                                <option value="F">Femme</option>
+                              </select>
+                            ) : (
+                              <span className={`px-2 py-1 rounded text-xs font-medium ${
+                                reg.sexe === 'H'
+                                  ? 'bg-blue-100 text-blue-700'
+                                  : reg.sexe === 'F'
+                                  ? 'bg-pink-100 text-pink-700'
+                                  : 'text-gray-500'
+                              }`}>
+                                {reg.sexe === 'H' ? 'Homme' : reg.sexe === 'F' ? 'Femme' : '-'}
+                              </span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {reg.horaire ? (
+                              <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-medium">
+                                {reg.horaire === 'matin' ? 'Matin' : 'Après-midi'}
+                              </span>
+                            ) : (
+                              '-'
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <span className={`px-2 py-1 rounded text-xs font-medium ${
+                              reg.type_inscription === 'Buvette'
+                                ? 'bg-orange-100 text-orange-700'
+                                : 'bg-green-100 text-green-700'
+                            }`}>
+                              {reg.type_inscription || 'Compétition'}
+                            </span>
+                          </TableCell>
+                          <TableCell className="text-sm">{reg.tarif || '-'}</TableCell>
+                          <TableCell>{reg.montant_tarif ? `${reg.montant_tarif} €` : '-'}</TableCell>
+                          <TableCell
+                            className="cursor-pointer hover:bg-blue-50 transition-colors relative"
+                            onClick={() => {
+                              setEditingClubId(reg.id);
+                              setEditingClubValue(reg.club || '');
+                            }}
+                            title="Cliquer pour éditer le club"
+                          >
+                            {editingClubId === reg.id ? (
+                              <input
+                                type="text"
+                                value={editingClubValue}
+                                onChange={(e) => setEditingClubValue(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    updateClub(reg.id, editingClubValue);
+                                  } else if (e.key === 'Escape') {
+                                    setEditingClubId(null);
+                                    setEditingClubValue('');
+                                  }
+                                }}
+                                onBlur={() => updateClub(reg.id, editingClubValue)}
+                                autoFocus
+                                className="w-full px-2 py-1 border border-blue-400 rounded text-sm"
+                              />
+                            ) : (
+                              <span>{reg.club || '-'}</span>
+                            )}
+                          </TableCell>
+                          <TableCell>{reg.numero_licence_ffme || '-'}</TableCell>
+                          <TableCell
+                            className="text-center cursor-pointer hover:bg-gray-100 transition-colors"
+                            onClick={() => togglePrintStatus(reg.id, reg.deja_imprimee)}
+                            title="Cliquer pour basculer le statut d'impression"
+                          >
+                            {reg.deja_imprimee ? (
+                              <CheckCircle2 className="w-5 h-5 text-green-600 mx-auto hover:scale-110 transition-transform" />
+                            ) : (
+                              <XCircle className="w-5 h-5 text-orange-600 mx-auto hover:scale-110 transition-transform" />
+                            )}
+                          </TableCell>
+                          <TableCell className="text-center flex gap-2 justify-center">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setDetailsId(reg.id)}
+                              className="text-blue-600 hover:text-blue-800 hover:bg-blue-50"
+                              title="Voir plus de détails"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => deleteRegistration(reg.id, `${reg.prenom_participant} ${reg.nom_participant}`)}
+                              className="text-red-600 hover:text-red-800 hover:bg-red-50"
+                              title="Supprimer cette inscription"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </TableCell>
+>>>>>>> 23727a5 (feat: enhance competition management with age filtering and birth date display)
                         </TableRow>
                       </TableHeader>
                       <TableBody>
