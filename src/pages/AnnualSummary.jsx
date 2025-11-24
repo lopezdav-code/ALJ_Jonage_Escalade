@@ -73,38 +73,47 @@ const ParticipationSummaryTable = ({ title, competitors, competitions, dateDebut
                     </div>
                   </TableHead>
                 ))}
+                <TableHead className="text-right font-bold sticky right-0 bg-background z-10 min-w-[100px]">Total</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredCompetitors.map(({ member, participations }) => (
-                <TableRow key={member.id}>
-                  <TableCell className="font-medium sticky left-0 bg-background z-10">
-                    <div className="flex items-center gap-2">
-                      <User className={`w-4 h-4 ${member.sexe === 'H' ? 'text-blue-600' : 'text-pink-600'}`} />
-                      <span className={member.sexe === 'H' ? 'text-blue-600' : 'text-pink-600'}>
-                        {formatName(member.first_name, member.last_name, true)}
-                      </span>
-                      {member.category && (
-                        <span className="text-muted-foreground text-sm">({member.category})</span>
-                      )}
-                    </div>
-                  </TableCell>
-                  {filteredCompetitions.map(comp => (
-                    <TableCell key={comp.id} className="text-center">
-                      {participations[comp.id] ? (
-                        participations[comp.id].ranking ? (
-                          <div className="flex items-center justify-center gap-1 font-bold text-primary">
-                            <Medal className="w-4 h-4" />
-                            {participations[comp.id].ranking}
-                          </div>
-                        ) : (
-                          <CheckCircle2 className="w-5 h-5 text-green-500 mx-auto" />
-                        )
-                      ) : null}
+              {filteredCompetitors.map(({ member, participations }) => {
+                // Calculer le nombre total de participations pour ce compétiteur
+                const total = filteredCompetitions.filter(comp => participations[comp.id]).length;
+
+                return (
+                  <TableRow key={member.id}>
+                    <TableCell className="font-medium sticky left-0 bg-background z-10">
+                      <div className="flex items-center gap-2">
+                        <User className={`w-4 h-4 ${member.sexe === 'H' ? 'text-blue-600' : 'text-pink-600'}`} />
+                        <span className={member.sexe === 'H' ? 'text-blue-600' : 'text-pink-600'}>
+                          {formatName(member.first_name, member.last_name, true)}
+                        </span>
+                        {member.category && (
+                          <span className="text-muted-foreground text-sm">({member.category})</span>
+                        )}
+                      </div>
                     </TableCell>
-                  ))}
-                </TableRow>
-              ))}
+                    {filteredCompetitions.map(comp => (
+                      <TableCell key={comp.id} className="text-center">
+                        {participations[comp.id] ? (
+                          participations[comp.id].ranking ? (
+                            <div className="flex items-center justify-center gap-1 font-bold text-primary">
+                              <Medal className="w-4 h-4" />
+                              {participations[comp.id].ranking}
+                            </div>
+                          ) : (
+                            <CheckCircle2 className="w-5 h-5 text-green-500 mx-auto" />
+                          )
+                        ) : null}
+                      </TableCell>
+                    ))}
+                    <TableCell className="text-right font-bold sticky right-0 bg-background z-10 text-primary">
+                      {total}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         ) : (
