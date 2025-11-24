@@ -227,16 +227,10 @@ const ParticipationPosterExport = ({
 
   return (
     <div
+      id="poster-export"
+      className="relative w-[1200px] min-h-[1600px] mx-auto overflow-hidden flex flex-col"
       style={{
-        fontFamily: "'Montserrat', 'Roboto', sans-serif",
-        background: `linear-gradient(180deg, ${COLORS.bg} 0%, ${COLORS.bg} 10%, #FFFFFF 100%)`, // Dégradé Jaune -> Blanc
-        padding: '40px',
-        minHeight: '100vh',
-        color: COLORS.textMain,
-        position: 'relative',
-        overflow: 'hidden',
-        display: 'flex',
-        flexDirection: 'column'
+        background: `linear-gradient(to bottom, ${COLORS.bg} 0%, ${COLORS.white} 100%)`,
       }}
     >
       {/* Motif à pois subtil en haut seulement */}
