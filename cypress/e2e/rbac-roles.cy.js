@@ -57,10 +57,11 @@ describe('🔐 Contrôle d\'Accès par Rôle (RBAC)', () => {
       it(`devrait bloquer "${page.name}" sans authentification`, () => {
         cy.visit(page.path, { failOnStatusCode: false });
         cy.get('body', { timeout: 5000 }).should('be.visible');
-        cy.wait(500);
+        // Attendre la fin du chargement
+        cy.get('.animate-spin').should('not.exist');
 
-        // Vérifier qu'il y a une restriction (redirection ou message)
-        cy.url().should('not.include', page.path.replace(/^\//, '') + '');
+        // Vérifier que l'accès est restreint (affichage du composant ProtectedRoute)
+        cy.contains('h1', /Accès restreint/i, { timeout: 10000 }).should('be.visible');
 
         cy.log(`✅ ${page.name} bloquée pour public`);
       });

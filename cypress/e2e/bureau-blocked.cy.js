@@ -47,6 +47,8 @@ describe('🔒 Bureau - Pages Bloquées', () => {
 
     cy.visit('/site-settings', { failOnStatusCode: false });
     cy.get('body', { timeout: 5000 }).should('be.visible');
+    // Attendre la fin du chargement
+    cy.get('.animate-spin').should('not.exist');
     cy.wait(500);
 
     // Vérifier qu'on n'a pas été redirigé
@@ -63,6 +65,8 @@ describe('🔒 Bureau - Pages Bloquées', () => {
 
     cy.visit('/admin-management', { failOnStatusCode: false });
     cy.get('body', { timeout: 5000 }).should('be.visible');
+    // Attendre la fin du chargement
+    cy.get('.animate-spin').should('not.exist');
     cy.wait(500);
 
     // Vérifier qu'on n'a pas été redirigé
