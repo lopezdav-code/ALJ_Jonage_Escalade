@@ -4,7 +4,7 @@ import { Helmet } from 'react-helmet';
 import { motion } from 'framer-motion';
 import { supabase } from '@/lib/customSupabaseClient';
 import { useToast } from '@/components/ui/use-toast';
-import { Loader2, ListChecks, CheckCircle2, Euro, Shield, User, Medal, Calendar, Filter, Users, Printer } from 'lucide-react';
+import { Loader2, ListChecks, CheckCircle2, Euro, Shield, User, Medal, Calendar, Filter, Users, Printer, Copy } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
