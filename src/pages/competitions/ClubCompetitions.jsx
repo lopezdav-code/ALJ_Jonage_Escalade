@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import ReactDOM from 'react-dom/client';
 import { useNavigate } from 'react-router-dom';
-import { Loader2, Plus, Eye, Calendar, Users } from 'lucide-react';
+import { Loader2, Plus, Eye, Calendar, Users, Printer } from 'lucide-react';
 import { supabase } from '@/lib/customSupabaseClient';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -10,6 +11,8 @@ import CompetitionFilters from '@/components/competitions/CompetitionFilters';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { usePageAccess } from '@/hooks/usePageAccess';
 import { getCompetitionPhotoUrl } from '@/lib/competitionStorageUtils';
+import html2canvas from 'html2canvas';
+import ParticipationPosterExport from '@/components/ParticipationPosterExport';
 
 const ClubCompetitions = () => {
   const [competitions, setCompetitions] = useState([]);
@@ -86,6 +89,116 @@ const ClubCompetitions = () => {
       setLoading(false);
     }
   }, [toast]);
+
+  // Fonction pour exporter une compétition en PNG
+  const handleExportCompetitionPNG = async (competition) => {
+    try {
+      // Récupérer les participants de cette compétition
+      const { data: participantsData, error: participantsError } = await supabase
+        .from('competition_participants')
+        .select(`
+          role,
+          member_id,
+          ranking,
+          nb_competitor,
+          members ( id, first_name, last_name, title, category, sexe )
+        `)
+        .eq('competition_id', competition.id)
+        .eq('role', 'Competiteur');
+
+      if (participantsError) {
+        console.error('Erreur Supabase:', participantsError);
+        throw participantsError;
+      }
+
+      console.log('Participants récupérés:', participantsData);
+
+      // Vérifier s'il y a des participants
+      if (!participantsData || participantsData.length === 0) {
+        toast({
+          title: 'Attention',
+          description: 'Aucun compétiteur inscrit pour cette compétition',
+          variant: 'default',
+        });
+        return;
+      }
+
+      // Transformer les données pour le format attendu par ParticipationPosterExport
+      const competitorsMap = {};
+      participantsData?.forEach(p => {
+        if (!p.members) return;
+        const memberId = p.members.id;
+        if (!competitorsMap[memberId]) {
+          competitorsMap[memberId] = {
+            member: p.members,
+            participations: {}
+          };
+        }
+        competitorsMap[memberId].participations[competition.id] = {
+          ranking: p.ranking,
+          nb_competitor: p.nb_competitor
+        };
+      });
+
+      const competitors = Object.values(competitorsMap);
+
+      console.log('Compétiteurs formatés:', competitors);
+
+      // Créer un conteneur temporaire
+      const tempDiv = document.createElement('div');
+      tempDiv.style.position = 'fixed';
+      tempDiv.style.left = '-9999px';
+      tempDiv.style.top = '-9999px';
+      tempDiv.style.width = '900px';
+      document.body.appendChild(tempDiv);
+
+      // Créer un élément React et le rendre
+      const root = ReactDOM.createRoot(tempDiv);
+      root.render(
+        <ParticipationPosterExport
+          competitors={competitors}
+          competitions={[competition]}
+          title="ALJ Escalade"
+          subtitle={competition.short_title || competition.name}
+        />
+      );
+
+      // Attendre que le rendu soit fait
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      const canvas = await html2canvas(tempDiv, {
+        backgroundColor: '#ffffff',
+        scale: 2,
+        allowTaint: true,
+        useCORS: true,
+        logging: false,
+        removeModal: true,
+      });
+
+      // Nettoyage
+      root.unmount();
+      document.body.removeChild(tempDiv);
+
+      // Télécharger
+      const link = document.createElement('a');
+      link.href = canvas.toDataURL('image/png');
+      const fileName = `${competition.short_title || competition.name}-${new Date().toISOString().split('T')[0]}.png`;
+      link.download = fileName.replace(/[^a-z0-9-]/gi, '_');
+      link.click();
+
+      toast({
+        title: 'Succès',
+        description: 'L\'affiche a été exportée en PNG',
+      });
+    } catch (error) {
+      console.error('Erreur lors de l\'export:', error);
+      toast({
+        title: 'Erreur',
+        description: `Impossible d'exporter l'affiche: ${error.message || 'Erreur inconnue'}`,
+        variant: 'destructive',
+      });
+    }
+  };
 
   useEffect(() => {
     fetchCompetitions();
@@ -227,8 +340,8 @@ const ClubCompetitions = () => {
                 <TableHead>Date</TableHead>
                 <TableHead>Statut</TableHead>
                 <TableHead>Info</TableHead>
-                <TableHead className="w-32 text-center">Compétiteurs</TableHead>
-                <TableHead className="w-32 text-center">Actions</TableHead>
+                <TableHead>Compétiteurs</TableHead>
+                <TableHead className="text-center">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -328,15 +441,29 @@ const ClubCompetitions = () => {
                   </TableCell>
 
                   <TableCell className="text-center">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => navigate(`/competitions/detail/${comp.id}`)}
-                      className="flex items-center gap-1"
-                    >
-                      <Eye className="w-4 h-4" />
-                      Voir
-                    </Button>
+                    <div className="flex items-center justify-center gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => navigate(`/competitions/detail/${comp.id}`)}
+                        className="flex items-center gap-1"
+                      >
+                        <Eye className="w-4 h-4" />
+                        Voir
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleExportCompetitionPNG(comp);
+                        }}
+                        className="flex items-center gap-1"
+                        title="Exporter en PNG"
+                      >
+                        <Printer className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}

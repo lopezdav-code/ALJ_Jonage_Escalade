@@ -228,11 +228,27 @@ const ParticipationPosterExport = ({
   return (
     <div
       id="poster-export"
-      className="relative w-[1200px] min-h-[1600px] mx-auto overflow-hidden flex flex-col"
+      className="relative w-[794px] min-h-[1123px] mx-auto overflow-hidden flex flex-col"
       style={{
         background: `linear-gradient(to bottom, ${COLORS.bg} 0%, ${COLORS.white} 100%)`,
       }}
     >
+      {/* Image de fond murJonage.png en haut */}
+      <div style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        height: '50%',
+        backgroundImage: 'url(/ALJ_Jonage_Escalade/murJonage.png)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center top',
+        backgroundRepeat: 'no-repeat',
+        opacity: 0.15,
+        pointerEvents: 'none',
+        zIndex: 0
+      }} />
+
       {/* Motif à pois subtil en haut seulement */}
       <div style={{
         position: 'absolute',
@@ -265,7 +281,7 @@ const ParticipationPosterExport = ({
         <div style={{ textAlign: 'center', marginBottom: '40px', position: 'relative' }}>
           <h1
             style={{
-              fontSize: '5rem',
+              fontSize: '3.5rem',
               fontWeight: 900,
               textTransform: 'uppercase',
               color: COLORS.black,
@@ -287,7 +303,7 @@ const ParticipationPosterExport = ({
           }} />
           <h2
             style={{
-              fontSize: '2.2rem',
+              fontSize: '1.6rem',
               fontWeight: 800,
               textTransform: 'uppercase',
               color: COLORS.black,
@@ -375,7 +391,7 @@ const ParticipationPosterExport = ({
         position: 'absolute',
         bottom: '30px',
         right: '30px',
-        zIndex: 10,
+        zIndex: 0,
         background: 'white',
         padding: '15px',
         borderRadius: '20px',
@@ -386,7 +402,7 @@ const ParticipationPosterExport = ({
         <img
           src="/ALJ_Jonage_Escalade/logoALJ.png"
           alt="Logo Club"
-          style={{ height: '130px', display: 'block' }}
+          style={{ height: '90px', display: 'block' }}
         />
       </div>
 
@@ -405,7 +421,7 @@ const ParticipationPosterExport = ({
         <h3 style={{
           margin: 0,
           color: COLORS.bg,
-          fontSize: '2rem',
+          fontSize: '1.5rem',
           fontWeight: 900,
           textTransform: 'uppercase',
           fontStyle: 'italic',

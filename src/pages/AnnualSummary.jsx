@@ -4,7 +4,7 @@ import { Helmet } from 'react-helmet';
 import { motion } from 'framer-motion';
 import { supabase } from '@/lib/customSupabaseClient';
 import { useToast } from '@/components/ui/use-toast';
-import { Loader2, ListChecks, CheckCircle2, Euro, Shield, User, Medal, Calendar, Filter, Users, Printer, Copy } from 'lucide-react';
+import { Loader2, ListChecks, CheckCircle2, Euro, Shield, User, Medal, Calendar, Filter, Users, Printer } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -569,89 +569,7 @@ const AnnualSummary = () => {
     }
   };
 
-  const handleCopyParticipationAsImage = async () => {
-    try {
-      // Créer un conteneur temporaire
-      const tempDiv = document.createElement('div');
-      tempDiv.style.position = 'fixed';
-      tempDiv.style.left = '-9999px';
-      tempDiv.style.top = '-9999px';
-      tempDiv.style.width = '900px';
-      document.body.appendChild(tempDiv);
 
-      // Déterminer les données à exporter avec filtres
-      let rawCompetitions = viewMode === 'by-group'
-        ? [...competitions.u11_u15, ...competitions.u15_u19]
-        : competitions.all;
-
-      // Filtrer les compétitions par date
-      const filteredCompetitions = rawCompetitions.filter(comp => {
-        const compDate = new Date(comp.start_date);
-        if (dateDebut && new Date(dateDebut) > compDate) return false;
-        if (dateFin && new Date(dateFin) < compDate) return false;
-        return true;
-      });
-
-      // Dédoublonner les compétitions
-      const uniqueCompetitions = filteredCompetitions.filter((v, i, a) => a.findIndex(t => t.id === v.id) === i);
-
-      const dataToExport = viewMode === 'by-group'
-        ? [...summaryData.u11_u15, ...summaryData.u15_u19]
-        : allCompetitors;
-
-      // Créer un élément React et le rendre
-      const root = ReactDOM.createRoot(tempDiv);
-      root.render(
-        <ParticipationPosterExport
-          competitors={dataToExport}
-          competitions={uniqueCompetitions}
-          title="ALJ Escalade"
-          subtitle="Résultat du week-end"
-        />
-      );
-
-      // Attendre que le rendu soit fait
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      const canvas = await html2canvas(tempDiv, {
-        backgroundColor: '#1a2a3a',
-        scale: 2,
-        allowTaint: true,
-        useCORS: true,
-        logging: false,
-        removeModal: true,
-      });
-
-      // Nettoyage
-      root.unmount();
-      document.body.removeChild(tempDiv);
-
-      // Copier dans le presse-papier
-      canvas.toBlob(async (blob) => {
-        try {
-          const item = new ClipboardItem({ 'image/png': blob });
-          await navigator.clipboard.write([item]);
-          toast({
-            title: 'Succès',
-            description: 'L\'affiche a été copiée dans le presse-papier',
-          });
-        } catch (err) {
-          toast({
-            title: 'Erreur',
-            description: 'Impossible de copier dans le presse-papier',
-            variant: 'destructive',
-          });
-        }
-      });
-    } catch (error) {
-      console.error('Erreur lors de la capture:', error);
-      toast({
-        title: 'Erreur',
-        description: 'Impossible de capturer l\'affiche',
-        variant: 'destructive',
-      });
-    }
-  };
 
   useEffect(() => {
     fetchData();
@@ -695,10 +613,6 @@ const AnnualSummary = () => {
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="space-y-4">
               {/* Boutons d'export */}
               <div className="flex justify-end gap-2 flex-wrap no-print">
-                <Button onClick={handleCopyParticipationAsImage} variant="outline" size="sm" className="gap-2">
-                  <Copy className="w-4 h-4" />
-                  Copier l'image
-                </Button>
                 <Button onClick={handleExportParticipationPNG} variant="default" size="sm" className="gap-2 bg-primary hover:bg-primary/90">
                   <Printer className="w-4 h-4" />
                   Exporter PNG
