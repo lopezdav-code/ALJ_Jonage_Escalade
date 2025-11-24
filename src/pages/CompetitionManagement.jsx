@@ -83,16 +83,6 @@ const CompetitionManagement = () => {
   const [filterUnknownMappings, setFilterUnknownMappings] = useState(false);
   const [isEditingMode, setIsEditingMode] = useState(false);
 
-  // Mappings prénoms - sexe depuis la BDD
-  const [genderMappings, setGenderMappings] = useState([]);
-  const [genderMappingsLoading, setGenderMappingsLoading] = useState(true);
-  const [showAddGenderMappingModal, setShowAddGenderMappingModal] = useState(false);
-  const [newGenderMappingFirstName, setNewGenderMappingFirstName] = useState('');
-  const [newGenderMappingGender, setNewGenderMappingGender] = useState('Masculin');
-  const [editingGenderMappingId, setEditingGenderMappingId] = useState(null);
-  const [isEditingGenderMode, setIsEditingGenderMode] = useState(false);
-  const [filterUnknownGenderMappings, setFilterUnknownGenderMappings] = useState(false);
-
   // Options pour l'export PDF/CSV
   const [pdfFormat, setPdfFormat] = useState('a5'); // 'a4' ou 'a5'
   const [pdfOrientation, setPdfOrientation] = useState('portrait'); // 'portrait' ou 'landscape'
@@ -161,29 +151,6 @@ const CompetitionManagement = () => {
       });
     } finally {
       setMappingsLoading(false);
-    }
-  };
-
-  // Charger les mappings prénoms-sexe depuis la BDD
-  const loadGenderMappings = async () => {
-    setGenderMappingsLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from('firstname_gender_mapping')
-        .select('*')
-        .order('first_name', { ascending: true });
-
-      if (error) throw error;
-      setGenderMappings(data || []);
-    } catch (error) {
-      console.error('Error loading gender mappings:', error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de charger les mappings prénoms-sexe.",
-        variant: "destructive"
-      });
-    } finally {
-      setGenderMappingsLoading(false);
     }
   };
 
@@ -290,28 +257,6 @@ const CompetitionManagement = () => {
       console.warn('Erreur lors de la conversion du sexe:', error);
       return null;
     }
-  };
-
-  // Obtenir le sexe : d'abord du CSV, sinon du mapping prénoms-sexe
-  const getSexeWithMapping = (sexeFromCSV, firstName) => {
-    // D'abord convertir le sexe du CSV s'il existe
-    const convertedSexe = convertSexeFormat(sexeFromCSV);
-    if (convertedSexe !== null) {
-      return convertedSexe;
-    }
-
-    // Si pas de sexe dans le CSV, essayer de le deviner à partir du prénom
-    if (firstName) {
-      const genderFromMapping = getGenderFromFirstName(firstName);
-      if (genderFromMapping === 'Masculin') {
-        return 'H';
-      } else if (genderFromMapping === 'Féminin') {
-        return 'F';
-      }
-      // 'Mixte' retourne null (pas de genre spécifié)
-    }
-
-    return null;
   };
 
   // Mapper un club selon la BDD
@@ -436,99 +381,6 @@ const CompetitionManagement = () => {
     }
   };
 
-  // Sauvegarder un mapping prénom-sexe
-  const saveGenderMapping = async (firstName, gender) => {
-    if (!firstName.trim()) {
-      toast({ title: "Erreur", description: "Veuillez remplir le prénom", variant: "destructive" });
-      return;
-    }
-
-    try {
-      if (isEditingGenderMode && editingGenderMappingId) {
-        // Mode édition: mettre à jour le mapping
-        const { error } = await supabase
-          .from('firstname_gender_mapping')
-          .update({ gender })
-          .eq('id', editingGenderMappingId);
-
-        if (error) throw error;
-        toast({ title: "Succès", description: "Mapping mis à jour avec succès" });
-      } else {
-        // Mode création: insérer un nouveau mapping
-        const { error } = await supabase
-          .from('firstname_gender_mapping')
-          .insert({
-            first_name: firstName.trim(),
-            gender
-          });
-
-        if (error) throw error;
-        toast({ title: "Succès", description: "Mapping ajouté avec succès" });
-      }
-
-      // Réinitialiser et fermer
-      closeGenderMappingModal();
-      loadGenderMappings();
-    } catch (error) {
-      console.error('Error saving gender mapping:', error);
-      toast({ title: "Erreur", description: "Impossible de sauvegarder le mapping", variant: "destructive" });
-    }
-  };
-
-  // Supprimer un mapping prénom-sexe
-  const deleteGenderMapping = async (id) => {
-    if (!window.confirm('Êtes-vous sûr de vouloir supprimer ce mapping ?')) return;
-
-    try {
-      const { error } = await supabase
-        .from('firstname_gender_mapping')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
-
-      toast({ title: "Succès", description: "Mapping supprimé avec succès" });
-      loadGenderMappings();
-    } catch (error) {
-      console.error('Error deleting gender mapping:', error);
-      toast({ title: "Erreur", description: "Impossible de supprimer le mapping", variant: "destructive" });
-    }
-  };
-
-  // Ouvrir modal d'édition pour un mapping prénom-sexe
-  const openEditGenderMappingModal = (mapping) => {
-    setIsEditingGenderMode(true);
-    setEditingGenderMappingId(mapping.id);
-    setNewGenderMappingFirstName(mapping.first_name);
-    setNewGenderMappingGender(mapping.gender);
-    setShowAddGenderMappingModal(true);
-  };
-
-  // Fermer modal pour ajouter/éditer un mapping prénom-sexe
-  const closeGenderMappingModal = () => {
-    setShowAddGenderMappingModal(false);
-    setIsEditingGenderMode(false);
-    setEditingGenderMappingId(null);
-    setNewGenderMappingFirstName('');
-    setNewGenderMappingGender('Masculin');
-  };
-
-  // Obtenir le sexe à partir du prénom (retourne null si non trouvé)
-  const getGenderFromFirstName = (firstName) => {
-    if (!firstName) return null;
-    const trimmed = String(firstName).trim();
-    // Recherche insensible à la casse
-    const mapping = genderMappings.find(m => m.first_name.toLowerCase() === trimmed.toLowerCase());
-    return mapping ? mapping.gender : null;
-  };
-
-  // Vérifier si un prénom a un mapping
-  const isFirstNameMapped = (firstName) => {
-    if (!firstName) return false;
-    const trimmed = String(firstName).trim();
-    return genderMappings.some(m => m.first_name.toLowerCase() === trimmed.toLowerCase());
-  };
-
   // Réappliquer la matrice de correspondance à toutes les inscriptions
   const reapplyClubMappings = async () => {
     if (!window.confirm('Êtes-vous sûr de vouloir réappliquer la matrice de correspondance des clubs à toutes les inscriptions ?')) {
@@ -602,39 +454,9 @@ const CompetitionManagement = () => {
     }
   };
 
-  // Ajouter les prénoms inconnus à la table firstname_gender_mapping
-  const addUnknownGenderMappingsForUnknownFirstNames = async (firstNames) => {
-    if (firstNames.length === 0) return;
-
-    try {
-      // Préparer les mappings INCONNU
-      const newMappings = firstNames.map(firstName => ({
-        first_name: firstName.trim(),
-        gender: 'INCONNU'
-      }));
-
-      // Insérer les mappings (on ignore les conflits si la ligne existe déjà)
-      const { error } = await supabase
-        .from('firstname_gender_mapping')
-        .insert(newMappings)
-        .select();
-
-      if (error && error.code !== '23505') { // 23505 = unique constraint violation
-        throw error;
-      }
-
-      // Recharger les mappings pour rafraîchir la liste
-      await loadGenderMappings();
-    } catch (error) {
-      console.error('Error adding unknown gender mappings:', error);
-      // Ne pas afficher d'erreur toast ici car c'est une action automatique
-    }
-  };
-
   useEffect(() => {
     fetchRegistrations();
     loadClubMappings();
-    loadGenderMappings();
     loadCompetitorStats();
   }, []);
 
@@ -766,7 +588,7 @@ const CompetitionManagement = () => {
           code_promo: row['Code Promo'] || null,
           montant_code_promo: parseFloat(row['Montant code promo']) || null,
           date_naissance: dateNaissance,
-          sexe: getSexeWithMapping(row['Sexe'] || row['sexe'] || null, row['Prénom participant'] || row['Prenom participant']),
+          sexe: convertSexeFormat(row['Sexe'] || row['sexe'] || null),
           club: mapClubName(row['Club']) || null,
           numero_licence_ffme: row['Numéro de licence FFME'] || row['Numero de licence FFME'] || null,
           horaire: horaire,
@@ -826,19 +648,6 @@ const CompetitionManagement = () => {
       // Ajouter automatiquement les clubs non mappés avec la valeur "INCONNU"
       if (unmappedClubs.length > 0) {
         await addUnknownMappingsForUnmappedClubs(unmappedClubs);
-      }
-
-      // Détecter les prénoms inconnus du fichier original
-      const firstNamesFromFile = new Set(
-        jsonData
-          .map(row => String(row['Prénom participant'] || row['Prenom participant'] || '').trim())
-          .filter(firstName => firstName && firstName !== 'null')
-      );
-      const unknownFirstNames = Array.from(firstNamesFromFile).filter(firstName => !isFirstNameMapped(firstName));
-
-      // Ajouter automatiquement les prénoms inconnus avec la valeur "INCONNU"
-      if (unknownFirstNames.length > 0) {
-        await addUnknownGenderMappingsForUnknownFirstNames(unknownFirstNames);
       }
 
       // Insérer les nouvelles inscriptions une par une pour gérer les erreurs individuellement
@@ -1194,7 +1003,6 @@ const CompetitionManagement = () => {
     setFilterAgeCategory('all');
     setFilterStatutCommande('all');
     setSelectedIds([]);
-    setFilterUnknownGenderMappings(false);
   };
 
   // Sélection/désélection
@@ -2132,57 +1940,6 @@ const CompetitionManagement = () => {
                   onClick={() => saveClubMapping(newMappingOriginal, newMappingMapped)}
                 >
                   {isEditingMode ? 'Enregistrer' : 'Ajouter'}
-                </Button>
-              </CardFooter>
-            </Card>
-          </div>
-        )}
-
-        {/* Modal Ajouter/Modifier Mapping Prénom-Sexe */}
-        {showAddGenderMappingModal && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <Card className="w-full max-w-md">
-              <CardHeader>
-                <CardTitle>
-                  {isEditingGenderMode ? 'Modifier le mapping prénom-sexe' : 'Ajouter un nouveau mapping prénom-sexe'}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label htmlFor="first-name">Prénom</Label>
-                  <Input
-                    id="first-name"
-                    value={newGenderMappingFirstName}
-                    onChange={(e) => setNewGenderMappingFirstName(e.target.value)}
-                    placeholder="ex: Alice"
-                    disabled={isEditingGenderMode}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="gender">Sexe</Label>
-                  <select
-                    id="gender"
-                    value={newGenderMappingGender}
-                    onChange={(e) => setNewGenderMappingGender(e.target.value)}
-                    className="w-full px-3 py-2 border border-input rounded-md bg-background text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    <option value="Masculin">Masculin</option>
-                    <option value="Féminin">Féminin</option>
-                    <option value="Mixte">Mixte</option>
-                  </select>
-                </div>
-              </CardContent>
-              <CardFooter className="gap-2">
-                <Button
-                  variant="outline"
-                  onClick={() => closeGenderMappingModal()}
-                >
-                  Annuler
-                </Button>
-                <Button
-                  onClick={() => saveGenderMapping(newGenderMappingFirstName, newGenderMappingGender)}
-                >
-                  {isEditingGenderMode ? 'Enregistrer' : 'Ajouter'}
                 </Button>
               </CardFooter>
             </Card>
@@ -3719,108 +3476,6 @@ const CompetitionManagement = () => {
                     </AccordionContent>
                   </AccordionItem>
                 )}
-
-                {/* Accordéon des mappings prénoms-sexe */}
-                <AccordionItem value="gender-mappings">
-                  <AccordionTrigger className="text-base font-semibold">
-                    👤 Mappings Prénoms-Sexe ({genderMappings.length})
-                  </AccordionTrigger>
-                  <AccordionContent>
-                    {genderMappingsLoading ? (
-                      <div className="flex justify-center py-8">
-                        <Loader2 className="w-6 h-6 animate-spin" />
-                      </div>
-                    ) : genderMappings.length === 0 ? (
-                      <div className="text-center py-8 text-muted-foreground">
-                        Aucun mapping prénom-sexe configuré. Commencez par en ajouter un.
-                      </div>
-                    ) : (
-                      <>
-                        {/* Filtres */}
-                        <div className="flex gap-2 mb-4">
-                          <Button
-                            variant={!filterUnknownGenderMappings ? 'default' : 'outline'}
-                            size="sm"
-                            onClick={() => setFilterUnknownGenderMappings(false)}
-                          >
-                            Tous les mappings
-                          </Button>
-                          <Button
-                            variant={filterUnknownGenderMappings ? 'default' : 'outline'}
-                            size="sm"
-                            onClick={() => setFilterUnknownGenderMappings(true)}
-                            className={filterUnknownGenderMappings ? 'bg-amber-600 hover:bg-amber-700' : ''}
-                          >
-                            ⚠️ INCONNU ({genderMappings.filter(m => m.gender === 'INCONNU').length})
-                          </Button>
-                        </div>
-
-                        <Button
-                          size="sm"
-                          className="mb-4"
-                          onClick={() => {
-                            setIsEditingGenderMode(false);
-                            setNewGenderMappingFirstName('');
-                            setNewGenderMappingGender('Masculin');
-                            setShowAddGenderMappingModal(true);
-                          }}
-                        >
-                          ➕ Ajouter un mapping
-                        </Button>
-
-                        <div className="overflow-x-auto mt-4">
-                          <Table>
-                            <TableHeader>
-                              <TableRow>
-                                <TableHead>Prénom</TableHead>
-                                <TableHead>Sexe</TableHead>
-                                <TableHead className="text-center w-24">Actions</TableHead>
-                              </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                              {genderMappings.filter(mapping => !filterUnknownGenderMappings || mapping.gender === 'INCONNU').map((mapping) => (
-                              <TableRow key={mapping.id}>
-                                <TableCell>
-                                  <span className="font-medium">{mapping.first_name}</span>
-                                </TableCell>
-                                <TableCell>
-                                  <span className={`px-2 py-1 rounded text-xs font-medium ${
-mapping.gender === 'Masculin' ? 'bg-blue-100 text-blue-700' :
-                                    mapping.gender === 'Féminin' ? 'bg-pink-100 text-pink-700' :
-                                    mapping.gender === 'Mixte' ? 'bg-purple-100 text-purple-700' :
-                                    'bg-amber-100 text-amber-700'
-                                  }`}>
-                                    {mapping.gender}
-                                  </span>
-                                </TableCell>
-                                <TableCell className="text-center space-x-1">
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    onClick={() => openEditGenderMappingModal(mapping)}
-                                    title="Éditer"
-                                  >
-                                    <Edit2 className="w-4 h-4" />
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    onClick={() => deleteGenderMapping(mapping.id)}
-                                    title="Supprimer"
-                                    className="text-red-600 hover:text-red-700"
-                                  >
-                                    <IconX className="w-4 h-4" />
-                                  </Button>
-                                </TableCell>
-                              </TableRow>
-                            ))}
-                            </TableBody>
-                          </Table>
-                        </div>
-                      </>
-                    )}
-                  </AccordionContent>
-                </AccordionItem>
               </Accordion>
             </CardContent>
           </Card>
@@ -3847,11 +3502,6 @@ mapping.gender === 'Masculin' ? 'bg-blue-100 text-blue-700' :
                     </tr>
                   </thead>
                   <tbody>
-                    <tr className="hover:bg-blue-50 border-b border-blue-100">
-                      <td className="border border-blue-100 px-4 py-3"><span className="font-bold text-green-700 bg-green-50 px-3 py-1 rounded">U9</span></td>
-                      <td className="border border-blue-100 px-4 py-3">2018, 2019</td>
-                      <td className="border border-blue-100 px-4 py-3">Enfants 9 ans</td>
-                    </tr>
                     <tr className="hover:bg-blue-50 border-b border-blue-100">
                       <td className="border border-blue-100 px-4 py-3"><span className="font-bold text-green-700 bg-green-50 px-3 py-1 rounded">U11</span></td>
                       <td className="border border-blue-100 px-4 py-3">2016, 2017</td>
