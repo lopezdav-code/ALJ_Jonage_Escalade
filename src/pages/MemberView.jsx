@@ -173,6 +173,18 @@ const MemberView = () => {
 
         setMember(data);
 
+        // Fetch group info if groupe_id exists
+        let groupInfo = null;
+        if (data.groupe_id) {
+          const { data: g } = await supabase.from('groupe').select('*').eq('id', data.groupe_id).single();
+          groupInfo = g;
+        }
+
+        // Fetch bureau info
+        const { data: bureauData } = await supabase.from('bureau').select('*').eq('members_id', id).maybeSingle();
+
+        setMember({ ...data, groupInfo, bureauData });
+
         // Emergency contacts are now pre-joined in the view as JSON fields
         const contact1 = data.emergency_contact_1 || null;
         const contact2 = data.emergency_contact_2 || null;
@@ -376,11 +388,15 @@ const MemberView = () => {
               <CardTitle className="text-3xl mb-2">
                 {member.first_name} {member.last_name}
               </CardTitle>
-              {member.title && (
+              {member.bureauData ? (
                 <Badge variant="secondary" className="text-base">
-                  {member.title}
+                  {member.bureauData.role} {member.bureauData.sub_role || ''}
                 </Badge>
-              )}
+              ) : member.groupInfo ? (
+                <Badge variant="secondary" className="text-base">
+                  {member.groupInfo.category}
+                </Badge>
+              ) : null}
             </div>
           </div>
         </CardHeader>
@@ -397,8 +413,7 @@ const MemberView = () => {
           </CardHeader>
           <CardContent className="space-y-1">
             <InfoRow icon={User} label="Sexe" value={member.sexe === 'H' ? 'Homme' : member.sexe === 'F' ? 'Femme' : null} />
-            <InfoRow icon={Users} label="Catégorie" value={member.category} />
-            <InfoRow icon={Users} label="Sous-groupe" value={member.sub_group} />
+            <InfoRow icon={Users} label="Groupe" value={member.groupInfo ? `${member.groupInfo.category} ${member.groupInfo.sous_category ? '- ' + member.groupInfo.sous_category : ''}` : 'Aucun'} />
             <InfoRow icon={FileText} label="Licence" value={member.licence} />
           </CardContent>
         </Card>
@@ -869,130 +884,130 @@ const MemberView = () => {
                 ) : sessionHistory.length > 0 ? (
                   <div className="space-y-4">
                     {sessionHistory.map((session) => (
-                  <div key={session.id} className="p-4 border rounded-lg hover:bg-muted/50 transition-colors">
-                    {/* Session header with date and time */}
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="flex items-center gap-2">
-                        <Calendar className="w-4 h-4 text-primary" />
-                        <span className="font-semibold">
-                          {new Date(session.date).toLocaleDateString('fr-FR', {
-                            weekday: 'long',
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric'
-                          })}
-                        </span>
-                      </div>
-                      {session.start_time && (
-                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                          <Clock className="w-3 h-3" />
-                          <span>{session.start_time.substring(0, 5)}</span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Cycle and Schedule info */}
-                    <div className="flex flex-wrap gap-2 mb-3">
-                      {session.cycles && (
-                        <Badge variant="default">
-                          {session.cycles.name}
-                        </Badge>
-                      )}
-                      {session.schedules && (
-                        <>
-                          {session.schedules.type && (
-                            <Badge variant="secondary">{session.schedules.type}</Badge>
+                      <div key={session.id} className="p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                        {/* Session header with date and time */}
+                        <div className="flex items-center gap-3 mb-3">
+                          <div className="flex items-center gap-2">
+                            <Calendar className="w-4 h-4 text-primary" />
+                            <span className="font-semibold">
+                              {new Date(session.date).toLocaleDateString('fr-FR', {
+                                weekday: 'long',
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric'
+                              })}
+                            </span>
+                          </div>
+                          {session.start_time && (
+                            <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                              <Clock className="w-3 h-3" />
+                              <span>{session.start_time.substring(0, 5)}</span>
+                            </div>
                           )}
-                          {session.schedules.age_category && (
-                            <Badge variant="outline">{session.schedules.age_category}</Badge>
+                        </div>
+
+                        {/* Cycle and Schedule info */}
+                        <div className="flex flex-wrap gap-2 mb-3">
+                          {session.cycles && (
+                            <Badge variant="default">
+                              {session.cycles.name}
+                            </Badge>
                           )}
-                        </>
-                      )}
-                    </div>
-
-                    {/* Session objective */}
-                    {session.session_objective && (
-                      <div className="mb-3 p-3 bg-blue-50 dark:bg-blue-950/20 rounded border border-blue-200 dark:border-blue-800">
-                        <div className="flex items-start gap-2">
-                          <FileText className="w-4 h-4 text-blue-600 dark:text-blue-400 mt-0.5 shrink-0" />
-                          <div className="flex-1">
-                            <p className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-1">
-                              Objectif de la séance
-                            </p>
-                            <p className="text-sm text-blue-800 dark:text-blue-200 whitespace-pre-wrap">
-                              {session.session_objective}
-                            </p>
-                          </div>
+                          {session.schedules && (
+                            <>
+                              {session.schedules.type && (
+                                <Badge variant="secondary">{session.schedules.type}</Badge>
+                              )}
+                              {session.schedules.age_category && (
+                                <Badge variant="outline">{session.schedules.age_category}</Badge>
+                              )}
+                            </>
+                          )}
                         </div>
-                      </div>
-                    )}
 
-                    {/* Equipment */}
-                    {session.equipment && (
-                      <div className="mb-3 text-sm">
-                        <span className="font-medium text-muted-foreground">Matériel : </span>
-                        <span>{session.equipment}</span>
-                      </div>
-                    )}
-
-                    {/* General session comment */}
-                    {session.comment && (
-                      <div className="mb-3 p-3 bg-muted/50 rounded">
-                        <div className="flex items-start gap-2">
-                          <MessageSquare className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
-                          <div className="flex-1">
-                            <p className="text-sm font-medium text-muted-foreground mb-1">
-                              Commentaire général
-                            </p>
-                            <p className="text-sm whitespace-pre-wrap">
-                              {session.comment}
-                            </p>
+                        {/* Session objective */}
+                        {session.session_objective && (
+                          <div className="mb-3 p-3 bg-blue-50 dark:bg-blue-950/20 rounded border border-blue-200 dark:border-blue-800">
+                            <div className="flex items-start gap-2">
+                              <FileText className="w-4 h-4 text-blue-600 dark:text-blue-400 mt-0.5 shrink-0" />
+                              <div className="flex-1">
+                                <p className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-1">
+                                  Objectif de la séance
+                                </p>
+                                <p className="text-sm text-blue-800 dark:text-blue-200 whitespace-pre-wrap">
+                                  {session.session_objective}
+                                </p>
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                      </div>
-                    )}
+                        )}
 
-                    {/* Member-specific instructor comment */}
-                    {session.memberComment && (
-                      <div className="mb-3 p-3 bg-green-50 dark:bg-green-950/20 rounded border border-green-200 dark:border-green-800">
-                        <div className="flex items-start gap-2">
-                          <MessageSquare className="w-4 h-4 text-green-600 dark:text-green-400 mt-0.5 shrink-0" />
-                          <div className="flex-1">
-                            <p className="text-sm font-medium text-green-900 dark:text-green-100 mb-1">
-                              Commentaire de l'encadrant pour vous
-                            </p>
-                            <p className="text-sm text-green-800 dark:text-green-200 whitespace-pre-wrap">
-                              {session.memberComment}
-                            </p>
+                        {/* Equipment */}
+                        {session.equipment && (
+                          <div className="mb-3 text-sm">
+                            <span className="font-medium text-muted-foreground">Matériel : </span>
+                            <span>{session.equipment}</span>
                           </div>
-                        </div>
-                      </div>
-                    )}
+                        )}
 
-                    {/* Instructors */}
-                    {session.instructorsList && session.instructorsList.length > 0 && (
-                      <div className="pt-2 border-t">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <GraduationCap className="w-4 h-4 text-muted-foreground" />
-                          <span className="text-sm font-medium text-muted-foreground">Encadrants :</span>
-                          <div className="flex flex-wrap gap-2">
-                            {session.instructorsList.map((instructor) => (
-                              <Button
-                                key={instructor.id}
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => navigate(`/member-view/${instructor.id}`, { state: { fromTab } })}
-                                className="h-7 text-xs px-2"
-                              >
-                                <Eye className="w-3 h-3 mr-1" />
-                                {instructor.first_name} {instructor.last_name}
-                              </Button>
-                            ))}
+                        {/* General session comment */}
+                        {session.comment && (
+                          <div className="mb-3 p-3 bg-muted/50 rounded">
+                            <div className="flex items-start gap-2">
+                              <MessageSquare className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
+                              <div className="flex-1">
+                                <p className="text-sm font-medium text-muted-foreground mb-1">
+                                  Commentaire général
+                                </p>
+                                <p className="text-sm whitespace-pre-wrap">
+                                  {session.comment}
+                                </p>
+                              </div>
+                            </div>
                           </div>
-                        </div>
+                        )}
+
+                        {/* Member-specific instructor comment */}
+                        {session.memberComment && (
+                          <div className="mb-3 p-3 bg-green-50 dark:bg-green-950/20 rounded border border-green-200 dark:border-green-800">
+                            <div className="flex items-start gap-2">
+                              <MessageSquare className="w-4 h-4 text-green-600 dark:text-green-400 mt-0.5 shrink-0" />
+                              <div className="flex-1">
+                                <p className="text-sm font-medium text-green-900 dark:text-green-100 mb-1">
+                                  Commentaire de l'encadrant pour vous
+                                </p>
+                                <p className="text-sm text-green-800 dark:text-green-200 whitespace-pre-wrap">
+                                  {session.memberComment}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Instructors */}
+                        {session.instructorsList && session.instructorsList.length > 0 && (
+                          <div className="pt-2 border-t">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <GraduationCap className="w-4 h-4 text-muted-foreground" />
+                              <span className="text-sm font-medium text-muted-foreground">Encadrants :</span>
+                              <div className="flex flex-wrap gap-2">
+                                {session.instructorsList.map((instructor) => (
+                                  <Button
+                                    key={instructor.id}
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => navigate(`/member-view/${instructor.id}`, { state: { fromTab } })}
+                                    className="h-7 text-xs px-2"
+                                  >
+                                    <Eye className="w-3 h-3 mr-1" />
+                                    {instructor.first_name} {instructor.last_name}
+                                  </Button>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
-                    )}
-                    </div>
                     ))}
                   </div>
                 ) : (

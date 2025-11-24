@@ -13,19 +13,6 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { useToast } from '@/components/ui/use-toast';
 import { getMemberPhotoUrl } from '@/lib/memberStorageUtils';
 
-const categoryOptions = {
-  "Loisir enfants": ["mercredi 13h Groupe A", "mercredi 13h Groupe B", "mercredi 16h", "vendredi"],
-  "Loisir collége": ["Mardi 18h", "Jeudi 18h"],
-  "Loisir lycée": [],
-  "Loisir adulte": [],
-  "Adultes autonomes": [],
-  "Compétition U11-U15": [],
-  "Compétition U15-U19": [],
-  "Bénévole": [],
-  "Bureau": [],
-  "emergency_contact": [],
-};
-
 const ageCategoryOptions = ['U11', 'U13', 'U15', 'U17', 'U19', 'Sénior', 'Vétéran 1'];
 const passeportOptions = ['Blanc', 'Jaune', 'Orange', 'Vert', 'Bleu', 'Violet', 'Rouge'];
 const brevetOptions = [
@@ -37,12 +24,12 @@ const brevetOptions = [
 const MemberForm = ({ member, onSave, onCancel, isSaving }) => {
   // Générer un ID unique pour ce formulaire pour éviter les IDs dupliqués
   const formId = React.useMemo(() => member?.id || `new-${Date.now()}`, [member?.id]);
-  
+
   const [formData, setFormData] = useState({
     first_name: member?.first_name || '',
     last_name: member?.last_name || '',
-    title: member?.title || '',
-    sub_group: member?.sub_group || '',
+    groupe_id: member?.groupe_id || null,
+    isBenevole: member?.isBenevole || false,
     category: member?.category || '',
     phone: member?.phone || '',
     photo_url: member?.photo_url || null,
@@ -57,6 +44,7 @@ const MemberForm = ({ member, onSave, onCancel, isSaving }) => {
   const [newImageFile, setNewImageFile] = useState(null);
   const [photoPreview, setPhotoPreview] = useState(null);
   const [allMembers, setAllMembers] = useState([]);
+  const [groups, setGroups] = useState([]);
   const [isContactForDialogOpen, setIsContactForDialogOpen] = useState(false);
   const [isEmergencyContactDialogOpen, setIsEmergencyContactDialogOpen] = useState(false);
   const [editingContactField, setEditingContactField] = useState(null);
@@ -72,6 +60,15 @@ const MemberForm = ({ member, onSave, onCancel, isSaving }) => {
       }
     };
     fetchAllMembers();
+
+    // Fetch groups
+    const fetchGroups = async () => {
+      const { data, error } = await supabase.from('groupe').select('*').order('category').order('sous_category');
+      if (!error) {
+        setGroups(data || []);
+      }
+    };
+    fetchGroups();
 
     // Fetch members for whom the current member is an emergency contact
     if (member?.id) {
@@ -119,9 +116,7 @@ const MemberForm = ({ member, onSave, onCancel, isSaving }) => {
   };
 
   const handleSelectChange = (name, value) => {
-    const newFormData = { ...formData, [name]: value };
-    if (name === 'title') newFormData.sub_group = '';
-    setFormData(newFormData);
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleCheckboxChange = (value) => {
@@ -141,7 +136,7 @@ const MemberForm = ({ member, onSave, onCancel, isSaving }) => {
       setFormData(prev => ({ ...prev, photo_url: URL.createObjectURL(file) }));
     }
   };
-  
+
   const handleDeletePhoto = () => {
     setNewImageFile(null);
     setPhotoPreview(null);
@@ -207,8 +202,6 @@ const MemberForm = ({ member, onSave, onCancel, isSaving }) => {
     setEditingContactField(null);
   };
 
-  const subGroupOptions = formData.title ? categoryOptions[formData.title] || [] : [];
-
   const getBrevetIcon = (brevet) => {
     if (brevet.includes('Initiateur')) return <Flag className="h-4 w-4" />;
     if (brevet.includes('Juge Bloc')) return <Gavel className="h-4 w-4" />;
@@ -233,7 +226,7 @@ const MemberForm = ({ member, onSave, onCancel, isSaving }) => {
                   <UploadCloud className="mr-2 h-4 w-4" /> Changer
                 </Label>
               </Button>
-              {photoPreview && 
+              {photoPreview &&
                 <Button type="button" variant="destructive" onClick={handleDeletePhoto}>
                   <Trash2 className="mr-2 h-4 w-4" /> Supprimer
                 </Button>
@@ -254,15 +247,37 @@ const MemberForm = ({ member, onSave, onCancel, isSaving }) => {
             <div><Label>Licence</Label><Input name="licence" value={formData.licence || ''} onChange={handleChange} /></div>
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <div><Label>Titre/Catégorie</Label><Select name="title" value={formData.title} onValueChange={(v) => handleSelectChange('title', v)}><SelectTrigger><SelectValue placeholder="Catégorie" /></SelectTrigger><SelectContent>{Object.keys(categoryOptions).map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent></Select></div>
-            <div><Label>Sous-groupe</Label><Select name="sub_group" value={formData.sub_group} onValueChange={(v) => handleSelectChange('sub_group', v)} disabled={subGroupOptions.length === 0}><SelectTrigger><SelectValue placeholder="Sous-groupe" /></SelectTrigger><SelectContent>{subGroupOptions.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent></Select></div>
+            <div>
+              <Label>Groupe</Label>
+              <Select name="groupe_id" value={formData.groupe_id?.toString() || "no_group"} onValueChange={(v) => handleSelectChange('groupe_id', v === "no_group" ? null : parseInt(v))}>
+                <SelectTrigger><SelectValue placeholder="Sélectionner un groupe" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="no_group">Aucun groupe</SelectItem>
+                  {groups.map(g => (
+                    <SelectItem key={g.id} value={g.id.toString()}>
+                      {g.category} {g.sous_category ? `- ${g.sous_category}` : ''} {g.Groupe_schedule ? `(${g.Groupe_schedule})` : ''}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-end pb-2">
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id={`benevole-${formId}`}
+                  checked={formData.isBenevole}
+                  onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isBenevole: checked }))}
+                />
+                <Label htmlFor={`benevole-${formId}`}>Bénévole</Label>
+              </div>
+            </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div><Label>Catégorie d'âge (Compétition)</Label><Select name="category" value={formData.category || ''} onValueChange={(v) => handleSelectChange('category', v)}><SelectTrigger><SelectValue placeholder="Catégorie d'âge" /></SelectTrigger><SelectContent><SelectItem value="">Aucune</SelectItem>{ageCategoryOptions.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent></Select></div>
             <div><Label>Passeport</Label><Select name="passeport" value={formData.passeport || ''} onValueChange={(v) => handleSelectChange('passeport', v)}><SelectTrigger><SelectValue placeholder="Passeport" /></SelectTrigger><SelectContent><SelectItem value="">Aucun</SelectItem>{passeportOptions.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent></Select></div>
           </div>
           <div><Label>Brevets Fédéraux</Label><div className="grid grid-cols-2 gap-1 mt-2">{brevetOptions.map(b => <div key={b} className="flex items-center gap-2"><Checkbox id={`b-${formId}-${b}`} checked={formData.brevet_federaux.includes(b)} onCheckedChange={() => handleCheckboxChange(b)} /> {getBrevetIcon(b)} <Label htmlFor={`b-${formId}-${b}`} className="font-normal text-sm">{b}</Label></div>)}</div></div>
-          
+
           <div>
             <Label>Contact d'urgence 1</Label>
             <Button variant="outline" type="button" className="w-full justify-between" onClick={() => openEmergencyContactDialog('emergency_contact_1_id')}>

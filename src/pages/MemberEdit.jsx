@@ -62,6 +62,16 @@ const MemberEdit = () => {
         return;
       }
 
+      // Fetch volunteer status
+      const { data: bureauData } = await supabase
+        .from('bureau')
+        .select('id')
+        .eq('members_id', id)
+        .eq('role', 'Bénévole')
+        .maybeSingle();
+
+      data.isBenevole = !!bureauData;
+
       setMember(data);
       setLoading(false);
     };
@@ -101,6 +111,7 @@ const MemberEdit = () => {
         isEmergencyContactFor,
         emergency_contact_1,
         emergency_contact_2,
+        isBenevole,
         ...dataToSave
       } = { ...memberData, photo_url };
 
@@ -117,6 +128,30 @@ const MemberEdit = () => {
         .eq('id', id);
 
       if (error) throw error;
+
+      // Handle Benevole status
+      if (isBenevole !== undefined) {
+        if (isBenevole) {
+          // Check if already exists
+          const { data: existing } = await supabase
+            .from('bureau')
+            .select('id')
+            .eq('members_id', id)
+            .eq('role', 'Bénévole')
+            .maybeSingle();
+
+          if (!existing) {
+            await supabase.from('bureau').insert([{ members_id: id, role: 'Bénévole' }]);
+          }
+        } else {
+          // Remove if exists
+          await supabase
+            .from('bureau')
+            .delete()
+            .eq('members_id', id)
+            .eq('role', 'Bénévole');
+        }
+      }
 
       toast({
         title: "Succès",
@@ -164,27 +199,27 @@ const MemberEdit = () => {
       pageTitle="Édition de membre"
       message="Vous n'avez pas les droits nécessaires pour modifier cette page. Seuls les administrateurs et les membres du bureau peuvent éditer les informations des membres."
     >
-    <div className="p-4 max-w-4xl mx-auto">
-      <Helmet>
-        <title>Modifier {member.first_name} {member.last_name} - Club d'Escalade</title>
-      </Helmet>
+      <div className="p-4 max-w-4xl mx-auto">
+        <Helmet>
+          <title>Modifier {member.first_name} {member.last_name} - Club d'Escalade</title>
+        </Helmet>
 
-      <div className="mb-4">
-        <BackButton onClick={() => navigateToVolunteers()} className="mb-2">
-          Retour aux adhérents
-        </BackButton>
-        <h1 className="text-xl font-bold">
-          Modifier {member.first_name} {member.last_name}
-        </h1>
+        <div className="mb-4">
+          <BackButton onClick={() => navigateToVolunteers()} className="mb-2">
+            Retour aux adhérents
+          </BackButton>
+          <h1 className="text-xl font-bold">
+            Modifier {member.first_name} {member.last_name}
+          </h1>
+        </div>
+
+        <MemberForm
+          member={member}
+          onSave={handleSave}
+          onCancel={handleCancel}
+          isSaving={isSaving}
+        />
       </div>
-
-      <MemberForm
-        member={member}
-        onSave={handleSave}
-        onCancel={handleCancel}
-        isSaving={isSaving}
-      />
-    </div>
     </ProtectedRoute>
   );
 };
