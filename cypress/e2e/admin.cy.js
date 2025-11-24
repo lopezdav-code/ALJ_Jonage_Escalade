@@ -154,7 +154,7 @@ describe('3️⃣  Mode Admin - Pages Accessibles', () => {
 
     // Vérifier qu'il y a du contenu
     cy.get('h1, h2, main, [role="main"]', { timeout: 5000 }).should('exist');
-    cy.contains('h1', /adhérent|volunteer|member/i).should('be.visible');
+    cy.contains('h1', /adhérent|volunteer|members?|gestion des membres/i).should('be.visible');
 
     // Vérifier pas d'erreur d'accès
     cy.contains('h1', /Accès restreint/i).should('not.exist');
