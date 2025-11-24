@@ -1608,16 +1608,9 @@ const CompetitionManagement = () => {
       const filterSuffix = filterParts.length > 0 ? `_${filterParts.join('-')}` : '';
       const filename = `listing_${dateStr}_${timeStr}_${sortedRegs.length}participants${filterSuffix}.csv`;
 
-<<<<<<< HEAD
-      // Créer un blob avec UTF-8 BOM et télécharger
-      const BOM = '\uFEFF';
-      const csvWithBOM = BOM + csvContent;
-      const blob = new Blob([csvWithBOM], { type: 'text/csv;charset=utf-8;' });
-=======
       // Créer un blob et télécharger (avec BOM UTF-8 pour Excel)
       const bom = '\uFEFF';
       const blob = new Blob([bom + csvContent], { type: 'text/csv;charset=utf-8' });
->>>>>>> 23727a5 (feat: enhance competition management with age filtering and birth date display)
       const link = document.createElement('a');
       const url = URL.createObjectURL(blob);
       link.setAttribute('href', url);
@@ -2054,18 +2047,16 @@ const CompetitionManagement = () => {
                                 setFilterAgeCategory(stat.label);
                               }
                             }}
-                            className={`flex justify-between items-center cursor-pointer rounded px-3 py-2 transition-colors ${
-                              filterAgeCategory === stat.label
-                                ? 'bg-green-600 text-white'
-                                : 'hover:bg-green-200'
-                            }`}
+                            className={`flex justify-between items-center cursor-pointer rounded px-3 py-2 transition-colors ${filterAgeCategory === stat.label
+                              ? 'bg-green-600 text-white'
+                              : 'hover:bg-green-200'
+                              }`}
                           >
                             <span className="text-sm font-medium">{stat.label}</span>
-                            <span className={`${
-                              filterAgeCategory === stat.label
-                                ? 'bg-green-700 text-white'
-                                : 'bg-green-600 text-white'
-                            } px-3 py-1 rounded-full text-sm font-bold`}>
+                            <span className={`${filterAgeCategory === stat.label
+                              ? 'bg-green-700 text-white'
+                              : 'bg-green-600 text-white'
+                              } px-3 py-1 rounded-full text-sm font-bold`}>
                               {stat.count}
                             </span>
                           </div>
@@ -2125,8 +2116,8 @@ const CompetitionManagement = () => {
                     <div
                       key={club}
                       className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors w-auto ${isMapped
-                          ? 'bg-blue-50 border border-blue-200 hover:bg-blue-100'
-                          : 'bg-red-50 border-2 border-red-300 hover:bg-red-100'
+                        ? 'bg-blue-50 border border-blue-200 hover:bg-blue-100'
+                        : 'bg-red-50 border-2 border-red-300 hover:bg-red-100'
                         }`}
                       onClick={() => setFilterClub(filterClub === club ? 'all' : club)}
                       title={isMapped ? 'Club mappé' : 'Club NON mappé - À vérifier!'}
@@ -2136,8 +2127,8 @@ const CompetitionManagement = () => {
                         {!isMapped && <span className="ml-1 text-red-600 font-bold">⚠</span>}
                       </span>
                       <span className={`px-2 py-1 rounded text-xs font-bold ${isMapped
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-red-600 text-white'
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-red-600 text-white'
                         }`}>
                         {clubStats[club]}
                       </span>
@@ -2401,52 +2392,13 @@ const CompetitionManagement = () => {
 
                   <div className="overflow-x-auto w-full px-6 pb-6">
                     <Table className="w-full min-w-max">
-<<<<<<< HEAD
                       <TableHeader>
                         <TableRow>
                           <TableHead className="w-12">
-=======
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-12">
-                          <Checkbox
-                            checked={selectedIds.length === filteredRegistrations.length && filteredRegistrations.length > 0}
-                            onCheckedChange={toggleSelectAll}
-                          />
-                        </TableHead>
-                        <TableHead>N° Dossard</TableHead>
-                        <TableHead>Référence</TableHead>
-                        <TableHead>Statut Commande</TableHead>
-                        <TableHead>Nom</TableHead>
-                        <TableHead>Prénom</TableHead>
-                        <TableHead>Catégorie d'Âge</TableHead>
-                        <TableHead>Date de naissance</TableHead>
-                        <TableHead>Sexe</TableHead>
-                        <TableHead>Horaire</TableHead>
-                        <TableHead>Type d'inscription</TableHead>
-                        <TableHead>Tarif</TableHead>
-                        <TableHead>Montant</TableHead>
-                        <TableHead>Club</TableHead>
-                        <TableHead>N° Licence FFME</TableHead>
-                        <TableHead className="text-center">Imprimé</TableHead>
-                        <TableHead className="text-center">Action</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredRegistrations.map((reg) => (
-                        <TableRow
-                          key={reg.id}
-                          className={`${selectedIds.includes(reg.id) ? 'bg-blue-50' : ''} ${
-                            reg.statut_commande === 'Annulé' ? 'bg-gray-100 opacity-60' : ''
-                          }`}
-                        >
-                          <TableCell>
->>>>>>> 23727a5 (feat: enhance competition management with age filtering and birth date display)
                             <Checkbox
                               checked={selectedIds.length === filteredRegistrations.length && filteredRegistrations.length > 0}
                               onCheckedChange={toggleSelectAll}
                             />
-<<<<<<< HEAD
                           </TableHead>
                           <TableHead>N° Dossard</TableHead>
                           <TableHead>Référence</TableHead>
@@ -2454,256 +2406,11 @@ const CompetitionManagement = () => {
                           <TableHead>Nom</TableHead>
                           <TableHead>Prénom</TableHead>
                           <TableHead>Catégorie d'Âge</TableHead>
+                          <TableHead>Date de naissance</TableHead>
                           <TableHead>Sexe</TableHead>
                           <TableHead>Horaire</TableHead>
                           <TableHead>Type d'inscription</TableHead>
-                          <TableHead>Tarif</TableHead>
-                          <TableHead>Montant</TableHead>
-                          <TableHead>Club</TableHead>
-                          <TableHead>N° Licence FFME</TableHead>
-                          <TableHead className="text-center">Imprimé</TableHead>
                           <TableHead className="text-center">Action</TableHead>
-=======
-                          </TableCell>
-                          <TableCell className="font-medium">
-                            {editingDossardId === reg.id ? (
-                              <div className="flex gap-1">
-                                <Input
-                                  value={editingDossardValue}
-                                  onChange={(e) => setEditingDossardValue(e.target.value)}
-                                  onKeyDown={(e) => {
-                                    if (e.key === 'Enter') {
-                                      updateDossardNumber(reg.id, editingDossardValue);
-                                    } else if (e.key === 'Escape') {
-                                      setEditingDossardId(null);
-                                    }
-                                  }}
-                                  autoFocus
-                                  className="h-8 w-24"
-                                />
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => updateDossardNumber(reg.id, editingDossardValue)}
-                                  className="h-8 w-8 p-0"
-                                >
-                                  ✓
-                                </Button>
-                              </div>
-                            ) : (
-                              <span
-                                className="cursor-pointer hover:bg-gray-200 px-1 py-0.5 rounded text-sm"
-                                onClick={() => {
-                                  setEditingDossardId(reg.id);
-                                  setEditingDossardValue(reg.numero_dossart || '');
-                                }}
-                              >
-                                {reg.numero_dossart || '-'}
-                              </span>
-                            )}
-                          </TableCell>
-                          <TableCell className="text-xs">
-                            {reg.reference_commande || '-'}
-                          </TableCell>
-                          <TableCell>
-                            {editingStatutId === reg.id ? (
-                              <div className="flex gap-1">
-                                <select
-                                  value={editingStatutValue}
-                                  onChange={(e) => setEditingStatutValue(e.target.value)}
-                                  onKeyDown={(e) => {
-                                    if (e.key === 'Enter') {
-                                      updateStatutCommande(reg.id, editingStatutValue);
-                                    } else if (e.key === 'Escape') {
-                                      setEditingStatutId(null);
-                                    }
-                                  }}
-                                  autoFocus
-                                  className="h-8 px-2 border border-gray-300 rounded text-sm"
-                                >
-                                  <option value="Validé">Validé</option>
-                                  <option value="Annulé">Annulé</option>
-                                </select>
-                                <button
-                                  onClick={() => updateStatutCommande(reg.id, editingStatutValue)}
-                                  className="bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded text-sm"
-                                >
-                                  ✓
-                                </button>
-                              </div>
-                            ) : (
-                              <span
-                                className={`cursor-pointer px-2 py-1 rounded text-xs font-medium ${
-                                  reg.statut_commande === 'Annulé'
-                                    ? 'bg-red-100 text-red-700'
-                                    : 'bg-green-100 text-green-700'
-                                }`}
-                                onClick={() => {
-                                  setEditingStatutId(reg.id);
-                                  setEditingStatutValue(reg.statut_commande || 'Validé');
-                                }}
-                              >
-                                {reg.statut_commande || 'Validé'}
-                              </span>
-                            )}
-                          </TableCell>
-                          <TableCell className="font-medium">
-                            {reg.nom_participant?.toUpperCase()}
-                          </TableCell>
-                          <TableCell>{reg.prenom_participant}</TableCell>
-                          <TableCell>
-                            {reg.date_naissance ? (
-                              <span className={`px-2 py-1 rounded text-xs font-medium ${
-                                getCategory(reg.date_naissance) === 'U11'
-                                  ? 'bg-green-100 text-green-700'
-                                  : getCategory(reg.date_naissance) === 'U13'
-                                  ? 'bg-blue-100 text-blue-700'
-                                  : getCategory(reg.date_naissance) === 'U15'
-                                  ? 'bg-indigo-100 text-indigo-700'
-                                  : getCategory(reg.date_naissance) === 'U17'
-                                  ? 'bg-purple-100 text-purple-700'
-                                  : getCategory(reg.date_naissance) === 'U19'
-                                  ? 'bg-pink-100 text-pink-700'
-                                  : getCategory(reg.date_naissance) === 'Sénior'
-                                  ? 'bg-orange-100 text-orange-700'
-                                  : 'bg-gray-100 text-gray-700'
-                              }`}>
-                                {getCategory(reg.date_naissance)}
-                              </span>
-                            ) : (
-                              <span className="text-gray-400">-</span>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            {reg.date_naissance ? (
-                              new Date(reg.date_naissance).toLocaleDateString('fr-FR')
-                            ) : (
-                              <span className="text-gray-400">-</span>
-                            )}
-                          </TableCell>
-                          <TableCell
-                            className="cursor-pointer hover:bg-blue-50 transition-colors"
-                            onClick={() => {
-                              setEditingSexeId(reg.id);
-                              setEditingSexeValue(reg.sexe || '');
-                            }}
-                            title="Cliquer pour éditer le sexe"
-                          >
-                            {editingSexeId === reg.id ? (
-                              <select
-                                value={editingSexeValue}
-                                onChange={(e) => setEditingSexeValue(e.target.value)}
-                                onBlur={() => updateSexe(reg.id, editingSexeValue)}
-                                onClick={(e) => e.stopPropagation()}
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter') {
-                                    updateSexe(reg.id, editingSexeValue);
-                                  } else if (e.key === 'Escape') {
-                                    setEditingSexeId(null);
-                                    setEditingSexeValue('');
-                                  }
-                                }}
-                                autoFocus
-                                className="w-full px-2 py-1 border border-blue-400 rounded text-sm"
-                              >
-                                <option value="">Non spécifié</option>
-                                <option value="H">Homme</option>
-                                <option value="F">Femme</option>
-                              </select>
-                            ) : (
-                              <span className={`px-2 py-1 rounded text-xs font-medium ${
-                                reg.sexe === 'H'
-                                  ? 'bg-blue-100 text-blue-700'
-                                  : reg.sexe === 'F'
-                                  ? 'bg-pink-100 text-pink-700'
-                                  : 'text-gray-500'
-                              }`}>
-                                {reg.sexe === 'H' ? 'Homme' : reg.sexe === 'F' ? 'Femme' : '-'}
-                              </span>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            {reg.horaire ? (
-                              <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-medium">
-                                {reg.horaire === 'matin' ? 'Matin' : 'Après-midi'}
-                              </span>
-                            ) : (
-                              '-'
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            <span className={`px-2 py-1 rounded text-xs font-medium ${
-                              reg.type_inscription === 'Buvette'
-                                ? 'bg-orange-100 text-orange-700'
-                                : 'bg-green-100 text-green-700'
-                            }`}>
-                              {reg.type_inscription || 'Compétition'}
-                            </span>
-                          </TableCell>
-                          <TableCell className="text-sm">{reg.tarif || '-'}</TableCell>
-                          <TableCell>{reg.montant_tarif ? `${reg.montant_tarif} €` : '-'}</TableCell>
-                          <TableCell
-                            className="cursor-pointer hover:bg-blue-50 transition-colors relative"
-                            onClick={() => {
-                              setEditingClubId(reg.id);
-                              setEditingClubValue(reg.club || '');
-                            }}
-                            title="Cliquer pour éditer le club"
-                          >
-                            {editingClubId === reg.id ? (
-                              <input
-                                type="text"
-                                value={editingClubValue}
-                                onChange={(e) => setEditingClubValue(e.target.value)}
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter') {
-                                    updateClub(reg.id, editingClubValue);
-                                  } else if (e.key === 'Escape') {
-                                    setEditingClubId(null);
-                                    setEditingClubValue('');
-                                  }
-                                }}
-                                onBlur={() => updateClub(reg.id, editingClubValue)}
-                                autoFocus
-                                className="w-full px-2 py-1 border border-blue-400 rounded text-sm"
-                              />
-                            ) : (
-                              <span>{reg.club || '-'}</span>
-                            )}
-                          </TableCell>
-                          <TableCell>{reg.numero_licence_ffme || '-'}</TableCell>
-                          <TableCell
-                            className="text-center cursor-pointer hover:bg-gray-100 transition-colors"
-                            onClick={() => togglePrintStatus(reg.id, reg.deja_imprimee)}
-                            title="Cliquer pour basculer le statut d'impression"
-                          >
-                            {reg.deja_imprimee ? (
-                              <CheckCircle2 className="w-5 h-5 text-green-600 mx-auto hover:scale-110 transition-transform" />
-                            ) : (
-                              <XCircle className="w-5 h-5 text-orange-600 mx-auto hover:scale-110 transition-transform" />
-                            )}
-                          </TableCell>
-                          <TableCell className="text-center flex gap-2 justify-center">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => setDetailsId(reg.id)}
-                              className="text-blue-600 hover:text-blue-800 hover:bg-blue-50"
-                              title="Voir plus de détails"
-                            >
-                              <Eye className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => deleteRegistration(reg.id, `${reg.prenom_participant} ${reg.nom_participant}`)}
-                              className="text-red-600 hover:text-red-800 hover:bg-red-50"
-                              title="Supprimer cette inscription"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </TableCell>
->>>>>>> 23727a5 (feat: enhance competition management with age filtering and birth date display)
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -2719,6 +2426,7 @@ const CompetitionManagement = () => {
                                 onCheckedChange={() => toggleSelect(reg.id)}
                               />
                             </TableCell>
+
                             <TableCell className="font-medium">
                               {editingDossardId === reg.id ? (
                                 <div className="flex gap-1">
@@ -2788,8 +2496,8 @@ const CompetitionManagement = () => {
                               ) : (
                                 <span
                                   className={`cursor-pointer px-2 py-1 rounded text-xs font-medium ${reg.statut_commande === 'Annulé'
-                                      ? 'bg-red-100 text-red-700'
-                                      : 'bg-green-100 text-green-700'
+                                    ? 'bg-red-100 text-red-700'
+                                    : 'bg-green-100 text-green-700'
                                     }`}
                                   onClick={() => {
                                     setEditingStatutId(reg.id);
@@ -2807,21 +2515,28 @@ const CompetitionManagement = () => {
                             <TableCell>
                               {reg.date_naissance ? (
                                 <span className={`px-2 py-1 rounded text-xs font-medium ${getCategory(reg.date_naissance) === 'U11'
-                                    ? 'bg-green-100 text-green-700'
-                                    : getCategory(reg.date_naissance) === 'U13'
-                                      ? 'bg-blue-100 text-blue-700'
-                                      : getCategory(reg.date_naissance) === 'U15'
-                                        ? 'bg-indigo-100 text-indigo-700'
-                                        : getCategory(reg.date_naissance) === 'U17'
-                                          ? 'bg-purple-100 text-purple-700'
-                                          : getCategory(reg.date_naissance) === 'U19'
-                                            ? 'bg-pink-100 text-pink-700'
-                                            : getCategory(reg.date_naissance) === 'Sénior'
-                                              ? 'bg-orange-100 text-orange-700'
-                                              : 'bg-gray-100 text-gray-700'
+                                  ? 'bg-green-100 text-green-700'
+                                  : getCategory(reg.date_naissance) === 'U13'
+                                    ? 'bg-blue-100 text-blue-700'
+                                    : getCategory(reg.date_naissance) === 'U15'
+                                      ? 'bg-indigo-100 text-indigo-700'
+                                      : getCategory(reg.date_naissance) === 'U17'
+                                        ? 'bg-purple-100 text-purple-700'
+                                        : getCategory(reg.date_naissance) === 'U19'
+                                          ? 'bg-pink-100 text-pink-700'
+                                          : getCategory(reg.date_naissance) === 'Sénior'
+                                            ? 'bg-orange-100 text-orange-700'
+                                            : 'bg-gray-100 text-gray-700'
                                   }`}>
                                   {getCategory(reg.date_naissance)}
                                 </span>
+                              ) : (
+                                <span className="text-gray-400">-</span>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              {reg.date_naissance ? (
+                                new Date(reg.date_naissance).toLocaleDateString('fr-FR')
                               ) : (
                                 <span className="text-gray-400">-</span>
                               )}
@@ -2857,10 +2572,10 @@ const CompetitionManagement = () => {
                                 </select>
                               ) : (
                                 <span className={`px-2 py-1 rounded text-xs font-medium ${reg.sexe === 'H'
-                                    ? 'bg-blue-100 text-blue-700'
-                                    : reg.sexe === 'F'
-                                      ? 'bg-pink-100 text-pink-700'
-                                      : 'text-gray-500'
+                                  ? 'bg-blue-100 text-blue-700'
+                                  : reg.sexe === 'F'
+                                    ? 'bg-pink-100 text-pink-700'
+                                    : 'text-gray-500'
                                   }`}>
                                   {reg.sexe === 'H' ? 'Homme' : reg.sexe === 'F' ? 'Femme' : '-'}
                                 </span>
@@ -2877,8 +2592,8 @@ const CompetitionManagement = () => {
                             </TableCell>
                             <TableCell>
                               <span className={`px-2 py-1 rounded text-xs font-medium ${reg.type_inscription === 'Buvette'
-                                  ? 'bg-orange-100 text-orange-700'
-                                  : 'bg-green-100 text-green-700'
+                                ? 'bg-orange-100 text-orange-700'
+                                : 'bg-green-100 text-green-700'
                                 }`}>
                                 {reg.type_inscription || 'Compétition'}
                               </span>
@@ -2946,210 +2661,212 @@ const CompetitionManagement = () => {
                                 <Trash2 className="w-4 h-4" />
                               </Button>
                             </TableCell>
-                          </TableRow>
+                          </TableRow >
                         ))}
                       </TableBody>
-                    </Table>
-                  </div>
+                    </Table >
+                  </div >
 
                   {/* Modal des détails */}
-                  {detailsId && registrations.length > 0 && (
-                    <Dialog open={!!detailsId} onOpenChange={(open) => !open && setDetailsId(null)}>
-                      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-                        <DialogHeader>
-                          <DialogTitle>Détails de l'inscription</DialogTitle>
-                          <DialogDescription>
-                            Toutes les informations relatives à cette inscription
-                          </DialogDescription>
-                        </DialogHeader>
-                        {(() => {
-                          const registration = registrations.find(r => r.id === detailsId);
-                          if (!registration) return null;
+                  {
+                    detailsId && registrations.length > 0 && (
+                      <Dialog open={!!detailsId} onOpenChange={(open) => !open && setDetailsId(null)}>
+                        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                          <DialogHeader>
+                            <DialogTitle>Détails de l'inscription</DialogTitle>
+                            <DialogDescription>
+                              Toutes les informations relatives à cette inscription
+                            </DialogDescription>
+                          </DialogHeader>
+                          {(() => {
+                            const registration = registrations.find(r => r.id === detailsId);
+                            if (!registration) return null;
 
-                          return (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                              {/* Informations participant */}
-                              <div className="space-y-3">
-                                <h3 className="font-semibold text-md border-b pb-2">Participant</h3>
-                                <div>
-                                  <p className="text-sm text-gray-600">Prénom</p>
-                                  <p className="font-medium">{registration.prenom_participant || '-'}</p>
+                            return (
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {/* Informations participant */}
+                                <div className="space-y-3">
+                                  <h3 className="font-semibold text-md border-b pb-2">Participant</h3>
+                                  <div>
+                                    <p className="text-sm text-gray-600">Prénom</p>
+                                    <p className="font-medium">{registration.prenom_participant || '-'}</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-sm text-gray-600">Nom</p>
+                                    <p className="font-medium">{registration.nom_participant || '-'}</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-sm text-gray-600">Date de naissance</p>
+                                    <p className="font-medium">{registration.date_naissance ? new Date(registration.date_naissance).toLocaleDateString('fr-FR') : '-'}</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-sm text-gray-600">Catégorie d'âge</p>
+                                    <p className="font-medium">{registration.categorie_age || '-'}</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-sm text-gray-600">Sexe</p>
+                                    <p className="font-medium">{registration.sexe === 'H' ? 'Homme' : registration.sexe === 'F' ? 'Femme' : '-'}</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-sm text-gray-600">Club</p>
+                                    <p className="font-medium">{registration.club || '-'}</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-sm text-gray-600">Numéro de licence FFME</p>
+                                    <p className="font-medium">{registration.numero_licence_ffme || '-'}</p>
+                                  </div>
                                 </div>
-                                <div>
-                                  <p className="text-sm text-gray-600">Nom</p>
-                                  <p className="font-medium">{registration.nom_participant || '-'}</p>
-                                </div>
-                                <div>
-                                  <p className="text-sm text-gray-600">Date de naissance</p>
-                                  <p className="font-medium">{registration.date_naissance ? new Date(registration.date_naissance).toLocaleDateString('fr-FR') : '-'}</p>
-                                </div>
-                                <div>
-                                  <p className="text-sm text-gray-600">Catégorie d'âge</p>
-                                  <p className="font-medium">{registration.categorie_age || '-'}</p>
-                                </div>
-                                <div>
-                                  <p className="text-sm text-gray-600">Sexe</p>
-                                  <p className="font-medium">{registration.sexe === 'H' ? 'Homme' : registration.sexe === 'F' ? 'Femme' : '-'}</p>
-                                </div>
-                                <div>
-                                  <p className="text-sm text-gray-600">Club</p>
-                                  <p className="font-medium">{registration.club || '-'}</p>
-                                </div>
-                                <div>
-                                  <p className="text-sm text-gray-600">Numéro de licence FFME</p>
-                                  <p className="font-medium">{registration.numero_licence_ffme || '-'}</p>
-                                </div>
-                              </div>
 
-                              {/* Informations de la commande et paiement */}
-                              <div className="space-y-3">
-                                <h3 className="font-semibold text-md border-b pb-2">Commande & Paiement</h3>
-                                <div>
-                                  <p className="text-sm text-gray-600">Référence</p>
-                                  <p className="font-medium">{registration.reference_commande || '-'}</p>
+                                {/* Informations de la commande et paiement */}
+                                <div className="space-y-3">
+                                  <h3 className="font-semibold text-md border-b pb-2">Commande & Paiement</h3>
+                                  <div>
+                                    <p className="text-sm text-gray-600">Référence</p>
+                                    <p className="font-medium">{registration.reference_commande || '-'}</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-sm text-gray-600">Date</p>
+                                    <p className="font-medium">{registration.date_commande ? new Date(registration.date_commande).toLocaleDateString('fr-FR') : '-'}</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-sm text-gray-600">Statut</p>
+                                    <p className="font-medium">{registration.statut_commande || '-'}</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-sm text-gray-600">Type d'inscription</p>
+                                    <p className="font-medium">{registration.type_inscription || '-'}</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-sm text-gray-600">Tarif</p>
+                                    <p className="font-medium">{registration.tarif || '-'}</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-sm text-gray-600">Montant</p>
+                                    <p className="font-medium">{registration.montant_tarif ? `${registration.montant_tarif}€` : '-'}</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-sm text-gray-600">Code promo</p>
+                                    <p className="font-medium">{registration.code_promo || '-'}</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-sm text-gray-600">Montant promo</p>
+                                    <p className="font-medium">{registration.montant_code_promo ? `${registration.montant_code_promo}€` : '-'}</p>
+                                  </div>
                                 </div>
-                                <div>
-                                  <p className="text-sm text-gray-600">Date</p>
-                                  <p className="font-medium">{registration.date_commande ? new Date(registration.date_commande).toLocaleDateString('fr-FR') : '-'}</p>
-                                </div>
-                                <div>
-                                  <p className="text-sm text-gray-600">Statut</p>
-                                  <p className="font-medium">{registration.statut_commande || '-'}</p>
-                                </div>
-                                <div>
-                                  <p className="text-sm text-gray-600">Type d'inscription</p>
-                                  <p className="font-medium">{registration.type_inscription || '-'}</p>
-                                </div>
-                                <div>
-                                  <p className="text-sm text-gray-600">Tarif</p>
-                                  <p className="font-medium">{registration.tarif || '-'}</p>
-                                </div>
-                                <div>
-                                  <p className="text-sm text-gray-600">Montant</p>
-                                  <p className="font-medium">{registration.montant_tarif ? `${registration.montant_tarif}€` : '-'}</p>
-                                </div>
-                                <div>
-                                  <p className="text-sm text-gray-600">Code promo</p>
-                                  <p className="font-medium">{registration.code_promo || '-'}</p>
-                                </div>
-                                <div>
-                                  <p className="text-sm text-gray-600">Montant promo</p>
-                                  <p className="font-medium">{registration.montant_code_promo ? `${registration.montant_code_promo}€` : '-'}</p>
-                                </div>
-                              </div>
 
-                              {/* Informations payeur */}
-                              <div className="space-y-3">
-                                <h3 className="font-semibold text-md border-b pb-2">Payeur</h3>
-                                <div>
-                                  <p className="text-sm text-gray-600">Prénom</p>
-                                  <p className="font-medium">{registration.prenom_payeur || '-'}</p>
+                                {/* Informations payeur */}
+                                <div className="space-y-3">
+                                  <h3 className="font-semibold text-md border-b pb-2">Payeur</h3>
+                                  <div>
+                                    <p className="text-sm text-gray-600">Prénom</p>
+                                    <p className="font-medium">{registration.prenom_payeur || '-'}</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-sm text-gray-600">Nom</p>
+                                    <p className="font-medium">{registration.nom_payeur || '-'}</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-sm text-gray-600">Email</p>
+                                    <p className="font-medium text-blue-600 break-all">{registration.email_payeur || '-'}</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-sm text-gray-600">Raison sociale</p>
+                                    <p className="font-medium">{registration.raison_sociale || '-'}</p>
+                                  </div>
                                 </div>
-                                <div>
-                                  <p className="text-sm text-gray-600">Nom</p>
-                                  <p className="font-medium">{registration.nom_payeur || '-'}</p>
-                                </div>
-                                <div>
-                                  <p className="text-sm text-gray-600">Email</p>
-                                  <p className="font-medium text-blue-600 break-all">{registration.email_payeur || '-'}</p>
-                                </div>
-                                <div>
-                                  <p className="text-sm text-gray-600">Raison sociale</p>
-                                  <p className="font-medium">{registration.raison_sociale || '-'}</p>
-                                </div>
-                              </div>
 
-                              {/* Informations dossard et billet */}
-                              <div className="space-y-3">
-                                <h3 className="font-semibold text-md border-b pb-2">Horaire & Dossard</h3>
-                                <div>
-                                  <p className="text-sm text-gray-600">Horaire</p>
-                                  <p className="font-medium">{registration.horaire === 'matin' ? 'Matin' : registration.horaire === 'après-midi' ? 'Après-midi' : '-'}</p>
-                                </div>
-                                <div>
-                                  <p className="text-sm text-gray-600">Numéro de dossard</p>
-                                  {editingDossardId === registration.id ? (
-                                    <div className="flex gap-2">
-                                      <Input
-                                        value={editingDossardValue}
-                                        onChange={(e) => setEditingDossardValue(e.target.value)}
-                                        onKeyDown={(e) => {
-                                          if (e.key === 'Enter') {
-                                            updateDossardNumber(registration.id, editingDossardValue);
-                                          } else if (e.key === 'Escape') {
-                                            setEditingDossardId(null);
-                                          }
+                                {/* Informations dossard et billet */}
+                                <div className="space-y-3">
+                                  <h3 className="font-semibold text-md border-b pb-2">Horaire & Dossard</h3>
+                                  <div>
+                                    <p className="text-sm text-gray-600">Horaire</p>
+                                    <p className="font-medium">{registration.horaire === 'matin' ? 'Matin' : registration.horaire === 'après-midi' ? 'Après-midi' : '-'}</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-sm text-gray-600">Numéro de dossard</p>
+                                    {editingDossardId === registration.id ? (
+                                      <div className="flex gap-2">
+                                        <Input
+                                          value={editingDossardValue}
+                                          onChange={(e) => setEditingDossardValue(e.target.value)}
+                                          onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                              updateDossardNumber(registration.id, editingDossardValue);
+                                            } else if (e.key === 'Escape') {
+                                              setEditingDossardId(null);
+                                            }
+                                          }}
+                                          autoFocus
+                                          className="flex-1 h-8"
+                                        />
+                                        <Button
+                                          size="sm"
+                                          variant="outline"
+                                          onClick={() => updateDossardNumber(registration.id, editingDossardValue)}
+                                        >
+                                          ✓
+                                        </Button>
+                                        <Button
+                                          size="sm"
+                                          variant="outline"
+                                          onClick={() => setEditingDossardId(null)}
+                                        >
+                                          ✕
+                                        </Button>
+                                      </div>
+                                    ) : (
+                                      <p
+                                        className="font-medium cursor-pointer hover:bg-gray-100 px-2 py-1 rounded"
+                                        onClick={() => {
+                                          setEditingDossardId(registration.id);
+                                          setEditingDossardValue(registration.numero_dossart || '');
                                         }}
-                                        autoFocus
-                                        className="flex-1 h-8"
-                                      />
-                                      <Button
-                                        size="sm"
-                                        variant="outline"
-                                        onClick={() => updateDossardNumber(registration.id, editingDossardValue)}
                                       >
-                                        ✓
-                                      </Button>
-                                      <Button
-                                        size="sm"
-                                        variant="outline"
-                                        onClick={() => setEditingDossardId(null)}
-                                      >
-                                        ✕
-                                      </Button>
-                                    </div>
-                                  ) : (
-                                    <p
-                                      className="font-medium cursor-pointer hover:bg-gray-100 px-2 py-1 rounded"
-                                      onClick={() => {
-                                        setEditingDossardId(registration.id);
-                                        setEditingDossardValue(registration.numero_dossart || '');
-                                      }}
-                                    >
-                                      {registration.numero_dossart || '-'}
-                                    </p>
-                                  )}
+                                        {registration.numero_dossart || '-'}
+                                      </p>
+                                    )}
+                                  </div>
+                                  <div>
+                                    <p className="text-sm text-gray-600">Imprimée</p>
+                                    <p className="font-medium">{registration.deja_imprimee ? 'Oui' : 'Non'}</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-sm text-gray-600">Billet</p>
+                                    <p className="font-medium">{registration.billet || '-'}</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-sm text-gray-600">Numéro de billet</p>
+                                    <p className="font-medium">{registration.numero_billet || '-'}</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-sm text-gray-600">Moyen de paiement</p>
+                                    <p className="font-medium">{registration.moyen_paiement || '-'}</p>
+                                  </div>
                                 </div>
-                                <div>
-                                  <p className="text-sm text-gray-600">Imprimée</p>
-                                  <p className="font-medium">{registration.deja_imprimee ? 'Oui' : 'Non'}</p>
-                                </div>
-                                <div>
-                                  <p className="text-sm text-gray-600">Billet</p>
-                                  <p className="font-medium">{registration.billet || '-'}</p>
-                                </div>
-                                <div>
-                                  <p className="text-sm text-gray-600">Numéro de billet</p>
-                                  <p className="font-medium">{registration.numero_billet || '-'}</p>
-                                </div>
-                                <div>
-                                  <p className="text-sm text-gray-600">Moyen de paiement</p>
-                                  <p className="font-medium">{registration.moyen_paiement || '-'}</p>
-                                </div>
-                              </div>
 
-                              {/* Informations système */}
-                              <div className="space-y-3">
-                                <h3 className="font-semibold text-md border-b pb-2">Système</h3>
-                                <div>
-                                  <p className="text-sm text-gray-600">Fichier source</p>
-                                  <p className="font-medium">{registration.file_name || '-'}</p>
-                                </div>
-                                <div>
-                                  <p className="text-sm text-gray-600">Créé le</p>
-                                  <p className="font-medium">{registration.created_at ? new Date(registration.created_at).toLocaleString('fr-FR') : '-'}</p>
-                                </div>
-                                <div>
-                                  <p className="text-sm text-gray-600">Modifié le</p>
-                                  <p className="font-medium">{registration.updated_at ? new Date(registration.updated_at).toLocaleString('fr-FR') : '-'}</p>
+                                {/* Informations système */}
+                                <div className="space-y-3">
+                                  <h3 className="font-semibold text-md border-b pb-2">Système</h3>
+                                  <div>
+                                    <p className="text-sm text-gray-600">Fichier source</p>
+                                    <p className="font-medium">{registration.file_name || '-'}</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-sm text-gray-600">Créé le</p>
+                                    <p className="font-medium">{registration.created_at ? new Date(registration.created_at).toLocaleString('fr-FR') : '-'}</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-sm text-gray-600">Modifié le</p>
+                                    <p className="font-medium">{registration.updated_at ? new Date(registration.updated_at).toLocaleString('fr-FR') : '-'}</p>
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                          );
-                        })()}
-                      </DialogContent>
-                    </Dialog>
-                  )}
+                            );
+                          })()}
+                        </DialogContent>
+                      </Dialog>
+                    )
+                  }
 
                   {/* Dialog Options d'export */}
                   <Dialog open={showPdfOptions} onOpenChange={setShowPdfOptions}>
@@ -3318,12 +3035,12 @@ const CompetitionManagement = () => {
                   </Dialog>
                 </>
               )}
-            </CardContent>
-          </Card>
-        </motion.div>
+            </CardContent >
+          </Card >
+        </motion.div >
 
         {/* Gestion du mapping des clubs */}
-        <motion.div
+        < motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.42 }}
@@ -3479,10 +3196,10 @@ const CompetitionManagement = () => {
               </Accordion>
             </CardContent>
           </Card>
-        </motion.div>
+        </motion.div >
 
         {/* Tableau des règles de catégorisation */}
-        <motion.div
+        < motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
@@ -3547,9 +3264,9 @@ const CompetitionManagement = () => {
               </div>
             </CardContent>
           </Card>
-        </motion.div>
-      </div>
-    </ProtectedRoute>
+        </motion.div >
+      </div >
+    </ProtectedRoute >
   );
 };
 
