@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
 import { Helmet } from '../components/ui/helmet';
-import { ExternalLink, FileText, Calendar, Clock, Users, Target, Package, MessageSquare, Edit, Copy, Download } from 'lucide-react';
+import { ExternalLink, FileText, Calendar, Clock, Users, Target, Package, MessageSquare, Edit, Copy, Download, Play } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { BackButton } from '../components/ui/back-button';
 import { useToast } from '../components/ui/use-toast';
@@ -636,6 +636,14 @@ const SessionLogDetail = () => {
           >
             <Download className="w-4 h-4" />
             Télécharger en PNG
+          </Button>
+          <Button
+            variant="default"
+            onClick={() => navigate(`/session-log/${id}/live`)}
+            className="flex items-center gap-2"
+          >
+            <Play className="w-4 h-4" />
+            Lancer la séance
           </Button>
           <Button onClick={() => navigate(`/session-log/edit/${id}`)}> {/* Use 'id' here */}
             Modifier la séance

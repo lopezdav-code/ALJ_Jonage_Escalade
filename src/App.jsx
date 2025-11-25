@@ -20,6 +20,7 @@ const SessionLog = lazy(() => import('@/pages/SessionLog'));
 const SessionEdit = lazy(() => import('@/pages/SessionEdit'));
 const SessionLogDetail = lazy(() => import('@/pages/SessionLogDetail'));
 const SessionCommentsEdit = lazy(() => import('@/pages/SessionCommentsEdit'));
+const LiveSession = lazy(() => import('@/pages/LiveSession'));
 const CycleManagement = lazy(() => import('@/pages/CycleManagement'));
 const CycleDetail = lazy(() => import('@/pages/CycleDetail'));
 const Pedagogy = lazy(() => import('@/pages/Pedagogy'));
@@ -136,6 +137,7 @@ const AppContent = () => {
           <Route path="/session-log/new" element={<LazyRoute><SessionEdit /></LazyRoute>} />
           <Route path="/session-log/edit/:id" element={<LazyRoute><SessionEdit /></LazyRoute>} />
           <Route path="/session-log/:id/comments" element={<LazyRoute><SessionCommentsEdit /></LazyRoute>} /> {/* Route for editing session comments */}
+          <Route path="/session-log/:id/live" element={<LazyRoute><LiveSession /></LazyRoute>} /> {/* Route for live session management */}
           <Route path="/cycles" element={<LazyRoute><CycleManagement /></LazyRoute>} />
           <Route path="/cycles/:id" element={<LazyRoute><CycleDetail /></LazyRoute>} />
           <Route path="/pedagogy" element={<LazyRoute><Pedagogy /></LazyRoute>} />
