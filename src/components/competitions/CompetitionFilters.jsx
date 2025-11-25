@@ -4,8 +4,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 
-const CompetitionFilters = ({ filters, onFilterChange, onClearFilters }) => {
+const CompetitionFilters = ({ filters, onFilterChange, onClearFilters, hideClosed, onHideClosedChange }) => {
   const niveaux = ['Tous', 'Départemental', 'Régional', 'National'];
   const natures = ['Toutes', 'Contest', 'Open', 'Coupe', 'Championnat'];
   const disciplines = ['Toutes', 'Bloc', 'Difficulté', 'Vitesse', 'Combiné'];
@@ -125,6 +126,17 @@ const CompetitionFilters = ({ filters, onFilterChange, onClearFilters }) => {
             </SelectContent>
           </Select>
         </div>
+      </div>
+
+      <div className="flex items-center space-x-2 mt-4">
+        <Checkbox
+          id="hideClosed"
+          checked={hideClosed}
+          onCheckedChange={onHideClosedChange}
+        />
+        <Label htmlFor="hideClosed" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+          Masquer les compétitions closes
+        </Label>
       </div>
     </div>
   );

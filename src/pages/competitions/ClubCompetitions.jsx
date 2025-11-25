@@ -17,6 +17,7 @@ const ClubCompetitions = () => {
   const [participants, setParticipants] = useState({});
   const [signedImageUrls, setSignedImageUrls] = useState({});
   const [loading, setLoading] = useState(true);
+  const [hideClosed, setHideClosed] = useState(true);
   const [filters, setFilters] = useState({
     search: '',
     status: '',
@@ -35,45 +36,41 @@ const ClubCompetitions = () => {
   const fetchCompetitions = useCallback(async () => {
     setLoading(true);
     try {
-      // Récupérer les compétitions
+      // Récupérer les compétitions (sélection optimisée des colonnes)
       const { data: competitionsData, error: competitionsError } = await supabase
         .from('competitions')
-        .select('*')
+        .select('id, name, short_title, start_date, end_date, status, niveau, nature, disciplines, image_url')
         .order('start_date', { ascending: false });
 
       if (competitionsError) throw competitionsError;
       setCompetitions(competitionsData);
 
-      // Generate signed URLs for competition images
+      // Generate signed URLs for competition images in parallel
+      const imagePromises = competitionsData
+        .filter(comp => comp.image_url)
+        .map(async (comp) => {
+          const url = await getCompetitionPhotoUrl(comp.image_url);
+          return { id: comp.id, url };
+        });
+
+      const imageResults = await Promise.all(imagePromises);
       const urls = {};
-      for (const comp of competitionsData) {
-        if (comp.image_url) {
-          urls[comp.id] = await getCompetitionPhotoUrl(comp.image_url);
-        }
-      }
+      imageResults.forEach(({ id, url }) => {
+        urls[id] = url;
+      });
       setSignedImageUrls(urls);
 
-      // Récupérer le nombre de participants par compétition
-      const { data: participantsData, error: participantsError } = await supabase
-        .from('competition_participants')
-        .select('competition_id, role');
+      // Récupérer le nombre de participants par compétition via la vue optimisée
+      const { data: statsData, error: statsError } = await supabase
+        .from('competition_stats')
+        .select('competition_id, participant_count');
 
-      if (participantsError) throw participantsError;
+      if (statsError) throw statsError;
 
-      console.log('Données participants récupérées:', participantsData);
-
-      // Compter les compétiteurs par compétition
       const counts = {};
-      participantsData?.forEach(p => {
-        console.log('Participant role:', p.role, 'Competition ID:', p.competition_id);
-        // Normaliser la comparaison pour gérer différentes orthographes
-        const role = p.role?.toLowerCase().trim();
-        if (role === 'compétiteur' || role === 'competiteur') {
-          counts[p.competition_id] = (counts[p.competition_id] || 0) + 1;
-        }
+      statsData?.forEach(stat => {
+        counts[stat.competition_id] = stat.participant_count;
       });
-
-      console.log('Comptage final des compétiteurs:', counts);
       setParticipants(counts);
 
     } catch (error) {
@@ -114,6 +111,8 @@ const ClubCompetitions = () => {
     // Filtre par statut
     if (filters.status) {
       filtered = filtered.filter(comp => comp.status === filters.status);
+    } else if (hideClosed) {
+      filtered = filtered.filter(comp => comp.status !== 'Clos');
     }
 
     // Filtre par niveau
@@ -212,7 +211,12 @@ const ClubCompetitions = () => {
       <CompetitionFilters
         filters={filters}
         onFilterChange={setFilters}
-        onClearFilters={() => setFilters({ search: '', status: '', niveau: '', nature: '', discipline: '' })}
+        onClearFilters={() => {
+          setFilters({ search: '', status: '', niveau: '', nature: '', discipline: '' });
+          setHideClosed(true);
+        }}
+        hideClosed={hideClosed}
+        onHideClosedChange={setHideClosed}
       />
 
       {/* Tableau */}
