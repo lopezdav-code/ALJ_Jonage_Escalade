@@ -159,7 +159,7 @@ const ClubCompetitions = () => {
           competitors={competitors}
           competitions={[competition]}
           title="ALJ Escalade"
-          subtitle={competition.short_title || competition.name}
+          subtitle="Résultat du week-end"
         />
       );
 
