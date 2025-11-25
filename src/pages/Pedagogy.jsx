@@ -17,6 +17,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
+import PedagogyImport from '@/components/PedagogyImport';
 
 const BUCKET_NAME = 'pedagogy_files';
 const CATEGORIES = ["Sécurité", "Noeud", "Secours", "Manip", "Information"];
@@ -118,95 +119,95 @@ const GameSheetDetails = ({ sheet, onEdit, onDelete, isAdmin }) => {
   }, [sheet.url, sheet.type, sheet.illustration_image]);
 
   return (
-  <motion.div layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-    <Card className="h-full flex flex-col group relative">
-      <CardHeader>
-        <div className="flex justify-between items-start">
-          <div>
-            <CardTitle className="text-lg leading-tight flex items-center gap-2">
-              <Puzzle className="w-5 h-5 text-purple-500" />
-              {sheet.title}
-            </CardTitle>
-            <div className="mt-1">
-              <Badge variant="game">{sheet.theme || 'Jeu Éducatif'}</Badge>
+    <motion.div layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+      <Card className="h-full flex flex-col group relative">
+        <CardHeader>
+          <div className="flex justify-between items-start">
+            <div>
+              <CardTitle className="text-lg leading-tight flex items-center gap-2">
+                <Puzzle className="w-5 h-5 text-purple-500" />
+                {sheet.title}
+              </CardTitle>
+              <div className="mt-1">
+                <Badge variant="game">{sheet.theme || 'Jeu Éducatif'}</Badge>
+              </div>
             </div>
+            {isAdmin && (
+              <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEdit(sheet)}><Edit className="h-4 w-4" /></Button>
+                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onDelete(sheet)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+              </div>
+            )}
           </div>
-          {isAdmin && (
-            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEdit(sheet)}><Edit className="h-4 w-4" /></Button>
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onDelete(sheet)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+        </CardHeader>
+        <CardContent className="flex-grow space-y-4">
+          {/* Afficher l'image d'illustration en priorité, sinon l'image de l'exercice */}
+          {(illustrationUrl || exerciseImageUrl) && (
+            <div className="w-full">
+              <p className="text-xs font-semibold text-muted-foreground mb-2">
+                {illustrationUrl ? 'Illustration' : 'Image de l\'exercice'}
+              </p>
+              <div className="w-full h-64 bg-muted rounded-md overflow-hidden">
+                <img
+                  src={illustrationUrl || exerciseImageUrl}
+                  alt={sheet.title}
+                  className="w-full h-full object-cover"
+                />
+              </div>
             </div>
           )}
-        </div>
-      </CardHeader>
-      <CardContent className="flex-grow space-y-4">
-        {/* Afficher l'image d'illustration en priorité, sinon l'image de l'exercice */}
-        {(illustrationUrl || exerciseImageUrl) && (
-          <div className="w-full">
-            <p className="text-xs font-semibold text-muted-foreground mb-2">
-              {illustrationUrl ? 'Illustration' : 'Image de l\'exercice'}
-            </p>
-            <div className="w-full h-64 bg-muted rounded-md overflow-hidden">
-              <img
-                src={illustrationUrl || exerciseImageUrl}
-                alt={sheet.title}
-                className="w-full h-full object-cover"
-              />
-            </div>
-          </div>
-        )}
 
-        {/* Afficher l'image de l'exercice seulement si elle existe ET qu'il y a aussi une illustration */}
-        {illustrationUrl && exerciseImageUrl && (
-          <div className="w-full">
-            <p className="text-xs font-semibold text-muted-foreground mb-2">Image de l'exercice</p>
-            <div className="w-full h-48 bg-muted rounded-md overflow-hidden">
-              <img src={exerciseImageUrl} alt={sheet.title} className="w-full h-full object-cover" />
+          {/* Afficher l'image de l'exercice seulement si elle existe ET qu'il y a aussi une illustration */}
+          {illustrationUrl && exerciseImageUrl && (
+            <div className="w-full">
+              <p className="text-xs font-semibold text-muted-foreground mb-2">Image de l'exercice</p>
+              <div className="w-full h-48 bg-muted rounded-md overflow-hidden">
+                <img src={exerciseImageUrl} alt={sheet.title} className="w-full h-full object-cover" />
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        <div className="space-y-4">
-          {sheet.starting_situation && (
-            <div>
-              <p className="font-semibold text-sm">Situation de départ</p>
-              <p className="text-sm text-muted-foreground">{sheet.starting_situation}</p>
-            </div>
-          )}
-          {sheet.game_goal && (
-            <div>
-              <p className="font-semibold text-sm">But du jeu</p>
-              <p className="text-sm text-muted-foreground">{sheet.game_goal}</p>
-            </div>
-          )}
-          {sheet.evolution && (
-            <div>
-              <p className="font-semibold text-sm">Évolution</p>
-              <p className="text-sm text-muted-foreground">{sheet.evolution}</p>
-            </div>
-          )}
-          {sheet.skill_to_develop && (
-            <div>
-              <p className="font-semibold text-sm">Capacité à développer</p>
-              <p className="text-sm text-muted-foreground">{sheet.skill_to_develop}</p>
-            </div>
-          )}
-          {sheet.success_criteria && (
-            <div>
-              <p className="font-semibold text-sm">Critères de réussite</p>
-              <p className="text-sm text-muted-foreground">{sheet.success_criteria}</p>
-            </div>
-          )}
-          {sheet.remarks && (
-            <div>
-              <p className="font-semibold text-sm">Remarques</p>
-              <p className="text-sm text-muted-foreground">{sheet.remarks}</p>
-            </div>
-          )}
-        </div>
-      </CardContent>
-    </Card>
-  </motion.div>
+          <div className="space-y-4">
+            {sheet.starting_situation && (
+              <div>
+                <p className="font-semibold text-sm">Situation de départ</p>
+                <p className="text-sm text-muted-foreground">{sheet.starting_situation}</p>
+              </div>
+            )}
+            {sheet.game_goal && (
+              <div>
+                <p className="font-semibold text-sm">But du jeu</p>
+                <p className="text-sm text-muted-foreground">{sheet.game_goal}</p>
+              </div>
+            )}
+            {sheet.evolution && (
+              <div>
+                <p className="font-semibold text-sm">Évolution</p>
+                <p className="text-sm text-muted-foreground">{sheet.evolution}</p>
+              </div>
+            )}
+            {sheet.skill_to_develop && (
+              <div>
+                <p className="font-semibold text-sm">Capacité à développer</p>
+                <p className="text-sm text-muted-foreground">{sheet.skill_to_develop}</p>
+              </div>
+            )}
+            {sheet.success_criteria && (
+              <div>
+                <p className="font-semibold text-sm">Critères de réussite</p>
+                <p className="text-sm text-muted-foreground">{sheet.success_criteria}</p>
+              </div>
+            )}
+            {sheet.remarks && (
+              <div>
+                <p className="font-semibold text-sm">Remarques</p>
+                <p className="text-sm text-muted-foreground">{sheet.remarks}</p>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    </motion.div>
   );
 };
 
@@ -268,20 +269,20 @@ const SheetCard = ({ sheet, onEdit, onDelete, isAdmin }) => {
     <motion.div layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
       <Card className="h-full flex flex-col group relative">
         <CardHeader className="flex-row items-start gap-4">
-            {illustrationUrl || thumbnailUrl ? (
-              <a href={sheet.url} target="_blank" rel="noopener noreferrer">
-                <img
-                  src={illustrationUrl || thumbnailUrl}
-                  alt={sheet.title}
-                  className="w-32 h-20 object-cover rounded-md"
-                  onError={(e) => {
-                    e.target.style.display = 'none';
-                  }}
-                />
-              </a>
-            ) : (
-                <div className="w-32 h-20 flex items-center justify-center bg-muted rounded-md">{getIcon()}</div>
-            )}
+          {illustrationUrl || thumbnailUrl ? (
+            <a href={sheet.url} target="_blank" rel="noopener noreferrer">
+              <img
+                src={illustrationUrl || thumbnailUrl}
+                alt={sheet.title}
+                className="w-32 h-20 object-cover rounded-md"
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                }}
+              />
+            </a>
+          ) : (
+            <div className="w-32 h-20 flex items-center justify-center bg-muted rounded-md">{getIcon()}</div>
+          )}
           <div className="flex-1">
             <CardTitle className="text-lg leading-tight">{sheet.title}</CardTitle>
             <div className="flex flex-wrap gap-1 mt-2">
@@ -396,7 +397,7 @@ const Pedagogy = () => {
       }, {});
       grouped.educational_game = gamesByTheme;
     }
-    
+
     const themes = [...new Set(sheets.filter(s => s.sheet_type === 'educational_game').map(s => s.theme).filter(Boolean))];
 
     return { sheetsByType: grouped, existingThemes: themes };
@@ -406,34 +407,37 @@ const Pedagogy = () => {
     <div className="space-y-8">
       <Helmet>
         <title>Fiches Pédagogiques - ALJ Escalade Jonage</title>
-          <meta name="description" content="Ressources et supports d'apprentissage pour l'escalade." />
-        </Helmet>
+        <meta name="description" content="Ressources et supports d'apprentissage pour l'escalade." />
+      </Helmet>
 
-        <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-          <div className="flex justify-between items-center">
-            <h1 className="text-4xl font-bold headline flex items-center gap-3">
-              <BookMarked className="w-10 h-10 text-primary" />
-              Fiches Pédagogiques
-            </h1>
-            {isAdmin && (
+      <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+        <div className="flex justify-between items-center">
+          <h1 className="text-4xl font-bold headline flex items-center gap-3">
+            <BookMarked className="w-10 h-10 text-primary" />
+            Fiches Pédagogiques
+          </h1>
+          {isAdmin && (
+            <div className="flex gap-2">
+              <PedagogyImport onImportSuccess={fetchSheets} />
               <Button onClick={() => navigate('/pedagogy/new')}>
                 <PlusCircle className="w-4 h-4 mr-2" /> Ajouter une fiche
               </Button>
-            )}
-          </div>
-        </motion.div>
+            </div>
+          )}
+        </div>
+      </motion.div>
 
-        {loading ? (
-          <div className="flex justify-center items-center py-16">
-            <Loader2 className="w-12 h-12 animate-spin text-primary" />
-          </div>
-        ) : sheets.length === 0 ? (
-          <div className="text-center py-16 bg-muted/30 rounded-lg">
-            <p className="text-lg font-semibold">Aucune fiche pédagogique pour le moment.</p>
-            <p className="text-muted-foreground mt-2">Cliquez sur "Ajouter une fiche" pour commencer à créer votre bibliothèque.</p>
-          </div>
-        ) : (
-          <>
+      {loading ? (
+        <div className="flex justify-center items-center py-16">
+          <Loader2 className="w-12 h-12 animate-spin text-primary" />
+        </div>
+      ) : sheets.length === 0 ? (
+        <div className="text-center py-16 bg-muted/30 rounded-lg">
+          <p className="text-lg font-semibold">Aucune fiche pédagogique pour le moment.</p>
+          <p className="text-muted-foreground mt-2">Cliquez sur "Ajouter une fiche" pour commencer à créer votre bibliothèque.</p>
+        </div>
+      ) : (
+        <>
           <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
             <TabsList className="grid grid-cols-2 md:grid-cols-4 w-full h-auto p-1">
               {Object.entries(TAB_CONFIG).map(([type, config]) => {
@@ -604,7 +608,7 @@ const Pedagogy = () => {
             {Object.entries(TAB_CONFIG).map(([type, config]) => {
               const typeSheets = sheetsByType[type];
               if (!typeSheets || (Array.isArray(typeSheets) && typeSheets.length === 0) ||
-                  (!Array.isArray(typeSheets) && Object.keys(typeSheets).length === 0)) {
+                (!Array.isArray(typeSheets) && Object.keys(typeSheets).length === 0)) {
                 return null;
               }
 
@@ -675,9 +679,9 @@ const Pedagogy = () => {
               );
             })}
           </Tabs>
-          </>
-        )}
-      </div>
+        </>
+      )}
+    </div>
   );
 };
 

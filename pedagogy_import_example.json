@@ -1,0 +1,44 @@
+[
+    {
+        "title": "Epervier Grimpeur",
+        "description": "Un jeu classique revisité pour l'escalade.",
+        "game_goal": "Traverser le mur sans se faire toucher par l'épervier.",
+        "starting_situation": "Les grimpeurs sont d'un côté du mur, l'épervier est au milieu.",
+        "success_criteria": "Arriver de l'autre côté sans tomber et sans être touché.",
+        "evolution": "Réduire les prises autorisées pour les grimpeurs.",
+        "sheet_type": "educational_game",
+        "theme": "Echauffement",
+        "structure": "SAE",
+        "type": "image_file",
+        "url": "epervier.jpg",
+        "illustration_image": "epervier_illustration.jpg",
+        "skill_to_develop": "Vitesse et anticipation",
+        "remarks": "Attention à la sécurité lors des déplacements rapides.",
+        "categories": [
+            "Jeu",
+            "Vitesse"
+        ],
+        "thumbnail_url": ""
+    },
+    {
+        "title": "Le Relais",
+        "description": "Course de relais en équipes.",
+        "game_goal": "Terminer le parcours le plus vite possible en équipe.",
+        "starting_situation": "Equipes de 3, un grimpeur sur le mur à la fois.",
+        "success_criteria": "Meilleur temps d'équipe.",
+        "evolution": "Ajouter des contraintes de mouvements.",
+        "sheet_type": "educational_game",
+        "theme": "Cohésion",
+        "structure": "SAE",
+        "type": "image_file",
+        "url": "relais.jpg",
+        "illustration_image": null,
+        "skill_to_develop": "Esprit d'équipe et résistance",
+        "remarks": null,
+        "categories": [
+            "Jeu",
+            "Résistance"
+        ],
+        "thumbnail_url": null
+    }
+]
