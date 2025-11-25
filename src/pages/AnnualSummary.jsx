@@ -4,7 +4,7 @@ import { Helmet } from 'react-helmet';
 import { motion } from 'framer-motion';
 import { supabase } from '@/lib/customSupabaseClient';
 import { useToast } from '@/components/ui/use-toast';
-import { Loader2, ListChecks, CheckCircle2, Euro, Shield, User, Medal, Calendar, Filter, Users, Printer, Copy } from 'lucide-react';
+import { Loader2, ListChecks, CheckCircle2, Euro, Shield, User, Medal, Calendar, Filter, Users, Printer, Copy, Download } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -202,7 +202,7 @@ const VolunteerSection = ({ coaches, referees, competitions }) => {
   const { toast } = useToast();
   const contentRef = useRef(null);
 
-  const handleCopyAsImage = async () => {
+  const handleDownloadPNG = async () => {
     try {
       if (!contentRef.current) return;
 
@@ -237,21 +237,15 @@ const VolunteerSection = ({ coaches, referees, competitions }) => {
       // Nettoyer le style temporaire
       document.head.removeChild(style);
 
-      canvas.toBlob(async (blob) => {
-        try {
-          const item = new ClipboardItem({ 'image/png': blob });
-          await navigator.clipboard.write([item]);
-          toast({
-            title: 'Succès',
-            description: 'Tableaux copiés dans le presse-papier',
-          });
-        } catch (err) {
-          toast({
-            title: 'Erreur',
-            description: 'Impossible de copier dans le presse-papier',
-            variant: 'destructive',
-          });
-        }
+      // Télécharger l'image en PNG
+      const link = document.createElement('a');
+      link.href = canvas.toDataURL('image/png');
+      link.download = `benevoles-${new Date().toISOString().split('T')[0]}.png`;
+      link.click();
+
+      toast({
+        title: 'Succès',
+        description: 'Les tableaux ont été téléchargés en PNG',
       });
     } catch (error) {
       console.error('Erreur lors de la capture:', error);
@@ -271,9 +265,9 @@ const VolunteerSection = ({ coaches, referees, competitions }) => {
     <div className="space-y-4">
       {/* Boutons d'action */}
       <div className="flex justify-end gap-2 no-print">
-        <Button onClick={handleCopyAsImage} variant="outline" size="sm" className="gap-2">
-          <Copy className="w-4 h-4" />
-          Copier l'image
+        <Button onClick={handleDownloadPNG} variant="outline" size="sm" className="gap-2">
+          <Download className="w-4 h-4" />
+          Télécharger le PNG
         </Button>
         <Button onClick={handlePrint} variant="outline" size="sm" className="gap-2">
           <Printer className="w-4 h-4" />
@@ -371,6 +365,12 @@ const AnnualSummary = () => {
       setActiveTab(tab);
     }
   }, [location.search]);
+
+  // Fonction pour gérer le changement d'onglet et mettre à jour l'URL
+  const handleTabChange = (newTab) => {
+    setActiveTab(newTab);
+    navigate(`/annual-summary?tab=${newTab}`, { replace: true });
+  };
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -612,7 +612,7 @@ const AnnualSummary = () => {
           </motion.div>
         )}
 
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <Tabs value={activeTab} onValueChange={handleTabChange}>
           <TabsList>
             <TabsTrigger value="participation">Liste des compétitions</TabsTrigger>
             <TabsTrigger value="financial">Récapitulatif Financier</TabsTrigger>

@@ -37,6 +37,7 @@ const MemberForm = ({ member, onSave, onCancel, isSaving }) => {
     licence: member?.licence || '',
     email: member?.email || '',
     passeport: member?.passeport || '',
+    tete_ok: member?.tete_ok || false,
     emergency_contact_1_id: member?.emergency_contact_1_id || null,
     emergency_contact_2_id: member?.emergency_contact_2_id || null,
     brevet_federaux: member?.brevet_federaux || [],
@@ -275,6 +276,14 @@ const MemberForm = ({ member, onSave, onCancel, isSaving }) => {
           <div className="grid grid-cols-2 gap-3">
             <div><Label>Catégorie d'âge (Compétition)</Label><Select name="category" value={formData.category || ''} onValueChange={(v) => handleSelectChange('category', v)}><SelectTrigger><SelectValue placeholder="Catégorie d'âge" /></SelectTrigger><SelectContent><SelectItem value="">Aucune</SelectItem>{ageCategoryOptions.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent></Select></div>
             <div><Label>Passeport</Label><Select name="passeport" value={formData.passeport || ''} onValueChange={(v) => handleSelectChange('passeport', v)}><SelectTrigger><SelectValue placeholder="Passeport" /></SelectTrigger><SelectContent><SelectItem value="">Aucun</SelectItem>{passeportOptions.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent></Select></div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id={`tete-ok-${formId}`}
+              checked={formData.tete_ok}
+              onCheckedChange={(checked) => setFormData(prev => ({ ...prev, tete_ok: checked }))}
+            />
+            <Label htmlFor={`tete-ok-${formId}`}>Sait monter en tête</Label>
           </div>
           <div><Label>Brevets Fédéraux</Label><div className="grid grid-cols-2 gap-1 mt-2">{brevetOptions.map(b => <div key={b} className="flex items-center gap-2"><Checkbox id={`b-${formId}-${b}`} checked={formData.brevet_federaux.includes(b)} onCheckedChange={() => handleCheckboxChange(b)} /> {getBrevetIcon(b)} <Label htmlFor={`b-${formId}-${b}`} className="font-normal text-sm">{b}</Label></div>)}</div></div>
 

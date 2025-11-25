@@ -442,6 +442,14 @@ const MemberView = () => {
           </CardHeader>
           <CardContent className="space-y-1">
             <InfoRow icon={Award} label="Passeport" value={member.passeport} />
+            {member.tete_ok !== null && member.tete_ok !== undefined && (
+              <div className="py-2">
+                <p className="text-sm font-medium text-muted-foreground mb-1">Montée en tête</p>
+                <Badge variant={member.tete_ok ? "default" : "secondary"}>
+                  {member.tete_ok ? "Sait monter en tête" : "Ne sait pas monter en tête"}
+                </Badge>
+              </div>
+            )}
             {member.brevet_federaux && member.brevet_federaux.length > 0 && (
               <div className="py-2">
                 <p className="text-sm font-medium text-muted-foreground mb-2">Brevets fédéraux</p>
