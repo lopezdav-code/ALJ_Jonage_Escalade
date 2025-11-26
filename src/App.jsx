@@ -25,6 +25,7 @@ const CycleManagement = lazy(() => import('@/pages/CycleManagement'));
 const CycleDetail = lazy(() => import('@/pages/CycleDetail'));
 const Pedagogy = lazy(() => import('@/pages/Pedagogy'));
 const PedagogyEditor = lazy(() => import('@/pages/PedagogyEditor'));
+const PedagogyViewer = lazy(() => import('@/pages/PedagogyViewer'));
 const SiteSettings = lazy(() => import('@/pages/SiteSettings'));
 const AnnualSummary = lazy(() => import('@/pages/AnnualSummary'));
 const AdminManagement = lazy(() => import('@/pages/AdminManagement'));
@@ -143,6 +144,7 @@ const AppContent = () => {
           <Route path="/pedagogy" element={<LazyRoute><Pedagogy /></LazyRoute>} />
           <Route path="/pedagogy/new" element={<LazyRoute><PedagogyEditor /></LazyRoute>} />
           <Route path="/pedagogy/edit/:id" element={<LazyRoute><PedagogyEditor /></LazyRoute>} />
+          <Route path="/pedagogy/view/:id" element={<LazyRoute><PedagogyViewer /></LazyRoute>} />
           <Route path="/inscriptions" element={<LazyRoute><Inscriptions /></LazyRoute>} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/site-settings" element={<LazyRoute><SiteSettings /></LazyRoute>} />

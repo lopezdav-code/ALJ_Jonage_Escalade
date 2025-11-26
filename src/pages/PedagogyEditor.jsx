@@ -341,6 +341,7 @@ const PedagogyEditor = () => {
   };
 
   const isGameType = formData.sheet_type === 'educational_game';
+  const isWarmUpType = formData.sheet_type === 'warm_up_exercise';
   const isUrlType = formData.type?.includes('url');
   const isFileType = formData.type?.includes('file');
 
@@ -447,56 +448,75 @@ const PedagogyEditor = () => {
                     </div>
                   </div>
 
-                  {isGameType ? (
+                  <div className="space-y-2">
+                    <Label htmlFor="illustration-upload">Image d'illustration</Label>
+                    <p className="text-xs text-muted-foreground mb-2">
+                      Cette image sera affichée comme illustration de la fiche (distincte de l'image de l'exercice)
+                    </p>
+                    <div className="flex items-center justify-center w-full">
+                      <Label htmlFor="illustration-upload" className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-muted/50 hover:bg-muted/80">
+                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                          <UploadCloud className="w-10 h-10 mb-3 text-muted-foreground" />
+                          <p className="mb-2 text-sm text-muted-foreground">
+                            <span className="font-semibold">Cliquez pour téléverser</span> une image
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {illustrationFile ? illustrationFile.name : 'PNG, JPG, GIF...'}
+                          </p>
+                        </div>
+                        <Input id="illustration-upload" type="file" accept="image/*" className="hidden" onChange={handleIllustrationChange} />
+                      </Label>
+                    </div>
+                    {illustrationPreview && (
+                      <div className="mt-3">
+                        <p className="text-sm font-medium mb-2">Prévisualisation :</p>
+                        <img
+                          src={illustrationPreview}
+                          alt="Prévisualisation illustration"
+                          className="max-w-full h-48 object-cover rounded-lg border"
+                        />
+                      </div>
+                    )}
+                    {id && !illustrationFile && formData.illustration_image && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Fichier actuel : {formData.illustration_image.split('/').pop()}
+                      </p>
+                    )}
+                  </div>
+
+                  {isGameType || isWarmUpType ? (
                     <>
                       <div className="space-y-2">
                         <Label htmlFor="theme">Thème</Label>
-                        <Input
-                          id="theme"
-                          name="theme"
-                          value={formData.theme || ''}
-                          onChange={handleChange}
-                          list="existing-themes"
-                          placeholder="Choisir ou créer un thème"
-                        />
-                        <datalist id="existing-themes">
-                          {existingThemes.map(theme => <option key={theme} value={theme} />)}
-                        </datalist>
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="illustration-upload">Image d'illustration</Label>
-                        <p className="text-xs text-muted-foreground mb-2">
-                          Cette image sera affichée comme illustration de la fiche (distincte de l'image de l'exercice)
-                        </p>
-                        <div className="flex items-center justify-center w-full">
-                          <Label htmlFor="illustration-upload" className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-muted/50 hover:bg-muted/80">
-                            <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                              <UploadCloud className="w-10 h-10 mb-3 text-muted-foreground" />
-                              <p className="mb-2 text-sm text-muted-foreground">
-                                <span className="font-semibold">Cliquez pour téléverser</span> une image
-                              </p>
-                              <p className="text-xs text-muted-foreground">
-                                {illustrationFile ? illustrationFile.name : 'PNG, JPG, GIF...'}
-                              </p>
-                            </div>
-                            <Input id="illustration-upload" type="file" accept="image/*" className="hidden" onChange={handleIllustrationChange} />
-                          </Label>
-                        </div>
-                        {illustrationPreview && (
-                          <div className="mt-3">
-                            <p className="text-sm font-medium mb-2">Prévisualisation :</p>
-                            <img
-                              src={illustrationPreview}
-                              alt="Prévisualisation illustration"
-                              className="max-w-full h-48 object-cover rounded-lg border"
+                        {isWarmUpType ? (
+                          <Select value={formData.theme || ''} onValueChange={(value) => setFormData(prev => ({ ...prev, theme: value }))}>
+                            <SelectTrigger id="theme">
+                              <SelectValue placeholder="Sélectionner un thème" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Cardio">Cardio</SelectItem>
+                              <SelectItem value="Mobilité Articulaire">Mobilité Articulaire</SelectItem>
+                              <SelectItem value="Gainage">Gainage</SelectItem>
+                              <SelectItem value="Étirements dynamiques">Étirements dynamiques</SelectItem>
+                              <SelectItem value="Renfo musculaire">Renfo musculaire</SelectItem>
+                              <SelectItem value="Équilibre">Équilibre</SelectItem>
+                              <SelectItem value="Force">Force</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <>
+                            <Input
+                              id="theme"
+                              name="theme"
+                              value={formData.theme || ''}
+                              onChange={handleChange}
+                              list="existing-themes"
+                              placeholder="Choisir ou créer un thème"
                             />
-                          </div>
-                        )}
-                        {id && !illustrationFile && formData.illustration_image && (
-                          <p className="text-xs text-muted-foreground mt-1">
-                            Fichier actuel : {formData.illustration_image.split('/').pop()}
-                          </p>
+                            <datalist id="existing-themes">
+                              {existingThemes.map(theme => <option key={theme} value={theme} />)}
+                            </datalist>
+                          </>
                         )}
                       </div>
 
@@ -513,7 +533,7 @@ const PedagogyEditor = () => {
                         </div>
 
                         <div className="space-y-2">
-                          <Label htmlFor="game_goal">But du jeu</Label>
+                          <Label htmlFor="game_goal">{isWarmUpType ? 'Objectif' : 'But du jeu'}</Label>
                           <Textarea
                             id="game_goal"
                             name="game_goal"
@@ -571,6 +591,20 @@ const PedagogyEditor = () => {
                           />
                         </div>
                       </div>
+
+                      {isWarmUpType && (
+                        <div className="space-y-2">
+                          <Label htmlFor="description">Description</Label>
+                          <Textarea
+                            id="description"
+                            name="description"
+                            value={formData.description || ''}
+                            onChange={handleChange}
+                            rows={4}
+                            placeholder="Description de l'exercice d'échauffement"
+                          />
+                        </div>
+                      )}
                     </>
                   ) : (
                     <>

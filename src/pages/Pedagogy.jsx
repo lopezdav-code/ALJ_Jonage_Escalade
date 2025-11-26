@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Helmet } from 'react-helmet';
 import { motion, AnimatePresence } from 'framer-motion';
-import { BookMarked, PlusCircle, Loader2, Edit, Trash2, FileText, Video, Image, Link as LinkIcon, UploadCloud, Puzzle, Gamepad2, Dumbbell, BrainCircuit, FileQuestion, Award } from 'lucide-react';
+import { BookMarked, PlusCircle, Loader2, Edit, Trash2, FileText, Video, Image, Link as LinkIcon, UploadCloud, Puzzle, Gamepad2, Dumbbell, BrainCircuit, FileQuestion, Award, Eye } from 'lucide-react';
 import { supabase } from '@/lib/customSupabaseClient';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { usePageAccess } from '@/hooks/usePageAccess';
@@ -97,7 +97,7 @@ const getSignedUrl = async (fileNameOrUrl) => {
   }
 };
 
-const GameSheetDetails = ({ sheet, onEdit, onDelete, isAdmin }) => {
+const GameSheetDetails = ({ sheet, onEdit, onDelete, onView, isAdmin }) => {
   const [illustrationUrl, setIllustrationUrl] = useState(null);
   const [exerciseImageUrl, setExerciseImageUrl] = useState(null);
 
@@ -132,12 +132,17 @@ const GameSheetDetails = ({ sheet, onEdit, onDelete, isAdmin }) => {
                 <Badge variant="game">{sheet.theme || 'Jeu Éducatif'}</Badge>
               </div>
             </div>
-            {isAdmin && (
-              <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEdit(sheet)}><Edit className="h-4 w-4" /></Button>
-                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onDelete(sheet)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
-              </div>
-            )}
+            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onView(sheet)}>
+                <Eye className="h-4 w-4" />
+              </Button>
+              {isAdmin && (
+                <>
+                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEdit(sheet)}><Edit className="h-4 w-4" /></Button>
+                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onDelete(sheet)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                </>
+              )}
+            </div>
           </div>
         </CardHeader>
         <CardContent className="flex-grow space-y-4">
@@ -211,7 +216,7 @@ const GameSheetDetails = ({ sheet, onEdit, onDelete, isAdmin }) => {
   );
 };
 
-const SheetCard = ({ sheet, onEdit, onDelete, isAdmin }) => {
+const SheetCard = ({ sheet, onEdit, onDelete, onView, isAdmin }) => {
   const [thumbnailUrl, setThumbnailUrl] = useState(null);
   const [illustrationUrl, setIllustrationUrl] = useState(null);
 
@@ -262,7 +267,7 @@ const SheetCard = ({ sheet, onEdit, onDelete, isAdmin }) => {
   };
 
   if (sheet.sheet_type === 'educational_game') {
-    return <GameSheetDetails sheet={sheet} onEdit={onEdit} onDelete={onDelete} isAdmin={isAdmin} />;
+    return <GameSheetDetails sheet={sheet} onEdit={onEdit} onDelete={onDelete} onView={onView} isAdmin={isAdmin} />;
   }
 
   return (
@@ -291,12 +296,17 @@ const SheetCard = ({ sheet, onEdit, onDelete, isAdmin }) => {
               {(sheet.categories || []).map(cat => <Badge key={cat}>{cat}</Badge>)}
             </div>
           </div>
-          {isAdmin && (
-            <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEdit(sheet)}><Edit className="h-4 w-4" /></Button>
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onDelete(sheet)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
-            </div>
-          )}
+          <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onView(sheet)}>
+              <Eye className="h-4 w-4" />
+            </Button>
+            {isAdmin && (
+              <>
+                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEdit(sheet)}><Edit className="h-4 w-4" /></Button>
+                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onDelete(sheet)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+              </>
+            )}
+          </div>
         </CardHeader>
         <CardContent className="flex-grow">
           <p className="text-sm text-muted-foreground">{sheet.description}</p>
@@ -356,6 +366,10 @@ const Pedagogy = () => {
     navigate(`/pedagogy/edit/${sheet.id}`);
   };
 
+  const handleView = (sheet) => {
+    navigate(`/pedagogy/view/${sheet.id}`);
+  };
+
   const handleDelete = async (sheet) => {
     if (!window.confirm(`Êtes-vous sûr de vouloir supprimer la fiche "${sheet.title}" ?`)) return;
 
@@ -396,6 +410,19 @@ const Pedagogy = () => {
         return acc;
       }, {});
       grouped.educational_game = gamesByTheme;
+    }
+
+    // Pour les exercices d'échauffement, grouper aussi par thème
+    if (grouped.warm_up_exercise) {
+      const warmUpByTheme = grouped.warm_up_exercise.reduce((acc, sheet) => {
+        const theme = sheet.theme || 'Sans thème';
+        if (!acc[theme]) {
+          acc[theme] = [];
+        }
+        acc[theme].push(sheet);
+        return acc;
+      }, {});
+      grouped.warm_up_exercise = warmUpByTheme;
     }
 
     const themes = [...new Set(sheets.filter(s => s.sheet_type === 'educational_game').map(s => s.theme).filter(Boolean))];
@@ -625,8 +652,8 @@ const Pedagogy = () => {
                       </div>
                     </div>
 
-                    {type === 'educational_game' ? (
-                      // Affichage spécial pour les jeux éducatifs avec sous-onglets par thème
+                    {type === 'educational_game' || type === 'warm_up_exercise' ? (
+                      // Affichage spécial pour les jeux éducatifs et exercices d'échauffement avec sous-onglets par thème
                       <Tabs value={activeTheme || Object.keys(typeSheets)[0]} onValueChange={handleThemeChange} className="w-full">
                         <TabsList className="w-full justify-start flex-wrap h-auto gap-2 p-2">
                           {Object.entries(typeSheets).map(([theme, themeSheets]) => (
@@ -648,6 +675,7 @@ const Pedagogy = () => {
                                       key={sheet.id}
                                       sheet={sheet}
                                       onEdit={handleEdit}
+                                      onView={handleView}
                                       onDelete={handleDelete}
                                       isAdmin={isAdmin}
                                     />
@@ -667,6 +695,7 @@ const Pedagogy = () => {
                               key={sheet.id}
                               sheet={sheet}
                               onEdit={handleEdit}
+                              onView={handleView}
                               onDelete={handleDelete}
                               isAdmin={isAdmin}
                             />
