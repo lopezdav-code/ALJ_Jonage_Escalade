@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import ReactDOM from 'react-dom/client';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/customSupabaseClient';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
@@ -9,6 +10,7 @@ import { ExternalLink, FileText, Calendar, Clock, Users, Target, Package, Messag
 import html2canvas from 'html2canvas';
 import { BackButton } from '../components/ui/back-button';
 import { useToast } from '../components/ui/use-toast';
+import SessionPosterExport from '../components/session-log/SessionPosterExport';
 
 const BUCKET_NAME = 'pedagogy_files';
 
@@ -301,52 +303,70 @@ const SessionLogDetail = () => {
   // Fonction pour télécharger le résumé en image PNG
   const handleDownloadPNG = async () => {
     try {
-      // Créer un div contenant le résumé avec un beau design
-      const element = document.createElement('div');
-      element.style.position = 'fixed';
-      element.style.left = '-9999px';
-      element.style.top = '-9999px';
-      element.style.width = '800px';
-      element.style.padding = '40px';
-      element.style.backgroundColor = '#ffffff';
-      element.style.fontFamily = '"Segoe UI", Tahoma, Geneva, Verdana, sans-serif';
-      element.style.lineHeight = '1.6';
-      element.style.color = '#1f2937';
+      // Créer un conteneur temporaire
+      const tempDiv = document.createElement('div');
+      tempDiv.style.position = 'fixed';
+      tempDiv.style.left = '-9999px';
+      tempDiv.style.top = '-9999px';
+      tempDiv.style.width = '800px'; // Largeur proche du A4 pour le rendu
+      document.body.appendChild(tempDiv);
 
-      // Contenu formaté
-      const summary = generateSessionSummary(session);
-      element.innerHTML = summary
-        .split('\n')
-        .map((line, i) => {
-          if (line.startsWith('🧗')) {
-            return `<div style="font-size: 28px; font-weight: bold; margin-bottom: 20px; text-align: center; color: #dc2626;">${line}</div>`;
-          } else if (line.startsWith('📅')) {
-            return `<div style="font-size: 18px; margin: 15px 0; font-weight: 600; color: #0369a1;">${line}</div>`;
-          } else if (line.startsWith('👥') || line.startsWith('🎯') || line.startsWith('🎪') || line.startsWith('📋')) {
-            return `<div style="font-size: 16px; margin: 12px 0; font-weight: 600; color: #2563eb;">${line}</div>`;
-          } else if (line.startsWith('•')) {
-            return `<div style="font-size: 14px; margin-left: 20px; margin: 6px 0 6px 20px;">${line}</div>`;
-          } else if (line.startsWith('---')) {
-            return `<div style="border-top: 2px solid #e5e7eb; margin: 20px 0;"></div>`;
-          } else if (line.trim() === '') {
-            return '<div style="height: 8px;"></div>';
-          } else if (line.match(/^\d+\./)) {
-            return `<div style="font-size: 14px; margin: 8px 0 8px 20px;">${line}</div>`;
-          } else {
-            return `<div style="font-size: 14px; margin: 8px 0;">${line}</div>`;
+      // Préparer les images des exercices
+      const exerciseImages = {};
+      await Promise.all(session.exercises.map(async (ex) => {
+        if (ex.pedagogy_sheet?.illustration_image) {
+          exerciseImages[ex.id] = await getSignedUrl(ex.pedagogy_sheet.illustration_image);
+        } else if (ex.image_url) {
+          exerciseImages[ex.id] = await getSignedUrl(ex.image_url);
+        }
+      }));
+
+      // Calculer le numéro de la séance dans le cycle
+      let cycleSessionInfo = null;
+      if (session.cycle_id) {
+        const { data: cycleSessions, error: cycleError } = await supabase
+          .from('sessions')
+          .select('id, date')
+          .eq('cycle_id', session.cycle_id)
+          .order('date', { ascending: true });
+
+        if (!cycleError && cycleSessions) {
+          const total = cycleSessions.length;
+          const current = cycleSessions.findIndex(s => s.id === session.id) + 1;
+          if (current > 0) {
+            cycleSessionInfo = { current, total };
           }
-        })
-        .join('');
+        }
+      }
 
-      document.body.appendChild(element);
+      // Créer un élément React et le rendre
+      const root = ReactDOM.createRoot(tempDiv);
+      root.render(
+        <SessionPosterExport
+          session={session}
+          exerciseImages={exerciseImages}
+          cycleSessionInfo={cycleSessionInfo}
+          title="ALJ Escalade"
+          subtitle="Séance d'entraînement"
+        />
+      );
+
+      // Attendre que le rendu soit fait (images, fonts, etc.)
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
       // Convertir en image
-      const canvas = await html2canvas(element, {
-        scale: 2,
+      const canvas = await html2canvas(tempDiv, {
+        scale: 2, // Meilleure qualité
         backgroundColor: '#ffffff',
         useCORS: true,
-        allowTaint: true
+        allowTaint: true,
+        logging: false,
+        removeModal: true,
       });
+
+      // Nettoyage
+      root.unmount();
+      document.body.removeChild(tempDiv);
 
       // Télécharger l'image
       const link = document.createElement('a');
@@ -359,9 +379,6 @@ const SessionLogDetail = () => {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-
-      // Nettoyer
-      document.body.removeChild(element);
 
       toast({
         title: 'Téléchargé !',
