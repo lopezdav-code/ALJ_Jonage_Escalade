@@ -152,11 +152,11 @@ const GameSheetDetails = ({ sheet, onEdit, onDelete, onView, isAdmin }) => {
               <p className="text-xs font-semibold text-muted-foreground mb-2">
                 {illustrationUrl ? 'Illustration' : 'Image de l\'exercice'}
               </p>
-              <div className="w-full h-64 bg-muted rounded-md overflow-hidden">
+              <div className="w-full h-64 bg-muted rounded-md overflow-hidden cursor-pointer" onClick={() => window.open(illustrationUrl || exerciseImageUrl, '_blank')}>
                 <img
                   src={illustrationUrl || exerciseImageUrl}
                   alt={sheet.title}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-contain"
                 />
               </div>
             </div>
@@ -166,8 +166,8 @@ const GameSheetDetails = ({ sheet, onEdit, onDelete, onView, isAdmin }) => {
           {illustrationUrl && exerciseImageUrl && (
             <div className="w-full">
               <p className="text-xs font-semibold text-muted-foreground mb-2">Image de l'exercice</p>
-              <div className="w-full h-48 bg-muted rounded-md overflow-hidden">
-                <img src={exerciseImageUrl} alt={sheet.title} className="w-full h-full object-cover" />
+              <div className="w-full h-48 bg-muted rounded-md overflow-hidden cursor-pointer" onClick={() => window.open(exerciseImageUrl, '_blank')}>
+                <img src={exerciseImageUrl} alt={sheet.title} className="w-full h-full object-contain" />
               </div>
             </div>
           )}
