@@ -1,0 +1,393 @@
+[
+  {
+    "N° de l'exercice": 1,
+    "Titre": "L'ADDITION",
+    "Dispositif": "- 1 prise de départ repérée ainsi qu'une prise d'arrivée\n- par équipes de 3 à 4 joueurs\n- escalade en traversée.",
+    "But": "Reproduire le mouvement réalisé précédemment, ajouter un mouvement supplémentaire, pour construire la plus longue traversée possible.",
+    "Consignes": "- les enfants passent chacun à leur tour\n- le grimpeur reproduit la traversée et ajoute un mouvement (utilisation de 2 nouvelles prises pour les mains).",
+    "Critère de réussite": "Atteindre la prise d'arrivée.",
+    "Variante": "- coder le déplacement (dessin ou numérotation des prises)\n- défi: ajouter un mouvement difficile, pour mettre ses partenaires en difficulté.",
+    "Observation": "- très bon exercice de mémorisation et d'observation."
+  },
+  {
+    "N° de l'exercice": 2,
+    "Titre": "L'ASCENSEUR",
+    "Dispositif": "- matérialiser une ligne horizontale au-dessus de laquelle l'enfant n'a pas le droit de tenir des prises, mais qu'il pourra dépasser de la main pour aller poser un objet\n- placer sur le mur, à bout de bras de l'enfant placé en-dessous de cette ligne, un point d'ancrage\n- placer au sol des réserves d'anneaux, de bracelets..., d'objets à ramasser.",
+    "But": "Ramasser le plus possible d'objets placés au pied du mur et les accrocher sur le mur aux points d'ancrage.",
+    "Consignes": "- se placer sur le mur\n- ramasser un objet au sol sans mettre les pieds à terre (descendre très bas sur ses appuis) et l'accrocher ensuite sur le mur au point imposé sans prendre de prise au-dessus de la ligne.",
+    "Critère de réussite": "Avoir ramassé et accroché plus d'objets que les autres grimpeurs sans avoir posé le pied à terre ni dépassé la ligne de blocage pour les mains.",
+    "Variante": "On peut renouveler l'opération en traversant vers un autre point de ramassage tant qu'on ne met pas le pied à terre."
+  },
+  {
+    "N° de l'exercice": 3,
+    "Titre": "L'AVEUGLE",
+    "Dispositif": "- un foulard point d'arrivée, un foulard pour bander les yeux\n- par groupe de 2\n- un enfant a les yeux bandés\n- l'autre en retrait du mur (pas en parade).",
+    "But": "Réaliser une voie les yeux bandés.",
+    "Consignes": "- 2 possibilités :\n. l'enfant réalise la voie les yeux ouverts, puis essaie de la répéter les yeux bandés\n. l'enfant grimpe les yeux bandés, sans avoir auparavant essayé la voie.",
+    "Critère de réussite": "Toucher le foulard.",
+    "Variante": "- défi à 2, un élève accroche un foulard sur le mur, son partenaire essaie d'aller le décrocher, les yeux bandés, en ayant repéré sa position\n- l'élève au sol peut guider oralement son camarade\n- l'enfant peut également prendre des informations pendant le passage des autres grimpeurs (travail de mémorisation)."
+  },
+  {
+    "N° de l'exercice": 4,
+    "Titre": "L'ARTISTE",
+    "Dispositif": "- une feuille collée au mur\n- un feutre accroché près de la feuille\n- un modèle de dessin au pied de chaque voie\n- équipes de 5 joueurs.",
+    "But": "Reproduire le modèle, chaque joueur dessinant un élément du modèle (une tête, un personnage, une maison...).",
+    "Consignes": "- grimper à tour de rôle\n- ne dessiner qu'un seul élément à chaque passage (le nez, la bouche...).",
+    "Critère de réussite": "Reproduire tous les éléments du modèle.",
+    "Variante": "Jeu par équipe en compétition (relais), la première équipe ayant réalisé le dessin a gagné."
+  },
+  {
+    "N° de l'exercice": 5,
+    "Titre": "LE BERET",
+    "Dispositif": "- un foulard ou un objet est accroché sur le mur à 2,50m, 3m de haut\n- les enfants sont répartis en 2 équipes équilibrées et sont numérotés de part et d'autre du foulard en bas du mur\n- plusieurs jeux peuvent se faire sur un même mur, en parallèle.",
+    "But": "Atteindre le foulard ou l'objet avant son adversaire.",
+    "Consignes": "- le numéro appelé par le meneur de jeu doit grimper jusqu'au foulard et le toucher avant son adversaire\n- l'équipe marque un point si son grimpeur touche le foulard en premier.",
+    "Critère de réussite": "Totaliser plus de points que l'équipe adverse dans le temps donné (ou nombre d'appels donné)."
+  },
+  {
+    "N° de l'exercice": 6,
+    "Titre": "LES CERCLES (dedans dehors)",
+    "Dispositif": "Cercles dessinés à la craie sur le mur, ou cerceaux accrochés (veiller à englober 4 ou 5 prises à l'intérieur de chaque cercle).",
+    "But": "Être regroupé à l'intérieur du cercle.",
+    "Consignes": "- grimpeur: utiliser les prises à l'intérieur du cercle pour s'y maintenir recroquevillé\n- observateur: observe si la règle est respectée, si aucune partie du corps ne sort du cercle.",
+    "Critère de réussite": "N'avoir plus aucune partie du corps à l'extérieur du cercle.",
+    "Variante": "- utiliser les prises à l'extérieur du cercle (les plus proches) pour cacher le cercle avec son corps\n- changer de cercle au signal (par équipe)\n- un meneur de jeu alterne la consigne (dedans - dehors)."
+  },
+  {
+    "N° de l'exercice": 7,
+    "Titre": "LA CHAINE",
+    "Dispositif": "- équipes de 4 à 5 grimpeurs\n- un objet à se faire passer (descendeur, balle de tennis...)\n- une ou plusieurs équipes sur le mur selon la largeur, les pieds à un mètre du sol, chaque grimpeur espacé d'un mètre.",
+    "But": "Faire passer l'objet du grimpeur n°1 au grimpeur n°5 sans le faire tomber.",
+    "Consignes": "- au signal, les grimpeurs d'une équipe se posent en équilibre sur le mur à l'emplacement indiqué\n- dès que l'enseignant ou un enfant donne l'objet au premier grimpeur, celui-ci le fait passer à ses partenaires\n- on a le droit de se déplacer sur le mur\n- lorsque le dernier grimpeur reçoit l'objet, la chaîne est terminée et réussie.",
+    "Critère de réussite": "Avoir réussi toute la chaîne sans faire tomber l'objet.",
+    "Variante": "- chronométrer le temps de la chaîne pour départager les équipes\n- réaliser le plus grand nombre de chaînes aller et retour à la suite."
+  },
+  {
+    "N° de l'exercice": 8,
+    "Titre": "CHAT PERCHE",
+    "Dispositif": "- le camp des souris: le mur d'escalade\n- des balises posées à quelques mètres du mur, sur une ligne parallèle à ce dernier\n- position de départ: un chat au sol et des souris accrochées au mur.",
+    "But": "- le chat: attraper une souris\n- les souris: toucher l'une des balises pour marquer un point, retourner sur le mur, puis aller toucher une autre balise.",
+    "Consignes": "- le chat n'a pas le droit d'attraper les souris lorsqu'elles sont sur le mur\n- chaque souris qui touche une balise marque un point\n- lorsque le chat touche une souris, celle-ci perd ses points et devient chat.",
+    "Critère de réussite": "La première souris ayant atteint le capital points défini (5 points, 10 points...) a gagné."
+  },
+  {
+    "N° de l'exercice": 9,
+    "Titre": "LE CHEF D'ORCHESTRE",
+    "Dispositif": "- une prise ou ligne d'arrivée matérialisée\n- par 2, un grimpeur, un chef d'orchestre\n- les 2 joueurs sont partenaires.",
+    "But": "Réaliser la voie en étant oralement guidé par le chef d'orchestre.",
+    "Consignes": "- le grimpeur ne se déplace qu'en respectant les directives du chef d'orchestre (ex.: pied droit sur prise jaune, main gauche sur prise rouge...)\n- un élève grimpe, un élève guide, puis inverser les rôles.",
+    "Critère de réussite": "Réussir la voie en ne prenant que les prises indiquées par le chef d'orchestre.",
+    "Variante": "- le grimpeur a les yeux bandés\n- on peut téléguider l'escalade et la désescalade\n- même jeu en traversée."
+  },
+  {
+    "N° de l'exercice": 10,
+    "Titre": "LES CIBLES",
+    "Dispositif": "- entourer les prises avec des craies de couleur (les cibles) et attribuer un certain nombre de points à chaque cible en fonction de la difficulté\n- équipes de 2.",
+    "But": "Toucher les prises choisies par l'équipe.",
+    "Consignes": "- chaque équipe choisit dans un temps donné des cibles à atteindre\n- pour que les points des cibles soient validés, il faut que les deux joueurs de l'équipe touchent la cible chacun à leur tour et désescaladent sans sauter.",
+    "Critère de réussite": "L'équipe qui a le plus de points est gagnante.",
+    "Commentaire": "Cet exercice est essentiellement un jeu de stratégie d'équipe (à 2, faire les bons choix de cibles accessibles)."
+  },
+  {
+    "N° de l'exercice": 11,
+    "Titre": "LA CLOCHETTE",
+    "Dispositif": "- matérialiser un parcours en triangle avec un point de départ et un point d'arrivée\n- accrocher une clochette au sommet du triangle\n- 5 à 6 joueurs par parcours.",
+    "But": "Effectuer le parcours en faisant sonner la clochette au passage.",
+    "Consignes": "Grimper jusqu'à la clochette, la faire sonner et rejoindre le point d'arrivée.",
+    "Critère de réussite": "Toucher la prise d'arrivée en ayant fait tinter la clochette."
+  },
+  {
+    "N° de l'exercice": 12,
+    "Titre": "COMPETITION INTER-EQUIPES",
+    "Dispositif": "- classe divisée en deux équipes\n- faire des groupes de 3 élèves au pied de chaque voie\n- 2 réserves de bracelets de 2 couleurs\n- placer dans chaque voie 3 mousquetons repérés à 3 hauteurs différentes (3pts, 2pts, 1pt)\n- un chrono pour organiser les rotations.",
+    "But": "Accrocher dans les mousquetons les plus haut placés, le plus possible de cordelettes de la couleur de son équipe.",
+    "Consignes": "- chaque groupe de 3 enfants se place au pied d'une voie\n- au signal, un grimpeur par groupe escalade pour accrocher un seul bracelet à la fois, désescalade et laisse la place au suivant\n- au second signal, les enfants cessent de grimper\n- on décale les équipes d'un rang pour changer de voie.",
+    "Critère de réussite": "Avoir fait plus de points que l'équipe adverse.",
+    "Commentaire": "Situation de réinvestissement à proposer en fin de cycle."
+  },
+  {
+    "N° de l'exercice": 13,
+    "Titre": "LE COMPTE A REBOURS",
+    "Dispositif": "- une ligne de départ à 5 mètres du mur\n- tous les joueurs derrière la ligne\n- l'enseignant ou un joueur décompte de 10 à zéro...",
+    "But": "Atteindre le mur et s'accrocher avant la fin du compte à rebours.",
+    "Consignes": "- il faut être accroché au mur à la fin du décompte (aucun appui au sol)\n- les joueurs gagnants retournent au départ pour un nouveau décompte\n- changer de place au départ pour ne pas s'accrocher toujours au même endroit.",
+    "Critère de réussite": "N'avoir aucun appui au sol et rester 5 secondes sans tomber.",
+    "Variante": "- s'accrocher au mur en lâchant une main ou un pied...\n- remettre tous les enfants en jeu à chaque décompte.",
+    "Commentaire": "Très bon exercice de mise en train et de découverte du mur."
+  },
+  {
+    "N° de l'exercice": 14,
+    "Titre": "LA COURSE POURSUITE",
+    "Dispositif": "- par équipe de 2 : un chat, une souris poursuivie\n- la poursuite s'effectue en traversée, avec un point d'arrivée matérialisé\n- position de départ : distance de 2 m entre chaque grimpeur\n- un foulard dans le dos pour la souris.",
+    "But": "- le chat : attraper la queue de la souris avant qu'elle n'atteigne l'arrivée\n- la souris : atteindre l'arrivée avant d'être touchée.",
+    "Consignes": "Départ au signal."
+  },
+  {
+    "N° de l'exercice": 15,
+    "Titre": "LA COURSE AUX TRESORS",
+    "Dispositif": "- installer sur le mur des objets (aimants, bouts de laine...) en grand nombre\n- 2 équipes s'affrontent.",
+    "But": "Ramasser le plus grand nombre d'objets posés sur le mur.",
+    "Consignes": "- au signal, tous les élèves montent sur le mur, ramassent un seul objet, descendent, posent l'objet dans un cerceau et remontent chercher un autre objet\n- le jeu s'arrête quand il n'y a plus d'objet sur le mur.",
+    "Critère de réussite": "Ramener plus d'objets que l'autre équipe.",
+    "Variante": "Une équipe pose les objets sur le mur, puis l'autre équipe ramasse tous les objets le plus rapidement possible (chronomètre) et on inverse les rôles."
+  },
+  {
+    "N° de l'exercice": 16,
+    "Titre": "LE CROISEMENT",
+    "Dispositif": "- par équipes de 2\n- matérialiser une ligne à 2m du sol, à ne pas dépasser avec les mains\n- escalade en traversée.",
+    "But": "Les joueurs sont partenaires et essaient de se croiser sur le mur.",
+    "Consignes": "- choisir une prise de départ\n- rejoindre la prise de départ de son partenaire sans mettre un pied au sol.",
+    "Critère de réussite": "Atteindre la prise de son camarade.",
+    "Variante": "Une \"chenille\" composée de plusieurs élèves croise une autre \"chenille\"."
+  },
+  {
+    "N° de l'exercice": 17,
+    "Titre": "L'ECUREUIL",
+    "Dispositif": "- un point de départ et un point d'arrivée matérialisés en traversée\n- 4 prises repérées, d'une valeur de 1 à 4 points\n- équipes de 2 : un grimpeur \"écureuil\" et un observateur\n- l'écureuil dispose d'un capital de 3 graines.",
+    "But": "Réaliser la traversée en essayant de déposer sa graine sur la prise qui lui rapportera le plus de points possibles.",
+    "Consignes": "- l'écureuil a 3 essais ; il emporte chaque fois une graine qu'il dépose sur la prise la plus éloignée qu'il pourra atteindre\n- l'écureuil ne peut pas reculer ; en cas de chute, il perd le bénéfice de sa graine\n- l'observateur compte les points obtenus à l'issue des 3 passages.",
+    "Critère de réussite": "- réaliser un maximum de points\n- réaliser plus de points que son adversaire.",
+    "Variante": "Ce jeu peut se faire à la verticale."
+  },
+  {
+    "N° de l'exercice": 18,
+    "Titre": "L'EGYPTIEN",
+    "Dispositif": "- une ligne de départ, une ligne d'arrivée\n- par 2, un observateur, un grimpeur\n- chaque grimpeur a une gommette sur chaque hanche.",
+    "But": "Grimper en se déplaçant de profil (jamais face au mur).",
+    "Consignes": "- réaliser la voie (traversée ou verticale) en conservant le bassin de profil, toujours du même côté, ou changement de profil au cours de l'escalade\n- inverser les rôles.",
+    "Critère de réussite": "Le grimpeur réussit la voie et l'observateur, face au mur, bien aligné avec le grimpeur, doit toujours voir la gommette."
+  },
+  {
+    "N° de l'exercice": 19,
+    "Titre": "L'ENTONNOIR",
+    "Dispositif": "Un parcours en entonnoir, matérialisé sur le mur, avec une prise de départ et une prise d'arrivée.",
+    "But": "Atteindre la prise d'arrivée en passant dans l'entonnoir.",
+    "Consignes": "Garder les pieds et les mains à l'intérieur des 2 lignes de l'entonnoir.",
+    "Critère de réussite": "Atteindre la ligne d'arrivée en utilisant les prises dans l'entonnoir.",
+    "Variante": "- réaliser le parcours avec les prises extérieures à l'entonnoir, du plus étroit au plus large\n- l'entonnoir peut être vertical ou horizontal."
+  },
+  {
+    "N° de l'exercice": 20,
+    "Titre": "LE FIL A PLOMB",
+    "Dispositif": "- placer sur le baudrier ou à la ceinture une sangle qui pend, avec un descendeur qui arrive au niveau des genoux\n- matérialiser une ligne de départ, une ligne d'arrivée\n- escalade en traversée\n- par 2 : un grimpeur, un observateur.",
+    "But": "Réussir la traversée et atteindre l'arrivée en respectant la consigne.",
+    "Consignes": "- grimpeur : il traverse à droite, il n'a le droit de déplacer le pied gauche que lorsque le fil à plomb est au-dessus de son pied droit\n- observateur : il observe le déplacement du grimpeur, le renseigne sur le moment où le fil à plomb est aligné sur le pied d'appui.",
+    "Critère de réussite": "- réussir la traversée\n- à chaque déplacement, le fil est à l'aplomb du point d'appui.",
+    "Variante": "- faire l'exercice en traversée dans l'autre sens\n- faire l'exercice à la verticale."
+  },
+  {
+    "N° de l'exercice": 21,
+    "Titre": "LA FRONTIERE",
+    "Dispositif": "- matérialiser plusieurs voies verticales avec un point d'arrivée repéré\n- tracer une ligne verticale sous ce point (la frontière)\n- répartir les enfants par équipes de 4 au pied des voies.",
+    "But": "Atteindre le haut de la voie sans jamais changer de zone pour les mains et les pieds.",
+    "Consignes": "- atteindre le repère avec une règle de déplacement à respecter : pendant toute l'escalade, les mains doivent rester d'un côté de la frontière, et les pieds de l'autre\n- les observateurs témoignent du respect de la règle du jeu.",
+    "Critère de réussite": "Atteindre le haut de la voie malgré la contrainte."
+  },
+  {
+    "N° de l'exercice": 22,
+    "Titre": "LES INDIENS AUX PIEDS COLORES",
+    "Dispositif": "- un point de départ, un point d'arrivée sur le mur\n- les prises de pieds sont marquées de 2 couleurs (rouge, bleu)\n- les élèves sont par 2 : un grimpeur \"l'indien\" (un pied rouge, un pied bleu) et un observateur.",
+    "But": "Suivre un circuit repéré par 2 couleurs en posant chaque pied sur les prises de couleur correspondantes.",
+    "Consignes": "- grimpeur : suivre la piste en posant toujours le pied bleu sur les prises bleues, le pied rouge sur les prises rouges\n- observateur : vérifier que l'indien respecte strictement la règle.",
+    "Critère de réussite": "Respecter strictement la règle (vérifié par l'observateur).",
+    "Variante": "- simplifier le jeu (sans croisement de pieds) en suivant une piste d'une seule couleur\n- transposer ce jeu au niveau des mains."
+  },
+  {
+    "N° de l'exercice": 23,
+    "Titre": "LE MANCHOT",
+    "Dispositif": "Une surface d'escalade en pente (plan incliné).",
+    "But": "Atteindre le sommet en utilisant une seule main.",
+    "Consignes": "- grimper avec une main dans le dos, ou une balle dans la main\n- on désescalade comme on veut.",
+    "Critère de réussite": "Atteindre le sommet de la voie en gardant la main dans le dos, ou sans avoir lâché la balle.",
+    "Variante": "- \"le gros ventre\" : grimper avec un ballon placé devant soi, sous le pull\n- grimper les 2 mains à plat à côté des prises\n- grimper sans les mains\n- jouer à la passe à 5 en grimpant."
+  },
+  {
+    "N° de l'exercice": 24,
+    "Titre": "PARCOURS SANS FIN",
+    "Dispositif": "- déterminer un parcours fermé sur le mur sous forme de figures géométriques\n- 1 équipe de 4 enfants par parcours.",
+    "But": "Faire le plus grand nombre de tours, établir le record de l'équipe.",
+    "Consignes": "- suivre le parcours indiqué et le réaliser le plus grand nombre de fois possible, sans mettre pied à terre\n- un seul essai par grimpeur.",
+    "Critère de réussite": "- individuel : celui qui a réalisé le plus grand nombre de tours\n- équipe : l'équipe qui a totalisé le plus grand nombre de tours a gagné."
+  },
+  {
+    "N° de l'exercice": 25,
+    "Titre": "PAS DE GEANT, PAS DE FOURMI",
+    "Dispositif": "- en traversée ou verticale, lignes de départ et d'arrivée\n- par 2 : un grimpeur, un observateur.",
+    "But": "Atteindre l'arrivée en utilisant le plus de prises possibles (fourmi) ou le moins de prises possibles (géant).",
+    "Consignes": "- pas de fourmi : chaque prise de pieds utilisée marque un point\n- pas de géant : chaque prise de pieds utilisée enlève un point (départ avec bonus de 10 points)\n- si chute, retour au départ.",
+    "Critère de réussite": "Réussir la voie avec le plus possible de points.",
+    "Variante": "Transposer la règle au niveau des mains."
+  },
+  {
+    "N° de l'exercice": 26,
+    "Titre": "PASSAGE OBLIGE",
+    "Dispositif": "- un point de départ, une prise d'arrivée\n- des prises repérées disposées sur le mur\n- par groupe de 2.",
+    "But": "Atteindre l'arrivée en utilisant toutes les prises repérées.",
+    "Consignes": "On peut se servir de toutes les prises mais en passant obligatoirement par les prises repérées.",
+    "Critère de réussite": "Atteindre la prise d'arrivée en étant passé par toutes les prises repérées.",
+    "Variante": "Organisation par atelier de 4 ou 5 joueurs et rechercher des itinéraires différents.",
+    "Observation": "Pour stimuler la capacité de choix de l'enfant, on essaiera d'installer les prises repérées de manière à susciter des réponses variées."
+  },
+  {
+    "N° de l'exercice": 27,
+    "Titre": "LA PATINETTE",
+    "Dispositif": "- surface d'escalade en pente, plan incliné\n- atelier de 3, 4 élèves.",
+    "But": "Atteindre le sommet sans poser les pieds sur les prises.",
+    "Consignes": "- n'utiliser les prises qu'avec les mains (pieds \"à plat\" sur le mur)\n- les prises de pied sont autorisées pour la désescalade\n- passer à tour de rôle.",
+    "Critère de réussite": "Atteindre le haut de la voie sans avoir touché une seule prise avec ses pieds.",
+    "Variante": "- faire varier l'inclinaison\n- faire varier la contrainte (ex: droit à une seule prise de pieds)."
+  },
+  {
+    "N° de l'exercice": 28,
+    "Titre": "LE PETIT POUCET",
+    "Dispositif": "Placer des petits cailloux en équilibre sur toutes les prises de pieds, le long d'une traversée.",
+    "But": "Réussir la traversée sans faire tomber de cailloux.",
+    "Consignes": "- grimpeur : traverser sans faire tomber de cailloux\n- observateur : compter les cailloux tombés.",
+    "Critère de réussite": "Avoir fait tomber moins de cailloux que son adversaire, ou que l'équipe adverse."
+  },
+  {
+    "N° de l'exercice": 29,
+    "Titre": "LE PIRATE",
+    "Dispositif": "- groupes de 2 élèves\n- une prise d'arrivée matérialisée.",
+    "But": "Réaliser la voie sur un seul pied.",
+    "Consignes": "- le grimpeur doit atteindre le sommet en utilisant une seule jambe (changer de jambe à chaque passage)\n- l'observateur contrôle le respect de la consigne.",
+    "Critère de réussite": "Réaliser la voie en ayant toujours utilisé la même jambe pour les appuis du pied."
+  },
+  {
+    "N° de l'exercice": 30,
+    "Titre": "POUSSE-POUSSE",
+    "Dispositif": "- matérialiser plusieurs voies verticales avec un point d'arrivée repéré à 2m50\n- équipes de 2 : un grimpeur, un observateur.",
+    "But": "Atteindre le haut de la voie en respectant la règle de déplacement.",
+    "Consignes": "- grimpeur: n'a le droit de poser son deuxième pied que lorsque sa jambe d'appui est complètement tendue (développer chaque appui à fond)\n- observateur: veiller à ce que la jambe d'appui ne soit pas encore fléchie quand le deuxième pied se pose.",
+    "Critère de réussite": "Toucher le point d'arrivée repéré."
+  },
+  {
+    "N° de l'exercice": 31,
+    "Titre": "PRISES ELIMINEES",
+    "Dispositif": "- une prise est matérialisée sur le mur à une certaine hauteur\n- par 2 : partenaires.",
+    "But": "Réaliser la voie avec un minimum de prises.",
+    "Consignes": "Atteindre la prise d'arrivée puis, à chaque passage, éliminer une prise. S'arrêter lorsqu'on ne peut plus éliminer de prise.",
+    "Critère de réussite": "Réaliser la voie en ayant éliminé au moins x prises.",
+    "Variante": "Depuis le sol, le partenaire peut interdire une prise que le grimpeur est sur le point d'utiliser."
+  },
+  {
+    "N° de l'exercice": 32,
+    "Titre": "PRISES TOUCHEES, PRISES TENUES",
+    "Dispositif": "- un point de départ, un point d'arrivée\n- par groupe de 2.",
+    "But": "Réaliser la voie en utilisant obligatoirement les prises touchées.",
+    "Consignes": "- grimpeur: chaque fois qu'une prise est touchée de la main, elle doit être tenue et utilisée pour la progression\n- observateur: compter les points (1 point par prise convertie, -2 points si non utilisée).",
+    "Critère de réussite": "Réussir la voie en obtenant plus de points que son partenaire.",
+    "Variante": "Faire le même jeu en le transposant au niveau des pieds."
+  },
+  {
+    "N° de l'exercice": 33,
+    "Titre": "RALENTI - ACCELERE",
+    "Dispositif": "- un magnétophone (musiques rapides et lentes)\n- par 2.",
+    "But": "Maîtriser son rythme d'escalade: vite ou lent.",
+    "Consignes": "- grimper en respectant le rythme de la musique (vite sur rapide, ralenti sur lente).",
+    "Critère de réussite": "Appréciation de l'observateur sur la variation du rythme.",
+    "Variante": "Danse escalade, ballet vertical."
+  },
+  {
+    "N° de l'exercice": 34,
+    "Titre": "LE RELAIS VERTICAL",
+    "Dispositif": "- placer 2 équipes de 4 élèves en parallèle sur 2 voies différentes\n- matérialiser le départ et l'arrivée.",
+    "But": "Réaliser sous forme de relais, le plus rapidement possible, la voie, par équipe.",
+    "Consignes": "- chaque équipe se tient à 3m du mur, un grimpeur dans le cerceau de départ\n- au signal, aller toucher l'arrivée et désescalader sans sauter.",
+    "Critère de réussite": "L'équipe ayant terminé la première son relais a gagné."
+  },
+  {
+    "N° de l'exercice": 35,
+    "Titre": "LES STATUES",
+    "Dispositif": "- par 3, 2 grimpeurs, un contrôleur.",
+    "But": "Reproduire avec exactitude la position réalisée par son partenaire.",
+    "Consignes": "- le premier grimpeur crée une statue originale (position immobile)\n- le deuxième grimpeur observe et reproduit la statue.",
+    "Critère de réussite": "Réaliser la posture de son partenaire (prises de mains et prises de pieds identiques).",
+    "Variante": "- mémorisation de 2 statues de suite\n- tableau collectif\n- dessiner la statue."
+  },
+  {
+    "N° de l'exercice": 36,
+    "Titre": "SEQUENCE HABILLAGE",
+    "Critère de réussite": "L'équipe qui a réalisé le plus grand nombre de tours d'horloge gagne."
+  },
+  {
+    "N° de l'exercice": 38,
+    "Titre": "JACQUES A DIT",
+    "Dispositif": "Un meneur (l'enseignant), tous les enfants sur le mur à un mètre du sol.",
+    "But": "Réaliser les consignes données seulement si elles sont précédées de 'Jacques a dit'.",
+    "Consignes": "Jacques a dit d'enlever la main gauche, le pied droit... Si la consigne n'est pas précédée de la phrase clé, ne pas bouger.",
+    "Critère de réussite": "Rester sur le mur sans tomber et sans se tromper de consigne."
+  },
+  {
+    "N° de l'exercice": 39,
+    "Titre": "JEU DE MASSACRE",
+    "Dispositif": "- 2 équipes : une traverse le mur, l'autre est au sol avec des ballons mous.\n- Zone de tir délimitée au sol.",
+    "But": "Traverser sans se faire toucher par les ballons.",
+    "Consignes": "- Les grimpeurs traversent.\n- Les tireurs visent les grimpeurs (corps uniquement, pas la tête) sans entrer dans la zone interdite.",
+    "Critère de réussite": "Comptabiliser le nombre de traversées réussies (sans touche)."
+  },
+  {
+    "N° de l'exercice": 40,
+    "Titre": "PARCOURS D'OBSTACLES",
+    "Dispositif": "Sur un itinéraire (vertical ou traversée), installer des obstacles (cerceaux, fils, objets en relief).",
+    "But": "Franchir les obstacles sans tomber.",
+    "Consignes": "Passer dessus, dessous ou à travers l'obstacle selon sa nature.",
+    "Critère de réussite": "Atteindre l'arrivée sans toucher l'obstacle (si interdit) et sans chute."
+  },
+  {
+    "N° de l'exercice": 41,
+    "Titre": "LA PIEUVRE",
+    "Dispositif": "- Une prise de départ cerclée à la craie.\n- Par 2 : un grimpeur, un observateur.",
+    "But": "Toucher le plus de prises possible en gardant une main sur la prise de départ.",
+    "Consignes": "Le grimpeur garde une main fixe sur la prise 'tête de pieuvre' et allonge l'autre main pour toucher des prises éloignées.",
+    "Critère de réussite": "Nombre de prises touchées validées par l'observateur."
+  },
+  {
+    "N° de l'exercice": 42,
+    "Titre": "LES PRÉNOMS CACHÉS",
+    "Dispositif": "Des lettres sont dispersées et accrochées sur les prises du mur.",
+    "But": "Reconstituer son prénom ou un mot donné.",
+    "Consignes": "Le grimpeur doit aller toucher (ou décrocher) les lettres dans l'ordre pour épeler le mot cible.",
+    "Critère de réussite": "Avoir trouvé toutes les lettres dans le bon ordre."
+  },
+  {
+    "N° de l'exercice": 43,
+    "Titre": "LE PUZZLE",
+    "Dispositif": "Des pièces de puzzle sont accrochées sur le mur.",
+    "But": "Reconstituer le puzzle au sol.",
+    "Consignes": "Aller chercher une pièce à la fois, redescendre pour la poser, et remonter chercher la suivante.",
+    "Critère de réussite": "Puzzle terminé le plus vite possible (en relais ou individuel)."
+  },
+  {
+    "N° de l'exercice": 44,
+    "Titre": "LA QUEUE DU DIABLE",
+    "Dispositif": "- Un foulard accroché au baudrier (dans le dos) ou à la ceinture.\n- Jeu en traversée par 2 (poursuite).",
+    "But": "Attraper le foulard de l'adversaire sans se faire prendre le sien.",
+    "Consignes": "Les grimpeurs évoluent sur le mur. Le poursuivant essaie de saisir la 'queue'.",
+    "Critère de réussite": "Avoir attrapé le foulard de l'autre."
+  },
+  {
+    "N° de l'exercice": 45,
+    "Titre": "LA RIVIÈRE AUX CROCODILES",
+    "Dispositif": "- Le mur est la 'falaise'. Les tapis au sol sont la 'rivière'.\n- Un 'crocodile' (élève) est sur les tapis.",
+    "But": "Traverser la falaise sans se faire 'manger' (toucher les pieds) par le crocodile.",
+    "Consignes": "Le crocodile se déplace à quatre pattes sur les tapis et essaie de toucher les pieds des grimpeurs s'ils pendent trop bas.",
+    "Critère de réussite": "Arriver au bout de la traversée sans avoir été touché."
+  },
+  {
+    "N° de l'exercice": 46,
+    "Titre": "1, 2, 3 SOLEIL",
+    "Dispositif": "Un meneur au pied du mur, les grimpeurs sur le mur.",
+    "But": "Atteindre le haut (ou le bout) du mur sans être vu en mouvement.",
+    "Consignes": "Le meneur dit '1, 2, 3 Soleil' et se retourne. Les grimpeurs doivent s'immobiliser (faire la statue). Si un grimpeur bouge, il redescend.",
+    "Critère de réussite": "Être le premier à toucher la ligne d'arrivée."
+  },
+  {
+    "N° de l'exercice": 47,
+    "Titre": "VIDER SON CAMP",
+    "Dispositif": "- Deux équipes sur deux pans de mur ou zones.\n- Des objets mous (balles, chaussettes) accrochés ou coincés sur le mur.",
+    "But": "Ne plus avoir d'objets dans son camp.",
+    "Consignes": "Prendre un objet de son mur et aller le mettre sur le mur de l'équipe adverse (ou le jeter dans une zone cible).",
+    "Critère de réussite": "Avoir le moins d'objets sur son mur à la fin du temps imparti."
+  }
+]
