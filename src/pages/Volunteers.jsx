@@ -239,7 +239,7 @@ const Volunteers = () => {
     setOpenMemberSearch(false);
     setSearchQuery('');
     if (member) {
-      navigate(`/member-edit/${member.id}`);
+      navigate(`/member-view/${member.id}`);
     }
   };
 
