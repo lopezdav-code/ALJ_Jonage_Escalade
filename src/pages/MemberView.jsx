@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useParams, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import { supabase } from '@/lib/customSupabaseClient';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Loader2, User, Mail, Phone, Award, Shield, FileText, Calendar, Users, Eye, Trophy, Medal, MapPin, Euro, Pencil, GraduationCap, Clock, MessageSquare, BookOpen } from 'lucide-react';
+import { Loader2, User, Pencil, Trophy, Calendar, MessageSquare, BookOpen } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { useMemberViewPermissions } from '@/hooks/useMemberViewPermissions';
@@ -13,25 +12,20 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { getMemberPhotoUrl } from '@/lib/memberStorageUtils';
 import { Badge } from '@/components/ui/badge';
 import { BackButton } from '@/components/ui/back-button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-const InfoRow = ({ icon: Icon, label, value }) => {
-  if (!value) return null;
-
-  return (
-    <div className="flex items-start gap-3 py-2">
-      {Icon && <Icon className="w-5 h-5 text-muted-foreground mt-0.5" />}
-      <div className="flex-1">
-        <p className="text-sm font-medium text-muted-foreground">{label}</p>
-        <p className="text-base">{value}</p>
-      </div>
-    </div>
-  );
-};
+// Sub-components
+import MemberGeneralInfo from '@/components/members/MemberGeneralInfo';
+import MemberSessions from '@/components/members/MemberSessions';
+import MemberAwards from '@/components/members/MemberAwards';
+import MemberCompetitions from '@/components/members/MemberCompetitions';
+import MemberComments from '@/components/members/MemberComments';
 
 const MemberView = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { toast } = useToast();
   const { isAdmin, isBureau, loading: authLoading } = useAuth();
   const { canViewDetail, loading: permissionsLoading } = useMemberViewPermissions();
@@ -49,15 +43,30 @@ const MemberView = () => {
   const [sessionHistoryLoading, setSessionHistoryLoading] = useState(false);
   const [sessionHistoryLoaded, setSessionHistoryLoaded] = useState(false);
 
+  // Counts for tabs
+  const [counts, setCounts] = useState({
+    sessions: 0,
+    awards: 0,
+    competitions: 0,
+    comments: 0
+  });
+
   // Get the tab to return to from navigation state
   const fromTab = location.state?.fromTab;
+
+  // Active tab management
+  const activeTab = searchParams.get('tab') || 'general';
+
+  const handleTabChange = (value) => {
+    setSearchParams({ tab: value });
+  };
 
   const navigateToVolunteers = () => {
     const url = fromTab ? `/volunteers?tab=${encodeURIComponent(fromTab)}` : '/volunteers';
     navigate(url);
   };
 
-  // Function to fetch session history when accordion is opened
+  // Function to fetch session history when needed
   const fetchSessionHistory = async () => {
     if (sessionHistoryLoaded || sessionHistoryLoading || !id) return;
 
@@ -151,6 +160,7 @@ const MemberView = () => {
       setSessionHistory([]);
       setSessionHistoryLoading(false);
       setSessionHistoryLoaded(false);
+      setCounts({ sessions: 0, awards: 0, competitions: 0, comments: 0 });
 
       try {
         // Fetch member data with pre-joined emergency contacts and competitions using optimized view
@@ -172,6 +182,30 @@ const MemberView = () => {
         }
 
         setMember(data);
+
+        // Fetch counts from the new view
+        // We use a separate try/catch because this view might not exist yet if migration wasn't run
+        try {
+          const { data: countsData, error: countsError } = await supabase
+            .from('member_details_counts')
+            .select('*')
+            .eq('member_id', id)
+            .single();
+
+          if (!countsError && countsData) {
+            setCounts({
+              sessions: countsData.session_count || 0,
+              awards: countsData.award_count || 0,
+              competitions: countsData.competition_count || 0,
+              comments: countsData.comment_count || 0
+            });
+          } else {
+            // Fallback if view query fails or returns no data (shouldn't happen if view exists)
+            console.warn("Could not fetch counts from view, falling back to manual calculation or 0");
+          }
+        } catch (e) {
+          console.warn("Error fetching counts (view might be missing):", e);
+        }
 
         // Fetch group info if groupe_id exists
         let groupInfo = null;
@@ -233,6 +267,9 @@ const MemberView = () => {
 
           setCompetitionResults(results);
           setCompetitionInscriptions(inscriptions);
+
+          // If view fetch failed, we can update some counts here based on loaded data
+          // But for sessions and comments we don't load them initially, so we rely on the view or 0
         }
 
         // Fetch teaching schedule (courses where member is instructor)
@@ -334,6 +371,13 @@ const MemberView = () => {
     }
   }, [id, canViewDetail, authLoading, permissionsLoading]);
 
+  // Load session history when tab is activated
+  useEffect(() => {
+    if (activeTab === 'sessions' && !sessionHistoryLoaded) {
+      fetchSessionHistory();
+    }
+  }, [activeTab, sessionHistoryLoaded]);
+
   if (loading || authLoading || permissionsLoading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -402,632 +446,74 @@ const MemberView = () => {
         </CardHeader>
       </Card>
 
-      <div className="grid gap-6 md:grid-cols-2">
-        {/* Informations générales */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <User className="w-5 h-5" />
-              Informations générales
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-1">
-            <InfoRow icon={User} label="Sexe" value={member.sexe === 'H' ? 'Homme' : member.sexe === 'F' ? 'Femme' : null} />
-            <InfoRow icon={Users} label="Groupe" value={member.groupInfo ? `${member.groupInfo.category} ${member.groupInfo.sous_category ? '- ' + member.groupInfo.sous_category : ''}` : 'Aucun'} />
-            <InfoRow icon={FileText} label="Licence" value={member.licence} />
-          </CardContent>
-        </Card>
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4">
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 h-auto">
+          <TabsTrigger value="general" className="py-2">
+            <User className="w-4 h-4 mr-2" />
+            <span className="hidden md:inline">Infos</span>
+          </TabsTrigger>
 
-        {/* Contact */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Mail className="w-5 h-5" />
-              Contact
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-1">
-            <InfoRow icon={Mail} label="Email" value={member.email} />
-            <InfoRow icon={Phone} label="Téléphone" value={member.phone} />
-          </CardContent>
-        </Card>
+          {(counts.sessions > 0 || memberSchedules.length > 0 || teachingSchedule.length > 0) && (
+            <TabsTrigger value="sessions" className="py-2">
+              <BookOpen className="w-4 h-4 mr-2" />
+              <span className="hidden md:inline">Séances {counts.sessions > 0 ? `(${counts.sessions})` : ''}</span>
+            </TabsTrigger>
+          )}
 
-        {/* Escalade */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Award className="w-5 h-5" />
-              Escalade
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-1">
-            <InfoRow icon={Award} label="Passeport" value={member.passeport} />
-            {member.tete_ok !== null && member.tete_ok !== undefined && (
-              <div className="py-2">
-                <p className="text-sm font-medium text-muted-foreground mb-1">Montée en tête</p>
-                <Badge variant={member.tete_ok ? "default" : "secondary"}>
-                  {member.tete_ok ? "Sait monter en tête" : "Ne sait pas monter en tête"}
-                </Badge>
-              </div>
-            )}
-            {member.brevet_federaux && member.brevet_federaux.length > 0 && (
-              <div className="py-2">
-                <p className="text-sm font-medium text-muted-foreground mb-2">Brevets fédéraux</p>
-                <div className="flex flex-wrap gap-2">
-                  {member.brevet_federaux.map((brevet, index) => (
-                    <Badge key={index} variant="outline">
-                      {brevet}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+          {counts.awards > 0 && (
+            <TabsTrigger value="awards" className="py-2">
+              <Trophy className="w-4 h-4 mr-2" />
+              <span className="hidden md:inline">Palmarès ({counts.awards})</span>
+            </TabsTrigger>
+          )}
 
-        {/* Emergency contacts */}
-        {(emergencyContacts.contact1 || emergencyContacts.contact2) && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Shield className="w-5 h-5" />
-                Contacts d'urgence
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {emergencyContacts.contact1 && (
-                <div className="pb-3 border-b last:border-b-0">
-                  <div className="flex items-start justify-between gap-2 mb-2">
-                    <p className="text-sm font-medium text-muted-foreground">Contact 1</p>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => navigate(`/member-view/${emergencyContacts.contact1.id}`, { state: { fromTab } })}
-                      className="flex items-center gap-1"
-                    >
-                      <Eye className="w-3 h-3" />
-                      Voir la fiche
-                    </Button>
-                  </div>
-                  <p className="text-base font-semibold mb-1">{emergencyContacts.contact1.first_name} {emergencyContacts.contact1.last_name}</p>
-                  <div className="space-y-1">
-                    {emergencyContacts.contact1.phone && (
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Phone className="w-3 h-3" />
-                        <span>{emergencyContacts.contact1.phone}</span>
-                      </div>
-                    )}
-                    {emergencyContacts.contact1.email && (
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Mail className="w-3 h-3" />
-                        <span>{emergencyContacts.contact1.email}</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-              {emergencyContacts.contact2 && (
-                <div className="pb-3 border-b last:border-b-0">
-                  <div className="flex items-start justify-between gap-2 mb-2">
-                    <p className="text-sm font-medium text-muted-foreground">Contact 2</p>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => navigate(`/member-view/${emergencyContacts.contact2.id}`, { state: { fromTab } })}
-                      className="flex items-center gap-1"
-                    >
-                      <Eye className="w-3 h-3" />
-                      Voir la fiche
-                    </Button>
-                  </div>
-                  <p className="text-base font-semibold mb-1">{emergencyContacts.contact2.first_name} {emergencyContacts.contact2.last_name}</p>
-                  <div className="space-y-1">
-                    {emergencyContacts.contact2.phone && (
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Phone className="w-3 h-3" />
-                        <span>{emergencyContacts.contact2.phone}</span>
-                      </div>
-                    )}
-                    {emergencyContacts.contact2.email && (
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Mail className="w-3 h-3" />
-                        <span>{emergencyContacts.contact2.email}</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        )}
+          {counts.competitions > 0 && (
+            <TabsTrigger value="competitions" className="py-2">
+              <Calendar className="w-4 h-4 mr-2" />
+              <span className="hidden md:inline">Inscriptions ({counts.competitions})</span>
+            </TabsTrigger>
+          )}
 
-        {/* Is emergency contact for */}
-        {isEmergencyContactFor.length > 0 && (
-          <Card className="md:col-span-2">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Shield className="w-5 h-5" />
-                Contact d'urgence pour
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-wrap gap-2">
-                {isEmergencyContactFor.map((person) => (
-                  <Button
-                    key={person.id}
-                    variant="outline"
-                    size="sm"
-                    onClick={() => navigate(`/member-view/${person.id}`, { state: { fromTab } })}
-                    className="flex items-center gap-2"
-                  >
-                    <Eye className="w-3 h-3" />
-                    {person.first_name} {person.last_name}
-                  </Button>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
+          {counts.comments > 0 && (
+            <TabsTrigger value="comments" className="py-2">
+              <MessageSquare className="w-4 h-4 mr-2" />
+              <span className="hidden md:inline">Commentaires ({counts.comments})</span>
+            </TabsTrigger>
+          )}
+        </TabsList>
 
-        {/* Member's Schedules - Courses they attend */}
-        {memberSchedules.length > 0 && (
-          <Card className="md:col-span-2">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Calendar className="w-5 h-5" />
-                Mes séances ({memberSchedules.length})
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                {memberSchedules.map((schedule) => (
-                  <div key={schedule.id} className="flex items-start gap-4 p-3 border rounded-lg hover:bg-muted/50 transition-colors">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <Badge variant="default" className="font-medium">
-                          {schedule.day}
-                        </Badge>
-                        <div className="flex items-center gap-1 text-sm font-medium">
-                          <Clock className="w-3 h-3" />
-                          <span>{schedule.start_time.substring(0, 5)} - {schedule.end_time.substring(0, 5)}</span>
-                        </div>
-                      </div>
+        <TabsContent value="general">
+          <MemberGeneralInfo
+            member={member}
+            emergencyContacts={emergencyContacts}
+            isEmergencyContactFor={isEmergencyContactFor}
+            fromTab={fromTab}
+          />
+        </TabsContent>
 
-                      <div className="space-y-1">
-                        {schedule.type && (
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium text-muted-foreground">Type:</span>
-                            <Badge variant="secondary" className="text-xs">{schedule.type}</Badge>
-                          </div>
-                        )}
+        <TabsContent value="sessions">
+          <MemberSessions
+            memberSchedules={memberSchedules}
+            teachingSchedule={teachingSchedule}
+            sessionHistory={sessionHistory}
+            sessionHistoryLoading={sessionHistoryLoading}
+            fetchSessionHistory={fetchSessionHistory}
+            fromTab={fromTab}
+          />
+        </TabsContent>
 
-                        {schedule.age_category && (
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium text-muted-foreground">Catégorie d'âge:</span>
-                            <span className="text-sm">{schedule.age_category}</span>
-                          </div>
-                        )}
+        <TabsContent value="awards">
+          <MemberAwards competitionResults={competitionResults} />
+        </TabsContent>
 
-                        {schedule.groupe && (
-                          <div className="mt-2 p-2 bg-muted/30 rounded">
-                            <p className="text-sm font-medium mb-1">Groupe:</p>
-                            <div className="flex flex-wrap gap-2 text-xs">
-                              {schedule.groupe.category && (
-                                <Badge variant="outline">{schedule.groupe.category}</Badge>
-                              )}
-                              {schedule.groupe.sous_category && (
-                                <Badge variant="outline">{schedule.groupe.sous_category}</Badge>
-                              )}
-                              {schedule.groupe.Groupe_schedule && (
-                                <span className="text-muted-foreground">{schedule.groupe.Groupe_schedule}</span>
-                              )}
-                            </div>
-                          </div>
-                        )}
+        <TabsContent value="competitions">
+          <MemberCompetitions competitionInscriptions={competitionInscriptions} />
+        </TabsContent>
 
-                        {schedule.instructors && schedule.instructors.length > 0 && (
-                          <div className="mt-3 p-3 bg-green-50 dark:bg-green-950/20 rounded border border-green-200 dark:border-green-800">
-                            <div className="flex items-center gap-2 mb-2">
-                              <GraduationCap className="w-4 h-4 text-green-600 dark:text-green-400" />
-                              <p className="text-sm font-medium text-green-900 dark:text-green-100">
-                                Encadrants ({schedule.instructors.length})
-                              </p>
-                            </div>
-                            <div className="flex flex-wrap gap-2">
-                              {schedule.instructors.map((instructor) => (
-                                <Button
-                                  key={instructor.id}
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => navigate(`/member-view/${instructor.id}`, { state: { fromTab } })}
-                                  className="h-7 text-xs bg-white dark:bg-gray-800 hover:bg-green-100 dark:hover:bg-green-900"
-                                >
-                                  <Eye className="w-3 h-3 mr-1" />
-                                  {instructor.first_name} {instructor.last_name}
-                                </Button>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Palmares - Competition Results */}
-        {competitionResults.length > 0 && (
-          <Card className="md:col-span-2">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Trophy className="w-5 h-5" />
-                Palmarès
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {competitionResults.map((result) => (
-                  <div key={result.id} className="flex items-start justify-between gap-4 p-3 border rounded-lg hover:bg-muted/50 transition-colors">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <Medal className={`w-4 h-4 ${result.ranking === 1 ? 'text-yellow-500' : result.ranking === 2 ? 'text-gray-400' : result.ranking === 3 ? 'text-amber-600' : 'text-muted-foreground'}`} />
-                        <span className="font-semibold text-lg">
-                          {result.ranking}{result.ranking === 1 ? 'er' : 'e'}
-                          {result.nb_competitor && <span className="text-sm text-muted-foreground ml-1">/ {result.nb_competitor}</span>}
-                        </span>
-                      </div>
-                      <p className="font-medium">{result.competitions.name}</p>
-                      <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground mt-1">
-                        {result.competitions.start_date && (
-                          <div className="flex items-center gap-1">
-                            <Calendar className="w-3 h-3" />
-                            <span>{new Date(result.competitions.start_date).toLocaleDateString('fr-FR')}</span>
-                          </div>
-                        )}
-                        {result.competitions.location && (
-                          <div className="flex items-center gap-1">
-                            <MapPin className="w-3 h-3" />
-                            <span>{result.competitions.location}</span>
-                          </div>
-                        )}
-                        {result.competitions.disciplines && result.competitions.disciplines.length > 0 && (
-                          <div className="flex items-center gap-1">
-                            <span className="font-medium">Discipline:</span>
-                            <span>{result.competitions.disciplines.join(', ')}</span>
-                          </div>
-                        )}
-                      </div>
-                      {(result.competitions.nature || result.competitions.niveau) && (
-                        <div className="flex gap-2 mt-2">
-                          {result.competitions.nature && (
-                            <Badge variant="secondary" className="text-xs">
-                              {result.competitions.nature}
-                            </Badge>
-                          )}
-                          {result.competitions.niveau && (
-                            <Badge variant="outline" className="text-xs">
-                              {result.competitions.niveau}
-                            </Badge>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => navigate(`/competitions/detail/${result.competitions.id}`)}
-                    >
-                      <Eye className="w-4 h-4" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Competition Inscriptions */}
-        {competitionInscriptions.length > 0 && (
-          <Card className="md:col-span-2">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Trophy className="w-5 h-5" />
-                Inscriptions aux compétitions ({competitionInscriptions.length})
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                {competitionInscriptions.map((inscription) => (
-                  <div key={inscription.id} className="flex items-center justify-between gap-4 p-3 border rounded-lg hover:bg-muted/50 transition-colors">
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium truncate">{inscription.competitions.short_title || inscription.competitions.name}</p>
-                      <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground mt-1">
-                        {inscription.competitions.start_date && (
-                          <div className="flex items-center gap-1">
-                            <Calendar className="w-3 h-3" />
-                            <span>{new Date(inscription.competitions.start_date).toLocaleDateString('fr-FR')}</span>
-                          </div>
-                        )}
-                        {inscription.competitions.location && (
-                          <div className="flex items-center gap-1">
-                            <MapPin className="w-3 h-3" />
-                            <span>{inscription.competitions.location}</span>
-                          </div>
-                        )}
-                        {inscription.competitions.prix !== null && inscription.competitions.prix !== undefined && (
-                          <div className="flex items-center gap-1 font-medium">
-                            <Euro className="w-3 h-3" />
-                            <span>{inscription.competitions.prix} €</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => navigate(`/competitions/detail/${inscription.competitions.id}`)}
-                      className="shrink-0"
-                    >
-                      <Eye className="w-4 h-4 mr-1" />
-                      Détails
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Teaching Schedule - Courses where member is instructor */}
-        {teachingSchedule.length > 0 && (
-          <Card className="md:col-span-2">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <GraduationCap className="w-5 h-5" />
-                Cours encadrés ({teachingSchedule.length})
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                {teachingSchedule.map((schedule) => (
-                  <div key={schedule.id} className="flex items-start gap-4 p-3 border rounded-lg hover:bg-muted/50 transition-colors">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <Badge variant="default" className="font-medium">
-                          {schedule.day}
-                        </Badge>
-                        <div className="flex items-center gap-1 text-sm font-medium">
-                          <Clock className="w-3 h-3" />
-                          <span>{schedule.start_time.substring(0, 5)} - {schedule.end_time.substring(0, 5)}</span>
-                        </div>
-                      </div>
-
-                      <div className="space-y-1">
-                        {schedule.type && (
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium text-muted-foreground">Type:</span>
-                            <Badge variant="secondary" className="text-xs">{schedule.type}</Badge>
-                          </div>
-                        )}
-
-                        {schedule.age_category && (
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium text-muted-foreground">Catégorie d'âge:</span>
-                            <span className="text-sm">{schedule.age_category}</span>
-                          </div>
-                        )}
-
-                        {schedule.groupe && (
-                          <div className="mt-2 p-2 bg-muted/30 rounded">
-                            <p className="text-sm font-medium mb-1">Groupe:</p>
-                            <div className="flex flex-wrap gap-2 text-xs">
-                              {schedule.groupe.category && (
-                                <Badge variant="outline">{schedule.groupe.category}</Badge>
-                              )}
-                              {schedule.groupe.sous_category && (
-                                <Badge variant="outline">{schedule.groupe.sous_category}</Badge>
-                              )}
-                              {schedule.groupe.Groupe_schedule && (
-                                <span className="text-muted-foreground">{schedule.groupe.Groupe_schedule}</span>
-                              )}
-                            </div>
-                          </div>
-                        )}
-
-                        {schedule.students && schedule.students.length > 0 && (
-                          <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-950/20 rounded border border-blue-200 dark:border-blue-800">
-                            <div className="flex items-center gap-2 mb-2">
-                              <Users className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                              <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
-                                Élèves ({schedule.students.length})
-                              </p>
-                            </div>
-                            <div className="flex flex-wrap gap-2">
-                              {schedule.students.map((student) => (
-                                <Button
-                                  key={student.id}
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => navigate(`/member-view/${student.id}`, { state: { fromTab } })}
-                                  className="h-7 text-xs bg-white dark:bg-gray-800 hover:bg-blue-100 dark:hover:bg-blue-900"
-                                >
-                                  <Eye className="w-3 h-3 mr-1" />
-                                  {student.first_name} {student.last_name}
-                                </Button>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Session History - Accordion */}
-        <Card className="md:col-span-2">
-          <Accordion type="single" collapsible onValueChange={(value) => {
-            if (value === 'session-history') {
-              fetchSessionHistory();
-            }
-          }}>
-            <AccordionItem value="session-history" className="border-none">
-              <AccordionTrigger className="px-6 hover:no-underline">
-                <CardTitle className="flex items-center gap-2">
-                  <BookOpen className="w-5 h-5" />
-                  Historique des séances {sessionHistory.length > 0 && `(${sessionHistory.length})`}
-                </CardTitle>
-              </AccordionTrigger>
-              <AccordionContent className="px-6 pb-6">
-                {sessionHistoryLoading ? (
-                  <div className="flex justify-center items-center py-8">
-                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                  </div>
-                ) : sessionHistory.length > 0 ? (
-                  <div className="space-y-4">
-                    {sessionHistory.map((session) => (
-                      <div key={session.id} className="p-4 border rounded-lg hover:bg-muted/50 transition-colors">
-                        {/* Session header with date and time */}
-                        <div className="flex items-center gap-3 mb-3">
-                          <div className="flex items-center gap-2">
-                            <Calendar className="w-4 h-4 text-primary" />
-                            <span className="font-semibold">
-                              {new Date(session.date).toLocaleDateString('fr-FR', {
-                                weekday: 'long',
-                                year: 'numeric',
-                                month: 'long',
-                                day: 'numeric'
-                              })}
-                            </span>
-                          </div>
-                          {session.start_time && (
-                            <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                              <Clock className="w-3 h-3" />
-                              <span>{session.start_time.substring(0, 5)}</span>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Cycle and Schedule info */}
-                        <div className="flex flex-wrap gap-2 mb-3">
-                          {session.cycles && (
-                            <Badge variant="default">
-                              {session.cycles.name}
-                            </Badge>
-                          )}
-                          {session.schedules && (
-                            <>
-                              {session.schedules.type && (
-                                <Badge variant="secondary">{session.schedules.type}</Badge>
-                              )}
-                              {session.schedules.age_category && (
-                                <Badge variant="outline">{session.schedules.age_category}</Badge>
-                              )}
-                            </>
-                          )}
-                        </div>
-
-                        {/* Session objective */}
-                        {session.session_objective && (
-                          <div className="mb-3 p-3 bg-blue-50 dark:bg-blue-950/20 rounded border border-blue-200 dark:border-blue-800">
-                            <div className="flex items-start gap-2">
-                              <FileText className="w-4 h-4 text-blue-600 dark:text-blue-400 mt-0.5 shrink-0" />
-                              <div className="flex-1">
-                                <p className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-1">
-                                  Objectif de la séance
-                                </p>
-                                <p className="text-sm text-blue-800 dark:text-blue-200 whitespace-pre-wrap">
-                                  {session.session_objective}
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Equipment */}
-                        {session.equipment && (
-                          <div className="mb-3 text-sm">
-                            <span className="font-medium text-muted-foreground">Matériel : </span>
-                            <span>{session.equipment}</span>
-                          </div>
-                        )}
-
-                        {/* General session comment */}
-                        {session.comment && (
-                          <div className="mb-3 p-3 bg-muted/50 rounded">
-                            <div className="flex items-start gap-2">
-                              <MessageSquare className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
-                              <div className="flex-1">
-                                <p className="text-sm font-medium text-muted-foreground mb-1">
-                                  Commentaire général
-                                </p>
-                                <p className="text-sm whitespace-pre-wrap">
-                                  {session.comment}
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Member-specific instructor comment */}
-                        {session.memberComment && (
-                          <div className="mb-3 p-3 bg-green-50 dark:bg-green-950/20 rounded border border-green-200 dark:border-green-800">
-                            <div className="flex items-start gap-2">
-                              <MessageSquare className="w-4 h-4 text-green-600 dark:text-green-400 mt-0.5 shrink-0" />
-                              <div className="flex-1">
-                                <p className="text-sm font-medium text-green-900 dark:text-green-100 mb-1">
-                                  Commentaire de l'encadrant pour vous
-                                </p>
-                                <p className="text-sm text-green-800 dark:text-green-200 whitespace-pre-wrap">
-                                  {session.memberComment}
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Instructors */}
-                        {session.instructorsList && session.instructorsList.length > 0 && (
-                          <div className="pt-2 border-t">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <GraduationCap className="w-4 h-4 text-muted-foreground" />
-                              <span className="text-sm font-medium text-muted-foreground">Encadrants :</span>
-                              <div className="flex flex-wrap gap-2">
-                                {session.instructorsList.map((instructor) => (
-                                  <Button
-                                    key={instructor.id}
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => navigate(`/member-view/${instructor.id}`, { state: { fromTab } })}
-                                    className="h-7 text-xs px-2"
-                                  >
-                                    <Eye className="w-3 h-3 mr-1" />
-                                    {instructor.first_name} {instructor.last_name}
-                                  </Button>
-                                ))}
-                              </div>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-center text-muted-foreground py-4">
-                    Aucune séance enregistrée
-                  </p>
-                )}
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
-        </Card>
-      </div>
+        <TabsContent value="comments">
+          <MemberComments memberId={id} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
