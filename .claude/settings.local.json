@@ -1,27 +1,31 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git fetch:*)",
-      "Bash(git add:*)",
-      "Bash(git commit:*)",
-      "Bash(git merge:*)",
-      "Bash(git push:*)",
-      "Bash(git rebase:*)",
-      "Bash(git stash:*)",
-      "Bash(npm ci:*)",
-      "Bash(npm run build:*)",
-      "Bash(pkill:*)",
-      "Bash(powershell -Command:*)",
-      "Bash(timeout 15 powershell -Command \"Start-Sleep -Seconds 3; (curl -s -I http://localhost:3000/ALJ_Jonage_Escalade/ | head -5) -or ''Server starting...''\")",
-      "Bash(npm install:*)",
-      "Bash(timeout 15 powershell -Command \"Start-Job -ScriptBlock { npm run dev 2>&1 } | Out-Null; Start-Sleep -Seconds 3; (curl -s -I http://localhost:3000/ALJ_Jonage_Escalade/ | head -5) -or ''Server starting...''\")",
-      "Bash(find:*)",
-      "Bash(nul)",
-      "Bash(findstr /s /m \"alj_jonage_escalade\" src*.jsx src***.jsx)",
-      "Bash(findstr:*)",
-      "Bash(npm run dev:*)"
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []
+  },
+  "mcpServers": {
+    "supabase": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@supabase/mcp-server-postgrest"
+      ],
+      "env": {
+        "SUPABASE_URL": "https://hvugiirundpxynozxxnd.supabase.co",
+        "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh2dWdpaXJ1bmRweHlub3p4eG5kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkyNTM0NjYsImV4cCI6MjA3NDgyOTQ2Nn0.aEH6Lp5B8qceXfY-uLIPJJYoE-ecUq78beLBcyD-bww"
+      }
+    },
+    "testsprite": {
+      "command": "npx",
+      "args": [
+        "@testsprite/testsprite-mcp@latest"
+      ],
+      "env": {
+        "API_KEY": "sk-user-EP-xUWqhGykW...SRQJ1jcJOPu_-dUYK1yI"
+      }
+    }
   }
 }

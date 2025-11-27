@@ -272,8 +272,17 @@ const News = () => {
           >
             <Card className="flex flex-col h-full">
               {signedUrls[item.id] && (
-                <div className="cursor-pointer" onClick={() => setViewingImage(signedUrls[item.id])}>
-                  <img src={signedUrls[item.id]} alt={item.title} className="w-full h-48 object-cover rounded-t-lg" />
+                <div
+                  className="cursor-pointer bg-muted rounded-t-lg"
+                  onClick={() => setViewingImage(signedUrls[item.id])}
+                >
+                  <div className="w-full h-48 flex items-center justify-center p-2">
+                    <img
+                      src={signedUrls[item.id]}
+                      alt={item.title}
+                      className="max-w-full max-h-full object-contain rounded"
+                    />
+                  </div>
                 </div>
               )}
               <CardHeader>
@@ -549,8 +558,14 @@ const News = () => {
       {renderContent()}
 
       <Dialog open={!!viewingImage} onOpenChange={() => setViewingImage(null)}>
-        <DialogContent className="max-w-4xl p-2">
-          <img src={viewingImage} alt="Aperçu de l'actualité" className="w-full h-auto max-h-[90vh] object-contain rounded-md" />
+        <DialogContent className="max-w-6xl max-h-[90vh] p-0 bg-black/95 border-0">
+          <div className="relative w-full h-full flex items-center justify-center p-8">
+            <img
+              src={viewingImage}
+              alt="Aperçu de l'actualité"
+              className="max-w-full max-h-full object-contain rounded-lg"
+            />
+          </div>
         </DialogContent>
       </Dialog>
     </div>
