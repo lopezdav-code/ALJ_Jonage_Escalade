@@ -139,11 +139,9 @@ const News = () => {
   }, []);
 
   useEffect(() => {
-    // Only fetch news when authentication is ready
-    if (!authLoading) {
-      fetchNews();
-    }
-  }, [authLoading, fetchNews]);
+    // Fetch news immediately on mount - RLS protects sensitive data on the server
+    fetchNews();
+  }, []); // eslint-disable-next-line react-hooks/exhaustive-deps
 
   const filteredAndSortedNews = useMemo(() => {
     let processedNews = [...news];

@@ -99,7 +99,8 @@ const SessionEdit = () => {
     } else if (!authLoading) {
       setLoading(false);
     }
-  }, [fetchSession, canEditContent, authLoading]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [canEditContent, authLoading]);
 
   const uploadImage = async (file) => {
     const fileExt = file.name.split('.').pop();
