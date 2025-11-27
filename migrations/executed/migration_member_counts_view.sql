@@ -11,7 +11,7 @@ SELECT
     (
         SELECT COUNT(*)
         FROM sessions s
-        WHERE s.students @> ARRAY[m.id]
+        WHERE s.students @> ARRAY[m.id::text]
     ) AS session_count,
     (
         SELECT COUNT(*)
