@@ -32,12 +32,19 @@ const VolunteerRow = React.memo(({ member, onEdit, onView, isEmergencyContact, s
       <td className="p-2">{member.last_name}</td>
       {showGroupDetails && (
         <td className="p-2">
-          {member.groupInfo && (
-            <div className="text-sm">
-              {member.groupInfo.sous_category && <div>{member.groupInfo.sous_category}</div>}
-              {member.groupInfo.Groupe_schedule && <div className="text-xs text-muted-foreground">{member.groupInfo.Groupe_schedule}</div>}
-            </div>
-          )}
+          <div className="text-sm">
+            {member.groupInfo && (
+              <>
+                {member.groupInfo.sous_category && <div>{member.groupInfo.sous_category}</div>}
+                {member.groupInfo.Groupe_schedule && <div className="text-xs text-muted-foreground">{member.groupInfo.Groupe_schedule}</div>}
+              </>
+            )}
+            {member.bureauInfo && member.bureauInfo.role && (
+              <div className="font-medium text-blue-600">
+                {member.bureauInfo.role} {member.bureauInfo.sub_role}
+              </div>
+            )}
+          </div>
         </td>
       )}
       <td className="p-2">
@@ -99,6 +106,83 @@ const BrevetDefinitionDialog = ({ brevetName, definition }) => (
 );
 BrevetDefinitionDialog.displayName = 'BrevetDefinitionDialog';
 
+const GroupedVolunteersView = ({ members, canEdit, canViewDetail, emergencyContactIds, navigate, activeTab }) => {
+  const [activeFilter, setActiveFilter] = useState('all');
+
+  const membersBySubGroup = useMemo(() => {
+    return members.reduce((acc, member) => {
+      const subGroup = member.groupInfo?.sous_category || 'Sans sous-groupe';
+      if (!acc[subGroup]) {
+        acc[subGroup] = [];
+      }
+      acc[subGroup].push(member);
+      return acc;
+    }, {});
+  }, [members]);
+
+  const subGroups = useMemo(() => Object.keys(membersBySubGroup).sort(), [membersBySubGroup]);
+
+  const filteredMembers = useMemo(() => {
+    if (activeFilter === 'all') return members;
+    return membersBySubGroup[activeFilter] || [];
+  }, [members, membersBySubGroup, activeFilter]);
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap gap-2">
+        <Button
+          variant={activeFilter === 'all' ? "default" : "outline"}
+          size="sm"
+          onClick={() => setActiveFilter('all')}
+          className="rounded-full"
+        >
+          Tous ({members.length})
+        </Button>
+        {subGroups.map(subGroup => (
+          <Button
+            key={subGroup}
+            variant={activeFilter === subGroup ? "default" : "outline"}
+            size="sm"
+            onClick={() => setActiveFilter(subGroup)}
+            className="rounded-full"
+          >
+            {subGroup} ({membersBySubGroup[subGroup].length})
+          </Button>
+        ))}
+      </div>
+
+      <div className="overflow-x-auto border rounded-md">
+        <table className="w-full border-collapse">
+          <thead>
+            <tr className="border-b bg-muted/50">
+              <th className="text-left p-2 font-medium">Photo</th>
+              <th className="text-left p-2 font-medium">Prénom</th>
+              <th className="text-left p-2 font-medium">Nom</th>
+              <th className="text-left p-2 font-medium">Groupe</th>
+              <th className="text-left p-2 font-medium">Info</th>
+              {(canEdit || canViewDetail) && <th className="text-left p-2 font-medium">Actions</th>}
+            </tr>
+          </thead>
+          <tbody>
+            {filteredMembers.map((member) => (
+              <VolunteerRow
+                key={member.id}
+                member={member}
+                onEdit={(member) => navigate(`/member-edit/${member.id}`, { state: { fromTab: activeTab } })}
+                onView={(member) => navigate(`/member-view/${member.id}`, { state: { fromTab: activeTab } })}
+                isEmergencyContact={emergencyContactIds.has(member.id)}
+                showGroupDetails={true}
+                canEdit={canEdit}
+                canView={canViewDetail}
+              />
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
+
 const Volunteers = () => {
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -107,7 +191,7 @@ const Volunteers = () => {
   const [selectedMember, setSelectedMember] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [showNoEmailFilter, setShowNoEmailFilter] = useState(false);
-  const [showAllInGroup, setShowAllInGroup] = useState({});
+  // showAllInGroup removed as it is now handled by GroupedVolunteersView
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { isAdmin, isBureau, loading: authLoading } = useAuth();
@@ -204,7 +288,7 @@ const Volunteers = () => {
     ];
 
     return Object.keys(membersByTitle)
-      .filter(title => title !== "emergency_contact")
+      .filter(title => title !== "emergency_contact" && title !== "Sans Groupe")
       .sort((a, b) => {
         const indexA = customOrder.indexOf(a);
         const indexB = customOrder.indexOf(b);
@@ -334,152 +418,53 @@ const Volunteers = () => {
           </TabsList>
           {titles.map((title) => {
             const currentTabMembers = membersByTitle[title] || [];
-            const isShowingAll = showAllInGroup[title];
 
-            // Determine if we should show sub-tabs (group by sous_category)
+            // Determine if we should group by sub_category
             // For Competition and Leisure, we usually want to group by sub-category
-            const shouldGroup = title.includes('Compétition') || title.includes('Loisir');
+            const shouldGroup = (title.includes('Compétition') || title.includes('Loisir')) &&
+              currentTabMembers.some(m => m.groupInfo && m.groupInfo.sous_category);
 
-            if (shouldGroup && currentTabMembers.some(m => m.groupInfo && m.groupInfo.sous_category)) {
-              const membersBySubGroup = currentTabMembers.reduce((acc, member) => {
-                const subGroup = member.groupInfo?.sous_category || 'Sans sous-groupe';
-                if (!acc[subGroup]) {
-                  acc[subGroup] = [];
-                }
-                acc[subGroup].push(member);
-                return acc;
-              }, {});
-              const subGroups = Object.keys(membersBySubGroup).sort();
-
-              return (
-                <TabsContent key={title} value={title}>
-                  <div className="flex justify-end mb-4">
-                    <Button
-                      variant={isShowingAll ? "default" : "outline"}
-                      onClick={() => setShowAllInGroup(prev => ({ ...prev, [title]: !prev[title] }))}
-                    >
-                      {isShowingAll ? (
-                        <>
-                          <List className="w-4 h-4 mr-2" />
-                          Vue par sous-groupes
-                        </>
-                      ) : (
-                        <>
-                          <Users className="w-4 h-4 mr-2" />
-                          Voir tout ({currentTabMembers.length})
-                        </>
-                      )}
-                    </Button>
-                  </div>
-
-                  {isShowingAll ? (
-                    <div className="overflow-x-auto">
-                      <table className="w-full border-collapse">
-                        <thead>
-                          <tr className="border-b">
-                            <th className="text-left p-2">Photo</th>
-                            <th className="text-left p-2">Prénom</th>
-                            <th className="text-left p-2">Nom</th>
-                            <th className="text-left p-2">Groupe</th>
-                            <th className="text-left p-2">Info</th>
-                            {(canEdit || canViewDetail) && <th className="text-left p-2">Actions</th>}
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {currentTabMembers.map((member) => (
-                            <VolunteerRow
-                              key={member.id}
-                              member={member}
-                              onEdit={(member) => navigate(`/member-edit/${member.id}`, { state: { fromTab: activeTab } })}
-                              onView={(member) => navigate(`/member-view/${member.id}`, { state: { fromTab: activeTab } })}
-                              isEmergencyContact={emergencyContactIds.has(member.id)}
-                              showGroupDetails={true}
-                              canEdit={canEdit}
-                              canView={canViewDetail}
-                            />
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  ) : (
-                    <Tabs defaultValue={subGroups[0]} className="w-full">
-                      <TabsList className="grid w-full grid-cols-2 lg:grid-cols-3">
-                        {subGroups.map((subGroup) => (
-                          <TabsTrigger key={subGroup} value={subGroup}>
-                            {subGroup} ({membersBySubGroup[subGroup].length})
-                          </TabsTrigger>
-                        ))}
-                      </TabsList>
-
-                      {subGroups.map((subGroup) => (
-                        <TabsContent key={subGroup} value={subGroup}>
-                          <div className="overflow-x-auto mt-4">
-                            <table className="w-full border-collapse">
-                              <thead>
-                                <tr className="border-b">
-                                  <th className="text-left p-2">Photo</th>
-                                  <th className="text-left p-2">Prénom</th>
-                                  <th className="text-left p-2">Nom</th>
-                                  <th className="text-left p-2">Groupe</th>
-                                  <th className="text-left p-2">Info</th>
-                                  {(canEdit || canViewDetail) && <th className="text-left p-2">Actions</th>}
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {membersBySubGroup[subGroup].map((member) => (
-                                  <VolunteerRow
-                                    key={member.id}
-                                    member={member}
-                                    onEdit={(member) => navigate(`/member-edit/${member.id}`, { state: { fromTab: activeTab } })}
-                                    onView={(member) => navigate(`/member-view/${member.id}`, { state: { fromTab: activeTab } })}
-                                    isEmergencyContact={emergencyContactIds.has(member.id)}
-                                    showGroupDetails={true}
-                                    canEdit={canEdit}
-                                    canView={canViewDetail}
-                                  />
-                                ))}
-                              </tbody>
-                            </table>
-                          </div>
-                        </TabsContent>
-                      ))}
-                    </Tabs>
-                  )}
-                </TabsContent>
-              );
-            }
-
-            // Default view
             return (
-              <TabsContent key={title} value={title}>
-                <div className="overflow-x-auto">
-                  <table className="w-full border-collapse">
-                    <thead>
-                      <tr className="border-b">
-                        <th className="text-left p-2">Photo</th>
-                        <th className="text-left p-2">Prénom</th>
-                        <th className="text-left p-2">Nom</th>
-                        <th className="text-left p-2">Groupe</th>
-                        <th className="text-left p-2">Info</th>
-                        {(canEdit || canViewDetail) && <th className="text-left p-2">Actions</th>}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {currentTabMembers.map((member) => (
-                        <VolunteerRow
-                          key={member.id}
-                          member={member}
-                          onEdit={(member) => navigate(`/member-edit/${member.id}`, { state: { fromTab: activeTab } })}
-                          onView={(member) => navigate(`/member-view/${member.id}`, { state: { fromTab: activeTab } })}
-                          isEmergencyContact={emergencyContactIds.has(member.id)}
-                          showGroupDetails={true}
-                          canEdit={canEdit}
-                          canView={canViewDetail}
-                        />
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+              <TabsContent key={title} value={title} className="mt-6">
+                {shouldGroup ? (
+                  <GroupedVolunteersView
+                    members={currentTabMembers}
+                    canEdit={canEdit}
+                    canViewDetail={canViewDetail}
+                    emergencyContactIds={emergencyContactIds}
+                    navigate={navigate}
+                    activeTab={activeTab}
+                  />
+                ) : (
+                  <div className="overflow-x-auto border rounded-md">
+                    <table className="w-full border-collapse">
+                      <thead>
+                        <tr className="border-b bg-muted/50">
+                          <th className="text-left p-2 font-medium">Photo</th>
+                          <th className="text-left p-2 font-medium">Prénom</th>
+                          <th className="text-left p-2 font-medium">Nom</th>
+                          <th className="text-left p-2 font-medium">Groupe</th>
+                          <th className="text-left p-2 font-medium">Info</th>
+                          {(canEdit || canViewDetail) && <th className="text-left p-2 font-medium">Actions</th>}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {currentTabMembers.map((member) => (
+                          <VolunteerRow
+                            key={member.id}
+                            member={member}
+                            onEdit={(member) => navigate(`/member-edit/${member.id}`, { state: { fromTab: activeTab } })}
+                            onView={(member) => navigate(`/member-view/${member.id}`, { state: { fromTab: activeTab } })}
+                            isEmergencyContact={emergencyContactIds.has(member.id)}
+                            showGroupDetails={true}
+                            canEdit={canEdit}
+                            canView={canViewDetail}
+                          />
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </TabsContent>
             );
           })}
