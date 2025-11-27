@@ -6,6 +6,10 @@
       "env": {
         "API_KEY": "sk-user-EP-xUWqhGykWkx9SrZzs6mDfVuKL3qExiK0jhJ7O06hhkyWdmdj9OOOfOQFyd3_YxUOfErDg45Y68bBxNf_n_woyZo_buh3qG2BLPCgki0hWAffSRQJ1jcJOPu_-dUYK1yI"
       }
+    },
+    "supabase": {
+      "transport": "http",
+      "url": "https://mcp.supabase.com/mcp?project_ref=hvugiirundpxynozxxnd"
     }
   }
 }

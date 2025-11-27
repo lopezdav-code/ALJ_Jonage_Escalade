@@ -152,6 +152,7 @@ const Navigation = () => {
         { to: '/passeport-validation', text: 'Validation Passeports', roles: ['bureau', 'encadrant', 'admin'] },
         { to: '/attendance-recap', text: 'Récapitulatif des présences', roles: ['bureau', 'encadrant', 'admin'] },
         { to: '/exercise-progress', text: 'Progression des exercices', roles: ['bureau', 'encadrant', 'admin'] },
+        { to: '/comments-summary', text: 'Commentaire', roles: ['bureau', 'encadrant', 'admin'] },
       ]
     },
     { to: '/pedagogy', text: 'Support Pédagogique', roles: ['adherent', 'encadrant', 'admin'] },

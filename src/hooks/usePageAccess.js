@@ -58,6 +58,7 @@ export const usePageAccess = (pagePath = null) => {
       '/database-schema': ['admin'],
       '/bureau-management': ['bureau', 'admin'],
       '/attendance-recap': ['bureau', 'encadrant', 'admin'],
+      '/comments-summary': ['bureau', 'encadrant', 'admin'],
       '/passeport-validation': ['encadrant', 'admin']
     };
 
@@ -123,7 +124,7 @@ const getDefaultPageConfig = (path) => {
   }
 
   // Pages réservées aux encadrants
-  const encadrantPages = ['/passeport-validation', '/attendance-recap'];
+  const encadrantPages = ['/passeport-validation', '/attendance-recap', '/comments-summary'];
 
   if (encadrantPages.some(p => path.startsWith(p))) {
     return { to: path, roles: ['bureau', 'encadrant', 'admin'] };
@@ -158,6 +159,7 @@ const getDefaultNavConfig = () => {
 
     // Pages réservées aux encadrants et admins
     { to: '/attendance-recap', text: 'Récapitulatif Présence', roles: ['bureau', 'encadrant', 'admin'] },
+    { to: '/comments-summary', text: 'Récapitulatif Commentaires', roles: ['bureau', 'encadrant', 'admin'] },
     { to: '/passeport-validation', text: 'Validation Passeports', roles: ['encadrant', 'admin'] },
 
     // Pages réservées aux ADMINS uniquement
