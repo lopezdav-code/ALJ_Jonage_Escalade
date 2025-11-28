@@ -802,6 +802,136 @@ const Specifications = () => {
     class secure_members,volunteer_roles_view,competition_stats,member_summary,session_detail,competition_summary,member_details_counts view
     class attendance_summary,member_statistics,pedagogy_sheet_usage matview`;
 
+  // Site pages mindmap diagram
+  const siteMapDiagram = `mindmap
+  root((ALJ Escalade))
+    Actualités
+      Liste des actualités
+        /news
+      Détail actualité
+        /news/:id
+      Créer actualité
+        /news/new
+      Éditer actualité
+        /news/edit/:id
+    Compétitions
+      Liste compétitions
+        /competitions
+      Détail compétition
+        /competitions/detail/:id
+      Créer compétition
+        /competitions/new
+      Éditer compétition
+        /competitions/edit/:id
+      Participants
+        /competitions/participants/:id
+      Résultats
+        /competitions/results/:id
+      Gestion compétitions
+        /competition-management
+      Statistiques
+        Récap inscriptions
+          /inscriptions-summary
+        Résumé compétitions
+          /competitions-summary
+    Membres
+      Liste membres
+        /volunteers
+      Vue membre
+        /member-view/:id
+      Édition membre
+        /member-edit/:id
+      Gestion bureau
+        /bureau-management
+      Autorisations
+        /authorization
+    Planning
+      Planning public
+        /schedule
+      Agenda
+        /agenda
+      Admin planning
+        /schedule/admin
+      Créer créneau
+        /schedule/admin/new
+      Éditer créneau
+        /schedule/admin/edit/:id
+    Sessions
+      Journal sessions
+        /session-log
+      Détail session
+        /session-log/:id
+      Créer session
+        /session-log/new
+      Éditer session
+        /session-log/edit/:id
+      Commentaires
+        /session-log/:id/comments
+      Session live
+        /session-log/:id/live
+      Récap présences
+        /attendance-recap
+      Résumé commentaires
+        /comments-summary
+    Cycles
+      Liste cycles
+        /cycles
+      Détail cycle
+        /cycles/:id
+    Pédagogie
+      Fiches pédagogiques
+        /pedagogy
+      Créer fiche
+        /pedagogy/new
+      Éditer fiche
+        /pedagogy/edit/:id
+      Voir fiche
+        /pedagogy/view/:id
+      Progression exercices
+        /exercise-progress
+    Passeport
+      Guide passeport
+        /passeport-guide
+      Validation
+        /passeport-validation
+      Visualisation
+        /passeport-viewer
+    Administration
+      Dashboard
+        /admin-dashboard
+      Paramètres site
+        /site-settings
+      Utilisateurs
+        /user-roles
+      Permissions
+        /permissions
+      Groupes
+        /groupes/admin
+      Images
+        /image-admin
+      Setup
+        /setup
+    Monitoring
+      Logs connexion
+        /connection-logs
+      Logs accès
+        /access-logs
+    Documentation
+      Schéma BDD
+        /database-schema
+      Gestion BDD
+        /database-management
+      Spécifications
+        /specifications
+    Statistiques
+      Résumé annuel
+        /annual-summary
+    Pages publiques
+      Inscriptions
+        /inscriptions
+      Connexion
+        /login`;
+
   // Filter pages based on search
   const filteredPages = pagesData.filter(page =>
     page.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -979,6 +1109,19 @@ const Specifications = () => {
 
             {/* Pages */}
             <TabsContent value="pages" className="space-y-6">
+              {/* Site Map Mindmap */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Carte du Site</CardTitle>
+                  <CardDescription>
+                    Organisation hiérarchique de toutes les pages de l'application
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <MermaidDiagram diagram={siteMapDiagram} title="Structure des Pages du Site" />
+                </CardContent>
+              </Card>
+
               <Card>
                 <CardHeader>
                   <CardTitle>Toutes les Pages ({pagesData.length})</CardTitle>
