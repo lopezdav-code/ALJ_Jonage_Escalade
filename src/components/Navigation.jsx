@@ -137,11 +137,11 @@ const Navigation = () => {
   const defaultNavLinks = [
     { to: '/news', text: 'Actualités', roles: ['public', 'user', 'adherent', 'bureau', 'encadrant', 'admin'] },
     { to: '/schedule', text: 'Planning', roles: ['public', 'user', 'adherent', 'bureau', 'encadrant', 'admin'] },
-    { to: '/inscriptions', text: 'Inscription', roles: ['public', 'user', 'adherent', 'bureau', 'encadrant', 'admin'] },
+    // { to: '/inscriptions', text: 'Inscription', roles: ['public', 'user', 'adherent', 'bureau', 'encadrant', 'admin'] },
     // { to: '/contact', text: 'Contact', roles: ['public', 'user', 'adherent', 'bureau', 'encadrant', 'admin'] },
     { to: '/volunteers', text: 'Adhérent', roles: ['adherent', 'bureau', 'encadrant', 'admin'] },
     { to: '/competitions', text: 'Compétitions', roles: ['adherent', 'bureau', 'encadrant', 'admin'] },
-    { to: '/agenda', text: 'Agenda', roles: ['public', 'user', 'adherent', 'bureau', 'encadrant', 'admin'] },
+    // { to: '/agenda', text: 'Agenda', roles: ['public', 'user', 'adherent', 'bureau', 'encadrant', 'admin'] },
     {
       to: '/session-log',
       text: 'Séances',
