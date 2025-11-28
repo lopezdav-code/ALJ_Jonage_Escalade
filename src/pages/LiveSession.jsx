@@ -109,7 +109,7 @@ const LiveSession = () => {
                 if (data.students && data.students.length > 0) {
                     const { data: commentsData, error: commentsError } = await supabase
                         .from('student_session_comments')
-                        .select('member_id, comment')
+                        .select('member_id, comment, max_moulinette, max_tete')
                         .eq('session_id', id)
                         .in('member_id', data.students);
 
@@ -117,7 +117,11 @@ const LiveSession = () => {
 
                     const commentsMap = {};
                     (commentsData || []).forEach(c => {
-                        commentsMap[c.member_id] = c.comment;
+                        commentsMap[c.member_id] = {
+                            comment: c.comment,
+                            max_moulinette: c.max_moulinette,
+                            max_tete: c.max_tete
+                        };
                     });
                     setComments(commentsMap);
                 }
@@ -181,63 +185,82 @@ const LiveSession = () => {
         }
     };
 
-    // Update comment with debounce
-    const updateComment = useCallback((memberId, comment) => {
-        setComments(prev => ({ ...prev, [memberId]: comment }));
+    // Use a Ref to keep track of the latest comments state for saving
+    const commentsRef = React.useRef(comments);
+    useEffect(() => {
+        commentsRef.current = comments;
+    }, [comments]);
 
-        // Clear existing timer
-        if (saveTimer) {
-            clearTimeout(saveTimer);
-        }
+    const saveComment = useCallback(async (memberId) => {
+        const data = commentsRef.current[memberId];
+        if (!data) return;
 
-        // Set new timer for auto-save
-        const timer = setTimeout(async () => {
-            try {
-                setSaving(true);
+        try {
+            setSaving(true);
 
-                if (comment.trim() === '') {
-                    // Delete comment if empty
-                    const { error } = await supabase
-                        .from('student_session_comments')
-                        .delete()
-                        .eq('session_id', id)
-                        .eq('member_id', memberId);
+            const isEmpty = !data.comment?.trim() && !data.max_moulinette && !data.max_tete;
 
-                    if (error) throw error;
-                } else {
-                    // Upsert comment
-                    const { error } = await supabase
-                        .from('student_session_comments')
-                        .upsert({
-                            session_id: id,
-                            member_id: memberId,
-                            comment: comment
-                        }, {
-                            onConflict: 'session_id,member_id'
-                        });
+            if (isEmpty) {
+                // Delete comment if empty
+                const { error } = await supabase
+                    .from('student_session_comments')
+                    .delete()
+                    .eq('session_id', id)
+                    .eq('member_id', memberId);
 
-                    if (error) throw error;
-                }
+                if (error) throw error;
+            } else {
+                // Upsert comment
+                const { error } = await supabase
+                    .from('student_session_comments')
+                    .upsert({
+                        session_id: id,
+                        member_id: memberId,
+                        comment: data.comment,
+                        max_moulinette: data.max_moulinette,
+                        max_tete: data.max_tete
+                    }, {
+                        onConflict: 'session_id,member_id'
+                    });
 
-                toast({
-                    title: 'Sauvegardé',
-                    description: 'Commentaire enregistré',
-                    duration: 1500
-                });
-            } catch (err) {
-                console.error('Error saving comment:', err);
-                toast({
-                    title: 'Erreur',
-                    description: 'Impossible de sauvegarder le commentaire',
-                    variant: 'destructive'
-                });
-            } finally {
-                setSaving(false);
+                if (error) throw error;
             }
-        }, 1000); // 1 second debounce
 
+            toast({
+                title: 'Sauvegardé',
+                description: 'Données enregistrées',
+                duration: 1500
+            });
+        } catch (err) {
+            console.error('Error saving comment:', err);
+            toast({
+                title: 'Erreur',
+                description: 'Impossible de sauvegarder',
+                variant: 'destructive'
+            });
+        } finally {
+            setSaving(false);
+        }
+    }, [id, toast]);
+
+    const updateComment = useCallback((memberId, comment, maxMoulinette, maxTete) => {
+        setComments(prev => {
+            const current = prev[memberId] || {};
+            return {
+                ...prev,
+                [memberId]: {
+                    ...current,
+                    comment: comment !== undefined ? comment : current.comment,
+                    max_moulinette: maxMoulinette !== undefined ? maxMoulinette : current.max_moulinette,
+                    max_tete: maxTete !== undefined ? maxTete : current.max_tete
+                }
+            };
+        });
+
+        if (saveTimer) clearTimeout(saveTimer);
+        const timer = setTimeout(() => saveComment(memberId), 1000);
         setSaveTimer(timer);
-    }, [id, saveTimer, toast]);
+    }, [saveTimer, saveComment]);
 
     // Toggle tete_ok status
     const toggleTeteOk = async (memberId) => {
@@ -500,9 +523,39 @@ const LiveSession = () => {
                                                     {member.category}
                                                 </p>
                                             </div>
+
+                                            <div className="grid grid-cols-2 gap-4 mb-3">
+                                                <div>
+                                                    <label className="text-xs text-muted-foreground mb-1 block">Max Moulinette</label>
+                                                    <select
+                                                        className="w-full text-sm border rounded p-1 bg-background"
+                                                        value={comments[member.id]?.max_moulinette || ''}
+                                                        onChange={(e) => updateComment(member.id, undefined, e.target.value, undefined)}
+                                                    >
+                                                        <option value="">-</option>
+                                                        {['4a', '4a+', '4b', '4b+', '4c', '4c+', '5a', '5a+', '5b', '5b+', '5c', '5c+', '6a', '6a+', '6b', '6b+', '6c', '6c+', '7a', '7a+', '7b', '7b+', '7c', '7c+', '8a', '8a+'].map(grade => (
+                                                            <option key={grade} value={grade}>{grade}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                                <div>
+                                                    <label className="text-xs text-muted-foreground mb-1 block">Max En tête</label>
+                                                    <select
+                                                        className="w-full text-sm border rounded p-1 bg-background"
+                                                        value={comments[member.id]?.max_tete || ''}
+                                                        onChange={(e) => updateComment(member.id, undefined, undefined, e.target.value)}
+                                                    >
+                                                        <option value="">-</option>
+                                                        {['4a', '4a+', '4b', '4b+', '4c', '4c+', '5a', '5a+', '5b', '5b+', '5c', '5c+', '6a', '6a+', '6b', '6b+', '6c', '6c+', '7a', '7a+', '7b', '7b+', '7c', '7c+', '8a', '8a+'].map(grade => (
+                                                            <option key={grade} value={grade}>{grade}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                            </div>
+
                                             <Textarea
                                                 placeholder="Ajouter un commentaire..."
-                                                value={comments[member.id] || ''}
+                                                value={comments[member.id]?.comment || ''}
                                                 onChange={(e) => updateComment(member.id, e.target.value)}
                                                 className="min-h-[80px]"
                                             />

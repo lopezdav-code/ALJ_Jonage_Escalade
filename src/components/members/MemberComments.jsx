@@ -25,6 +25,8 @@ const MemberComments = ({ memberId }) => {
                     .select(`
             id,
             comment,
+            max_moulinette,
+            max_tete,
             created_at,
             session:sessions (
               id,
@@ -170,6 +172,12 @@ const MemberComments = ({ memberId }) => {
 
                             <div className="bg-muted/30 p-3 rounded-md border-l-4 border-primary">
                                 <p className="whitespace-pre-wrap">{item.comment}</p>
+                                {(item.max_moulinette || item.max_tete) && (
+                                    <div className="mt-2 flex gap-2">
+                                        {item.max_moulinette && <Badge variant="secondary">Max Moulinette: {item.max_moulinette}</Badge>}
+                                        {item.max_tete && <Badge variant="secondary">Max Tête: {item.max_tete}</Badge>}
+                                    </div>
+                                )}
                             </div>
 
                             {item.session?.instructorsList?.length > 0 && (

@@ -117,7 +117,7 @@ const CommentsSummary = () => {
       if (sessionIds.length > 0 && memberIds.length > 0) {
         const { data: comments, error: commentsError } = await supabase
           .from('student_session_comments')
-          .select('session_id, member_id, comment')
+          .select('session_id, member_id, comment, max_moulinette, max_tete')
           .in('session_id', sessionIds)
           .in('member_id', memberIds);
 
@@ -133,6 +133,8 @@ const CommentsSummary = () => {
             const session = sessionsArray.find(s => s.id === c.session_id);
             return {
               comment: c.comment,
+              max_moulinette: c.max_moulinette,
+              max_tete: c.max_tete,
               date: session?.date,
               sessionId: c.session_id
             };
@@ -340,6 +342,12 @@ const CommentsSummary = () => {
                                     <span className="text-muted-foreground ml-2">
                                       ({new Date(c.date).toLocaleDateString('fr-FR')})
                                     </span>
+                                    {(c.max_moulinette || c.max_tete) && (
+                                      <span className="ml-2 flex gap-2">
+                                        {c.max_moulinette && <Badge variant="outline" className="text-xs">Moulinette: {c.max_moulinette}</Badge>}
+                                        {c.max_tete && <Badge variant="outline" className="text-xs">Tête: {c.max_tete}</Badge>}
+                                      </span>
+                                    )}
                                   </Button>
                                 </div>
                               </li>
