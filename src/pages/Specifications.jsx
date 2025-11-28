@@ -711,6 +711,97 @@ const Specifications = () => {
 
     sessions ||--o{ student_session_comments : has`;
 
+  // Diagram for database views
+  const viewsDiagram = `flowchart TB
+    subgraph Tables["📊 Tables de base"]
+        members[(members)]
+        sessions[(sessions)]
+        schedules[(schedules)]
+        cycles[(cycles)]
+        competitions[(competitions)]
+        competition_participants[(competition_participants)]
+        passeport_validations[(passeport_validations)]
+        student_session_comments[(student_session_comments)]
+        pedagogy_sheets[(pedagogy_sheets)]
+        exercises[(exercises)]
+        member_schedule[(member_schedule)]
+    end
+
+    subgraph NormalViews["👁️ Vues normales (VIEW)"]
+        secure_members[secure_members]
+        volunteer_roles_view[volunteer_roles_view]
+        competition_stats[competition_stats]
+        member_summary[member_summary]
+        session_detail[session_detail]
+        competition_summary[competition_summary]
+        member_details_counts[member_details_counts]
+    end
+
+    subgraph MaterializedViews["⚡ Vues matérialisées (MATERIALIZED VIEW)"]
+        attendance_summary[attendance_summary]
+        member_statistics[member_statistics]
+        pedagogy_sheet_usage[pedagogy_sheet_usage]
+    end
+
+    %% Relations pour secure_members
+    members --> secure_members
+
+    %% Relations pour volunteer_roles_view
+    schedules --> volunteer_roles_view
+
+    %% Relations pour competition_stats
+    competition_participants --> competition_stats
+
+    %% Relations pour member_summary
+    members --> member_summary
+    competition_participants --> member_summary
+    competitions --> member_summary
+
+    %% Relations pour session_detail
+    sessions --> session_detail
+    cycles --> session_detail
+    schedules --> session_detail
+    student_session_comments --> session_detail
+
+    %% Relations pour competition_summary
+    competitions --> competition_summary
+    competition_participants --> competition_summary
+    members --> competition_summary
+
+    %% Relations pour member_details_counts
+    members --> member_details_counts
+    sessions --> member_details_counts
+    student_session_comments --> member_details_counts
+    competition_participants --> member_details_counts
+    member_schedule --> member_details_counts
+    schedules --> member_details_counts
+
+    %% Relations pour attendance_summary
+    sessions --> attendance_summary
+    schedules --> attendance_summary
+    cycles --> attendance_summary
+    student_session_comments --> attendance_summary
+
+    %% Relations pour member_statistics
+    members --> member_statistics
+    sessions --> member_statistics
+    competition_participants --> member_statistics
+    passeport_validations --> member_statistics
+    student_session_comments --> member_statistics
+
+    %% Relations pour pedagogy_sheet_usage
+    pedagogy_sheets --> pedagogy_sheet_usage
+    exercises --> pedagogy_sheet_usage
+
+    %% Styling
+    classDef table fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    classDef view fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px
+    classDef matview fill:#fff3e0,stroke:#e65100,stroke-width:2px
+
+    class members,sessions,schedules,cycles,competitions,competition_participants,passeport_validations,student_session_comments,pedagogy_sheets,exercises,member_schedule table
+    class secure_members,volunteer_roles_view,competition_stats,member_summary,session_detail,competition_summary,member_details_counts view
+    class attendance_summary,member_statistics,pedagogy_sheet_usage matview`;
+
   // Filter pages based on search
   const filteredPages = pagesData.filter(page =>
     page.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -975,7 +1066,60 @@ const Specifications = () => {
                 </CardHeader>
                 <CardContent className="space-y-6">
                   {/* Database diagram */}
-                  <MermaidDiagram diagram={databaseDiagram} title="Diagramme des Relations" />
+                  <MermaidDiagram diagram={databaseDiagram} title="Diagramme des Relations entre Tables" />
+
+                  <Separator />
+
+                  {/* Views diagram */}
+                  <MermaidDiagram diagram={viewsDiagram} title="Diagramme des Vues et Tables Sources" />
+
+                  {/* Views documentation */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold">Vues de la Base de Données</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Les vues permettent d'optimiser les requêtes en pré-calculant des jointures complexes ou en agrégeant des données fréquemment utilisées.
+                    </p>
+
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <Card className="border-l-4 border-l-green-500">
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-base flex items-center gap-2">
+                            <Badge variant="outline" className="bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300">VIEW</Badge>
+                            Vues normales
+                          </CardTitle>
+                          <CardDescription>Calculées à la volée à chaque requête</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-2 text-sm">
+                          <div><strong>secure_members</strong> - Vue sécurisée avec masquage RLS du nom</div>
+                          <div><strong>volunteer_roles_view</strong> - Rôles bénévoles (ouvreur/encadrant)</div>
+                          <div><strong>competition_stats</strong> - Nombre de participants par compétition</div>
+                          <div><strong>member_summary</strong> - Membres avec contacts et compétitions pré-joints</div>
+                          <div><strong>session_detail</strong> - Sessions avec cycles et schedules pré-joints</div>
+                          <div><strong>competition_summary</strong> - Compétitions avec statistiques de participation</div>
+                          <div><strong>member_details_counts</strong> - Comptages pour les détails des membres</div>
+                        </CardContent>
+                      </Card>
+
+                      <Card className="border-l-4 border-l-orange-500">
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-base flex items-center gap-2">
+                            <Badge variant="outline" className="bg-orange-50 text-orange-700 dark:bg-orange-950 dark:text-orange-300">MATERIALIZED</Badge>
+                            Vues matérialisées
+                          </CardTitle>
+                          <CardDescription>Données pré-calculées, rafraîchissement périodique requis</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-2 text-sm">
+                          <div><strong>attendance_summary</strong> - Statistiques de présence par session</div>
+                          <div><strong>member_statistics</strong> - Statistiques globales par membre (sessions, compétitions, validations)</div>
+                          <div><strong>pedagogy_sheet_usage</strong> - Statistiques d'utilisation des fiches pédagogiques</div>
+                          <Separator className="my-2" />
+                          <div className="text-xs text-muted-foreground italic">
+                            Rafraîchissement via: <code className="bg-muted px-1 rounded">refresh_all_materialized_views()</code>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  </div>
 
                   <Separator />
 
