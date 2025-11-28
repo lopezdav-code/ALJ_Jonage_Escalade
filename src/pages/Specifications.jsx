@@ -802,135 +802,177 @@ const Specifications = () => {
     class secure_members,volunteer_roles_view,competition_stats,member_summary,session_detail,competition_summary,member_details_counts view
     class attendance_summary,member_statistics,pedagogy_sheet_usage matview`;
 
-  // Site pages mindmap diagram
-  const siteMapDiagram = `mindmap
-  root((ALJ Escalade))
-    Actualités
-      Liste des actualités
-        /news
-      Détail actualité
-        /news/:id
-      Créer actualité
-        /news/new
-      Éditer actualité
-        /news/edit/:id
-    Compétitions
-      Liste compétitions
-        /competitions
-      Détail compétition
-        /competitions/detail/:id
-      Créer compétition
-        /competitions/new
-      Éditer compétition
-        /competitions/edit/:id
-      Participants
-        /competitions/participants/:id
-      Résultats
-        /competitions/results/:id
-      Gestion compétitions
-        /competition-management
-      Statistiques
-        Récap inscriptions
-          /inscriptions-summary
-        Résumé compétitions
-          /competitions-summary
-    Membres
-      Liste membres
-        /volunteers
-      Vue membre
-        /member-view/:id
-      Édition membre
-        /member-edit/:id
-      Gestion bureau
-        /bureau-management
-      Autorisations
-        /authorization
-    Planning
-      Planning public
-        /schedule
-      Agenda
-        /agenda
-      Admin planning
-        /schedule/admin
-      Créer créneau
-        /schedule/admin/new
-      Éditer créneau
-        /schedule/admin/edit/:id
-    Sessions
-      Journal sessions
-        /session-log
-      Détail session
-        /session-log/:id
-      Créer session
-        /session-log/new
-      Éditer session
-        /session-log/edit/:id
-      Commentaires
-        /session-log/:id/comments
-      Session live
-        /session-log/:id/live
-      Récap présences
-        /attendance-recap
-      Résumé commentaires
-        /comments-summary
-    Cycles
-      Liste cycles
-        /cycles
-      Détail cycle
-        /cycles/:id
-    Pédagogie
-      Fiches pédagogiques
-        /pedagogy
-      Créer fiche
-        /pedagogy/new
-      Éditer fiche
-        /pedagogy/edit/:id
-      Voir fiche
-        /pedagogy/view/:id
-      Progression exercices
-        /exercise-progress
-    Passeport
-      Guide passeport
-        /passeport-guide
-      Validation
-        /passeport-validation
-      Visualisation
-        /passeport-viewer
-    Administration
-      Dashboard
-        /admin-dashboard
-      Paramètres site
-        /site-settings
-      Utilisateurs
-        /user-roles
-      Permissions
-        /permissions
-      Groupes
-        /groupes/admin
-      Images
-        /image-admin
-      Setup
-        /setup
-    Monitoring
-      Logs connexion
-        /connection-logs
-      Logs accès
-        /access-logs
-    Documentation
-      Schéma BDD
-        /database-schema
-      Gestion BDD
-        /database-management
-      Spécifications
-        /specifications
-    Statistiques
-      Résumé annuel
-        /annual-summary
-    Pages publiques
-      Inscriptions
-        /inscriptions
-      Connexion
-        /login`;
+  // Site pages - individual section diagrams for better readability
+  const siteMapNews = `flowchart LR
+    subgraph news["📰 ACTUALITÉS"]
+        direction TB
+        N1["Liste actualités<br/>/news"]
+        N2["Détail<br/>/news/:id"]
+        N3["Créer<br/>/news/new"]
+        N4["Éditer<br/>/news/edit/:id"]
+        N1 --> N2
+        N1 --> N3
+        N2 --> N4
+    end
+    style news fill:#e3f2fd,stroke:#1976d2,stroke-width:2px`;
+
+  const siteMapCompetitions = `flowchart LR
+    subgraph comp["🏆 COMPÉTITIONS"]
+        direction TB
+        C1["Liste compétitions<br/>/competitions"]
+        C2["Détail<br/>/competitions/detail/:id"]
+        C3["Créer/Éditer<br/>/competitions/new"]
+        C4["Participants<br/>/competitions/participants/:id"]
+        C5["Résultats<br/>/competitions/results/:id"]
+        C6["Gestion<br/>/competition-management"]
+
+        subgraph stats["📊 Statistiques"]
+            S1["Inscriptions<br/>/inscriptions-summary"]
+            S2["Résumé<br/>/competitions-summary"]
+        end
+
+        C1 --> C2
+        C2 --> C4
+        C2 --> C5
+        C1 --> C3
+        C1 --> C6
+        C6 --> stats
+    end
+    style comp fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+    style stats fill:#ffe0b2,stroke:#ef6c00,stroke-width:1px`;
+
+  const siteMapMembers = `flowchart LR
+    subgraph memb["👥 MEMBRES"]
+        direction TB
+        M1["Liste membres<br/>/volunteers"]
+        M2["Vue membre<br/>/member-view/:id"]
+        M3["Édition<br/>/member-edit/:id"]
+        M4["Bureau<br/>/bureau-management"]
+        M5["Autorisations<br/>/authorization"]
+
+        M1 --> M2
+        M2 --> M3
+        M1 --> M4
+        M1 --> M5
+    end
+    style memb fill:#e8f5e9,stroke:#388e3c,stroke-width:2px`;
+
+  const siteMapPlanning = `flowchart LR
+    subgraph plan["📅 PLANNING"]
+        direction TB
+        P1["Planning public<br/>/schedule"]
+        P2["Agenda<br/>/agenda"]
+        P3["Admin<br/>/schedule/admin"]
+        P4["Créer créneau<br/>/schedule/admin/new"]
+        P5["Éditer<br/>/schedule/admin/edit/:id"]
+
+        P1 --> P3
+        P3 --> P4
+        P3 --> P5
+        P1 -.-> P2
+    end
+    style plan fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px`;
+
+  const siteMapSessions = `flowchart LR
+    subgraph sess["🎯 SESSIONS & ENTRAÎNEMENTS"]
+        direction TB
+        SE1["Journal<br/>/session-log"]
+        SE2["Détail<br/>/session-log/:id"]
+        SE3["Créer/Éditer<br/>/session-log/new"]
+        SE4["Commentaires<br/>/session-log/:id/comments"]
+        SE5["Live<br/>/session-log/:id/live"]
+
+        subgraph recap["📋 Récaps"]
+            R1["Présences<br/>/attendance-recap"]
+            R2["Commentaires<br/>/comments-summary"]
+        end
+
+        SE1 --> SE2
+        SE2 --> SE4
+        SE2 --> SE5
+        SE1 --> SE3
+        SE1 --> recap
+    end
+    style sess fill:#e0f2f1,stroke:#00796b,stroke-width:2px
+    style recap fill:#b2dfdb,stroke:#00695c,stroke-width:1px`;
+
+  const siteMapPedagogy = `flowchart LR
+    subgraph peda["📚 PÉDAGOGIE"]
+        direction TB
+
+        subgraph cycles["🔄 Cycles"]
+            CY1["Liste<br/>/cycles"]
+            CY2["Détail<br/>/cycles/:id"]
+            CY1 --> CY2
+        end
+
+        subgraph fiches["📝 Fiches"]
+            F1["Liste<br/>/pedagogy"]
+            F2["Créer<br/>/pedagogy/new"]
+            F3["Éditer<br/>/pedagogy/edit/:id"]
+            F4["Voir<br/>/pedagogy/view/:id"]
+            F1 --> F2
+            F1 --> F4
+            F4 --> F3
+        end
+
+        subgraph passeport["🎖️ Passeport"]
+            PA1["Guide<br/>/passeport-guide"]
+            PA2["Validation<br/>/passeport-validation"]
+            PA3["Visualisation<br/>/passeport-viewer"]
+            PA1 --> PA2
+            PA2 --> PA3
+        end
+
+        EX["Progression<br/>/exercise-progress"]
+
+        fiches --> EX
+    end
+    style peda fill:#fce4ec,stroke:#c2185b,stroke-width:2px
+    style cycles fill:#f8bbd9,stroke:#ad1457,stroke-width:1px
+    style fiches fill:#f8bbd9,stroke:#ad1457,stroke-width:1px
+    style passeport fill:#f8bbd9,stroke:#ad1457,stroke-width:1px`;
+
+  const siteMapAdmin = `flowchart LR
+    subgraph admin["⚙️ ADMINISTRATION"]
+        direction TB
+        A1["Dashboard<br/>/admin-dashboard"]
+        A2["Paramètres<br/>/site-settings"]
+        A3["Utilisateurs<br/>/user-roles"]
+        A4["Permissions<br/>/permissions"]
+        A5["Groupes<br/>/groupes/admin"]
+        A6["Images<br/>/image-admin"]
+        A7["Setup<br/>/setup"]
+
+        subgraph logs["📊 Monitoring"]
+            L1["Connexions<br/>/connection-logs"]
+            L2["Accès<br/>/access-logs"]
+        end
+
+        subgraph docs["📖 Documentation"]
+            D1["Schéma BDD<br/>/database-schema"]
+            D2["Gestion BDD<br/>/database-management"]
+            D3["Specs<br/>/specifications"]
+        end
+
+        A1 --> A2
+        A1 --> A3
+        A3 --> A4
+        A1 --> logs
+        A1 --> docs
+    end
+    style admin fill:#ffebee,stroke:#c62828,stroke-width:2px
+    style logs fill:#ffcdd2,stroke:#b71c1c,stroke-width:1px
+    style docs fill:#ffcdd2,stroke:#b71c1c,stroke-width:1px`;
+
+  const siteMapPublic = `flowchart LR
+    subgraph pub["🌐 PAGES PUBLIQUES"]
+        direction LR
+        PU1["Inscriptions<br/>/inscriptions"]
+        PU2["Connexion<br/>/login"]
+        PU3["Résumé annuel<br/>/annual-summary"]
+    end
+    style pub fill:#e8eaf6,stroke:#3f51b5,stroke-width:2px`;
 
   // Filter pages based on search
   const filteredPages = pagesData.filter(page =>
@@ -1109,16 +1151,54 @@ const Specifications = () => {
 
             {/* Pages */}
             <TabsContent value="pages" className="space-y-6">
-              {/* Site Map Mindmap */}
+              {/* Site Map - Organized by sections */}
               <Card>
                 <CardHeader>
                   <CardTitle>Carte du Site</CardTitle>
                   <CardDescription>
-                    Organisation hiérarchique de toutes les pages de l'application
+                    Organisation des pages par fonctionnalité - Chaque section montre les flux de navigation
                   </CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <MermaidDiagram diagram={siteMapDiagram} title="Structure des Pages du Site" />
+                <CardContent className="space-y-6">
+                  {/* Row 1: News, Competitions */}
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="border rounded-lg p-4 bg-blue-50/50 dark:bg-blue-950/20">
+                      <MermaidDiagram diagram={siteMapNews} />
+                    </div>
+                    <div className="border rounded-lg p-4 bg-orange-50/50 dark:bg-orange-950/20">
+                      <MermaidDiagram diagram={siteMapCompetitions} />
+                    </div>
+                  </div>
+
+                  {/* Row 2: Members, Planning */}
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="border rounded-lg p-4 bg-green-50/50 dark:bg-green-950/20">
+                      <MermaidDiagram diagram={siteMapMembers} />
+                    </div>
+                    <div className="border rounded-lg p-4 bg-purple-50/50 dark:bg-purple-950/20">
+                      <MermaidDiagram diagram={siteMapPlanning} />
+                    </div>
+                  </div>
+
+                  {/* Row 3: Sessions, Pedagogy */}
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="border rounded-lg p-4 bg-teal-50/50 dark:bg-teal-950/20">
+                      <MermaidDiagram diagram={siteMapSessions} />
+                    </div>
+                    <div className="border rounded-lg p-4 bg-pink-50/50 dark:bg-pink-950/20">
+                      <MermaidDiagram diagram={siteMapPedagogy} />
+                    </div>
+                  </div>
+
+                  {/* Row 4: Admin, Public */}
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="border rounded-lg p-4 bg-red-50/50 dark:bg-red-950/20">
+                      <MermaidDiagram diagram={siteMapAdmin} />
+                    </div>
+                    <div className="border rounded-lg p-4 bg-indigo-50/50 dark:bg-indigo-950/20">
+                      <MermaidDiagram diagram={siteMapPublic} />
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
 
