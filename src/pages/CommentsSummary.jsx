@@ -17,6 +17,32 @@ import { Button } from '@/components/ui/button';
 import { formatName } from '@/lib/utils';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
+// Helper function to compare climbing grades
+const compareGrades = (grade1, grade2) => {
+  if (!grade1) return -1;
+  if (!grade2) return 1;
+
+  const grades = ['4a', '4a+', '4b', '4b+', '4c', '4c+', '5a', '5a+', '5b', '5b+', '5c', '5c+',
+    '6a', '6a+', '6b', '6b+', '6c', '6c+', '7a', '7a+', '7b', '7b+', '7c', '7c+',
+    '8a', '8a+', '8b', '8b+', '8c', '8c+'];
+
+  const index1 = grades.indexOf(grade1);
+  const index2 = grades.indexOf(grade2);
+
+  if (index1 === -1) return -1;
+  if (index2 === -1) return 1;
+
+  return index1 - index2;
+};
+
+// Get the maximum grade from an array of grades
+const getMaxGrade = (grades) => {
+  if (!grades || grades.length === 0) return null;
+  return grades.reduce((max, current) => {
+    return compareGrades(current, max) > 0 ? current : max;
+  }, grades[0]);
+};
+
 const CommentsSummary = () => {
   const { loading: authLoading } = useAuth();
   const [schedules, setSchedules] = useState([]);
@@ -142,10 +168,20 @@ const CommentsSummary = () => {
           .filter(c => c.date) // Ne garder que les commentaires avec date valide
           .sort((a, b) => new Date(a.date) - new Date(b.date)); // Ordre chronologique
 
+        // Calculate max grades across all sessions for this member
+        const allMemberData = commentsData.filter(c => c.member_id === member.id);
+        const moulinetteGrades = allMemberData.map(c => c.max_moulinette).filter(Boolean);
+        const teteGrades = allMemberData.map(c => c.max_tete).filter(Boolean);
+
+        const maxMoulinette = getMaxGrade(moulinetteGrades);
+        const maxTete = getMaxGrade(teteGrades);
+
         return {
           member,
           comments: memberComments,
-          totalComments: memberComments.length
+          totalComments: memberComments.length,
+          maxMoulinette,
+          maxTete
         };
       });
 
@@ -293,6 +329,8 @@ const CommentsSummary = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-[200px]">Élève</TableHead>
+                  <TableHead className="w-[120px] text-center">Max Moulinette</TableHead>
+                  <TableHead className="w-[120px] text-center">Max en Tête</TableHead>
                   <TableHead>Commentaires</TableHead>
                   <TableHead className="w-[100px] text-center">Total</TableHead>
                 </TableRow>
@@ -300,7 +338,7 @@ const CommentsSummary = () => {
               <TableBody>
                 {displayedData.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={3} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
                       {searchTerm.trim() ? (
                         <>Aucun élève trouvé pour "{searchTerm}"</>
                       ) : onlyShowWithComments ? (
@@ -311,7 +349,7 @@ const CommentsSummary = () => {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  displayedData.map(({ member, comments, totalComments }) => (
+                  displayedData.map(({ member, comments, totalComments, maxMoulinette, maxTete }) => (
                     <TableRow key={member.id}>
                       <TableCell>
                         <Button
@@ -321,6 +359,20 @@ const CommentsSummary = () => {
                         >
                           {formatName(member.first_name, member.last_name, true)}
                         </Button>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {maxMoulinette ? (
+                          <Badge variant="secondary">{maxMoulinette}</Badge>
+                        ) : (
+                          <span className="text-muted-foreground">-</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {maxTete ? (
+                          <Badge variant="secondary">{maxTete}</Badge>
+                        ) : (
+                          <span className="text-muted-foreground">-</span>
+                        )}
                       </TableCell>
                       <TableCell>
                         {comments.length === 0 ? (
