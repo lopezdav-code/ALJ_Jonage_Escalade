@@ -217,7 +217,14 @@ const MemberView = () => {
         // Fetch bureau info
         const { data: bureauData } = await supabase.from('bureau').select('*').eq('members_id', id).maybeSingle();
 
-        setMember({ ...data, groupInfo, bureauData });
+        // Fetch volunteer roles
+        const { data: volunteerRoles } = await supabase
+          .from('volunteer_roles_view')
+          .select('*')
+          .eq('member_id', id)
+          .maybeSingle();
+
+        setMember({ ...data, groupInfo, bureauData, volunteerRoles });
 
         // Emergency contacts are now pre-joined in the view as JSON fields
         const contact1 = data.emergency_contact_1 || null;
@@ -432,15 +439,27 @@ const MemberView = () => {
               <CardTitle className="text-3xl mb-2">
                 {member.first_name} {member.last_name}
               </CardTitle>
-              {member.bureauData ? (
-                <Badge variant="secondary" className="text-base">
-                  {member.bureauData.role} {member.bureauData.sub_role || ''}
-                </Badge>
-              ) : member.groupInfo ? (
-                <Badge variant="secondary" className="text-base">
-                  {member.groupInfo.category}
-                </Badge>
-              ) : null}
+              <div className="flex flex-wrap gap-2">
+                {member.bureauData ? (
+                  <Badge variant="secondary" className="text-base">
+                    {member.bureauData.role} {member.bureauData.sub_role || ''}
+                  </Badge>
+                ) : member.groupInfo ? (
+                  <Badge variant="secondary" className="text-base">
+                    {member.groupInfo.category}
+                  </Badge>
+                ) : null}
+                {member.volunteerRoles && member.volunteerRoles.is_ouvreur && (
+                  <Badge className="text-base bg-purple-100 text-purple-800 hover:bg-purple-200 border-none">
+                    Ouvreur
+                  </Badge>
+                )}
+                {member.volunteerRoles && member.volunteerRoles.is_encadrant && (
+                  <Badge className="text-base bg-orange-100 text-orange-800 hover:bg-orange-200 border-none">
+                    Encadrant
+                  </Badge>
+                )}
+              </div>
             </div>
           </div>
         </CardHeader>

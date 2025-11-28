@@ -147,7 +147,7 @@ const AppContent = () => {
           <Route path="/pedagogy/edit/:id" element={<LazyRoute><PedagogyEditor /></LazyRoute>} />
           <Route path="/pedagogy/view/:id" element={<LazyRoute><PedagogyViewer /></LazyRoute>} />
           <Route path="/inscriptions" element={<LazyRoute><Inscriptions /></LazyRoute>} />
-          <Route path="/contact" element={<Contact />} />
+          {/* <Route path="/contact" element={<Contact />} /> */}
           <Route path="/site-settings" element={<LazyRoute><SiteSettings /></LazyRoute>} />
           <Route path="/annual-summary" element={<LazyRoute><AnnualSummary /></LazyRoute>} />
           <Route path="/admin-dashboard" element={<LazyRoute><AdminDashboard /></LazyRoute>} />

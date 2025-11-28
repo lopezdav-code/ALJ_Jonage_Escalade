@@ -42,7 +42,7 @@ const NAV_PAGES = [
   { to: '/news', text: 'Actualités' },
   { to: '/schedule', text: 'Planning' },
   { to: '/inscriptions', text: 'Inscription' },
-  { to: '/contact', text: 'Contact' },
+  // { to: '/contact', text: 'Contact' },
   { to: '/agenda', text: 'Agenda' },
   { to: '/volunteers', text: 'Adhérents' },
   { to: '/competitions', text: 'Compétitions' },

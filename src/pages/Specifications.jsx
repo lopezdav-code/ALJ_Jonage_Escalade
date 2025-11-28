@@ -165,7 +165,7 @@ const Specifications = () => {
     },
     {
       name: "Contact",
-      route: "/contact",
+      // route: "/contact",
       description: "Page de contact publique avec formulaire et carte",
       auth: "Public",
       tables: [],
@@ -928,8 +928,8 @@ const Specifications = () => {
                                 </div>
                                 <Badge variant={
                                   page.auth === "Public" ? "secondary" :
-                                  page.auth === "Admin" ? "destructive" :
-                                  "default"
+                                    page.auth === "Admin" ? "destructive" :
+                                      "default"
                                 }>
                                   {page.auth}
                                 </Badge>

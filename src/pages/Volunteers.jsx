@@ -2,10 +2,9 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import { supabase } from '@/lib/customSupabaseClient';
-import MemberImage from '@/components/MemberImage';
 import VolunteerQuiz from '@/components/VolunteerQuiz';
 import { Button } from '@/components/ui/button';
-import { Info, Loader2, Pencil, Eye, Shield, Star, Mail, Phone, Award, Gavel, Scale, Flag, Check, Users, List } from 'lucide-react';
+import { Info, Loader2, Shield, Star, Mail, Phone, Award, Gavel, Scale, Flag, Check } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
@@ -13,6 +12,9 @@ import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { useMemberViewPermissions } from '@/hooks/useMemberViewPermissions';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
+import VolunteerRow from '@/components/volunteers/VolunteerRow';
+import GroupedVolunteersView from '@/components/volunteers/GroupedVolunteersView';
+import RoleFilteredVolunteersView from '@/components/volunteers/RoleFilteredVolunteersView';
 
 // Placeholder for brevetColors - adapt if needed
 const brevetColors = {
@@ -20,64 +22,6 @@ const brevetColors = {
   'Animateur SAE': 'bg-green-500',
   'Moniteur Escalade': 'bg-red-500',
 };
-
-const VolunteerRow = React.memo(({ member, onEdit, onView, isEmergencyContact, showGroupDetails, canEdit, canView }) => {
-  const hasEmergencyContact = !!(member.emergency_contact_1_id || member.emergency_contact_2_id);
-  return (
-    <tr className="border-b">
-      <td className="p-2">
-        <MemberImage member={member} />
-      </td>
-      <td className="p-2">{member.first_name}</td>
-      <td className="p-2">{member.last_name}</td>
-      {showGroupDetails && (
-        <td className="p-2">
-          <div className="text-sm">
-            {member.groupInfo && (
-              <>
-                {member.groupInfo.sous_category && <div>{member.groupInfo.sous_category}</div>}
-                {member.groupInfo.Groupe_schedule && <div className="text-xs text-muted-foreground">{member.groupInfo.Groupe_schedule}</div>}
-              </>
-            )}
-            {member.bureauInfo && member.bureauInfo.role && (
-              <div className="font-medium text-blue-600">
-                {member.bureauInfo.role} {member.bureauInfo.sub_role}
-              </div>
-            )}
-          </div>
-        </td>
-      )}
-      <td className="p-2">
-        <div className="flex items-center gap-2">
-          {hasEmergencyContact && <Shield className="h-5 w-5 text-blue-500" title="A un contact d'urgence" />}
-          {isEmergencyContact && <Star className="h-5 w-5 text-yellow-500" title="Est un contact d'urgence" />}
-          {member.sexe === 'H' && <span className="font-bold text-blue-600" title="Homme">♂</span>}
-          {member.sexe === 'F' && <span className="font-bold text-pink-600" title="Femme">♀</span>}
-          {!!member.email && <Mail className="h-4 w-4 text-slate-500" title="Email renseigné" />}
-          {!!member.phone && <Phone className="h-4 w-4 text-slate-500" title="Téléphone renseigné" />}
-          {member.brevet_federaux && member.brevet_federaux.length > 0 && <Award className="h-4 w-4 text-green-500" title="A des brevets fédéraux" />}
-        </div>
-      </td>
-      <td className="p-2">
-        <div className="flex items-center gap-1">
-          {canView && (
-            <Button variant="ghost" size="icon" onClick={() => onView(member)} title="Voir le détail">
-              <Eye className="h-4 w-4" />
-            </Button>
-          )}
-          {canEdit && (
-            <Button variant="ghost" size="icon" onClick={() => onEdit(member)} title="Modifier">
-              <Pencil className="h-4 w-4" />
-            </Button>
-          )}
-        </div>
-      </td>
-    </tr>
-  );
-}, (prevProps, nextProps) => {
-  return prevProps.member.id === nextProps.member.id;
-});
-VolunteerRow.displayName = 'VolunteerRow';
 
 const BrevetDefinitionDialog = ({ brevetName, definition }) => (
   <Dialog>
@@ -105,83 +49,6 @@ const BrevetDefinitionDialog = ({ brevetName, definition }) => (
   </Dialog>
 );
 BrevetDefinitionDialog.displayName = 'BrevetDefinitionDialog';
-
-const GroupedVolunteersView = ({ members, canEdit, canViewDetail, emergencyContactIds, navigate, activeTab }) => {
-  const [activeFilter, setActiveFilter] = useState('all');
-
-  const membersBySubGroup = useMemo(() => {
-    return members.reduce((acc, member) => {
-      const subGroup = member.groupInfo?.sous_category || 'Sans sous-groupe';
-      if (!acc[subGroup]) {
-        acc[subGroup] = [];
-      }
-      acc[subGroup].push(member);
-      return acc;
-    }, {});
-  }, [members]);
-
-  const subGroups = useMemo(() => Object.keys(membersBySubGroup).sort(), [membersBySubGroup]);
-
-  const filteredMembers = useMemo(() => {
-    if (activeFilter === 'all') return members;
-    return membersBySubGroup[activeFilter] || [];
-  }, [members, membersBySubGroup, activeFilter]);
-
-  return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap gap-2">
-        <Button
-          variant={activeFilter === 'all' ? "default" : "outline"}
-          size="sm"
-          onClick={() => setActiveFilter('all')}
-          className="rounded-full"
-        >
-          Tous ({members.length})
-        </Button>
-        {subGroups.map(subGroup => (
-          <Button
-            key={subGroup}
-            variant={activeFilter === subGroup ? "default" : "outline"}
-            size="sm"
-            onClick={() => setActiveFilter(subGroup)}
-            className="rounded-full"
-          >
-            {subGroup} ({membersBySubGroup[subGroup].length})
-          </Button>
-        ))}
-      </div>
-
-      <div className="overflow-x-auto border rounded-md">
-        <table className="w-full border-collapse">
-          <thead>
-            <tr className="border-b bg-muted/50">
-              <th className="text-left p-2 font-medium">Photo</th>
-              <th className="text-left p-2 font-medium">Prénom</th>
-              <th className="text-left p-2 font-medium">Nom</th>
-              <th className="text-left p-2 font-medium">Groupe</th>
-              <th className="text-left p-2 font-medium">Info</th>
-              {(canEdit || canViewDetail) && <th className="text-left p-2 font-medium">Actions</th>}
-            </tr>
-          </thead>
-          <tbody>
-            {filteredMembers.map((member) => (
-              <VolunteerRow
-                key={member.id}
-                member={member}
-                onEdit={(member) => navigate(`/member-edit/${member.id}`, { state: { fromTab: activeTab } })}
-                onView={(member) => navigate(`/member-view/${member.id}`, { state: { fromTab: activeTab } })}
-                isEmergencyContact={emergencyContactIds.has(member.id)}
-                showGroupDetails={true}
-                canEdit={canEdit}
-                canView={canViewDetail}
-              />
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-};
 
 const Volunteers = () => {
   const [members, setMembers] = useState([]);
@@ -230,11 +97,16 @@ const Volunteers = () => {
       const { data: bureauData } = await supabase.from('bureau').select('*');
       const bureauMap = (bureauData || []).reduce((acc, b) => ({ ...acc, [b.members_id]: b }), {});
 
+      // Fetch volunteer roles from view
+      const { data: volunteerRolesData } = await supabase.from('volunteer_roles_view').select('*');
+      const volunteerRolesMap = (volunteerRolesData || []).reduce((acc, r) => ({ ...acc, [r.member_id]: r }), {});
+
       // Merge
       const mergedMembers = (membersData || []).map(m => ({
         ...m,
         groupInfo: m.groupe_id ? groupsMap[m.groupe_id] : null,
-        bureauInfo: bureauMap[m.id] || null
+        bureauInfo: bureauMap[m.id] || null,
+        volunteerRoles: volunteerRolesMap[m.id] || { is_ouvreur: false, is_encadrant: false }
       }));
 
       setMembers(mergedMembers || []);
@@ -426,7 +298,16 @@ const Volunteers = () => {
 
             return (
               <TabsContent key={title} value={title} className="mt-6">
-                {shouldGroup ? (
+                {title === 'Bénévole' ? (
+                  <RoleFilteredVolunteersView
+                    members={currentTabMembers}
+                    canEdit={canEdit}
+                    canViewDetail={canViewDetail}
+                    emergencyContactIds={emergencyContactIds}
+                    navigate={navigate}
+                    activeTab={activeTab}
+                  />
+                ) : shouldGroup ? (
                   <GroupedVolunteersView
                     members={currentTabMembers}
                     canEdit={canEdit}
@@ -538,3 +419,4 @@ const Volunteers = () => {
 };
 
 export default Volunteers;
+

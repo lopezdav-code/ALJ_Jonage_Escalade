@@ -30,7 +30,7 @@ const ChangePasswordDialog = ({ isOpen, onClose }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (newPassword !== confirmPassword) {
       toast({
         title: "Erreur",
@@ -61,7 +61,7 @@ const ChangePasswordDialog = ({ isOpen, onClose }) => {
         title: "Succès",
         description: "Votre mot de passe a été modifié avec succès.",
       });
-      
+
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
@@ -138,7 +138,7 @@ const Navigation = () => {
     { to: '/news', text: 'Actualités', roles: ['public', 'user', 'adherent', 'bureau', 'encadrant', 'admin'] },
     { to: '/schedule', text: 'Planning', roles: ['public', 'user', 'adherent', 'bureau', 'encadrant', 'admin'] },
     { to: '/inscriptions', text: 'Inscription', roles: ['public', 'user', 'adherent', 'bureau', 'encadrant', 'admin'] },
-    { to: '/contact', text: 'Contact', roles: ['public', 'user', 'adherent', 'bureau', 'encadrant', 'admin'] },
+    // { to: '/contact', text: 'Contact', roles: ['public', 'user', 'adherent', 'bureau', 'encadrant', 'admin'] },
     { to: '/volunteers', text: 'Adhérent', roles: ['adherent', 'bureau', 'encadrant', 'admin'] },
     { to: '/competitions', text: 'Compétitions', roles: ['adherent', 'bureau', 'encadrant', 'admin'] },
     { to: '/agenda', text: 'Agenda', roles: ['public', 'user', 'adherent', 'bureau', 'encadrant', 'admin'] },
@@ -158,7 +158,7 @@ const Navigation = () => {
     { to: '/pedagogy', text: 'Support Pédagogique', roles: ['adherent', 'encadrant', 'admin'] },
     { to: '/admin-dashboard', text: 'Administration', roles: ['admin', 'bureau'] },
   ];
-  
+
   const [navLinks, setNavLinks] = useState(defaultNavLinks);
 
   // Chargement de la configuration depuis la base de données
@@ -220,9 +220,9 @@ const Navigation = () => {
               if (link.subMenu) {
                 // Filtrer les sous-menus selon les rôles
                 const filteredSubMenu = link.subMenu.filter(subLink => subLink.roles.includes(userRole));
-                
+
                 if (filteredSubMenu.length === 0) return null;
-                
+
                 return (
                   <DropdownMenu key={link.to}>
                     <DropdownMenuTrigger className="text-sm font-medium transition-colors hover:text-primary text-muted-foreground">
@@ -238,7 +238,7 @@ const Navigation = () => {
                   </DropdownMenu>
                 );
               }
-              
+
               return (
                 <NavLink key={link.to} to={link.to} className={({ isActive }) => `text-sm font-medium transition-colors hover:text-primary ${isActive ? 'text-primary' : 'text-muted-foreground'}`}>
                   {link.text}
@@ -251,11 +251,11 @@ const Navigation = () => {
             {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                   <Button variant="ghost" size="sm" className="flex items-center gap-2">
-                     <User className="h-4 w-4" />
-                     <span className="hidden sm:inline">{profile?.members ? formatName(profile.members.first_name, profile.members.last_name, false) : user.email}</span>
-                     {profile?.role && <Badge variant="outline" className="hidden sm:inline-flex">{profile.role}</Badge>}
-                   </Button>
+                  <Button variant="ghost" size="sm" className="flex items-center gap-2">
+                    <User className="h-4 w-4" />
+                    <span className="hidden sm:inline">{profile?.members ? formatName(profile.members.first_name, profile.members.last_name, false) : user.email}</span>
+                    {profile?.role && <Badge variant="outline" className="hidden sm:inline-flex">{profile.role}</Badge>}
+                  </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuLabel>Mon Compte</DropdownMenuLabel>
@@ -351,15 +351,15 @@ const Navigation = () => {
                   </NavLink>
                 );
               })}
-               {!user && <Button onClick={() => { closeMenu(); navigate('/login'); }} variant="outline">Connexion</Button>}
+              {!user && <Button onClick={() => { closeMenu(); navigate('/login'); }} variant="outline">Connexion</Button>}
             </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      <ChangePasswordDialog 
-        isOpen={isChangePasswordOpen} 
-        onClose={() => setIsChangePasswordOpen(false)} 
+      <ChangePasswordDialog
+        isOpen={isChangePasswordOpen}
+        onClose={() => setIsChangePasswordOpen(false)}
       />
     </>
   );
