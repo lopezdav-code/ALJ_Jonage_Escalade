@@ -64,6 +64,7 @@ const ExerciseProgress = lazy(() => import('@/pages/ExerciseProgress'));
 const AuthorizationManagement = lazy(() => import('@/pages/AuthorizationManagement'));
 const Specifications = lazy(() => import('@/pages/Specifications'));
 const CompetitionManagement = lazy(() => import('@/pages/CompetitionManagement'));
+const HelloAsso = lazy(() => import('@/pages/HelloAsso'));
 
 import { AuthProvider, useAuth } from '@/contexts/SupabaseAuthContext';
 import { ConfigProvider } from '@/contexts/ConfigContext';
@@ -175,6 +176,7 @@ const AppContent = () => {
           <Route path="/exercise-progress" element={<LazyRoute><ExerciseProgress /></LazyRoute>} />
           <Route path="/specifications" element={<LazyRoute><Specifications /></LazyRoute>} />
           <Route path="/competition-management" element={<LazyRoute><CompetitionManagement /></LazyRoute>} />
+          <Route path="/helloasso" element={<LazyRoute><HelloAsso /></LazyRoute>} />
         </Routes>
       </main>
       <Footer />

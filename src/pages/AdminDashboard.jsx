@@ -86,6 +86,17 @@ const AdminDashboard = () => {
       iconColor: 'text-green-600',
       badge: 'Nouveau',
     },
+    {
+      id: 'helloasso',
+      title: '🎫 HelloAsso',
+      description: 'Connexion API V5, récupération des commandes et sauvegarde',
+      route: '/helloasso',
+      roles: ['admin'],
+      icon: LogIn, // Using LogIn as a placeholder, could be Ticket or similar if available
+      color: 'bg-pink-50 border-pink-200 hover:bg-pink-100',
+      iconColor: 'text-pink-600',
+      badge: 'API V5',
+    },
   ];
 
   if (authLoading) {

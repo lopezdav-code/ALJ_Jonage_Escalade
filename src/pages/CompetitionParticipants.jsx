@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { Trash2, Users, Trophy, UserCheck, Search, Save, X } from 'lucide-react';
+import { Trash2, Users, Trophy, UserCheck, Search, Save, X, CheckCircle2 } from 'lucide-react';
 import { supabase } from '@/lib/customSupabaseClient';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -120,7 +120,7 @@ const CompetitionParticipants = () => {
 
     // Filtrer par terme de recherche
     if (searchTerm) {
-      filtered = filtered.filter(member => 
+      filtered = filtered.filter(member =>
         `${member.first_name} ${member.last_name}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
         member.category?.toLowerCase().includes(searchTerm.toLowerCase())
       );
@@ -128,7 +128,7 @@ const CompetitionParticipants = () => {
 
     // Filtrer par catégories sélectionnées
     if (selectedCategories.length > 0) {
-      filtered = filtered.filter(member => 
+      filtered = filtered.filter(member =>
         selectedCategories.includes(member.category)
       );
     }
@@ -163,7 +163,7 @@ const CompetitionParticipants = () => {
       if (error) throw error;
 
       toast({ title: "Succès", description: `${selectedMembers.length} participant(s) ajouté(s).` });
-      
+
       // Recharger les participants
       const { data: participantsData } = await supabase
         .from('competition_participants')
@@ -210,8 +210,8 @@ const CompetitionParticipants = () => {
 
   // Toggle catégorie
   const toggleCategory = (category) => {
-    setSelectedCategories(prev => 
-      prev.includes(category) 
+    setSelectedCategories(prev =>
+      prev.includes(category)
         ? prev.filter(cat => cat !== category)
         : [...prev, category]
     );
@@ -228,8 +228,8 @@ const CompetitionParticipants = () => {
 
   // Toggle sélection membre
   const toggleMemberSelection = (memberId) => {
-    setSelectedMembers(prev => 
-      prev.includes(memberId) 
+    setSelectedMembers(prev =>
+      prev.includes(memberId)
         ? prev.filter(id => id !== memberId)
         : [...prev, memberId]
     );
@@ -284,23 +284,28 @@ const CompetitionParticipants = () => {
               <div className="space-y-2">
                 {roleParticipants.map(participant => (
                   <div key={participant.id} className="flex items-center justify-between p-3 border rounded-lg">
-                    <div 
+                    <div
                       className="flex items-center gap-3 cursor-pointer flex-1"
                       onClick={() => participant.members?.id && showMemberDetails(participant.members.id)}
                     >
-                      <div>
-                        <p className="font-medium">
-                          {participant.members?.last_name && participant.members?.first_name 
+                      <div className="flex-1">
+                        <p className="font-medium flex items-center gap-2">
+                          {participant.members?.last_name && participant.members?.first_name
                             ? `${participant.members.last_name.toUpperCase()} ${participant.members.first_name}`
                             : `Membre non trouvé (ID: ${participant.member_id})`
                           }
+                          {participant.statut === 'Processed' && (
+                            <CheckCircle2
+                              className="w-4 h-4 text-green-600"
+                              title="Paiement effectué"
+                            />
+                          )}
                         </p>
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <span className={`text-xs px-2 py-1 rounded font-medium ${
-                            participant.members?.sexe === 'Femme' 
-                              ? 'bg-pink-100 text-pink-700 border border-pink-200' 
-                              : 'bg-blue-100 text-blue-700 border border-blue-200'
-                          }`}>
+                          <span className={`text-xs px-2 py-1 rounded font-medium ${participant.members?.sexe === 'Femme'
+                            ? 'bg-pink-100 text-pink-700 border border-pink-200'
+                            : 'bg-blue-100 text-blue-700 border border-blue-200'
+                            }`}>
                             {participant.members?.category || 'Catégorie inconnue'}
                           </span>
                           <span>•</span>
@@ -489,42 +494,41 @@ const CompetitionParticipants = () => {
                   {filteredMembers
                     .sort((a, b) => a.last_name.localeCompare(b.last_name))
                     .map((member, index) => (
-                    <div
-                      key={member.id}
-                      className={`grid grid-cols-12 gap-4 p-3 border-b cursor-pointer transition-colors ${
-                        selectedMembers.includes(member.id)
+                      <div
+                        key={member.id}
+                        className={`grid grid-cols-12 gap-4 p-3 border-b cursor-pointer transition-colors ${selectedMembers.includes(member.id)
                           ? 'bg-blue-50 border-blue-200'
                           : index % 2 === 0 ? 'bg-white' : 'bg-gray-50'
-                      } hover:bg-blue-100`}
-                      onClick={() => toggleMemberSelection(member.id)}
-                    >
-                      <div className="col-span-1 flex items-center justify-center">
-                        <input
-                          type="checkbox"
-                          checked={selectedMembers.includes(member.id)}
-                          onChange={() => toggleMemberSelection(member.id)}
-                          className="w-4 h-4"
-                        />
+                          } hover:bg-blue-100`}
+                        onClick={() => toggleMemberSelection(member.id)}
+                      >
+                        <div className="col-span-1 flex items-center justify-center">
+                          <input
+                            type="checkbox"
+                            checked={selectedMembers.includes(member.id)}
+                            onChange={() => toggleMemberSelection(member.id)}
+                            className="w-4 h-4"
+                          />
+                        </div>
+                        <div className="col-span-3 font-medium">
+                          {member.last_name?.toUpperCase() || ''}
+                        </div>
+                        <div className="col-span-3">
+                          {member.first_name || ''}
+                        </div>
+                        <div className="col-span-2 text-sm text-muted-foreground">
+                          {member.licence || '-'}
+                        </div>
+                        <div className="col-span-3">
+                          <Badge
+                            variant={selectedMembers.includes(member.id) ? "default" : "outline"}
+                            className="text-xs"
+                          >
+                            {member.category || '-'}
+                          </Badge>
+                        </div>
                       </div>
-                      <div className="col-span-3 font-medium">
-                        {member.last_name?.toUpperCase() || ''}
-                      </div>
-                      <div className="col-span-3">
-                        {member.first_name || ''}
-                      </div>
-                      <div className="col-span-2 text-sm text-muted-foreground">
-                        {member.licence || '-'}
-                      </div>
-                      <div className="col-span-3">
-                        <Badge
-                          variant={selectedMembers.includes(member.id) ? "default" : "outline"}
-                          className="text-xs"
-                        >
-                          {member.category || '-'}
-                        </Badge>
-                      </div>
-                    </div>
-                  ))}
+                    ))}
                 </div>
               </div>
             )}
