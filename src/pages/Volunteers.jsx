@@ -315,6 +315,7 @@ const Volunteers = () => {
                     emergencyContactIds={emergencyContactIds}
                     navigate={navigate}
                     activeTab={activeTab}
+                    showLicense={title.includes('Compétition')}
                   />
                 ) : (
                   <div className="overflow-x-auto border rounded-md">

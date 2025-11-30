@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import VolunteerRow from './VolunteerRow';
 
-const GroupedVolunteersView = ({ members, canEdit, canViewDetail, emergencyContactIds, navigate, activeTab }) => {
+const GroupedVolunteersView = ({ members, canEdit, canViewDetail, emergencyContactIds, navigate, activeTab, showLicense }) => {
     const [activeFilter, setActiveFilter] = useState('all');
 
     const membersBySubGroup = useMemo(() => {
@@ -55,6 +55,7 @@ const GroupedVolunteersView = ({ members, canEdit, canViewDetail, emergencyConta
                             <th className="text-left p-2 font-medium">Prénom</th>
                             <th className="text-left p-2 font-medium">Nom</th>
                             <th className="text-left p-2 font-medium">Groupe</th>
+                            {showLicense && <th className="text-left p-2 font-medium">N° Licence</th>}
                             <th className="text-left p-2 font-medium">Info</th>
                             {(canEdit || canViewDetail) && <th className="text-left p-2 font-medium">Actions</th>}
                         </tr>
@@ -70,6 +71,7 @@ const GroupedVolunteersView = ({ members, canEdit, canViewDetail, emergencyConta
                                 showGroupDetails={true}
                                 canEdit={canEdit}
                                 canView={canViewDetail}
+                                showLicense={showLicense}
                             />
                         ))}
                     </tbody>

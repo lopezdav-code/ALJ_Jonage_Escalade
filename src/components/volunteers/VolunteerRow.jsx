@@ -3,7 +3,7 @@ import MemberImage from '@/components/MemberImage';
 import { Button } from '@/components/ui/button';
 import { Shield, Star, Mail, Phone, Award, Eye, Pencil } from 'lucide-react';
 
-const VolunteerRow = React.memo(({ member, onEdit, onView, isEmergencyContact, showGroupDetails, canEdit, canView }) => {
+const VolunteerRow = React.memo(({ member, onEdit, onView, isEmergencyContact, showGroupDetails, canEdit, canView, showLicense }) => {
     const hasEmergencyContact = !!(member.emergency_contact_1_id || member.emergency_contact_2_id);
     return (
         <tr className="border-b">
@@ -40,6 +40,13 @@ const VolunteerRow = React.memo(({ member, onEdit, onView, isEmergencyContact, s
                                 )}
                             </div>
                         )}
+                    </div>
+                </td>
+            )}
+            {showLicense && (
+                <td className="p-2">
+                    <div className="text-sm font-mono text-slate-600">
+                        {member.licence || '-'}
                     </div>
                 </td>
             )}
