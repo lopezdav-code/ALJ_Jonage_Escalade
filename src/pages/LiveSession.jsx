@@ -91,7 +91,7 @@ const LiveSession = () => {
 
                 let query = supabase
                     .from('members')
-                    .select('id, first_name, last_name, sexe, category, tete_ok')
+                    .select('id, first_name, last_name, sexe, category, tete_ok, photo_url')
                     .order('last_name')
                     .order('first_name');
 
