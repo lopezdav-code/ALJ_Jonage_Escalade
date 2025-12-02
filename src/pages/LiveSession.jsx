@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/customSupabaseClient';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
@@ -10,6 +10,7 @@ import { Textarea } from '../components/ui/textarea';
 import { Checkbox } from '../components/ui/checkbox';
 import { BackButton } from '../components/ui/back-button';
 import { useToast } from '../components/ui/use-toast';
+import { uploadMemberPhoto } from '../lib/memberStorageUtils';
 import {
     Calendar,
     Clock,
@@ -19,7 +20,8 @@ import {
     CheckCircle2,
     XCircle,
     Loader2,
-    Trophy
+    Trophy,
+    Camera
 } from 'lucide-react';
 
 const LiveSession = () => {
@@ -35,9 +37,13 @@ const LiveSession = () => {
     const [comments, setComments] = useState({});
     const [teteOkStatus, setTeteOkStatus] = useState({});
     const [saving, setSaving] = useState(false);
+    const [uploadingPhoto, setUploadingPhoto] = useState({});
 
     // Debounce timer for auto-save
     const [saveTimer, setSaveTimer] = useState(null);
+
+    // Refs pour les inputs file (un par membre)
+    const fileInputRefs = useRef({});
 
     // Fetch session details
     useEffect(() => {
@@ -295,6 +301,63 @@ const LiveSession = () => {
         }
     };
 
+    // Capture photo for a member
+    const handlePhotoCapture = async (memberId, file) => {
+        if (!file) return;
+
+        const member = members.find(m => m.id === memberId);
+        if (!member) return;
+
+        try {
+            setUploadingPhoto(prev => ({ ...prev, [memberId]: true }));
+
+            // Upload vers Supabase Storage
+            const result = await uploadMemberPhoto(file, {
+                first_name: member.first_name,
+                last_name: member.last_name
+            });
+
+            if (!result.success) {
+                throw new Error(result.error);
+            }
+
+            // Mettre à jour le membre dans la BDD
+            const { error: updateError } = await supabase
+                .from('members')
+                .update({ photo_url: result.url })
+                .eq('id', memberId);
+
+            if (updateError) throw updateError;
+
+            // Mettre à jour le state local
+            setMembers(prev => prev.map(m =>
+                m.id === memberId ? { ...m, photo_url: result.url } : m
+            ));
+
+            toast({
+                title: 'Photo enregistrée',
+                description: `Photo de ${member.first_name} ${member.last_name} mise à jour`,
+                duration: 2000
+            });
+        } catch (err) {
+            console.error('Error uploading photo:', err);
+            toast({
+                title: 'Erreur',
+                description: `Impossible d'enregistrer la photo: ${err.message}`,
+                variant: 'destructive'
+            });
+        } finally {
+            setUploadingPhoto(prev => ({ ...prev, [memberId]: false }));
+        }
+    };
+
+    // Trigger file input for a specific member
+    const triggerPhotoCapture = (memberId) => {
+        if (fileInputRefs.current[memberId]) {
+            fileInputRefs.current[memberId].click();
+        }
+    };
+
     if (loading) {
         return (
             <div className="container mx-auto p-4 flex items-center justify-center min-h-screen">
@@ -458,37 +521,74 @@ const LiveSession = () => {
                             <div className="space-y-2">
                                 {members.map(member => {
                                     const isPresent = presentIds.has(member.id);
+                                    const isUploading = uploadingPhoto[member.id];
                                     return (
-                                        <button
-                                            key={member.id}
-                                            onClick={() => toggleAttendance(member.id)}
-                                            className={`w-full p-4 rounded-lg border-2 transition-all text-left ${isPresent
-                                                ? 'border-green-500 bg-green-50 dark:bg-green-950'
-                                                : 'border-red-300 bg-red-50 dark:bg-red-950'
-                                                }`}
-                                        >
-                                            <div className="flex items-center justify-between">
-                                                <div className="flex items-center gap-3">
-                                                    {isPresent ? (
-                                                        <CheckCircle2 className="w-6 h-6 text-green-600 dark:text-green-400" />
-                                                    ) : (
-                                                        <XCircle className="w-6 h-6 text-red-600 dark:text-red-400" />
-                                                    )}
-                                                    <div>
-                                                        <p className="font-medium">
-                                                            {member.first_name} {member.last_name}
-                                                        </p>
-                                                        <p className="text-xs text-muted-foreground">
-                                                            {member.sexe && `${member.sexe} • `}
-                                                            {member.category}
-                                                        </p>
+                                        <div key={member.id} className="relative">
+                                            <button
+                                                onClick={() => toggleAttendance(member.id)}
+                                                className={`w-full p-4 rounded-lg border-2 transition-all text-left ${isPresent
+                                                    ? 'border-green-500 bg-green-50 dark:bg-green-950'
+                                                    : 'border-red-300 bg-red-50 dark:bg-red-950'
+                                                    }`}
+                                            >
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex items-center gap-3">
+                                                        {isPresent ? (
+                                                            <CheckCircle2 className="w-6 h-6 text-green-600 dark:text-green-400" />
+                                                        ) : (
+                                                            <XCircle className="w-6 h-6 text-red-600 dark:text-red-400" />
+                                                        )}
+                                                        <div>
+                                                            <p className="font-medium">
+                                                                {member.first_name} {member.last_name}
+                                                            </p>
+                                                            <p className="text-xs text-muted-foreground">
+                                                                {member.sexe && `${member.sexe} • `}
+                                                                {member.category}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <Button
+                                                            size="sm"
+                                                            variant="outline"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                triggerPhotoCapture(member.id);
+                                                            }}
+                                                            disabled={isUploading}
+                                                            className="flex items-center gap-1"
+                                                        >
+                                                            {isUploading ? (
+                                                                <Loader2 className="w-4 h-4 animate-spin" />
+                                                            ) : (
+                                                                <Camera className="w-4 h-4" />
+                                                            )}
+                                                            <span className="hidden sm:inline">Photo</span>
+                                                        </Button>
+                                                        <Badge variant={isPresent ? 'default' : 'secondary'}>
+                                                            {isPresent ? 'Présent' : 'Absent'}
+                                                        </Badge>
                                                     </div>
                                                 </div>
-                                                <Badge variant={isPresent ? 'default' : 'secondary'}>
-                                                    {isPresent ? 'Présent' : 'Absent'}
-                                                </Badge>
-                                            </div>
-                                        </button>
+                                            </button>
+                                            {/* Input file caché pour capture photo */}
+                                            <input
+                                                ref={el => fileInputRefs.current[member.id] = el}
+                                                type="file"
+                                                accept="image/*"
+                                                capture="environment"
+                                                style={{ display: 'none' }}
+                                                onChange={(e) => {
+                                                    const file = e.target.files?.[0];
+                                                    if (file) {
+                                                        handlePhotoCapture(member.id, file);
+                                                        // Reset input pour permettre de reprendre la même photo
+                                                        e.target.value = '';
+                                                    }
+                                                }}
+                                            />
+                                        </div>
                                     );
                                 })}
                             </div>
