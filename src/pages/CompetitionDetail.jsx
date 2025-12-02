@@ -73,6 +73,7 @@ const CompetitionDetail = () => {
       setCompetition(compData);
       setFormData({
         ...compData,
+        numero: compData.numero || '',
         disciplines: compData.disciplines || [],
         categories: compData.categories || [],
         photo_gallery: compData.photo_gallery || []
@@ -213,6 +214,7 @@ const CompetitionDetail = () => {
       const dataToSave = {
         name: formData.name || '',
         short_title: formData.short_title || '',
+        numero: formData.numero || null,
         start_date: formData.start_date || '',
         end_date: formData.end_date || null,
         location: formData.location || '',
@@ -226,7 +228,8 @@ const CompetitionDetail = () => {
         details_format: formData.details_format || null,
         details_schedule: formData.details_schedule || null,
         image_url: formData.image_url || null,
-        photo_gallery: Array.isArray(formData.photo_gallery) && formData.photo_gallery.length > 0 ? formData.photo_gallery : []
+        photo_gallery: Array.isArray(formData.photo_gallery) && formData.photo_gallery.length > 0 ? formData.photo_gallery : [],
+        helloasso_widget_url: formData.helloasso_widget_url || null
       };
 
       const { error } = await supabase
@@ -259,6 +262,7 @@ const CompetitionDetail = () => {
   const handleCancelEdit = () => {
     setFormData({
       ...competition,
+      numero: competition.numero || '',
       disciplines: competition.disciplines || [],
       categories: competition.categories || [],
       photo_gallery: competition.photo_gallery || []
@@ -494,6 +498,14 @@ const CompetitionDetail = () => {
                       />
                     </div>
                     <div>
+                      <Label htmlFor="numero">Numéro officiel</Label>
+                      <Input
+                        id="numero"
+                        value={formData.numero}
+                        onChange={(e) => handleChange('numero', e.target.value)}
+                      />
+                    </div>
+                    <div>
                       <Label>Image principale</Label>
                       <div className="flex items-center gap-2">
                         <Input
@@ -544,6 +556,9 @@ const CompetitionDetail = () => {
                     <h1 className="text-3xl font-bold">{dataToDisplay.name}</h1>
                     {dataToDisplay.short_title && (
                       <p className="text-lg text-primary font-medium">{dataToDisplay.short_title}</p>
+                    )}
+                    {dataToDisplay.numero && (
+                      <p className="text-sm text-muted-foreground">Numéro: {dataToDisplay.numero}</p>
                     )}
                   </>
                 )}
@@ -760,6 +775,20 @@ const CompetitionDetail = () => {
                     rows={3}
                   />
                 </div>
+
+                <div>
+                  <Label htmlFor="helloasso_widget_url">URL du widget HelloAsso (iframe src)</Label>
+                  <Input
+                    id="helloasso_widget_url"
+                    type="url"
+                    value={formData.helloasso_widget_url || ''}
+                    onChange={(e) => handleChange('helloasso_widget_url', e.target.value)}
+                    placeholder="https://www.helloasso-sandbox.com/..."
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Copiez l'URL "src" de l'iframe fournie par HelloAsso.
+                  </p>
+                </div>
               </>
             ) : (
               <>
@@ -798,6 +827,38 @@ const CompetitionDetail = () => {
                     </p>
                   </div>
                 )}
+
+                {dataToDisplay.helloasso_widget_url && (
+                  <div className="mt-6">
+                    <Card className="border-2 border-primary/20">
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                          <ExternalLink className="w-5 h-5 text-primary" />
+                          Inscription en ligne
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <iframe
+                          id="haWidget"
+                          allowTransparency="true"
+                          src={dataToDisplay.helloasso_widget_url}
+                          style={{ width: '100%', border: 'none', minHeight: '600px' }}
+                          onLoad={() => {
+                            window.addEventListener('message', function (e) {
+                              if (e.data && e.data.height) {
+                                const haWidgetElement = document.getElementById('haWidget');
+                                if (haWidgetElement) {
+                                  haWidgetElement.style.height = e.data.height + 'px';
+                                }
+                              }
+                            });
+                          }}
+                        ></iframe>
+                      </CardContent>
+                    </Card>
+                  </div>
+                )}
+
 
                 {dataToDisplay.more_info_link && (
                   <div className="p-3 bg-orange-50 rounded-md border border-orange-200">

@@ -107,6 +107,7 @@ const CompetitionCard = ({ comp, participants, showAdminFeatures, onEdit, onDele
         {comp.image_url && <img src={comp.image_url} alt={comp.name} className="w-24 h-24 object-cover rounded-md" />}
         <div className="flex-1">
           <CardTitle className="text-2xl mb-1">{comp.name}</CardTitle>
+          {comp.numero && <p className="text-sm text-muted-foreground mb-1">Numéro: {comp.numero}</p>}
           <p className="text-md text-muted-foreground">{new Date(comp.start_date).toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
         </div>
       </CardHeader>

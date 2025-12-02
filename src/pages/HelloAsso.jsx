@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
-import { authenticate, getOrders } from '@/services/helloasso';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { authenticate, getOrders, getForms, getFormOrders } from '@/services/helloasso';
 import { supabase } from '@/lib/customSupabaseClient';
-import { Loader2, Save, RefreshCw } from 'lucide-react';
+import { Loader2, Save, RefreshCw, Link, Download } from 'lucide-react';
 
 const HelloAsso = () => {
     const clientId = import.meta.env.VITE_HELLOASSO_CLIENT_ID;
@@ -14,6 +15,8 @@ const HelloAsso = () => {
     const [showDebug, setShowDebug] = useState(true);
     const [loading, setLoading] = useState(false);
     const [orders, setOrders] = useState([]);
+    const [forms, setForms] = useState([]);
+    const [selectedForm, setSelectedForm] = useState("all");
     const [jsonResponse, setJsonResponse] = useState(null);
     const [saving, setSaving] = useState(false);
     const { toast } = useToast();
@@ -24,6 +27,34 @@ const HelloAsso = () => {
         setLogs(prev => [...prev, logMessage]);
     };
 
+    const handleLoadForms = async () => {
+        setLoading(true);
+        try {
+            addLog("Authenticating to fetch forms...");
+            const authData = await authenticate(clientId, clientSecret, addLog);
+
+            addLog("Fetching forms...");
+            const formsData = await getForms(authData.access_token, organizationSlug, addLog);
+
+            setForms(formsData.data || []);
+            addLog(`Loaded ${formsData.data?.length || 0} forms`);
+            toast({
+                title: "Succès",
+                description: `${formsData.data?.length || 0} formulaires chargés.`,
+            });
+        } catch (error) {
+            console.error("Error loading forms:", error);
+            addLog(`ERROR: ${error.message}`);
+            toast({
+                title: "Erreur",
+                description: "Impossible de charger les formulaires.",
+                variant: "destructive",
+            });
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const handleFetchOrders = async () => {
         setLoading(true);
         setLogs([]);
@@ -32,6 +63,7 @@ const HelloAsso = () => {
         addLog(`Client ID: ${clientId ? clientId.substring(0, 8) + '...' : 'NOT SET'}`);
         addLog(`Organization Slug: ${organizationSlug || 'NOT SET'}`);
         addLog(`Client Secret: ${clientSecret ? '***SET***' : 'NOT SET'}`);
+        addLog(`Selected Form: ${selectedForm}`);
 
         try {
             if (!clientId || !clientSecret || !organizationSlug) {
@@ -43,8 +75,32 @@ const HelloAsso = () => {
             addLog("Starting authentication...");
             const authData = await authenticate(clientId, clientSecret, addLog);
 
-            addLog("Fetching orders...");
-            const ordersData = await getOrders(authData.access_token, organizationSlug, 1, 20, addLog);
+            let ordersData;
+            if (selectedForm && selectedForm !== "all") {
+                addLog(`Fetching orders for form: ${selectedForm}`);
+                // selectedForm format expected: "formType/formSlug" or just find it in forms array
+                const form = forms.find(f => f.formSlug === selectedForm);
+                if (form) {
+                    ordersData = await getFormOrders(authData.access_token, organizationSlug, form.formType, form.formSlug, 1, 20, addLog);
+                } else {
+                    // Fallback if selectedForm is just the slug or if forms list wasn't loaded but we have the value
+                    // We might need to store type and slug in the value
+                    // For now, let's assume if it's not in the list, we can't fetch it easily without type
+                    // But wait, the value in SelectItem is just the slug if we set it so.
+                    // Let's make sure we store enough info in the value or lookup.
+                    // If we used "formType::formSlug" as value:
+                    const [type, slug] = selectedForm.split('::');
+                    if (type && slug) {
+                        ordersData = await getFormOrders(authData.access_token, organizationSlug, type, slug, 1, 20, addLog);
+                    } else {
+                        addLog("Form details not found, fetching all orders instead.");
+                        ordersData = await getOrders(authData.access_token, organizationSlug, 1, 20, addLog);
+                    }
+                }
+            } else {
+                addLog("Fetching all orders...");
+                ordersData = await getOrders(authData.access_token, organizationSlug, 1, 20, addLog);
+            }
 
             addLog("Enriching orders with member and competition data...");
             const enrichedOrders = await Promise.all(ordersData.data.map(async (order) => {
@@ -232,20 +288,54 @@ const HelloAsso = () => {
                 <CardHeader>
                     <CardTitle className="flex justify-between items-center">
                         <span>Actions</span>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setShowDebug(!showDebug)}
-                        >
-                            {showDebug ? 'Masquer Debug' : 'Afficher Debug'}
-                        </Button>
+                        <div className="flex gap-2">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setShowDebug(!showDebug)}
+                            >
+                                {showDebug ? 'Masquer Debug' : 'Afficher Debug'}
+                            </Button>
+                        </div>
                     </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                    <Button onClick={handleFetchOrders} disabled={loading}>
-                        {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
-                        Récupérer les commandes
-                    </Button>
+                    <div className="flex flex-col md:flex-row gap-4 items-end">
+                        <div className="w-full md:w-1/3">
+                            <Button
+                                onClick={handleLoadForms}
+                                disabled={loading}
+                                variant="outline"
+                                className="w-full"
+                            >
+                                {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
+                                1. Charger les formulaires
+                            </Button>
+                        </div>
+
+                        <div className="w-full md:w-1/3">
+                            <Select value={selectedForm} onValueChange={setSelectedForm}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Choisir un formulaire" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">Tous les formulaires</SelectItem>
+                                    {forms.map((form) => (
+                                        <SelectItem key={form.formSlug} value={`${form.formType}::${form.formSlug}`}>
+                                            {form.title || form.formSlug}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div className="w-full md:w-1/3">
+                            <Button onClick={handleFetchOrders} disabled={loading} className="w-full">
+                                {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
+                                2. Récupérer les commandes
+                            </Button>
+                        </div>
+                    </div>
 
                     {showDebug && (
                         <div className="space-y-4">

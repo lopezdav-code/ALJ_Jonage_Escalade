@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 
 const CompetitionForm = ({ competition, onSave, onCancel, isSaving }) => {
   const [formData, setFormData] = useState({
-    name: '', short_title: '', start_date: '', end_date: '', location: '',
+    name: '', short_title: '', numero: '', start_date: '', end_date: '', location: '',
     more_info_link: '', niveau: '', nature: '', categories: [], disciplines: [],
     image_url: '', details_format: '', details_description: '', details_schedule: [],
     prix: 0,
@@ -83,6 +83,10 @@ const CompetitionForm = ({ competition, onSave, onCancel, isSaving }) => {
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="short_title" className="text-right">Titre court</Label>
               <Input id="short_title" name="short_title" value={formData.short_title} onChange={handleChange} className="col-span-3" />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="numero" className="text-right">Numéro officiel</Label>
+              <Input id="numero" name="numero" value={formData.numero} onChange={handleChange} className="col-span-3" />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="start_date" className="text-right">Date de début</Label>

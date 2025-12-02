@@ -65,3 +65,59 @@ export const getOrders = async (accessToken, organizationSlug, pageIndex = 1, pa
     throw error;
   }
 };
+
+export const getForms = async (accessToken, organizationSlug, logger = console.log) => {
+  const url = `${HELLOASSO_API_URL}/organizations/${organizationSlug}/forms`;
+
+  logger(`[GET] ${url}`);
+
+  try {
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      logger(`[ERROR] ${response.status} ${JSON.stringify(errorData)}`);
+      throw new Error(errorData.message || 'Failed to fetch forms');
+    }
+
+    logger(`[SUCCESS] Forms fetched`);
+    return response.json();
+  } catch (error) {
+    logger(`[FATAL] Network or other error: ${error.message}`);
+    throw error;
+  }
+};
+
+export const getFormOrders = async (accessToken, organizationSlug, formType, formSlug, pageIndex = 1, pageSize = 20, logger = console.log) => {
+  const url = `${HELLOASSO_API_URL}/organizations/${organizationSlug}/forms/${formType}/${formSlug}/orders?pageIndex=${pageIndex}&pageSize=${pageSize}&withDetails=true`;
+
+  logger(`[GET] ${url}`);
+
+  try {
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      logger(`[ERROR] ${response.status} ${JSON.stringify(errorData)}`);
+      throw new Error(errorData.message || 'Failed to fetch form orders');
+    }
+
+    logger(`[SUCCESS] Form orders fetched`);
+    return response.json();
+  } catch (error) {
+    logger(`[FATAL] Network or other error: ${error.message}`);
+    throw error;
+  }
+};

@@ -39,7 +39,7 @@ const ClubCompetitions = () => {
       // Récupérer les compétitions (sélection optimisée des colonnes)
       const { data: competitionsData, error: competitionsError } = await supabase
         .from('competitions')
-        .select('id, name, short_title, start_date, end_date, status, niveau, nature, disciplines, image_url')
+        .select('id, name, short_title, numero, start_date, end_date, status, niveau, nature, disciplines, image_url')
         .order('start_date', { ascending: false });
 
       if (competitionsError) throw competitionsError;
@@ -234,6 +234,7 @@ const ClubCompetitions = () => {
                 <TableHead className="w-16">Image</TableHead>
                 <TableHead>Nom</TableHead>
                 <TableHead>Titre court</TableHead>
+                <TableHead>Numéro</TableHead>
                 <TableHead>Date</TableHead>
                 <TableHead>Statut</TableHead>
                 <TableHead>Info</TableHead>
@@ -265,6 +266,14 @@ const ClubCompetitions = () => {
                   <TableCell>
                     {comp.short_title ? (
                       <div className="text-sm text-primary">{comp.short_title}</div>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">-</span>
+                    )}
+                  </TableCell>
+
+                  <TableCell>
+                    {comp.numero ? (
+                      <div className="text-sm">{comp.numero}</div>
                     ) : (
                       <span className="text-xs text-muted-foreground">-</span>
                     )}

@@ -328,6 +328,7 @@ const SessionLogDetail = () => {
           .from('sessions')
           .select('id, date')
           .eq('cycle_id', session.cycle_id)
+          .not('date', 'is', null) // Filtrer uniquement les sessions avec une date
           .order('date', { ascending: true });
 
         if (!cycleError && cycleSessions) {

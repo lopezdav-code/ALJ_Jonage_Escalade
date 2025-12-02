@@ -40,6 +40,7 @@ const CompetitionEditor = () => {
   const [formData, setFormData] = useState({
     name: '',
     short_title: '',
+    numero: '',
     start_date: '',
     end_date: '',
     location: '',
@@ -101,6 +102,7 @@ const CompetitionEditor = () => {
       setFormData({
         name: data.name || '',
         short_title: data.short_title || '',
+        numero: data.numero || '',
         start_date: data.start_date || '',
         end_date: data.end_date || '',
         location: data.location || '',
@@ -292,6 +294,7 @@ const CompetitionEditor = () => {
       const dataToSave = {
         name: formData.name || '',
         short_title: formData.short_title || '',
+        numero: formData.numero || null,
         start_date: formData.start_date || '',
         end_date: formData.end_date || null,
         location: formData.location || '',
@@ -416,6 +419,17 @@ const CompetitionEditor = () => {
                 placeholder="Ex: Régional Escalade 2024"
               />
             </div>
+          </div>
+
+          {/* Numéro officiel */}
+          <div>
+            <Label htmlFor="numero">Numéro officiel de la compétition</Label>
+            <Input
+              id="numero"
+              value={formData.numero}
+              onChange={(e) => handleChange('numero', e.target.value)}
+              placeholder="Ex: 2024-RA-001"
+            />
           </div>
           <div>
             <Label>Image principale</Label>

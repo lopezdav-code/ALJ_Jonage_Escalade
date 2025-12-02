@@ -21,7 +21,7 @@ const CompetitionsSummary = () => {
       setLoading(true);
       const { data: competitions, error: competitionsError } = await supabase
         .from('competitions')
-        .select('id, name, location, start_date, disciplines')
+        .select('id, name, numero, location, start_date, disciplines')
         .order('start_date', { ascending: false });
 
       if (competitionsError) {
@@ -119,6 +119,7 @@ const CompetitionsSummary = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead>Compétition</TableHead>
+                  <TableHead>Numéro</TableHead>
                   <TableHead>Date</TableHead>
                   <TableHead>Discipline</TableHead>
                   <TableHead className="text-center">Coachs</TableHead>
@@ -135,6 +136,13 @@ const CompetitionsSummary = () => {
                         <div className="font-semibold">{competition.name}</div>
                         <div className="text-sm text-muted-foreground">{competition.location}</div>
                       </div>
+                    </TableCell>
+                    <TableCell>
+                      {competition.numero ? (
+                        <span className="text-sm">{competition.numero}</span>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">-</span>
+                      )}
                     </TableCell>
                     <TableCell>
                       {new Date(competition.start_date).toLocaleDateString('fr-FR')}
