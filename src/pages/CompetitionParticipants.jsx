@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { Trash2, Users, Trophy, UserCheck, Search, Save, X, CheckCircle2 } from 'lucide-react';
+import { Users, Search, Save, X } from 'lucide-react';
 import { supabase } from '@/lib/customSupabaseClient';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/components/ui/use-toast';
 import { useMemberDetail } from '@/contexts/MemberDetailContext';
+import ParticipantsDisplay from '@/components/ParticipantsDisplay';
 
 const CompetitionParticipants = () => {
   const { id } = useParams();
@@ -164,20 +165,36 @@ const CompetitionParticipants = () => {
 
       toast({ title: "Succès", description: `${selectedMembers.length} participant(s) ajouté(s).` });
 
-      // Recharger les participants
-      const { data: participantsData } = await supabase
+      // Recharger les participants avec le même pattern que le chargement initial
+      const { data: rawParticipants, error: reloadError } = await supabase
         .from('competition_participants')
-        .select(`
-          *,
-          members (*)
-        `)
+        .select('*')
         .eq('competition_id', id)
         .order('role')
-        .order('last_name', { foreignTable: 'members' });
+        .order('created_at');
 
-      setParticipants(participantsData || []);
+      if (reloadError) {
+        console.error('Error reloading participants:', reloadError);
+      } else if (rawParticipants && rawParticipants.length > 0) {
+        const memberIds = rawParticipants.map(p => p.member_id);
+        const { data: membersData, error: membersError } = await supabase
+          .from('secure_members')
+          .select('*')
+          .in('id', memberIds);
+
+        if (membersError) {
+          console.error('Error loading members:', membersError);
+        } else {
+          // Associer les membres aux participants
+          const enrichedParticipants = rawParticipants.map(participant => ({
+            ...participant,
+            members: membersData?.find(member => member.id === participant.member_id) || null
+          }));
+          setParticipants(enrichedParticipants);
+        }
+      }
+
       setSelectedMembers([]);
-      setIsAddDialogOpen(false);
 
     } catch (error) {
       console.error('Error adding participants:', error);
@@ -243,14 +260,6 @@ const CompetitionParticipants = () => {
     return <div className="text-center py-8">Compétition non trouvée.</div>;
   }
 
-  // Grouper les participants par rôle
-  const participantsByRole = participants.reduce((acc, participant) => {
-    const role = participant.role || 'Autre';
-    if (!acc[role]) acc[role] = [];
-    acc[role].push(participant);
-    return acc;
-  }, {});
-
   return (
     <div className="space-y-6">
       {/* En-tête */}
@@ -265,88 +274,24 @@ const CompetitionParticipants = () => {
       </div>
 
       {/* Section Participants */}
-      <h2 className="text-xl font-semibold flex items-center gap-2">
-        <Users className="w-5 h-5" />
-        Participants ({participants.length})
-      </h2>
-
-      {/* Liste des participants par rôle */}
-      <div className="space-y-6">
-        {Object.entries(participantsByRole).map(([role, roleParticipants]) => (
-          <Card key={role}>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                {role === 'Competiteur' ? <Trophy className="w-5 h-5" /> : <UserCheck className="w-5 h-5" />}
-                {role} ({roleParticipants.length})
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                {roleParticipants.map(participant => (
-                  <div key={participant.id} className="flex items-center justify-between p-3 border rounded-lg">
-                    <div
-                      className="flex items-center gap-3 cursor-pointer flex-1"
-                      onClick={() => participant.members?.id && showMemberDetails(participant.members.id)}
-                    >
-                      <div className="flex-1">
-                        <p className="font-medium flex items-center gap-2">
-                          {participant.members?.last_name && participant.members?.first_name
-                            ? `${participant.members.last_name.toUpperCase()} ${participant.members.first_name}`
-                            : `Membre non trouvé (ID: ${participant.member_id})`
-                          }
-                          {participant.statut === 'Processed' && (
-                            <CheckCircle2
-                              className="w-4 h-4 text-green-600"
-                              title="Paiement effectué"
-                            />
-                          )}
-                        </p>
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <span className={`text-xs px-2 py-1 rounded font-medium ${participant.members?.sexe === 'Femme'
-                            ? 'bg-pink-100 text-pink-700 border border-pink-200'
-                            : 'bg-blue-100 text-blue-700 border border-blue-200'
-                            }`}>
-                            {participant.members?.category || 'Catégorie inconnue'}
-                          </span>
-                          <span>•</span>
-                          <span>{participant.members?.sexe || 'Sexe inconnu'}</span>
-                          {participant.ranking && (
-                            <>
-                              <span>•</span>
-                              <Badge variant="outline" className="text-xs">
-                                Classé {participant.ranking}
-                                {participant.nb_competitor && `/${participant.nb_competitor}`}
-                              </Badge>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleRemoveParticipant(participant.id)}
-                      className="text-destructive hover:text-destructive"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-
-        {participants.length === 0 && (
-          <Card>
-            <CardContent className="text-center py-8">
-              <Users className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-              <p className="text-lg font-medium mb-2">Aucun participant</p>
-              <p className="text-muted-foreground">Cette compétition n'a pas encore de participants.</p>
-            </CardContent>
-          </Card>
-        )}
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Users className="w-5 h-5" />
+            Participants ({participants.length})
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ParticipantsDisplay
+            participants={participants}
+            showRemoveButton={true}
+            onRemoveParticipant={handleRemoveParticipant}
+            onParticipantClick={showMemberDetails}
+            compact={false}
+            alwaysShowRemoveButton={true}
+          />
+        </CardContent>
+      </Card>
 
       {/* Section d'ajout de participants */}
       <Card>

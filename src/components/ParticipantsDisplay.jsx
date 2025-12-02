@@ -5,13 +5,14 @@ import { Button } from '@/components/ui/button';
 import { formatName } from '@/lib/utils';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
 
-const ParticipantsDisplay = ({ 
-  participants = [], 
-  showRemoveButton = false, 
-  onRemoveParticipant = null, 
+const ParticipantsDisplay = ({
+  participants = [],
+  showRemoveButton = false,
+  onRemoveParticipant = null,
   onParticipantClick = null,
   onEditRanking = null,
-  compact = false 
+  compact = false,
+  alwaysShowRemoveButton = false
 }) => {
   const { isAdmin } = useAuth();
   
@@ -65,7 +66,7 @@ const ParticipantsDisplay = ({
   const groupedCompetitors = groupCompetitorsByGenderAndCategory(competitors);
 
   // Composant pour afficher une carte de participant
-  const ParticipantCard = ({ participant, showRemove }) => {
+  const ParticipantCard = ({ participant, showRemove, alwaysShowRemove }) => {
     if (!participant.members) {
       return (
         <div className="text-sm text-muted-foreground py-1">
@@ -107,7 +108,7 @@ const ParticipantsDisplay = ({
                 e.stopPropagation();
                 onRemoveParticipant(participant.id);
               }}
-              className="opacity-0 group-hover:opacity-100 transition-opacity"
+              className={alwaysShowRemove ? "transition-opacity" : "opacity-0 group-hover:opacity-100 transition-opacity"}
             >
               <Trash2 className="w-4 h-4 text-destructive" />
             </Button>
@@ -140,10 +141,11 @@ const ParticipantsDisplay = ({
                       <div className="text-xs font-medium text-pink-600 mb-1">{category} ({categoryParticipants.length})</div>
                       <div className="space-y-0">
                         {categoryParticipants.map(participant => (
-                          <ParticipantCard 
-                            key={participant.id} 
-                            participant={participant} 
+                          <ParticipantCard
+                            key={participant.id}
+                            participant={participant}
                             showRemove={showRemoveButton}
+                            alwaysShowRemove={alwaysShowRemoveButton}
                           />
                         ))}
                       </div>
@@ -167,10 +169,11 @@ const ParticipantsDisplay = ({
                       <div className="text-xs font-medium text-blue-600 mb-1">{category} ({categoryParticipants.length})</div>
                       <div className="space-y-0">
                         {categoryParticipants.map(participant => (
-                          <ParticipantCard 
-                            key={participant.id} 
-                            participant={participant} 
+                          <ParticipantCard
+                            key={participant.id}
+                            participant={participant}
                             showRemove={showRemoveButton}
+                            alwaysShowRemove={alwaysShowRemoveButton}
                           />
                         ))}
                       </div>
@@ -202,10 +205,11 @@ const ParticipantsDisplay = ({
               {coaches.length > 0 ? (
                 <div className="border rounded-lg bg-purple-50">
                   {coaches.map(participant => (
-                    <ParticipantCard 
-                      key={participant.id} 
-                      participant={participant} 
+                    <ParticipantCard
+                      key={participant.id}
+                      participant={participant}
                       showRemove={showRemoveButton}
+                      alwaysShowRemove={alwaysShowRemoveButton}
                     />
                   ))}
                 </div>
@@ -222,10 +226,11 @@ const ParticipantsDisplay = ({
               {arbitres.length > 0 ? (
                 <div className="border rounded-lg bg-blue-50">
                   {arbitres.map(participant => (
-                    <ParticipantCard 
-                      key={participant.id} 
-                      participant={participant} 
+                    <ParticipantCard
+                      key={participant.id}
+                      participant={participant}
                       showRemove={showRemoveButton}
+                      alwaysShowRemove={alwaysShowRemoveButton}
                     />
                   ))}
                 </div>
@@ -247,10 +252,11 @@ const ParticipantsDisplay = ({
           
           <div className="border rounded-lg">
             {autreStaff.map(participant => (
-              <ParticipantCard 
-                key={participant.id} 
-                participant={participant} 
+              <ParticipantCard
+                key={participant.id}
+                participant={participant}
                 showRemove={showRemoveButton}
+                alwaysShowRemove={alwaysShowRemoveButton}
               />
             ))}
           </div>
