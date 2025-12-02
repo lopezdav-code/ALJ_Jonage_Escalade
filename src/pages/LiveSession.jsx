@@ -10,7 +10,7 @@ import { Textarea } from '../components/ui/textarea';
 import { Checkbox } from '../components/ui/checkbox';
 import { BackButton } from '../components/ui/back-button';
 import { useToast } from '../components/ui/use-toast';
-import { uploadMemberPhoto } from '../lib/memberStorageUtils';
+import { uploadMemberPhoto, getMemberPhotoUrl } from '../lib/memberStorageUtils';
 import {
     Calendar,
     Clock,
@@ -38,6 +38,7 @@ const LiveSession = () => {
     const [teteOkStatus, setTeteOkStatus] = useState({});
     const [saving, setSaving] = useState(false);
     const [uploadingPhoto, setUploadingPhoto] = useState({});
+    const [memberPhotos, setMemberPhotos] = useState({});
 
     // Debounce timer for auto-save
     const [saveTimer, setSaveTimer] = useState(null);
@@ -110,6 +111,22 @@ const LiveSession = () => {
                     teteStatus[member.id] = member.tete_ok || false;
                 });
                 setTeteOkStatus(teteStatus);
+
+                // Load member photos
+                const photoPromises = (membersData || []).map(async (member) => {
+                    if (member.photo_url) {
+                        const url = await getMemberPhotoUrl(member.photo_url);
+                        return { id: member.id, url };
+                    }
+                    return { id: member.id, url: null };
+                });
+
+                const photoResults = await Promise.all(photoPromises);
+                const photosMap = {};
+                photoResults.forEach(result => {
+                    photosMap[result.id] = result.url;
+                });
+                setMemberPhotos(photosMap);
 
                 // Fetch existing comments
                 if (data.students && data.students.length > 0) {
@@ -334,6 +351,10 @@ const LiveSession = () => {
                 m.id === memberId ? { ...m, photo_url: result.url } : m
             ));
 
+            // Charger et afficher la nouvelle photo
+            const newPhotoUrl = await getMemberPhotoUrl(result.url);
+            setMemberPhotos(prev => ({ ...prev, [memberId]: newPhotoUrl }));
+
             toast({
                 title: 'Photo enregistrée',
                 description: `Photo de ${member.first_name} ${member.last_name} mise à jour`,
@@ -537,6 +558,21 @@ const LiveSession = () => {
                                                             <CheckCircle2 className="w-6 h-6 text-green-600 dark:text-green-400" />
                                                         ) : (
                                                             <XCircle className="w-6 h-6 text-red-600 dark:text-red-400" />
+                                                        )}
+                                                        {/* Photo du membre */}
+                                                        {memberPhotos[member.id] ? (
+                                                            <img
+                                                                src={memberPhotos[member.id]}
+                                                                alt={`${member.first_name} ${member.last_name}`}
+                                                                className="w-12 h-12 rounded-full object-cover border-2 border-border"
+                                                                onError={(e) => {
+                                                                    e.target.style.display = 'none';
+                                                                }}
+                                                            />
+                                                        ) : (
+                                                            <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center text-muted-foreground font-semibold border-2 border-border">
+                                                                {member.first_name[0]}{member.last_name[0]}
+                                                            </div>
                                                         )}
                                                         <div>
                                                             <p className="font-medium">
