@@ -650,14 +650,31 @@ const LiveSession = () => {
                                 <div className="space-y-4">
                                     {presentMembers.map(member => (
                                         <div key={member.id} className="border rounded-lg p-4">
-                                            <div className="mb-2">
-                                                <p className="font-medium">
-                                                    {member.first_name} {member.last_name}
-                                                </p>
-                                                <p className="text-xs text-muted-foreground">
-                                                    {member.sexe && `${member.sexe} • `}
-                                                    {member.category}
-                                                </p>
+                                            <div className="mb-3 flex items-center gap-3">
+                                                {/* Photo du membre */}
+                                                {memberPhotos[member.id] ? (
+                                                    <img
+                                                        src={memberPhotos[member.id]}
+                                                        alt={`${member.first_name} ${member.last_name}`}
+                                                        className="w-12 h-12 rounded-full object-cover border-2 border-border"
+                                                        onError={(e) => {
+                                                            e.target.style.display = 'none';
+                                                        }}
+                                                    />
+                                                ) : (
+                                                    <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center text-muted-foreground font-semibold border-2 border-border">
+                                                        {member.first_name[0]}{member.last_name[0]}
+                                                    </div>
+                                                )}
+                                                <div>
+                                                    <p className="font-medium">
+                                                        {member.first_name} {member.last_name}
+                                                    </p>
+                                                    <p className="text-xs text-muted-foreground">
+                                                        {member.sexe && `${member.sexe} • `}
+                                                        {member.category}
+                                                    </p>
+                                                </div>
                                             </div>
 
                                             <div className="grid grid-cols-2 gap-4 mb-3">
