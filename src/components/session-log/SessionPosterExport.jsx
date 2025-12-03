@@ -201,68 +201,155 @@ const SessionPosterExport = ({
                 </div>
 
                 {/* Exercices */}
-                {session.exercises && session.exercises.length > 0 && (
-                    <SectionCard title="Programme de la séance" icon={Dumbbell} color={COLORS.black}>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                            {session.exercises.map((ex, idx) => (
-                                <div key={idx} style={{
-                                    display: 'flex',
-                                    gap: '15px',
-                                    padding: '10px',
-                                    background: idx % 2 === 0 ? '#f8f9fa' : '#fff',
-                                    borderRadius: '8px',
-                                    border: '1px solid #eee'
-                                }}>
-                                    <div style={{
-                                        background: COLORS.black,
-                                        color: 'white',
-                                        width: '24px',
-                                        height: '24px',
-                                        borderRadius: '50%',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        fontWeight: 'bold',
-                                        fontSize: '0.8rem',
-                                        flexShrink: 0,
-                                        marginTop: '2px'
-                                    }}>
-                                        {idx + 1}
-                                    </div>
-                                    <div style={{ flex: 1 }}>
-                                        <div style={{ fontWeight: 'bold', fontSize: '1rem', marginBottom: '4px' }}>
-                                            {ex.operational_objective || 'Exercice sans titre'}
-                                        </div>
-                                        {ex.time && (
-                                            <div style={{ fontSize: '0.8rem', color: '#666', marginBottom: '4px', display: 'inline-block', background: '#eee', padding: '2px 6px', borderRadius: '4px' }}>
-                                                ⏱ {ex.time}
-                                            </div>
-                                        )}
-                                        <div style={{ fontSize: '0.9rem', color: '#444', lineHeight: '1.4' }}>
-                                            {ex.situation || ex.consigne || ex.organisation}
-                                        </div>
+                {session.exercises && session.exercises.length > 0 && (() => {
+                    // Séparer les exercices d'échauffement des autres
+                    const warmUpExercises = session.exercises.filter(ex =>
+                        ex.pedagogy_sheet?.sheet_type === 'warm_up_exercise'
+                    );
+                    const mainExercises = session.exercises.filter(ex =>
+                        ex.pedagogy_sheet?.sheet_type !== 'warm_up_exercise'
+                    );
 
-                                        {/* Image de l'exercice */}
-                                        {exerciseImages[ex.id] && (
-                                            <div style={{ marginTop: '10px' }}>
-                                                <img
-                                                    src={exerciseImages[ex.id]}
-                                                    alt="Illustration"
-                                                    style={{
-                                                        maxHeight: '150px',
-                                                        maxWidth: '100%',
-                                                        borderRadius: '8px',
-                                                        border: '1px solid #ddd'
-                                                    }}
-                                                />
-                                            </div>
-                                        )}
+                    let exerciseCounter = 0;
+
+                    return (
+                        <>
+                            {/* Exercices d'échauffement groupés */}
+                            {warmUpExercises.length > 0 && (
+                                <SectionCard title="Échauffement" icon={Dumbbell} color={COLORS.brown}>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                                        {warmUpExercises.map((ex, idx) => {
+                                            const currentNumber = ++exerciseCounter;
+                                            return (
+                                                <div key={idx} style={{
+                                                    display: 'flex',
+                                                    gap: '15px',
+                                                    padding: '10px',
+                                                    background: idx % 2 === 0 ? '#fff4e6' : '#fff',
+                                                    borderRadius: '8px',
+                                                    border: '1px solid #e8d5b7'
+                                                }}>
+                                                    <div style={{
+                                                        background: COLORS.brown,
+                                                        color: 'white',
+                                                        width: '24px',
+                                                        height: '24px',
+                                                        borderRadius: '50%',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        fontWeight: 'bold',
+                                                        fontSize: '0.8rem',
+                                                        flexShrink: 0,
+                                                        marginTop: '2px'
+                                                    }}>
+                                                        {currentNumber}
+                                                    </div>
+                                                    <div style={{ flex: 1 }}>
+                                                        <div style={{ fontWeight: 'bold', fontSize: '1rem', marginBottom: '4px' }}>
+                                                            {ex.operational_objective || 'Exercice sans titre'}
+                                                        </div>
+                                                        {ex.time && (
+                                                            <div style={{ fontSize: '0.8rem', color: '#666', marginBottom: '4px', display: 'inline-block', background: '#e8d5b7', padding: '2px 6px', borderRadius: '4px' }}>
+                                                                ⏱ {ex.time}
+                                                            </div>
+                                                        )}
+                                                        <div style={{ fontSize: '0.9rem', color: '#444', lineHeight: '1.4' }}>
+                                                            {ex.situation || ex.consigne || ex.organisation}
+                                                        </div>
+
+                                                        {/* Image de l'exercice */}
+                                                        {exerciseImages[ex.id] && (
+                                                            <div style={{ marginTop: '10px' }}>
+                                                                <img
+                                                                    src={exerciseImages[ex.id]}
+                                                                    alt="Illustration"
+                                                                    style={{
+                                                                        maxHeight: '150px',
+                                                                        maxWidth: '100%',
+                                                                        borderRadius: '8px',
+                                                                        border: '1px solid #ddd'
+                                                                    }}
+                                                                />
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
                                     </div>
-                                </div>
-                            ))}
-                        </div>
-                    </SectionCard>
-                )}
+                                </SectionCard>
+                            )}
+
+                            {/* Exercices principaux */}
+                            {mainExercises.length > 0 && (
+                                <SectionCard title="Programme de la séance" icon={Dumbbell} color={COLORS.black}>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                                        {mainExercises.map((ex, idx) => {
+                                            const currentNumber = ++exerciseCounter;
+                                            return (
+                                                <div key={idx} style={{
+                                                    display: 'flex',
+                                                    gap: '15px',
+                                                    padding: '10px',
+                                                    background: idx % 2 === 0 ? '#f8f9fa' : '#fff',
+                                                    borderRadius: '8px',
+                                                    border: '1px solid #eee'
+                                                }}>
+                                                    <div style={{
+                                                        background: COLORS.black,
+                                                        color: 'white',
+                                                        width: '24px',
+                                                        height: '24px',
+                                                        borderRadius: '50%',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        fontWeight: 'bold',
+                                                        fontSize: '0.8rem',
+                                                        flexShrink: 0,
+                                                        marginTop: '2px'
+                                                    }}>
+                                                        {currentNumber}
+                                                    </div>
+                                                    <div style={{ flex: 1 }}>
+                                                        <div style={{ fontWeight: 'bold', fontSize: '1rem', marginBottom: '4px' }}>
+                                                            {ex.operational_objective || 'Exercice sans titre'}
+                                                        </div>
+                                                        {ex.time && (
+                                                            <div style={{ fontSize: '0.8rem', color: '#666', marginBottom: '4px', display: 'inline-block', background: '#eee', padding: '2px 6px', borderRadius: '4px' }}>
+                                                                ⏱ {ex.time}
+                                                            </div>
+                                                        )}
+                                                        <div style={{ fontSize: '0.9rem', color: '#444', lineHeight: '1.4' }}>
+                                                            {ex.situation || ex.consigne || ex.organisation}
+                                                        </div>
+
+                                                        {/* Image de l'exercice */}
+                                                        {exerciseImages[ex.id] && (
+                                                            <div style={{ marginTop: '10px' }}>
+                                                                <img
+                                                                    src={exerciseImages[ex.id]}
+                                                                    alt="Illustration"
+                                                                    style={{
+                                                                        maxHeight: '150px',
+                                                                        maxWidth: '100%',
+                                                                        borderRadius: '8px',
+                                                                        border: '1px solid #ddd'
+                                                                    }}
+                                                                />
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </SectionCard>
+                            )}
+                        </>
+                    );
+                })()}
 
                 {/* Commentaires */}
                 {session.comment && (
