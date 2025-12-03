@@ -114,7 +114,7 @@ const AppContent = () => {
       <main className="flex-grow w-full mx-auto px-4 py-8">
         <Routes>
           <Route path="/login" element={<Login />} />
-          <Route path="/" element={<News />} />
+          <Route path="/" element={<Competitions />} />
           <Route path="/news" element={<News />} />
           <Route path="/news/:id" element={<NewsDetail />} />
           <Route path="/news/new" element={<LazyRoute><NewsEdit /></LazyRoute>} /> {/* Route for creating new news */}

@@ -6,6 +6,12 @@ let activeLogRequests = 0;
 const { MAX_CONCURRENT_LOGS } = PERFORMANCE_CONFIG.RATE_LIMITING;
 const logQueue = [];
 
+// Liste des emails de comptes de test Cypress à exclure du logging
+const EXCLUDED_TEST_EMAILS = [
+  'test20251128alj.test@yopmail.com',
+  'test.bureau@yopmail.com'
+];
+
 // Fonction pour traiter la queue des logs
 const processLogQueue = async () => {
   while (logQueue.length > 0 && activeLogRequests < MAX_CONCURRENT_LOGS) {
@@ -32,6 +38,11 @@ export const useConnectionLogger = () => {
   // Logger une connexion
   const logConnection = async (user, action = 'login', profileData = null) => {
     if (!user) return;
+
+    // Exclure les comptes de test Cypress du logging
+    if (EXCLUDED_TEST_EMAILS.includes(user.email)) {
+      return;
+    }
 
     // Si trop de requêtes actives, ajouter à la queue
     if (activeLogRequests >= MAX_CONCURRENT_LOGS) {
