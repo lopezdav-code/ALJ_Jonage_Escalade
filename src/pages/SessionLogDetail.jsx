@@ -11,6 +11,7 @@ import html2canvas from 'html2canvas';
 import { BackButton } from '../components/ui/back-button';
 import { useToast } from '../components/ui/use-toast';
 import SessionPosterExport from '../components/session-log/SessionPosterExport';
+import SimpleMemberAvatar from '../components/SimpleMemberAvatar';
 
 const BUCKET_NAME = 'pedagogy_files';
 
@@ -454,7 +455,7 @@ const SessionLogDetail = () => {
         if (allMemberIds.length > 0) {
           const { data: members, error: membersError } = await supabase
             .from('members')
-            .select('id, first_name, last_name, sexe, category')
+            .select('id, first_name, last_name, sexe, category, photo_url')
             .in('id', allMemberIds);
 
           if (membersError) {
@@ -470,7 +471,8 @@ const SessionLogDetail = () => {
               firstName: member.first_name,
               lastName: member.last_name,
               sex: member.sexe,
-              category: member.category
+              category: member.category,
+              photo_url: member.photo_url
             };
             return acc;
           }, {});
@@ -578,6 +580,7 @@ const SessionLogDetail = () => {
               fullName: member?.fullName || `ID: ${memberId}`,
               sex: member?.sex || '',
               category: member?.category || '',
+              photo_url: member?.photo_url || null,
               comment: studentCommentsMap[memberId] || ''
             };
           }),
@@ -801,8 +804,16 @@ const SessionLogDetail = () => {
                         <Badge
                           key={index}
                           variant="outline"
-                          className="text-sm py-1.5 px-3 bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800 text-green-900 dark:text-green-100"
+                          className="text-sm py-1.5 px-3 bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800 text-green-900 dark:text-green-100 flex items-center gap-2"
                         >
+                          {student.photo_url && (
+                            <SimpleMemberAvatar
+                              photoUrl={student.photo_url}
+                              firstName={student.first_name}
+                              lastName={student.last_name}
+                              size="small"
+                            />
+                          )}
                           {student.fullName}
                         </Badge>
                       ))}
@@ -820,8 +831,16 @@ const SessionLogDetail = () => {
                       <div className="flex items-start gap-2">
                         <Badge
                           variant="outline"
-                          className="text-sm py-1 px-3 bg-green-100 dark:bg-green-900 border-green-300 dark:border-green-700 text-green-900 dark:text-green-100 whitespace-nowrap"
+                          className="text-sm py-1 px-3 bg-green-100 dark:bg-green-900 border-green-300 dark:border-green-700 text-green-900 dark:text-green-100 whitespace-nowrap flex items-center gap-2"
                         >
+                          {student.photo_url && (
+                            <SimpleMemberAvatar
+                              photoUrl={student.photo_url}
+                              firstName={student.first_name}
+                              lastName={student.last_name}
+                              size="small"
+                            />
+                          )}
                           {student.fullName}
                         </Badge>
                         <div className="flex-1">
