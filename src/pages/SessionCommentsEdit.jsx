@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Save, Trash2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { BackButton } from '../components/ui/back-button';
+import SimpleMemberAvatar from '../components/SimpleMemberAvatar';
 
 const SessionCommentsEdit = () => {
   const { id } = useParams(); // session ID
@@ -52,7 +53,7 @@ const SessionCommentsEdit = () => {
       if (sessionData.students && sessionData.students.length > 0) {
         const { data: studentsData, error: studentsError } = await supabase
           .from('members')
-          .select('id, first_name, last_name, sexe, category')
+          .select('id, first_name, last_name, sexe, category, photo_url')
           .in('id', sessionData.students)
           .order('last_name')
           .order('first_name');
@@ -207,7 +208,17 @@ const SessionCommentsEdit = () => {
                 <SelectContent>
                   {presentStudents.map((student) => (
                     <SelectItem key={student.id} value={student.id}>
-                      {formatStudentLabel(student)}
+                      <div className="flex items-center gap-2">
+                        {student.photo_url && (
+                          <SimpleMemberAvatar
+                            photoUrl={student.photo_url}
+                            firstName={student.first_name}
+                            lastName={student.last_name}
+                            size="small"
+                          />
+                        )}
+                        <span>{formatStudentLabel(student)}</span>
+                      </div>
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -253,6 +264,14 @@ const SessionCommentsEdit = () => {
                       key={studentId}
                       className="flex items-start gap-3 p-4 rounded-lg bg-background border hover:border-primary/50 transition-colors"
                     >
+                      {student.photo_url && (
+                        <SimpleMemberAvatar
+                          photoUrl={student.photo_url}
+                          firstName={student.first_name}
+                          lastName={student.last_name}
+                          size="default"
+                        />
+                      )}
                       <div className="flex-1 min-w-0 space-y-1">
                         <p className="text-sm font-semibold">
                           {formatStudentLabel(student)}
