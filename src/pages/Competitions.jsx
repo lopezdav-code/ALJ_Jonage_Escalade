@@ -7,7 +7,6 @@ import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { usePageAccess } from '@/hooks/usePageAccess';
 import ClubCompetitions from './competitions/ClubCompetitions';
-import FederalCalendar from './competitions/FederalCalendar';
 import Palmares from './competitions/Palmares';
 import Vocabulary from './competitions/Vocabulary';
 
@@ -42,17 +41,13 @@ const Competitions = () => {
       </motion.div>
 
       <Tabs defaultValue="club" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 gap-1">
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 gap-1">
           <TabsTrigger value="club" className="text-xs sm:text-sm">Compétitions du club</TabsTrigger>
-          <TabsTrigger value="federal" className="text-xs sm:text-sm">Calendrier</TabsTrigger>
           <TabsTrigger value="palmares" className="text-xs sm:text-sm">Palmarès 2024-2025</TabsTrigger>
           <TabsTrigger value="vocabulaire" className="text-xs sm:text-sm">Vocabulaire</TabsTrigger>
         </TabsList>
         <TabsContent value="club" className="mt-6">
           <ClubCompetitions />
-        </TabsContent>
-        <TabsContent value="federal" className="mt-6">
-          <FederalCalendar />
         </TabsContent>
         <TabsContent value="palmares" className="mt-6">
           <Palmares />
