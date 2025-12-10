@@ -111,6 +111,64 @@ const ExerciseDisplay = ({ exercise, index }) => {
         </div>
       )}
 
+      {/* Informations détaillées de la fiche pédagogique */}
+      {exercise.pedagogy_sheet && (
+        <div className="my-3 bg-blue-50 dark:bg-blue-950 p-4 rounded-lg border border-blue-200 dark:border-blue-800 space-y-3">
+          <p className="text-sm font-bold text-blue-800 dark:text-blue-200 mb-3">
+            Détails de la fiche pédagogique
+          </p>
+
+          {exercise.pedagogy_sheet.theme && (
+            <div>
+              <p className="text-xs font-semibold text-blue-700 dark:text-blue-300 mb-1">Thème</p>
+              <p className="text-sm text-blue-900 dark:text-blue-100">{exercise.pedagogy_sheet.theme}</p>
+            </div>
+          )}
+
+          {exercise.pedagogy_sheet.game_goal && (
+            <div>
+              <p className="text-xs font-semibold text-blue-700 dark:text-blue-300 mb-1">Objectif</p>
+              <p className="text-sm text-blue-900 dark:text-blue-100">{exercise.pedagogy_sheet.game_goal}</p>
+            </div>
+          )}
+
+          {exercise.pedagogy_sheet.starting_situation && (
+            <div>
+              <p className="text-xs font-semibold text-blue-700 dark:text-blue-300 mb-1">Situation de départ</p>
+              <p className="text-sm text-blue-900 dark:text-blue-100">{exercise.pedagogy_sheet.starting_situation}</p>
+            </div>
+          )}
+
+          {exercise.pedagogy_sheet.evolution && (
+            <div>
+              <p className="text-xs font-semibold text-blue-700 dark:text-blue-300 mb-1">Évolution</p>
+              <p className="text-sm text-blue-900 dark:text-blue-100">{exercise.pedagogy_sheet.evolution}</p>
+            </div>
+          )}
+
+          {exercise.pedagogy_sheet.skill_to_develop && (
+            <div>
+              <p className="text-xs font-semibold text-blue-700 dark:text-blue-300 mb-1">Capacité à développer</p>
+              <p className="text-sm text-blue-900 dark:text-blue-100">{exercise.pedagogy_sheet.skill_to_develop}</p>
+            </div>
+          )}
+
+          {exercise.pedagogy_sheet.success_criteria && (
+            <div>
+              <p className="text-xs font-semibold text-blue-700 dark:text-blue-300 mb-1">Critères de réussite</p>
+              <p className="text-sm text-blue-900 dark:text-blue-100">{exercise.pedagogy_sheet.success_criteria}</p>
+            </div>
+          )}
+
+          {exercise.pedagogy_sheet.remarks && (
+            <div>
+              <p className="text-xs font-semibold text-blue-700 dark:text-blue-300 mb-1">Remarques</p>
+              <p className="text-sm text-blue-900 dark:text-blue-100">{exercise.pedagogy_sheet.remarks}</p>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Image de l'exercice avec URL signée */}
       {imageUrl && (
         <div className="my-3">
@@ -506,7 +564,7 @@ const SessionLogDetail = () => {
         if (pedagogySheetIds.length > 0) {
           const { data: sheets, error: sheetsError } = await supabase
             .from('pedagogy_sheets')
-            .select('id, title, sheet_type, illustration_image')
+            .select('id, title, sheet_type, illustration_image, theme, game_goal, starting_situation, description, evolution, skill_to_develop, success_criteria, remarks')
             .in('id', pedagogySheetIds);
 
           if (sheetsError) {

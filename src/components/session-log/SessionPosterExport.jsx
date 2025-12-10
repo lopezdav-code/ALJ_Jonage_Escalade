@@ -258,6 +258,57 @@ const SessionPosterExport = ({
                                                             {ex.situation || ex.consigne || ex.organisation}
                                                         </div>
 
+                                                        {/* Informations de la fiche pédagogique */}
+                                                        {ex.pedagogy_sheet && (
+                                                            <div style={{ marginTop: '10px', padding: '8px', background: '#fff', border: '1px solid #d4c5a9', borderRadius: '6px' }}>
+                                                                <div style={{ fontWeight: 'bold', fontSize: '0.85rem', marginBottom: '6px', color: COLORS.brown }}>
+                                                                    📋 Fiche pédagogique
+                                                                </div>
+                                                                {ex.pedagogy_sheet.theme && (
+                                                                    <div style={{ marginBottom: '4px' }}>
+                                                                        <span style={{ fontWeight: 'bold', fontSize: '0.8rem' }}>Thème: </span>
+                                                                        <span style={{ fontSize: '0.8rem' }}>{ex.pedagogy_sheet.theme}</span>
+                                                                    </div>
+                                                                )}
+                                                                {ex.pedagogy_sheet.game_goal && (
+                                                                    <div style={{ marginBottom: '4px' }}>
+                                                                        <span style={{ fontWeight: 'bold', fontSize: '0.8rem' }}>Objectif: </span>
+                                                                        <span style={{ fontSize: '0.8rem' }}>{ex.pedagogy_sheet.game_goal}</span>
+                                                                    </div>
+                                                                )}
+                                                                {ex.pedagogy_sheet.starting_situation && (
+                                                                    <div style={{ marginBottom: '4px' }}>
+                                                                        <span style={{ fontWeight: 'bold', fontSize: '0.8rem' }}>Situation de départ: </span>
+                                                                        <span style={{ fontSize: '0.8rem' }}>{ex.pedagogy_sheet.starting_situation}</span>
+                                                                    </div>
+                                                                )}
+                                                                {ex.pedagogy_sheet.evolution && (
+                                                                    <div style={{ marginBottom: '4px' }}>
+                                                                        <span style={{ fontWeight: 'bold', fontSize: '0.8rem' }}>Évolution: </span>
+                                                                        <span style={{ fontSize: '0.8rem' }}>{ex.pedagogy_sheet.evolution}</span>
+                                                                    </div>
+                                                                )}
+                                                                {ex.pedagogy_sheet.skill_to_develop && (
+                                                                    <div style={{ marginBottom: '4px' }}>
+                                                                        <span style={{ fontWeight: 'bold', fontSize: '0.8rem' }}>Capacité à développer: </span>
+                                                                        <span style={{ fontSize: '0.8rem' }}>{ex.pedagogy_sheet.skill_to_develop}</span>
+                                                                    </div>
+                                                                )}
+                                                                {ex.pedagogy_sheet.success_criteria && (
+                                                                    <div style={{ marginBottom: '4px' }}>
+                                                                        <span style={{ fontWeight: 'bold', fontSize: '0.8rem' }}>Critères de réussite: </span>
+                                                                        <span style={{ fontSize: '0.8rem' }}>{ex.pedagogy_sheet.success_criteria}</span>
+                                                                    </div>
+                                                                )}
+                                                                {ex.pedagogy_sheet.remarks && (
+                                                                    <div style={{ marginBottom: '4px' }}>
+                                                                        <span style={{ fontWeight: 'bold', fontSize: '0.8rem' }}>Remarques: </span>
+                                                                        <span style={{ fontSize: '0.8rem' }}>{ex.pedagogy_sheet.remarks}</span>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        )}
+
                                                         {/* Image de l'exercice */}
                                                         {exerciseImages[ex.id] && (
                                                             <div style={{ marginTop: '10px' }}>
@@ -324,6 +375,57 @@ const SessionPosterExport = ({
                                                         <div style={{ fontSize: '0.9rem', color: '#444', lineHeight: '1.4' }}>
                                                             {ex.situation || ex.consigne || ex.organisation}
                                                         </div>
+
+                                                        {/* Informations de la fiche pédagogique */}
+                                                        {ex.pedagogy_sheet && (
+                                                            <div style={{ marginTop: '10px', padding: '8px', background: '#f0f8ff', border: '1px solid #d0e7ff', borderRadius: '6px' }}>
+                                                                <div style={{ fontWeight: 'bold', fontSize: '0.85rem', marginBottom: '6px', color: COLORS.primary }}>
+                                                                    📋 Fiche pédagogique
+                                                                </div>
+                                                                {ex.pedagogy_sheet.theme && (
+                                                                    <div style={{ marginBottom: '4px' }}>
+                                                                        <span style={{ fontWeight: 'bold', fontSize: '0.8rem' }}>Thème: </span>
+                                                                        <span style={{ fontSize: '0.8rem' }}>{ex.pedagogy_sheet.theme}</span>
+                                                                    </div>
+                                                                )}
+                                                                {ex.pedagogy_sheet.game_goal && (
+                                                                    <div style={{ marginBottom: '4px' }}>
+                                                                        <span style={{ fontWeight: 'bold', fontSize: '0.8rem' }}>Objectif: </span>
+                                                                        <span style={{ fontSize: '0.8rem' }}>{ex.pedagogy_sheet.game_goal}</span>
+                                                                    </div>
+                                                                )}
+                                                                {ex.pedagogy_sheet.starting_situation && (
+                                                                    <div style={{ marginBottom: '4px' }}>
+                                                                        <span style={{ fontWeight: 'bold', fontSize: '0.8rem' }}>Situation de départ: </span>
+                                                                        <span style={{ fontSize: '0.8rem' }}>{ex.pedagogy_sheet.starting_situation}</span>
+                                                                    </div>
+                                                                )}
+                                                                {ex.pedagogy_sheet.evolution && (
+                                                                    <div style={{ marginBottom: '4px' }}>
+                                                                        <span style={{ fontWeight: 'bold', fontSize: '0.8rem' }}>Évolution: </span>
+                                                                        <span style={{ fontSize: '0.8rem' }}>{ex.pedagogy_sheet.evolution}</span>
+                                                                    </div>
+                                                                )}
+                                                                {ex.pedagogy_sheet.skill_to_develop && (
+                                                                    <div style={{ marginBottom: '4px' }}>
+                                                                        <span style={{ fontWeight: 'bold', fontSize: '0.8rem' }}>Capacité à développer: </span>
+                                                                        <span style={{ fontSize: '0.8rem' }}>{ex.pedagogy_sheet.skill_to_develop}</span>
+                                                                    </div>
+                                                                )}
+                                                                {ex.pedagogy_sheet.success_criteria && (
+                                                                    <div style={{ marginBottom: '4px' }}>
+                                                                        <span style={{ fontWeight: 'bold', fontSize: '0.8rem' }}>Critères de réussite: </span>
+                                                                        <span style={{ fontSize: '0.8rem' }}>{ex.pedagogy_sheet.success_criteria}</span>
+                                                                    </div>
+                                                                )}
+                                                                {ex.pedagogy_sheet.remarks && (
+                                                                    <div style={{ marginBottom: '4px' }}>
+                                                                        <span style={{ fontWeight: 'bold', fontSize: '0.8rem' }}>Remarques: </span>
+                                                                        <span style={{ fontSize: '0.8rem' }}>{ex.pedagogy_sheet.remarks}</span>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        )}
 
                                                         {/* Image de l'exercice */}
                                                         {exerciseImages[ex.id] && (
