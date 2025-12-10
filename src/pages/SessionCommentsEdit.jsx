@@ -29,7 +29,8 @@ const SessionCommentsEdit = () => {
   // Charger le commentaire quand on sélectionne un étudiant
   useEffect(() => {
     if (selectedStudentId) {
-      setCurrentComment(comments[selectedStudentId] || '');
+      const commentData = comments[selectedStudentId];
+      setCurrentComment(commentData?.comment || '');
     } else {
       setCurrentComment('');
     }
@@ -62,16 +63,20 @@ const SessionCommentsEdit = () => {
         setPresentStudents(studentsData || []);
       }
 
-      // Récupérer les commentaires existants
+      // Récupérer les commentaires existants (avec les notes pour les préserver)
       const { data: commentsData, error: commentsError } = await supabase
         .from('student_session_comments')
-        .select('member_id, comment')
+        .select('member_id, comment, max_moulinette, max_tete')
         .eq('session_id', id);
 
       if (commentsError) throw commentsError;
 
       const commentsMap = (commentsData || []).reduce((acc, item) => {
-        acc[item.member_id] = item.comment;
+        acc[item.member_id] = {
+          comment: item.comment,
+          max_moulinette: item.max_moulinette,
+          max_tete: item.max_tete
+        };
         return acc;
       }, {});
       setComments(commentsMap);
@@ -89,7 +94,10 @@ const SessionCommentsEdit = () => {
 
     setComments(prev => ({
       ...prev,
-      [selectedStudentId]: currentComment.trim()
+      [selectedStudentId]: {
+        ...(prev[selectedStudentId] || {}), // Préserver max_moulinette et max_tete
+        comment: currentComment.trim()
+      }
     }));
 
     // Réinitialiser
@@ -99,39 +107,71 @@ const SessionCommentsEdit = () => {
 
   const handleEditComment = (studentId) => {
     setSelectedStudentId(studentId);
-    setCurrentComment(comments[studentId] || '');
+    const commentData = comments[studentId];
+    setCurrentComment(commentData?.comment || '');
   };
 
   const handleDeleteComment = (studentId) => {
-    const { [studentId]: _, ...rest } = comments;
-    setComments(rest);
+    const existingData = comments[studentId];
+
+    // Si des notes existent, on garde l'entrée mais on vide le commentaire
+    if (existingData?.max_moulinette || existingData?.max_tete) {
+      setComments(prev => ({
+        ...prev,
+        [studentId]: {
+          max_moulinette: existingData.max_moulinette,
+          max_tete: existingData.max_tete,
+          comment: null
+        }
+      }));
+    } else {
+      // Sinon on supprime complètement l'entrée
+      const { [studentId]: _, ...rest } = comments;
+      setComments(rest);
+    }
   };
 
   const handleSave = async () => {
     try {
       setSaving(true);
 
-      // Supprimer tous les commentaires existants pour cette session
-      await supabase
-        .from('student_session_comments')
-        .delete()
-        .eq('session_id', id);
-
-      // Insérer les nouveaux commentaires
-      const commentsToInsert = Object.entries(comments)
-        .filter(([_, comment]) => comment && comment.trim() !== '')
-        .map(([memberId, comment]) => ({
+      // Utiliser upsert pour préserver max_moulinette et max_tete
+      const commentsToUpsert = Object.entries(comments)
+        .filter(([_, data]) => data?.comment && data.comment.trim() !== '')
+        .map(([memberId, data]) => ({
           session_id: id,
           member_id: memberId,
-          comment: comment.trim()
+          comment: data.comment.trim(),
+          // Préserver les notes si elles existent
+          max_moulinette: data.max_moulinette || null,
+          max_tete: data.max_tete || null
         }));
 
-      if (commentsToInsert.length > 0) {
-        const { error: insertError } = await supabase
+      if (commentsToUpsert.length > 0) {
+        const { error: upsertError } = await supabase
           .from('student_session_comments')
-          .insert(commentsToInsert);
+          .upsert(commentsToUpsert, {
+            onConflict: 'session_id,member_id'
+          });
 
-        if (insertError) throw insertError;
+        if (upsertError) throw upsertError;
+      }
+
+      // Supprimer les commentaires qui ont été vidés
+      const studentIdsWithComments = new Set(Object.keys(comments).filter(id => comments[id]?.comment?.trim()));
+      const allStudentIds = presentStudents.map(s => s.id);
+      const studentIdsToDelete = allStudentIds.filter(id => !studentIdsWithComments.has(id));
+
+      if (studentIdsToDelete.length > 0) {
+        const { error: deleteError } = await supabase
+          .from('student_session_comments')
+          .delete()
+          .eq('session_id', id)
+          .in('member_id', studentIdsToDelete)
+          .is('max_moulinette', null)
+          .is('max_tete', null);
+
+        if (deleteError) throw deleteError;
       }
 
       // Retourner à la page de détail de la session
@@ -151,10 +191,12 @@ const SessionCommentsEdit = () => {
     return `${student.first_name} ${student.last_name} ${sex} ${category}`.trim();
   };
 
-  const commentsArray = Object.entries(comments).map(([studentId, comment]) => ({
-    studentId,
-    comment
-  }));
+  const commentsArray = Object.entries(comments)
+    .filter(([_, data]) => data?.comment)
+    .map(([studentId, data]) => ({
+      studentId,
+      comment: data.comment
+    }));
 
   if (loading) {
     return (
@@ -242,7 +284,7 @@ const SessionCommentsEdit = () => {
               disabled={!selectedStudentId || !currentComment.trim()}
               className="w-full"
             >
-              {selectedStudentId && comments[selectedStudentId]
+              {selectedStudentId && comments[selectedStudentId]?.comment
                 ? 'Modifier le commentaire'
                 : 'Ajouter le commentaire'}
             </Button>

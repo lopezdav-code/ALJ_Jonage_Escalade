@@ -239,9 +239,9 @@ const LiveSession = () => {
                     .upsert({
                         session_id: id,
                         member_id: memberId,
-                        comment: data.comment,
-                        max_moulinette: data.max_moulinette,
-                        max_tete: data.max_tete
+                        comment: data.comment || null,
+                        max_moulinette: data.max_moulinette || null,
+                        max_tete: data.max_tete || null
                     }, {
                         onConflict: 'session_id,member_id'
                     });

@@ -541,7 +541,7 @@ const SessionLogDetail = () => {
         if (data.students && data.students.length > 0) {
           const { data: comments, error: commentsError } = await supabase
             .from('student_session_comments')
-            .select('member_id, comment')
+            .select('member_id, comment, max_moulinette, max_tete')
             .eq('session_id', id) // Use 'id' here
             .in('member_id', data.students);
 
@@ -550,7 +550,11 @@ const SessionLogDetail = () => {
           }
 
           studentCommentsMap = (comments || []).reduce((acc, comment) => {
-            acc[comment.member_id] = comment.comment;
+            acc[comment.member_id] = {
+              comment: comment.comment,
+              max_moulinette: comment.max_moulinette,
+              max_tete: comment.max_tete
+            };
             return acc;
           }, {});
         }
@@ -631,6 +635,7 @@ const SessionLogDetail = () => {
           studentNames: (data.students || []).map(memberId => membersMap[memberId]?.fullName || `ID: ${memberId}`),
           studentsData: (data.students || []).map(memberId => {
             const member = membersMap[memberId];
+            const commentData = studentCommentsMap[memberId] || {};
             return {
               id: memberId,
               first_name: member?.firstName || '',
@@ -639,7 +644,9 @@ const SessionLogDetail = () => {
               sex: member?.sex || '',
               category: member?.category || '',
               photo_url: member?.photo_url || null,
-              comment: studentCommentsMap[memberId] || ''
+              comment: commentData.comment || '',
+              max_moulinette: commentData.max_moulinette || null,
+              max_tete: commentData.max_tete || null
             };
           }),
           // Absent students derived from table `members` (Loisir lycée) minus les présents
@@ -853,11 +860,11 @@ const SessionLogDetail = () => {
             </div>
             {session.studentsData && session.studentsData.length > 0 ? (
               <div className="space-y-3">
-                {/* Élèves sans commentaire - Format compact */}
-                {session.studentsData.filter(s => !s.comment).length > 0 && (
+                {/* Élèves sans commentaire ni notes - Format compact */}
+                {session.studentsData.filter(s => !s.comment && !s.max_moulinette && !s.max_tete).length > 0 && (
                   <div className="flex flex-wrap gap-2">
                     {session.studentsData
-                      .filter(student => !student.comment)
+                      .filter(student => !student.comment && !student.max_moulinette && !student.max_tete)
                       .map((student, index) => (
                         <Badge
                           key={index}
@@ -878,15 +885,15 @@ const SessionLogDetail = () => {
                   </div>
                 )}
 
-                {/* Élèves avec commentaire - Format détaillé */}
+                {/* Élèves avec commentaire ou notes - Format détaillé */}
                 {session.studentsData
-                  .filter(student => student.comment)
+                  .filter(student => student.comment || student.max_moulinette || student.max_tete)
                   .map((student, index) => (
                     <div
                       key={index}
                       className="border rounded-lg p-3 bg-green-50/50 dark:bg-green-950/20 border-green-200 dark:border-green-800"
                     >
-                      <div className="flex items-start gap-2">
+                      <div className="flex items-start gap-3">
                         <Badge
                           variant="outline"
                           className="text-sm py-1 px-3 bg-green-100 dark:bg-green-900 border-green-300 dark:border-green-700 text-green-900 dark:text-green-100 whitespace-nowrap flex items-center gap-2"
@@ -901,10 +908,30 @@ const SessionLogDetail = () => {
                           )}
                           {student.fullName}
                         </Badge>
-                        <div className="flex-1">
-                          <p className="text-sm text-muted-foreground italic">
-                            "{student.comment}"
-                          </p>
+                        <div className="flex-1 space-y-2">
+                          {/* Notes de grimpe */}
+                          {(student.max_moulinette || student.max_tete) && (
+                            <div className="flex flex-wrap gap-3 text-xs">
+                              {student.max_moulinette && (
+                                <div className="flex items-center gap-1.5 bg-blue-100 dark:bg-blue-900 px-2 py-1 rounded">
+                                  <span className="font-semibold text-blue-700 dark:text-blue-300">Moulinette:</span>
+                                  <span className="font-bold text-blue-900 dark:text-blue-100">{student.max_moulinette}</span>
+                                </div>
+                              )}
+                              {student.max_tete && (
+                                <div className="flex items-center gap-1.5 bg-orange-100 dark:bg-orange-900 px-2 py-1 rounded">
+                                  <span className="font-semibold text-orange-700 dark:text-orange-300">En tête:</span>
+                                  <span className="font-bold text-orange-900 dark:text-orange-100">{student.max_tete}</span>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                          {/* Commentaire */}
+                          {student.comment && (
+                            <p className="text-sm text-muted-foreground italic">
+                              "{student.comment}"
+                            </p>
+                          )}
                         </div>
                       </div>
                     </div>
