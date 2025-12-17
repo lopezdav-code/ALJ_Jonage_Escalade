@@ -190,33 +190,17 @@ const CompetitionResultsImport = () => {
     setResults([]);
     setMissingCompetitors([]);
     try {
-      // Try multiple CORS proxies for reliability
-      const proxies = [
-        (u) => `https://corsproxy.io/?${encodeURIComponent(u)}`,
-        (u) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
-      ];
-
-      let text = null;
-      let lastError = null;
-
-      for (const proxyFn of proxies) {
-        try {
-          const proxyUrl = proxyFn(url);
-          const resp = await fetch(proxyUrl, { method: 'GET' });
-          if (resp.ok) {
-            text = await resp.text();
-            break;
-          }
-        } catch (err) {
-          lastError = err;
-          continue;
-        }
-      }
-
-      if (!text) {
-        throw lastError || new Error('Impossible de récupérer la page externe avec tous les proxies disponibles');
-      }
-
+      // Use Supabase Edge Function to fetch HTML (no CORS issues)
+      const supabaseUrl = process.env.REACT_APP_SUPABASE_URL || '';
+      const edgeFunctionUrl = `${supabaseUrl}/functions/v1/fetch-html?url=${encodeURIComponent(url)}`;
+      
+      const resp = await fetch(edgeFunctionUrl);
+      if (!resp.ok) throw new Error(`Impossible de récupérer la page (${resp.status})`);
+      
+      const json = await resp.json();
+      if (!json.data) throw new Error('Pas de données HTML reçues');
+      
+      const text = json.data;
       const parsed = parseHtml(text, clubName || '');
       setResults(parsed);
 
