@@ -113,7 +113,17 @@ const MemberDetailCard = () => {
                   {selectedMember.licence && (
                     <div className="flex items-center gap-3 text-sm">
                       <CreditCard className="w-4 h-4 text-muted-foreground" />
-                      <span>Licence FFME: {selectedMember.licence}</span>
+                      <div>
+                        <span>Licence FFME: </span>
+                        <a
+                          href={`https://mycompet.ffme.fr/resultat/palmares_${selectedMember.licence}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:underline"
+                        >
+                          {selectedMember.licence}
+                        </a>
+                      </div>
                     </div>
                   )}
                 </div>

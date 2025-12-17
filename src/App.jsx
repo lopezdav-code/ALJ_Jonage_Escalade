@@ -44,6 +44,7 @@ const ConnectionLogs = lazy(() => import('@/pages/ConnectionLogs'));
 const AccessLogs = lazy(() => import('@/pages/AccessLogs'));
 const CompetitionParticipants = lazy(() => import('@/pages/CompetitionParticipants'));
 const CompetitionResultsEditor = lazy(() => import('@/pages/CompetitionResultsEditor'));
+const CompetitionResultsImport = lazy(() => import('@/pages/CompetitionResultsImport'));
 const DatabaseSchema = lazy(() => import('@/pages/DatabaseSchema'));
 const PasseportValidation = lazy(() => import('@/pages/PasseportValidation'));
 const PasseportViewer = lazy(() => import('@/pages/PasseportViewer'));
@@ -125,6 +126,7 @@ const AppContent = () => {
           <Route path="/competitions/edit/:id" element={<LazyRoute><CompetitionEditor /></LazyRoute>} />
           <Route path="/competitions/participants/:id" element={<LazyRoute><CompetitionParticipants /></LazyRoute>} />
           <Route path="/competitions/results/:id" element={<LazyRoute><CompetitionResultsEditor /></LazyRoute>} />
+          <Route path="/competitions/results/import/:id" element={<LazyRoute><CompetitionResultsImport /></LazyRoute>} />
           <Route path="/competitions-summary" element={<LazyRoute><CompetitionsSummary /></LazyRoute>} />
           <Route path="/inscriptions-summary" element={<LazyRoute><InscriptionsSummary /></LazyRoute>} />
           <Route path="/volunteers" element={<Volunteers />} />

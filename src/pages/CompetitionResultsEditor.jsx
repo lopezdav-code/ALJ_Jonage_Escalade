@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Save, Loader2, Trophy, UserCheck, X } from 'lucide-react';
+import { Save, Loader2, Trophy, UserCheck, X, Upload } from 'lucide-react';
 import { supabase } from '@/lib/customSupabaseClient';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -21,6 +21,15 @@ const CompetitionResultsEditor = () => {
   const [competition, setCompetition] = useState(null);
   const [participants, setParticipants] = useState([]);
   const [editedResults, setEditedResults] = useState({}); // { participantId: { ranking: value, nb_competitor: value } }
+
+  // Helper function to normalize text (remove accents)
+  const normalizeText = (text) => {
+    return text
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .trim();
+  };
 
   useEffect(() => {
     const fetchCompetitionAndParticipants = async () => {
@@ -71,6 +80,57 @@ const CompetitionResultsEditor = () => {
         });
         setEditedResults(initialEditedResults);
 
+        // After initializing, check if there are imported results in sessionStorage
+        try {
+          const importedRaw = sessionStorage.getItem(`imported_results_${id}`);
+          if (importedRaw) {
+            const imported = JSON.parse(importedRaw);
+            if (Array.isArray(imported) && imported.length > 0) {
+              // Map imported results to participants by matching first/last names
+              const newEdited = { ...initialEditedResults };
+              const normalizedParticipants = (rawParticipants || []).map(p => ({
+                id: p.id,
+                first: normalizeText(p.members?.first_name || ''),
+                last: normalizeText(p.members?.last_name || '')
+              }));
+
+              imported.forEach(r => {
+                const targetFirst = normalizeText(r.prenom || '');
+                const targetLast = normalizeText(r.nom || '');
+                const match = normalizedParticipants.find(p => {
+                  if (targetFirst && targetLast) {
+                    return p.first === targetFirst && p.last === targetLast;
+                  }
+                  if (targetLast) {
+                    return p.last === targetLast || p.last.includes(targetLast) || targetLast.includes(p.last);
+                  }
+                  if (targetFirst) {
+                    return p.first === targetFirst || p.first.startsWith(targetFirst) || targetFirst.startsWith(p.first);
+                  }
+                  return false;
+                });
+
+                  if (match) {
+                    const parsedRank = parseInt(String(r.rang || '').replace(/[^0-9]/g, ''), 10);
+                    const parsedNb = parseInt(String(r.nb_competitor || '').replace(/[^0-9]/g, ''), 10);
+                    newEdited[match.id] = {
+                      ...newEdited[match.id],
+                      ranking: isNaN(parsedRank) ? newEdited[match.id]?.ranking || null : parsedRank,
+                      nb_competitor: isNaN(parsedNb) ? newEdited[match.id]?.nb_competitor || null : parsedNb
+                    };
+                  }
+              });
+
+              setEditedResults(newEdited);
+              // Remove the stored import to avoid reapplying
+              sessionStorage.removeItem(`imported_results_${id}`);
+              toast({ title: 'Import appliqué', description: 'Les résultats importés ont été préremplis dans l’éditeur.' });
+            }
+          }
+        } catch (err) {
+          console.error('Error applying imported results', err);
+        }
+
       } catch (error) {
         console.error('Error fetching competition or participants:', error);
         toast({
@@ -101,6 +161,23 @@ const CompetitionResultsEditor = () => {
       };
     });
   };
+
+  const groupParticipantsByGenderAndCategory = (participants) => {
+    const grouped = { femmes: {}, hommes: {}, inconnu: {} };
+    participants.forEach(participant => {
+      if (!participant.members) return;
+      let gender = 'inconnu';
+      if (participant.members.sexe === 'F') gender = 'femmes';
+      else if (participant.members.sexe === 'H') gender = 'hommes';
+      
+      const category = participant.members.category || 'Sans catégorie';
+      if (!grouped[gender][category]) grouped[gender][category] = [];
+      grouped[gender][category].push(participant);
+    });
+    return grouped;
+  };
+
+  const groupedParticipants = groupParticipantsByGenderAndCategory(participants);
 
   const handleSaveResults = async () => {
     setSaving(true);
@@ -157,9 +234,15 @@ const CompetitionResultsEditor = () => {
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <BackButton to={`/competitions/detail/${id}`} variant="outline">
-          Retour à la compétition
-        </BackButton>
+        <div className="flex items-center gap-2">
+          <BackButton to={`/competitions/detail/${id}`} variant="outline">
+            Retour à la compétition
+          </BackButton>
+          <Button variant="outline" onClick={() => navigate(`/competitions/results/import/${id}`)}>
+            <Upload className="w-4 h-4 mr-2" />
+            Importer résultats
+          </Button>
+        </div>
         <div>
           <h1 className="text-2xl font-bold">
             Résultats de la compétition: {competition.name}
@@ -188,52 +271,171 @@ const CompetitionResultsEditor = () => {
               </Button>
             </div>
           ) : (
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {participants.map(participant => (
-                  <Card key={participant.id} className="p-4">
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="flex-1">
-                        <p className="font-semibold">
-                          {formatName(participant.members?.first_name, participant.members?.last_name)}
-                        </p>
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <Badge variant="outline" className="text-xs">
-                            {participant.members?.category || 'Catégorie inconnue'}
-                          </Badge>
-                          <span>•</span>
-                          <span>{participant.members?.sexe || 'Sexe inconnu'}</span>
+            <div className="space-y-6">
+              {/* Filles */}
+              <div>
+                <h5 className="text-sm font-semibold text-pink-700 mb-3 flex items-center gap-2 border-b border-pink-200 pb-2">
+                  👩 Filles ({Object.values(groupedParticipants.femmes).flat().length})
+                </h5>
+                {Object.keys(groupedParticipants.femmes).length > 0 ? (
+                  <div className="space-y-3">
+                    {Object.entries(groupedParticipants.femmes).map(([category, categoryParticipants]) => (
+                      <div key={`f-${category}`} className="border rounded-lg p-3 bg-pink-50">
+                        <div className="text-xs font-medium text-pink-600 mb-2">{category} ({categoryParticipants.length})</div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                          {categoryParticipants.map(participant => (
+                            <Card key={participant.id} className="p-3 bg-white">
+                              <div className="flex-1">
+                                <p className="font-semibold text-sm">
+                                  {formatName(participant.members?.first_name, participant.members?.last_name)}
+                                </p>
+                              </div>
+                              <div className="grid grid-cols-2 gap-2 mt-2">
+                                <div>
+                                  <Label htmlFor={`ranking-${participant.id}`} className="text-xs">Classement</Label>
+                                  <Input
+                                    id={`ranking-${participant.id}`}
+                                    type="number"
+                                    min="1"
+                                    value={editedResults[participant.id]?.ranking || ''}
+                                    onChange={(e) => handleResultChange(participant.id, 'ranking', e.target.value)}
+                                    placeholder="Ex: 1"
+                                    className="text-xs"
+                                  />
+                                </div>
+                                <div>
+                                  <Label htmlFor={`nb_competitor-${participant.id}`} className="text-xs">Nb Compétiteurs</Label>
+                                  <Input
+                                    id={`nb_competitor-${participant.id}`}
+                                    type="number"
+                                    min="1"
+                                    value={editedResults[participant.id]?.nb_competitor || ''}
+                                    onChange={(e) => handleResultChange(participant.id, 'nb_competitor', e.target.value)}
+                                    placeholder="Ex: 20"
+                                    className="text-xs"
+                                  />
+                                </div>
+                              </div>
+                            </Card>
+                          ))}
                         </div>
                       </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
-                        <Label htmlFor={`ranking-${participant.id}`}>Classement</Label>
-                        <Input
-                          id={`ranking-${participant.id}`}
-                          type="number"
-                          min="1"
-                          value={editedResults[participant.id]?.ranking || ''}
-                          onChange={(e) => handleResultChange(participant.id, 'ranking', e.target.value)}
-                          placeholder="Ex: 1"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor={`nb_competitor-${participant.id}`}>Nb Compétiteurs</Label>
-                        <Input
-                          id={`nb_competitor-${participant.id}`}
-                          type="number"
-                          min="1"
-                          value={editedResults[participant.id]?.nb_competitor || ''}
-                          onChange={(e) => handleResultChange(participant.id, 'nb_competitor', e.target.value)}
-                          placeholder="Ex: 20"
-                        />
-                      </div>
-                    </div>
-                  </Card>
-                ))}
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-sm text-muted-foreground italic">Aucune fille inscrite</div>
+                )}
               </div>
-              <div className="flex justify-end gap-2 pt-4">
+
+              {/* Garçons */}
+              <div>
+                <h5 className="text-sm font-semibold text-blue-700 mb-3 flex items-center gap-2 border-b border-blue-200 pb-2">
+                  👨 Garçons ({Object.values(groupedParticipants.hommes).flat().length})
+                </h5>
+                {Object.keys(groupedParticipants.hommes).length > 0 ? (
+                  <div className="space-y-3">
+                    {Object.entries(groupedParticipants.hommes).map(([category, categoryParticipants]) => (
+                      <div key={`h-${category}`} className="border rounded-lg p-3 bg-blue-50">
+                        <div className="text-xs font-medium text-blue-600 mb-2">{category} ({categoryParticipants.length})</div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                          {categoryParticipants.map(participant => (
+                            <Card key={participant.id} className="p-3 bg-white">
+                              <div className="flex-1">
+                                <p className="font-semibold text-sm">
+                                  {formatName(participant.members?.first_name, participant.members?.last_name)}
+                                </p>
+                              </div>
+                              <div className="grid grid-cols-2 gap-2 mt-2">
+                                <div>
+                                  <Label htmlFor={`ranking-${participant.id}`} className="text-xs">Classement</Label>
+                                  <Input
+                                    id={`ranking-${participant.id}`}
+                                    type="number"
+                                    min="1"
+                                    value={editedResults[participant.id]?.ranking || ''}
+                                    onChange={(e) => handleResultChange(participant.id, 'ranking', e.target.value)}
+                                    placeholder="Ex: 1"
+                                    className="text-xs"
+                                  />
+                                </div>
+                                <div>
+                                  <Label htmlFor={`nb_competitor-${participant.id}`} className="text-xs">Nb Compétiteurs</Label>
+                                  <Input
+                                    id={`nb_competitor-${participant.id}`}
+                                    type="number"
+                                    min="1"
+                                    value={editedResults[participant.id]?.nb_competitor || ''}
+                                    onChange={(e) => handleResultChange(participant.id, 'nb_competitor', e.target.value)}
+                                    placeholder="Ex: 20"
+                                    className="text-xs"
+                                  />
+                                </div>
+                              </div>
+                            </Card>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-sm text-muted-foreground italic">Aucun garçon inscrit</div>
+                )}
+              </div>
+
+              {/* Sexe Inconnu */}
+              {Object.keys(groupedParticipants.inconnu).length > 0 && (
+                <div>
+                  <h5 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2 border-b border-gray-200 pb-2">
+                    ❓ Sexe Inconnu ({Object.values(groupedParticipants.inconnu).flat().length})
+                  </h5>
+                  <div className="space-y-3">
+                    {Object.entries(groupedParticipants.inconnu).map(([category, categoryParticipants]) => (
+                      <div key={`u-${category}`} className="border rounded-lg p-3 bg-gray-50">
+                        <div className="text-xs font-medium text-gray-600 mb-2">{category} ({categoryParticipants.length})</div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                          {categoryParticipants.map(participant => (
+                            <Card key={participant.id} className="p-3 bg-white">
+                              <div className="flex-1">
+                                <p className="font-semibold text-sm">
+                                  {formatName(participant.members?.first_name, participant.members?.last_name)}
+                                </p>
+                              </div>
+                              <div className="grid grid-cols-2 gap-2 mt-2">
+                                <div>
+                                  <Label htmlFor={`ranking-${participant.id}`} className="text-xs">Classement</Label>
+                                  <Input
+                                    id={`ranking-${participant.id}`}
+                                    type="number"
+                                    min="1"
+                                    value={editedResults[participant.id]?.ranking || ''}
+                                    onChange={(e) => handleResultChange(participant.id, 'ranking', e.target.value)}
+                                    placeholder="Ex: 1"
+                                    className="text-xs"
+                                  />
+                                </div>
+                                <div>
+                                  <Label htmlFor={`nb_competitor-${participant.id}`} className="text-xs">Nb Compétiteurs</Label>
+                                  <Input
+                                    id={`nb_competitor-${participant.id}`}
+                                    type="number"
+                                    min="1"
+                                    value={editedResults[participant.id]?.nb_competitor || ''}
+                                    onChange={(e) => handleResultChange(participant.id, 'nb_competitor', e.target.value)}
+                                    placeholder="Ex: 20"
+                                    className="text-xs"
+                                  />
+                                </div>
+                              </div>
+                            </Card>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="flex justify-end gap-2 pt-4 border-t">
                 <Button variant="outline" onClick={() => navigate(`/competitions/detail/${id}`)}>
                   <X className="w-4 h-4 mr-2" />
                   Annuler

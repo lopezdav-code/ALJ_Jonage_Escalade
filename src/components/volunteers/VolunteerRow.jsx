@@ -46,7 +46,16 @@ const VolunteerRow = React.memo(({ member, onEdit, onView, isEmergencyContact, s
             {showLicense && (
                 <td className="p-2">
                     <div className="text-sm font-mono text-slate-600">
-                        {member.licence || '-'}
+                        {member.licence ? (
+                            <a
+                                href={`https://mycompet.ffme.fr/resultat/palmares_${member.licence}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-600 hover:underline"
+                            >
+                                {member.licence}
+                            </a>
+                        ) : '-'}
                     </div>
                 </td>
             )}
