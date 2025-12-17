@@ -218,6 +218,40 @@ const Competitions = lazy(() => import('./pages/Competitions'));
 
 All lazy-loaded components are wrapped in Suspense boundaries with a custom `LoadingScreen` component.
 
+## FFME Competition Scraper
+
+New feature for indexing FFME competition results from mycompet.ffme.fr.
+
+**Files Added**:
+- `migrations/20251217_create_ffme_competitions_index.sql` - Database table with RLS policies
+- `scripts/scrape-ffme-competitions.js` - Node.js CLI scraper (cheerio + fetch)
+- `src/components/competitions/FFMECompetitionScraper.jsx` - React GUI component
+- `src/services/ffmeCompetitionsService.js` - Query service for FFME competition data
+- `src/hooks/useFFMECompetitionScraper.js` - Custom hook for scraper logic
+- `docs/ffme-scraper-guide.md` - Complete documentation
+
+**Modified**:
+- `src/pages/Competitions.jsx` - Added "Scraper FFME" tab
+
+**Database**:
+- Table: `ffme_competitions_index` (ffme_id, title, created_at, updated_at)
+- RLS: Read for authenticated users, write for service_role
+
+**Usage**:
+- GUI: Competitions page → "Scraper FFME" tab
+- CLI: `node scripts/scrape-ffme-competitions.js 13150 13200`
+- Service: Import `ffmeCompetitionsService` for querying indexed competitions
+
+**Key Features**:
+- ✅ Scrapes `<div class="title">{Title}</div>` from resultat pages
+- ✅ Stops at first error (HTTP, invalid page, network)
+- ✅ Progress tracking in real-time (GUI)
+- ✅ Respectful delays (800ms GUI, 1s CLI)
+- ✅ Upsert to prevent duplicates by ffme_id
+- ✅ Full-text search indexes for performance
+
+See `docs/ffme-scraper-guide.md` for detailed usage.
+
 ## Common Architectural Patterns
 
 ### Custom Hooks Pattern
@@ -227,6 +261,7 @@ Hooks encapsulate business logic and are used extensively:
 - `useMemberImage()` - Image loading with error handling
 - `useConnectionLogger()` - Activity logging
 - `useRefreshMaterializedViews()` - Database view refresh
+- `useFFMECompetitionScraper()` - FFME competition scraping
 
 ### Real-time Updates Pattern
 Supabase channels for live data:

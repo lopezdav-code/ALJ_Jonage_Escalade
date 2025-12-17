@@ -9,6 +9,7 @@ import { usePageAccess } from '@/hooks/usePageAccess';
 import ClubCompetitions from './competitions/ClubCompetitions';
 import Palmares from './competitions/Palmares';
 import Vocabulary from './competitions/Vocabulary';
+import FFMECompetitionScraper from '@/components/competitions/FFMECompetitionScraper';
 
 const Competitions = () => {
   const { isAdmin, isBureau, isEncadrant } = useAuth();
@@ -41,10 +42,11 @@ const Competitions = () => {
       </motion.div>
 
       <Tabs defaultValue="club" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 gap-1">
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 gap-1">
           <TabsTrigger value="club" className="text-xs sm:text-sm">Compétitions du club</TabsTrigger>
           <TabsTrigger value="palmares" className="text-xs sm:text-sm">Palmarès 2024-2025</TabsTrigger>
           <TabsTrigger value="vocabulaire" className="text-xs sm:text-sm">Vocabulaire</TabsTrigger>
+          <TabsTrigger value="ffme" className="text-xs sm:text-sm">Scraper FFME</TabsTrigger>
         </TabsList>
         <TabsContent value="club" className="mt-6">
           <ClubCompetitions />
@@ -54,6 +56,9 @@ const Competitions = () => {
         </TabsContent>
         <TabsContent value="vocabulaire" className="mt-6">
           <Vocabulary />
+        </TabsContent>
+        <TabsContent value="ffme" className="mt-6">
+          <FFMECompetitionScraper />
         </TabsContent>
       </Tabs>
 
