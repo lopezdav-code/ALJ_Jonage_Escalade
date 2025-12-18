@@ -224,6 +224,7 @@ const CompetitionDetail = () => {
         disciplines: Array.isArray(formData.disciplines) && formData.disciplines.length > 0 ? formData.disciplines : [],
         categories: Array.isArray(formData.categories) && formData.categories.length > 0 ? formData.categories : [],
         more_info_link: formData.more_info_link || null,
+        ffme_results_id: formData.ffme_results_id || null,
         details_description: formData.details_description || null,
         details_format: formData.details_format || null,
         details_schedule: formData.details_schedule || null,
@@ -747,6 +748,25 @@ const CompetitionDetail = () => {
                 </div>
 
                 <div>
+                  <Label htmlFor="ffme_results_id">
+                    ID FFME pour les résultats
+                    <span className="text-xs text-gray-500 ml-2">(ex: 13156)</span>
+                  </Label>
+                  <Input
+                    id="ffme_results_id"
+                    type="text"
+                    value={formData.ffme_results_id || ''}
+                    onChange={(e) => handleChange('ffme_results_id', e.target.value)}
+                    placeholder="13156"
+                  />
+                  {formData.ffme_results_id && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      Lien: https://mycompet.ffme.fr/resultat/resultat_{formData.ffme_results_id}
+                    </p>
+                  )}
+                </div>
+
+                <div>
                   <Label htmlFor="details_description">Informations pratiques</Label>
                   <Textarea
                     id="details_description"
@@ -870,6 +890,21 @@ const CompetitionDetail = () => {
                       <a href={dataToDisplay.more_info_link} target="_blank" rel="noopener noreferrer">
                         <ExternalLink className="w-3 h-3 mr-1" />
                         Consulter le site officiel
+                      </a>
+                    </Button>
+                  </div>
+                )}
+
+                {dataToDisplay.ffme_results_id && (
+                  <div className="p-3 bg-blue-50 rounded-md border border-blue-200">
+                    <h5 className="font-semibold mb-3 flex items-center gap-2">
+                      <Trophy className="w-4 h-4 text-blue-600" />
+                      Résultats FFME
+                    </h5>
+                    <Button variant="outline" size="sm" asChild>
+                      <a href={`https://mycompet.ffme.fr/resultat/resultat_${dataToDisplay.ffme_results_id}`} target="_blank" rel="noopener noreferrer">
+                        <ExternalLink className="w-3 h-3 mr-1" />
+                        Voir les résultats
                       </a>
                     </Button>
                   </div>

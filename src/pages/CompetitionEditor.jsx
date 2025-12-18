@@ -50,6 +50,7 @@ const CompetitionEditor = () => {
     disciplines: [],
     categories: [],
     more_info_link: '',
+    ffme_results_id: '',
     details_description: '',
     details_format: '',
     details_schedule: '',
@@ -112,6 +113,7 @@ const CompetitionEditor = () => {
         disciplines: data.disciplines || [],
         categories: data.categories || [],
         more_info_link: data.more_info_link || '',
+        ffme_results_id: data.ffme_results_id || '',
         details_description: data.details_description || '',
         details_format: data.details_format || '',
         details_schedule: data.details_schedule || '',
@@ -304,6 +306,7 @@ const CompetitionEditor = () => {
         disciplines: Array.isArray(formData.disciplines) && formData.disciplines.length > 0 ? formData.disciplines : [],
         categories: Array.isArray(formData.categories) && formData.categories.length > 0 ? formData.categories : [],
         more_info_link: formData.more_info_link || null,
+        ffme_results_id: formData.ffme_results_id || null,
         details_description: formData.details_description || null,
         details_format: formData.details_format || null,
         details_schedule: formData.details_schedule || null,
@@ -629,6 +632,38 @@ const CompetitionEditor = () => {
               onChange={(e) => handleChange('more_info_link', e.target.value)}
               placeholder="https://..."
             />
+          </div>
+
+          <div>
+            <Label htmlFor="ffme_results_id">
+              ID FFME pour les résultats
+              <span className="text-xs text-gray-500 ml-2">(ex: 13156)</span>
+            </Label>
+            <div className="flex items-center gap-2">
+              <div className="flex-1">
+                <Input
+                  id="ffme_results_id"
+                  type="text"
+                  value={formData.ffme_results_id}
+                  onChange={(e) => handleChange('ffme_results_id', e.target.value)}
+                  placeholder="13156"
+                />
+              </div>
+              {formData.ffme_results_id && (
+                <a
+                  href={`https://mycompet.ffme.fr/resultat/resultat_${formData.ffme_results_id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-500 hover:text-blue-700"
+                  title="Voir les résultats FFME"
+                >
+                  <ExternalLink className="w-5 h-5" />
+                </a>
+              )}
+            </div>
+            <p className="text-xs text-gray-500 mt-1">
+              Lien généré: {formData.ffme_results_id ? `https://mycompet.ffme.fr/resultat/resultat_${formData.ffme_results_id}` : 'Entrez un ID'}
+            </p>
           </div>
 
           {/* Détails pratiques */}

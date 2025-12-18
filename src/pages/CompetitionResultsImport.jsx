@@ -24,11 +24,26 @@ const CompetitionResultsImport = () => {
   const [participants, setParticipants] = useState([]);
   const [missingCompetitors, setMissingCompetitors] = useState([]);
 
-  // Charger les participants au chargement
+  // Charger les participants et la compétition au chargement
   useEffect(() => {
-    const fetchParticipants = async () => {
+    const fetchData = async () => {
       try {
-        const { data, error } = await supabase
+        // Charger la compétition pour obtenir l'ID FFME
+        const { data: compData, error: compError } = await supabase
+          .from('competitions')
+          .select('ffme_results_id')
+          .eq('id', id)
+          .single();
+
+        if (compError) throw compError;
+
+        // Pré-remplir l'URL si l'ID FFME existe
+        if (compData?.ffme_results_id) {
+          setUrl(`https://mycompet.ffme.fr/resultat/resultat_${compData.ffme_results_id}`);
+        }
+
+        // Charger les participants
+        const { data: participantsData, error: participantsError } = await supabase
           .from('competition_participants')
           .select(`
             id,
@@ -44,15 +59,15 @@ const CompetitionResultsImport = () => {
           .eq('competition_id', id)
           .eq('role', 'Competiteur');
 
-        if (error) throw error;
-        setParticipants(data || []);
+        if (participantsError) throw participantsError;
+        setParticipants(participantsData || []);
       } catch (err) {
-        console.error('Error fetching participants:', err);
+        console.error('Error fetching data:', err);
       }
     };
 
     if (id) {
-      fetchParticipants();
+      fetchData();
     }
   }, [id]);
 
