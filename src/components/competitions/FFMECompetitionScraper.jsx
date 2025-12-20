@@ -6,15 +6,37 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Loader2, AlertCircle, CheckCircle, Database } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { useFFMECompetitionScraper } from '@/hooks/useFFMECompetitionScraper';
+import { getFFMECompetitions, getFFMECompetitionUrl } from '@/services/ffmeCompetitionsService';
+import { ExternalLink, RefreshCw } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 
 const FFMECompetitionScraper = () => {
   const { toast } = useToast();
   const [startId, setStartId] = useState('13150');
   const [endId, setEndId] = useState('13160');
+  const [indexedCompetitions, setIndexedCompetitions] = useState([]);
+  const [loadingList, setLoadingList] = useState(false);
   const { loading, progress, results, scrapeCompetitions, reset } = useFFMECompetitionScraper();
+
+  const fetchIndexed = async () => {
+    setLoadingList(true);
+    try {
+      const data = await getFFMECompetitions();
+      setIndexedCompetitions(data);
+    } catch (error) {
+      console.error('Erreur lors du chargement des compétitions indexées:', error);
+    } finally {
+      setLoadingList(false);
+    }
+  };
+
+  React.useEffect(() => {
+    fetchIndexed();
+  }, []);
 
   const handleScrape = async () => {
     await scrapeCompetitions(startId, endId);
+    fetchIndexed(); // Refresh list after scraping
   };
 
   const handleReset = () => {
@@ -80,9 +102,8 @@ const FFMECompetitionScraper = () => {
         )}
 
         {results && (
-          <div className={`p-3 rounded border ${
-            results.completed ? 'bg-green-50 border-green-200' : 'bg-orange-50 border-orange-200'
-          }`}>
+          <div className={`p-3 rounded border ${results.completed ? 'bg-green-50 border-green-200' : 'bg-orange-50 border-orange-200'
+            }`}>
             <div className="flex items-center gap-2 mb-2">
               {results.completed ? (
                 <CheckCircle className="w-5 h-5 text-green-600" />
@@ -136,6 +157,65 @@ const FFMECompetitionScraper = () => {
           💡 Conseil: Commencez avec un petit intervalle (ex: 13150-13160) pour tester.
           Les résultats sont stockés dans la table <code className="bg-white px-1 py-0.5 rounded">ffme_competitions_index</code>.
         </p>
+
+        <div className="pt-6 border-t border-blue-200">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-semibold flex items-center gap-2">
+              <Database className="w-4 h-4" />
+              Compétitions déjà indexées ({indexedCompetitions.length})
+            </h3>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={fetchIndexed}
+              disabled={loadingList}
+              className="h-8 w-8 p-0"
+            >
+              <RefreshCw className={`w-4 h-4 ${loadingList ? 'animate-spin' : ''}`} />
+            </Button>
+          </div>
+
+          <div className="bg-white rounded-md border border-gray-200 overflow-hidden">
+            <div className="max-h-[400px] overflow-y-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50 sticky top-0">
+                  <tr>
+                    <th className="px-4 py-2 text-left font-medium text-gray-500">ID FFME</th>
+                    <th className="px-4 py-2 text-left font-medium text-gray-500">Titre</th>
+                    <th className="px-4 py-2 text-right font-medium text-gray-500">Lien</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {indexedCompetitions.length === 0 ? (
+                    <tr>
+                      <td colSpan="3" className="px-4 py-8 text-center text-gray-500 italic">
+                        {loadingList ? 'Chargement...' : 'Aucune compétition indexée'}
+                      </td>
+                    </tr>
+                  ) : (
+                    indexedCompetitions.map((comp) => (
+                      <tr key={comp.ffme_id} className="hover:bg-gray-50 transition-colors">
+                        <td className="px-4 py-2 font-mono text-blue-600">
+                          {comp.ffme_id}
+                        </td>
+                        <td className="px-4 py-2">
+                          <span className="font-medium">{comp.title}</span>
+                        </td>
+                        <td className="px-4 py-2 text-right">
+                          <Button variant="ghost" size="sm" asChild className="h-8 w-8 p-0">
+                            <a href={getFFMECompetitionUrl(comp.ffme_id)} target="_blank" rel="noopener noreferrer">
+                              <ExternalLink className="w-4 h-4" />
+                            </a>
+                          </Button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
       </CardContent>
     </Card>
   );
