@@ -191,6 +191,86 @@ const CompetitionDetail = () => {
     }
   };
 
+  const handleAddMultiplePhotos = async (e) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    setUploadingPhoto(true);
+    const newPhotos = [];
+    let successCount = 0;
+
+    toast({
+      title: "Upload en cours",
+      description: `Préparation de l'upload de ${files.length} photo(s)...`,
+    });
+
+    for (const file of files) {
+      try {
+        const result = await uploadCompetitionPhoto(file, formData?.name || competition?.name);
+        if (result.success) {
+          newPhotos.push(result.url);
+          successCount++;
+        } else {
+          toast({
+            title: "Erreur",
+            description: `Erreur pour ${file.name}: ${result.error}`,
+            variant: "destructive"
+          });
+        }
+      } catch (error) {
+        console.error(`Erreur lors de l'upload de ${file.name}:`, error);
+      }
+    }
+
+    if (successCount > 0) {
+      const currentGallery = isEditMode ? (formData.photo_gallery || []) : (competition.photo_gallery || []);
+      const updatedGallery = [...currentGallery, ...newPhotos];
+
+      if (isEditMode) {
+        setFormData(prev => ({
+          ...prev,
+          photo_gallery: updatedGallery
+        }));
+      } else {
+        // Enregistrer directement en base si pas en mode édition
+        try {
+          const { error } = await supabase
+            .from('competitions')
+            .update({ photo_gallery: updatedGallery })
+            .eq('id', id);
+
+          if (error) throw error;
+
+          setCompetition(prev => ({ ...prev, photo_gallery: updatedGallery }));
+          setFormData(prev => ({ ...prev, photo_gallery: updatedGallery }));
+
+          // Mettre à jour les URLs signées pour l'affichage immédiat
+          const newSignedUrls = await Promise.all(newPhotos.map(p => getCompetitionPhotoUrl(p)));
+          setSignedUrls(prev => ({
+            ...prev,
+            gallery: [...prev.gallery, ...newSignedUrls.filter(Boolean)]
+          }));
+        } catch (error) {
+          console.error("Erreur lors de la mise à jour de la galerie:", error);
+          toast({
+            title: "Erreur",
+            description: "Photos uploadées mais impossible de mettre à jour la base de données.",
+            variant: "destructive"
+          });
+        }
+      }
+
+      toast({
+        title: "Succès",
+        description: `${successCount} photo(s) ajoutée(s) avec succès !`,
+        variant: "default"
+      });
+    }
+
+    setUploadingPhoto(false);
+    e.target.value = '';
+  };
+
   const removePhoto = (index) => {
     setFormData(prev => ({
       ...prev,
@@ -941,18 +1021,33 @@ const CompetitionDetail = () => {
                   </div>
                 )}
 
-                {dataToDisplay.ffme_results_id && (
+                {(dataToDisplay.ffme_results_id || canEdit) && (
                   <div className="p-3 bg-blue-50 rounded-md border border-blue-200">
                     <h5 className="font-semibold mb-3 flex items-center gap-2">
                       <Trophy className="w-4 h-4 text-blue-600" />
                       Résultats FFME
                     </h5>
-                    <Button variant="outline" size="sm" asChild>
-                      <a href={`https://mycompet.ffme.fr/resultat/resultat_${dataToDisplay.ffme_results_id}`} target="_blank" rel="noopener noreferrer">
-                        <ExternalLink className="w-3 h-3 mr-1" />
-                        Voir les résultats
-                      </a>
-                    </Button>
+                    <div className="flex flex-wrap gap-2">
+                      {dataToDisplay.ffme_results_id && (
+                        <Button variant="outline" size="sm" asChild>
+                          <a href={`https://mycompet.ffme.fr/resultat/resultat_${dataToDisplay.ffme_results_id}`} target="_blank" rel="noopener noreferrer">
+                            <ExternalLink className="w-3 h-3 mr-1" />
+                            Voir les résultats
+                          </a>
+                        </Button>
+                      )}
+                      {canEdit && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => navigate(`/competitions/results/import/${id}`)}
+                          className="bg-white"
+                        >
+                          <Download className="w-3 h-3 mr-1" />
+                          Importer les résultats
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 )}
 
@@ -1039,10 +1134,36 @@ const CompetitionDetail = () => {
         {/* Galerie photo */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Award className="w-5 h-5" />
-              Photos {dataToDisplay.photo_gallery && dataToDisplay.photo_gallery.length > 0 && `(${dataToDisplay.photo_gallery.length})`}
-            </CardTitle>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <CardTitle className="flex items-center gap-2">
+                <Award className="w-5 h-5" />
+                Photos {dataToDisplay.photo_gallery && dataToDisplay.photo_gallery.length > 0 && `(${dataToDisplay.photo_gallery.length})`}
+              </CardTitle>
+              {canEdit && (
+                <div className="flex flex-wrap gap-2">
+                  <Label
+                    htmlFor="multiple-photo-upload"
+                    className={`flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md border border-primary text-primary hover:bg-primary/10 transition-colors ${uploadingPhoto ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                  >
+                    {uploadingPhoto ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Upload className="w-4 h-4" />
+                    )}
+                    <span>Ajouter des photos</span>
+                    <Input
+                      id="multiple-photo-upload"
+                      type="file"
+                      multiple
+                      className="sr-only"
+                      onChange={handleAddMultiplePhotos}
+                      accept="image/*"
+                      disabled={uploadingPhoto}
+                    />
+                  </Label>
+                </div>
+              )}
+            </div>
           </CardHeader>
           <CardContent>
             {isEditMode && (
