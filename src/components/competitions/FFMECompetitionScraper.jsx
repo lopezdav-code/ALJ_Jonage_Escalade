@@ -6,7 +6,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Loader2, AlertCircle, CheckCircle, Database } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { useFFMECompetitionScraper } from '@/hooks/useFFMECompetitionScraper';
-import { getFFMECompetitions, getFFMECompetitionUrl } from '@/services/ffmeCompetitionsService';
+import { getFFMECompetitions, getFFMECompetitionUrl, getLinkedFFMECompetitions } from '@/services/ffmeCompetitionsService';
 import { ExternalLink, RefreshCw } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
@@ -15,14 +15,19 @@ const FFMECompetitionScraper = () => {
   const [startId, setStartId] = useState('13150');
   const [endId, setEndId] = useState('13160');
   const [indexedCompetitions, setIndexedCompetitions] = useState([]);
+  const [linkedIds, setLinkedIds] = useState(new Set());
   const [loadingList, setLoadingList] = useState(false);
   const { loading, progress, results, scrapeCompetitions, reset } = useFFMECompetitionScraper();
 
   const fetchIndexed = async () => {
     setLoadingList(true);
     try {
-      const data = await getFFMECompetitions();
-      setIndexedCompetitions(data);
+      const [indexedData, linkedData] = await Promise.all([
+        getFFMECompetitions(),
+        getLinkedFFMECompetitions()
+      ]);
+      setIndexedCompetitions(indexedData);
+      setLinkedIds(new Set(linkedData.map(c => parseInt(c.ffme_id, 10))));
     } catch (error) {
       console.error('Erreur lors du chargement des compétitions indexées:', error);
     } finally {
@@ -199,7 +204,14 @@ const FFMECompetitionScraper = () => {
                           {comp.ffme_id}
                         </td>
                         <td className="px-4 py-2">
-                          <span className="font-medium">{comp.title}</span>
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">{comp.title}</span>
+                            {linkedIds.has(parseInt(comp.ffme_id, 10)) && (
+                              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 py-0 h-5 px-1.5 text-[10px]">
+                                Importé
+                              </Badge>
+                            )}
+                          </div>
                         </td>
                         <td className="px-4 py-2 text-right">
                           <Button variant="ghost" size="sm" asChild className="h-8 w-8 p-0">
