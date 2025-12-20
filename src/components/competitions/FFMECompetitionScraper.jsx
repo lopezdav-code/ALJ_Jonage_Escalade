@@ -21,15 +21,28 @@ const FFMECompetitionScraper = () => {
 
   const fetchIndexed = async () => {
     setLoadingList(true);
+    console.log('Fetching indexed competitions...');
     try {
-      const [indexedData, linkedData] = await Promise.all([
+      const [indexedResult, linkedResult] = await Promise.allSettled([
         getFFMECompetitions(),
         getLinkedFFMECompetitions()
       ]);
-      setIndexedCompetitions(indexedData);
-      setLinkedIds(new Set(linkedData.map(c => parseInt(c.ffme_id, 10))));
+
+      if (indexedResult.status === 'fulfilled') {
+        console.log(`Found ${indexedResult.value.length} indexed competitions`);
+        setIndexedCompetitions(indexedResult.value);
+      } else {
+        console.error('Error fetching indexed competitions:', indexedResult.reason);
+      }
+
+      if (linkedResult.status === 'fulfilled') {
+        console.log(`Found ${linkedResult.value.length} linked competitions`);
+        setLinkedIds(new Set(linkedResult.value.map(c => parseInt(c.ffme_id, 10))));
+      } else {
+        console.error('Error fetching linked competitions:', linkedResult.reason);
+      }
     } catch (error) {
-      console.error('Erreur lors du chargement des compétitions indexées:', error);
+      console.error('Unexpected error in fetchIndexed:', error);
     } finally {
       setLoadingList(false);
     }

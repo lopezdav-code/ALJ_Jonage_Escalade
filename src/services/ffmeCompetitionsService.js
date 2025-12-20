@@ -130,7 +130,7 @@ export const linkFFMECompetition = async (competitionId, ffmeId) => {
   try {
     const { error } = await supabase
       .from('competitions')
-      .update({ ffme_id: ffmeId })
+      .update({ ffme_results_id: ffmeId })
       .eq('id', competitionId);
 
     if (error) throw error;
@@ -148,19 +148,12 @@ export const getLinkedFFMECompetitions = async () => {
   try {
     const { data, error } = await supabase
       .from('competitions')
-      .select(`
-        id,
-        name,
-        ffme_id,
-        ffme_competitions_index (
-          ffme_id,
-          title
-        )
-      `)
-      .not('ffme_id', 'is', null);
+      .select('ffme_results_id')
+      .not('ffme_results_id', 'is', null);
 
     if (error) throw error;
-    return data || [];
+    // Return a format that is expected by the caller (array of objects with ffme_id property)
+    return data.map(item => ({ ffme_id: item.ffme_results_id })) || [];
   } catch (error) {
     console.error('Error fetching linked FFME competitions:', error);
     throw error;
