@@ -1,0 +1,47 @@
+{
+  "poster_generation_example": {
+    "description": "Exemple de payload pour la génération d'affiche via n8n",
+    "solo_example": {
+      "posterType": "solo",
+      "competitionName": "Championnat Régional de Bloc 2025",
+      "competitionDate": "18/12/25",
+      "photoUrl": "https://supabase.example.com/competitions/comp-1/main-photo.jpg",
+      "athletes": [
+        {
+          "name": "Marie Dupont",
+          "rank": 1
+        }
+      ]
+    },
+    "grouped_example": {
+      "posterType": "grouped",
+      "competitionName": "Coupe de France Escalade",
+      "competitionDate": "20/12/25",
+      "photoUrl": "https://supabase.example.com/competitions/comp-2/gallery/photo-1.jpg",
+      "athletes": [
+        {
+          "name": "Alice Dupont",
+          "rank": 1
+        },
+        {
+          "name": "Bob Martin",
+          "rank": 2
+        },
+        {
+          "name": "Charlotte Blanc",
+          "rank": 3
+        }
+      ]
+    },
+    "expected_response": {
+      "posterUrl": "https://supabase.example.com/ai-posters/comp-1/poster-2025-12-18.png",
+      "status": "success",
+      "message": "Affiche générée avec succès"
+    },
+    "error_response": {
+      "status": "error",
+      "message": "Erreur lors de la génération de l'affiche",
+      "details": "La photo n'est pas accessible"
+    }
+  }
+}

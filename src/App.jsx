@@ -5,7 +5,6 @@ import { Toaster } from '@/components/ui/toaster';
 import { useToast } from '@/components/ui/use-toast';
 import { Loader2 } from 'lucide-react';
 import Navigation from '@/components/Navigation';
-import Footer from '@/components/Footer';
 import News from '@/pages/News';
 import NewsDetail from '@/pages/NewsDetail';
 import Competitions from '@/pages/Competitions';
@@ -181,7 +180,6 @@ const AppContent = () => {
           <Route path="/helloasso" element={<LazyRoute><HelloAsso /></LazyRoute>} />
         </Routes>
       </main>
-      <Footer />
       <Toaster />
       <MemberDetailCard />
     </div>

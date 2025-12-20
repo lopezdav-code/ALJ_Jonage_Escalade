@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import {
   Edit, Save, X, Calendar, MapPin, Euro, ExternalLink,
   Info, Trophy, Award, Users, Settings, Plus, ChevronLeft, ChevronRight,
-  ZoomIn, Upload, Loader2, Printer
+  ZoomIn, Upload, Loader2, Printer, Zap, Download
 } from 'lucide-react';
 import { supabase } from '@/lib/customSupabaseClient';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -24,6 +24,7 @@ import { usePageAccess } from '@/hooks/usePageAccess';
 import { formatName } from '@/lib/utils';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { exportCompetitionToPNG } from '@/lib/competitionExportUtils';
+import GeneratePosterDialog from '@/components/GeneratePosterDialog';
 
 const CompetitionDetail = () => {
   const { id } = useParams();
@@ -38,6 +39,7 @@ const CompetitionDetail = () => {
   const [saving, setSaving] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [isGeneratePosterOpen, setIsGeneratePosterOpen] = useState(false);
 
   const [competition, setCompetition] = useState(null);
   const [formData, setFormData] = useState(null);
@@ -299,6 +301,41 @@ const CompetitionDetail = () => {
     }));
   };
 
+  // Gérer la génération d'affiche
+  const handlePosterGenerated = async (result) => {
+    try {
+      // Le résultat de n8n contient l'URL de l'affiche générée
+      if (result && result.posterUrl) {
+        // Mettre à jour la compétition avec l'URL de l'affiche
+        const { error } = await supabase
+          .from('competitions')
+          .update({ ai_poster_url: result.posterUrl })
+          .eq('id', id);
+
+        if (error) throw error;
+
+        // Mettre à jour localement
+        setCompetition(prev => ({
+          ...prev,
+          ai_poster_url: result.posterUrl
+        }));
+
+        toast({
+          title: 'Succès',
+          description: 'Affiche générée et sauvegardée avec succès !',
+          variant: 'default'
+        });
+      }
+    } catch (error) {
+      console.error('Erreur lors de la sauvegarde de l\'affiche:', error);
+      toast({
+        title: 'Erreur',
+        description: 'Affiche générée mais erreur lors de la sauvegarde',
+        variant: 'destructive'
+      });
+    }
+  };
+
   // Fonctions de couleur
   const getDisciplineColor = (discipline) => {
     const colors = {
@@ -394,12 +431,21 @@ const CompetitionDetail = () => {
     >
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <BackButton to="/competitions" variant="outline">
             Retour à la liste
           </BackButton>
 
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
+            <Button
+              onClick={() => setIsGeneratePosterOpen(true)}
+              variant="outline"
+              className="flex items-center gap-2"
+              title="Générer une affiche par IA"
+            >
+              <Zap className="w-4 h-4" />
+              Générer affiche par IA
+            </Button>
             <Button
               onClick={handleExportPNG}
               variant="outline"
@@ -435,8 +481,8 @@ const CompetitionDetail = () => {
         {/* Statut de la compétition */}
         <Card className="border-2">
           <CardContent className="pt-6">
-            <div className="flex items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex flex-wrap items-center gap-3">
                 <Settings className="w-5 h-5 text-muted-foreground" />
                 <span className="font-medium">Statut de la compétition:</span>
                 <Badge
@@ -446,7 +492,7 @@ const CompetitionDetail = () => {
                   {dataToDisplay.status || 'À venir'}
                 </Badge>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <Label htmlFor="status-select" className="text-sm text-muted-foreground">Changer le statut:</Label>
                 <Select
                   value={dataToDisplay.status || 'À venir'}
@@ -927,6 +973,69 @@ const CompetitionDetail = () => {
           </CardContent>
         </Card>
 
+        {/* Affiche IA (si disponible) */}
+        {!isEditMode && dataToDisplay.ai_poster_url && (
+          <Card className="border-2 border-indigo-200 bg-indigo-50/30 overflow-hidden">
+            <CardHeader className="bg-white border-b">
+              <CardTitle className="flex items-center gap-2 text-indigo-700">
+                <Zap className="w-5 h-5 fill-indigo-500" />
+                Affiche Officielle IA
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-6">
+              <div className="flex flex-col md:flex-row gap-8 items-center lg:items-start">
+                <div className="w-full max-w-sm relative group cursor-pointer" onClick={() => window.open(dataToDisplay.ai_poster_url, '_blank')}>
+                  <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 to-blue-500 rounded-xl blur opacity-25 group-hover:opacity-40 transition duration-1000"></div>
+                  <img
+                    src={dataToDisplay.ai_poster_url}
+                    alt="Affiche IA"
+                    className="relative w-full h-auto rounded-lg shadow-xl border border-white"
+                  />
+                  <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm p-2 rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity">
+                    <ZoomIn className="w-4 h-4 text-indigo-600" />
+                  </div>
+                </div>
+
+                <div className="flex-1 space-y-6 text-center md:text-left">
+                  <div className="space-y-2">
+                    <h3 className="text-xl font-bold text-indigo-900">Composition Dynamique</h3>
+                    <p className="text-indigo-600/80 text-sm leading-relaxed">
+                      Cette affiche a été générée par l'intelligence artificielle du club. Elle combine les photos de la compétition avec les données de performance de nos grimpeurs.
+                    </p>
+                  </div>
+
+                  <div className="flex flex-wrap gap-3 justify-center md:justify-start">
+                    <Button
+                      className="bg-indigo-600 hover:bg-indigo-700 gap-2 font-bold"
+                      onClick={() => {
+                        const link = document.createElement('a');
+                        link.href = dataToDisplay.ai_poster_url;
+                        link.download = `affiche-${dataToDisplay.name}.jpg`;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                      }}
+                    >
+                      <Download className="w-4 h-4" /> Télécharger l'affiche
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="border-indigo-200 text-indigo-700 hover:bg-indigo-100 gap-2"
+                      onClick={() => window.open(dataToDisplay.ai_poster_url, '_blank')}
+                    >
+                      <ExternalLink className="w-4 h-4" /> Voir en plein écran
+                    </Button>
+                  </div>
+
+                  <Badge variant="outline" className="border-indigo-200 bg-white text-indigo-600 uppercase tracking-tighter text-[10px]">
+                    Propulsé par n8n & Adobe Express
+                  </Badge>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Galerie photo */}
         <Card>
           <CardHeader>
@@ -1109,6 +1218,17 @@ const CompetitionDetail = () => {
             </div>
           </DialogContent>
         </Dialog>
+
+        {/* Dialog Génération Affiche */}
+        <GeneratePosterDialog
+          isOpen={isGeneratePosterOpen}
+          onClose={() => setIsGeneratePosterOpen(false)}
+          competition={competition}
+          participants={participants}
+          competitionPhotoUrl={signedUrls.main}
+          competitionPhotoGallery={signedUrls.gallery}
+          onPosterGenerated={handlePosterGenerated}
+        />
       </div>
     </ProtectedRoute>
   );
