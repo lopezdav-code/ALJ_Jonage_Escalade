@@ -130,7 +130,7 @@ const ParticipantsDisplay = ({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 relative z-[60]">
       {/* Compétiteurs par genre - Affichage en deux colonnes */}
       {competitors.length > 0 && (
         <div>
