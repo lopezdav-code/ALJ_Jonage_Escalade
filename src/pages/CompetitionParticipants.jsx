@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { Users, Search, Save, X } from 'lucide-react';
+import { Users, Search, Save, X, Edit, Trash2 } from 'lucide-react';
 import { supabase } from '@/lib/customSupabaseClient';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -27,6 +27,10 @@ const CompetitionParticipants = () => {
   const [selectedMembers, setSelectedMembers] = useState([]);
   const [selectedRole, setSelectedRole] = useState('Competiteur');
   const [saving, setSaving] = useState(false);
+
+  // Edit mode states
+  const [editMode, setEditMode] = useState(false);
+  const [selectedParticipants, setSelectedParticipants] = useState([]);
 
   // Nouveaux filtres
   const [selectedCategories, setSelectedCategories] = useState([]);
@@ -276,19 +280,78 @@ const CompetitionParticipants = () => {
       {/* Section Participants */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Users className="w-5 h-5" />
-            Participants ({participants.length})
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Users className="w-5 h-5" />
+              Participants ({participants.length})
+            </CardTitle>
+
+            {/* Edit mode toggle */}
+            <div className="flex items-center gap-2">
+              {editMode ? (
+                <>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={async () => {
+                      if (selectedParticipants.length === 0) return;
+
+                      if (!window.confirm(`Êtes-vous sûr de vouloir supprimer ${selectedParticipants.length} participant(s) ?`)) return;
+
+                      try {
+                        const { error } = await supabase
+                          .from('competition_participants')
+                          .delete()
+                          .in('id', selectedParticipants);
+
+                        if (error) throw error;
+
+                        setParticipants(prev => prev.filter(p => !selectedParticipants.includes(p.id)));
+                        setSelectedParticipants([]);
+                        setEditMode(false);
+                        toast({ title: "Succès", description: `${selectedParticipants.length} participant(s) supprimé(s).` });
+                      } catch (error) {
+                        console.error('Error removing participants:', error);
+                        toast({ title: "Erreur", description: "Impossible de supprimer les participants.", variant: "destructive" });
+                      }
+                    }}
+                    disabled={selectedParticipants.length === 0}
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Supprimer ({selectedParticipants.length})
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setEditMode(false);
+                      setSelectedParticipants([]);
+                    }}
+                  >
+                    Annuler
+                  </Button>
+                </>
+              ) : (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setEditMode(true)}
+                >
+                  <Edit className="w-4 h-4 mr-2" />
+                  Mode édition
+                </Button>
+              )}
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           <ParticipantsDisplay
             participants={participants}
-            showRemoveButton={true}
-            onRemoveParticipant={handleRemoveParticipant}
             onParticipantClick={showMemberDetails}
             compact={false}
-            alwaysShowRemoveButton={true}
+            editMode={editMode}
+            selectedIds={selectedParticipants}
+            onSelectionChange={setSelectedParticipants}
           />
         </CardContent>
       </Card>

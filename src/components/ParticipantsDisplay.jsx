@@ -1,18 +1,17 @@
 import React from 'react';
-import { Trophy, UserCheck, Users, Trash2, Settings } from 'lucide-react';
+import { Trophy, UserCheck, Users } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { formatName, cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
 
 const ParticipantsDisplay = ({
   participants = [],
-  showRemoveButton = false,
-  onRemoveParticipant = null,
   onParticipantClick = null,
-  onEditRanking = null,
   compact = false,
-  alwaysShowRemoveButton = false
+  // Edit mode props
+  editMode = false,
+  selectedIds = [],
+  onSelectionChange = null
 }) => {
   const { isAdmin } = useAuth();
 
@@ -66,7 +65,7 @@ const ParticipantsDisplay = ({
   const groupedCompetitors = groupCompetitorsByGenderAndCategory(competitors);
 
   // Composant pour afficher une carte de participant
-  const ParticipantCard = ({ participant, showRemove, alwaysShowRemove, onClick }) => {
+  const ParticipantCard = ({ participant }) => {
     if (!participant.members) {
       return (
         <div className="text-sm text-muted-foreground py-1">
@@ -75,58 +74,68 @@ const ParticipantsDisplay = ({
       );
     }
 
+    const isSelected = selectedIds.includes(participant.id);
+
+    const handleCheckboxChange = (e) => {
+      e.stopPropagation();
+      if (onSelectionChange) {
+        if (isSelected) {
+          onSelectionChange(selectedIds.filter(id => id !== participant.id));
+        } else {
+          onSelectionChange([...selectedIds, participant.id]);
+        }
+      }
+    };
+
     return (
       <div
-        className="flex items-center justify-between py-2 px-3 hover:bg-muted/30 transition-colors group border-b border-muted/30 last:border-b-0"
+        className={cn(
+          "flex items-center gap-3 py-2 px-3 hover:bg-muted/30 transition-colors border-b border-muted/30 last:border-b-0",
+          isSelected && editMode && "bg-blue-50 border-blue-200"
+        )}
       >
-        <div
-          className={cn(
-            "flex items-center gap-3 flex-1 min-w-0",
-            onClick && "cursor-pointer"
-          )}
-          onClick={() => onClick && onClick(participant.members.id)}
-        >
-          <span className="text-sm font-medium truncate">
+        {/* Checkbox in edit mode */}
+        {editMode && (
+          <input
+            type="checkbox"
+            checked={isSelected}
+            onChange={handleCheckboxChange}
+            className="w-4 h-4 cursor-pointer flex-shrink-0"
+            onClick={(e) => e.stopPropagation()}
+          />
+        )}
+
+        {/* Name - clickable to view details */}
+        <div className="flex items-center gap-3 flex-1 min-w-0">
+          <span
+            className={cn(
+              "text-sm font-medium truncate",
+              onParticipantClick && !editMode && "cursor-pointer hover:underline"
+            )}
+            onClick={(e) => {
+              if (onParticipantClick && !editMode) {
+                e.stopPropagation();
+                onParticipantClick(participant.members.id);
+              }
+            }}
+          >
             {formatName(participant.members.first_name, participant.members.last_name, isAdmin)}
           </span>
         </div>
 
-        <div className="flex items-center gap-2 flex-shrink-0 relative z-10">
+        {/* Badges */}
+        <div className="flex items-center gap-2 flex-shrink-0">
           {participant.members.licence && (
-            <Badge variant="secondary" className="text-xs pointer-events-none">
+            <Badge variant="secondary" className="text-xs">
               Licence: {participant.members.licence}
             </Badge>
           )}
 
           {participant.ranking && (
-            <Badge variant="secondary" className="text-xs pointer-events-none">
+            <Badge variant="secondary" className="text-xs">
               #{participant.ranking}
               {participant.nb_competitor && ` / ${participant.nb_competitor}`}
             </Badge>
-          )}
-
-
-          {showRemove && onRemoveParticipant && (
-            <Button
-              variant="ghost"
-              size="icon"
-              type="button"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                onRemoveParticipant(participant.id);
-              }}
-              className={cn(
-                "h-9 w-9 text-destructive hover:text-destructive hover:bg-destructive/10 transition-all",
-                alwaysShowRemove
-                  ? "opacity-100"
-                  : "opacity-30 hover:opacity-100"
-              )}
-              title="Supprimer le participant"
-              style={{ pointerEvents: 'auto', position: 'relative', zIndex: 100 }}
-            >
-              <Trash2 className="w-5 h-5" style={{ pointerEvents: 'none' }} />
-            </Button>
           )}
         </div>
       </div>
@@ -159,9 +168,6 @@ const ParticipantsDisplay = ({
                           <ParticipantCard
                             key={participant.id}
                             participant={participant}
-                            showRemove={showRemoveButton}
-                            alwaysShowRemove={alwaysShowRemoveButton}
-                            onClick={onParticipantClick}
                           />
                         ))}
                       </div>
@@ -188,8 +194,6 @@ const ParticipantsDisplay = ({
                           <ParticipantCard
                             key={participant.id}
                             participant={participant}
-                            showRemove={showRemoveButton}
-                            alwaysShowRemove={alwaysShowRemoveButton}
                           />
                         ))}
                       </div>
@@ -224,9 +228,6 @@ const ParticipantsDisplay = ({
                     <ParticipantCard
                       key={participant.id}
                       participant={participant}
-                      showRemove={showRemoveButton}
-                      alwaysShowRemove={alwaysShowRemoveButton}
-                      onClick={onParticipantClick}
                     />
                   ))}
                 </div>
@@ -246,8 +247,6 @@ const ParticipantsDisplay = ({
                     <ParticipantCard
                       key={participant.id}
                       participant={participant}
-                      showRemove={showRemoveButton}
-                      alwaysShowRemove={alwaysShowRemoveButton}
                     />
                   ))}
                 </div>
@@ -272,9 +271,6 @@ const ParticipantsDisplay = ({
               <ParticipantCard
                 key={participant.id}
                 participant={participant}
-                showRemove={showRemoveButton}
-                alwaysShowRemove={alwaysShowRemoveButton}
-                onClick={onParticipantClick}
               />
             ))}
           </div>
