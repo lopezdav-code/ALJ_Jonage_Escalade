@@ -110,18 +110,23 @@ const ParticipantsDisplay = ({
             <Button
               variant="ghost"
               size="icon"
+              type="button"
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
+                console.log('Delete button clicked for participant:', participant.id);
                 onRemoveParticipant(participant.id);
               }}
               className={cn(
-                "h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10 transition-all pointer-events-auto",
-                alwaysShowRemove ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                "h-9 w-9 text-destructive hover:text-destructive hover:bg-destructive/10 transition-all",
+                alwaysShowRemove
+                  ? "opacity-100"
+                  : "opacity-30 hover:opacity-100"
               )}
               title="Supprimer le participant"
+              style={{ pointerEvents: 'auto', position: 'relative', zIndex: 100 }}
             >
-              <Trash2 className="w-5 h-5 pointer-events-none" />
+              <Trash2 className="w-5 h-5" style={{ pointerEvents: 'none' }} />
             </Button>
           )}
         </div>
