@@ -96,7 +96,7 @@ export const getN8nWebhookUrl = async () => {
       .select('config_value')
       .eq('config_key', 'n8n_proxy_url')
       .limit(1)
-      .single();
+      .maybeSingle();
 
     if (!error && data && data.config_value) {
       return data.config_value;

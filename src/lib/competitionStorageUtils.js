@@ -95,11 +95,24 @@ export const uploadCompetitionPhoto = async (file, competitionName) => {
 
     // Upload vers Supabase Storage
     console.log('Début upload vers Supabase Storage...');
-    const { data, error: uploadError } = await supabase.storage
+
+    if (!supabase) {
+      console.error('Erreur: Le client Supabase est indéfini');
+      return { success: false, error: 'Client Supabase non initialisé' };
+    }
+
+    if (!supabase.storage) {
+      console.error('Erreur: supabase.storage est indéfini');
+      return { success: false, error: 'Module Storage Supabase non disponible' };
+    }
+
+    console.log('Tentative d\'upload vers le bucket:', BUCKET_NAME);
+
+    const { data: uploadData, error: uploadError } = await supabase.storage
       .from(BUCKET_NAME)
       .upload(fileName, file, {
         cacheControl: '3600',
-        upsert: false // Ne pas écraser si existe déjà
+        upsert: false
       });
 
     if (uploadError) {
@@ -107,7 +120,7 @@ export const uploadCompetitionPhoto = async (file, competitionName) => {
       return { success: false, error: `Erreur d'upload : ${uploadError.message}` };
     }
 
-    console.log('Upload réussi, données:', data);
+    console.log('Upload réussi, données:', uploadData);
 
     // Retourner uniquement le chemin relatif du fichier
     return {
@@ -178,7 +191,7 @@ export const getCompetitionPhotoUrl = async (photoPath) => {
       console.error('Erreur createSignedUrl (competition):', error);
       return null;
     }
-    
+
     let finalUrl = data.signedUrl;
     if (finalUrl && finalUrl.startsWith('/')) {
       finalUrl = `${supabaseUrl}/storage/v1${finalUrl}`;

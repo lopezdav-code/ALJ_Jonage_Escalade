@@ -2,7 +2,7 @@ import React from 'react';
 import { Trophy, UserCheck, Users, Trash2, Settings } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { formatName } from '@/lib/utils';
+import { formatName, cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
 
 const ParticipantsDisplay = ({
@@ -15,7 +15,7 @@ const ParticipantsDisplay = ({
   alwaysShowRemoveButton = false
 }) => {
   const { isAdmin } = useAuth();
-  
+
   if (participants.length === 0) {
     return (
       <div className="text-center py-4 text-muted-foreground">
@@ -41,7 +41,7 @@ const ParticipantsDisplay = ({
 
     competitors.forEach(competitor => {
       if (!competitor.members) return;
-      
+
       let gender;
       if (competitor.members.sexe === 'F') {
         gender = 'femmes';
@@ -50,13 +50,13 @@ const ParticipantsDisplay = ({
       } else {
         gender = 'inconnu';
       }
-      
+
       const category = competitor.members.category || 'Sans catégorie';
-      
+
       if (!grouped[gender][category]) {
         grouped[gender][category] = [];
       }
-      
+
       grouped[gender][category].push(competitor);
     });
 
@@ -66,7 +66,7 @@ const ParticipantsDisplay = ({
   const groupedCompetitors = groupCompetitorsByGenderAndCategory(competitors);
 
   // Composant pour afficher une carte de participant
-  const ParticipantCard = ({ participant, showRemove, alwaysShowRemove }) => {
+  const ParticipantCard = ({ participant, showRemove, alwaysShowRemove, onClick }) => {
     if (!participant.members) {
       return (
         <div className="text-sm text-muted-foreground py-1">
@@ -75,17 +75,23 @@ const ParticipantsDisplay = ({
       );
     }
 
-    const isCompetitor = participant.role === 'Competiteur';
-
     return (
-      <div className="flex items-center justify-between py-2 px-3 hover:bg-muted/30 transition-colors group border-b border-muted/30 last:border-b-0">
-        <div className="flex items-center gap-3 flex-1">
-          <span className="text-sm font-medium">
+      <div
+        className="flex items-center justify-between py-2 px-3 hover:bg-muted/30 transition-colors group border-b border-muted/30 last:border-b-0"
+      >
+        <div
+          className={cn(
+            "flex items-center gap-3 flex-1 min-w-0",
+            onClick && "cursor-pointer"
+          )}
+          onClick={() => onClick && onClick(participant.members.id)}
+        >
+          <span className="text-sm font-medium truncate">
             {formatName(participant.members.first_name, participant.members.last_name, isAdmin)}
           </span>
         </div>
 
-        <div className="flex items-center gap-2 pointer-events-auto">
+        <div className="flex items-center gap-2 flex-shrink-0 relative z-10">
           {participant.members.licence && (
             <Badge variant="secondary" className="text-xs pointer-events-none">
               Licence: {participant.members.licence}
@@ -103,14 +109,19 @@ const ParticipantsDisplay = ({
           {showRemove && onRemoveParticipant && (
             <Button
               variant="ghost"
-              size="sm"
+              size="icon"
               onClick={(e) => {
+                e.preventDefault();
                 e.stopPropagation();
                 onRemoveParticipant(participant.id);
               }}
-              className={alwaysShowRemove ? "transition-opacity" : "opacity-0 group-hover:opacity-100 transition-opacity"}
+              className={cn(
+                "h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10 transition-all pointer-events-auto",
+                alwaysShowRemove ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+              )}
+              title="Supprimer le participant"
             >
-              <Trash2 className="w-4 h-4 text-destructive" />
+              <Trash2 className="w-5 h-5 pointer-events-none" />
             </Button>
           )}
         </div>
@@ -127,7 +138,7 @@ const ParticipantsDisplay = ({
             <Trophy className="w-4 h-4" />
             Compétiteurs ({competitors.length})
           </h5>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Colonne Filles */}
             <div>
@@ -146,6 +157,7 @@ const ParticipantsDisplay = ({
                             participant={participant}
                             showRemove={showRemoveButton}
                             alwaysShowRemove={alwaysShowRemoveButton}
+                            onClick={onParticipantClick}
                           />
                         ))}
                       </div>
@@ -195,7 +207,7 @@ const ParticipantsDisplay = ({
             <UserCheck className="w-4 h-4" />
             Encadrement ({arbitres.length + coaches.length})
           </h5>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Colonne Coaches */}
             <div>
@@ -210,6 +222,7 @@ const ParticipantsDisplay = ({
                       participant={participant}
                       showRemove={showRemoveButton}
                       alwaysShowRemove={alwaysShowRemoveButton}
+                      onClick={onParticipantClick}
                     />
                   ))}
                 </div>
@@ -249,7 +262,7 @@ const ParticipantsDisplay = ({
             <UserCheck className="w-4 h-4" />
             Autre Encadrement ({autreStaff.length})
           </h5>
-          
+
           <div className="border rounded-lg">
             {autreStaff.map(participant => (
               <ParticipantCard
@@ -257,6 +270,7 @@ const ParticipantsDisplay = ({
                 participant={participant}
                 showRemove={showRemoveButton}
                 alwaysShowRemove={alwaysShowRemoveButton}
+                onClick={onParticipantClick}
               />
             ))}
           </div>
