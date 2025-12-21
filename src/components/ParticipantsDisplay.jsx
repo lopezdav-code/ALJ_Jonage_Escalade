@@ -114,7 +114,6 @@ const ParticipantsDisplay = ({
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                console.log('Delete button clicked for participant:', participant.id);
                 onRemoveParticipant(participant.id);
               }}
               className={cn(
