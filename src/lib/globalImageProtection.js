@@ -100,47 +100,17 @@ const blockBrokenImageRequests = () => {
     return img;
   };
 
-  // Bloquer aussi les requêtes fetch pour les images
-  const originalFetch = window.fetch;
-  window.fetch = async function (url, options) {
-    try {
-      if (typeof url === 'string') {
-        // Détecter si c'est une image
-        const isImageUrl = url.includes('.jpg') || url.includes('.jpeg') || url.includes('.png') ||
-          url.includes('.gif') || url.includes('.webp') || url.includes('.svg') ||
-          url.includes('storage/v1/object');
 
-        if (isImageUrl) {
-          const imageName = url.split('/').pop();
-          const blocked = window.BLOCKED_IMAGES || BLOCKED_IMAGES;
-
-          if (blocked && blocked.has && blocked.has(imageName)) {
-            console.warn(`🚫 Requête fetch bloquée pour image interdite: ${imageName}`);
-            throw new Error('Image bloquée par la protection globale');
-          }
-
-          if (url.includes('Thibault_N') || url.includes('Cl%C3%A9ment_LIMA_FERREIRA')) {
-            console.warn(`🚫 Requête fetch bloquée pour URL interdite: ${url}`);
-            throw new Error('URL d\'image bloquée par la protection globale');
-          }
-        }
-      }
-    } catch (err) {
-      if (err.message.includes('bloquée')) {
-        return Promise.reject(err);
-      }
-      console.error('Erreur dans l\'intercepteur fetch d\'images:', err);
-    }
-
-    return originalFetch.call(this, url, options);
-  };
 };
 
-// Initialiser la protection dès que possible
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', blockBrokenImageRequests);
-} else {
-  blockBrokenImageRequests();
+// Initialiser la protection une seule fois
+if (!window.__IMAGE_PROTECTION_INITIALIZED) {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', blockBrokenImageRequests);
+  } else {
+    blockBrokenImageRequests();
+  }
+  window.__IMAGE_PROTECTION_INITIALIZED = true;
 }
 
 // Exporter pour utilisation dans les hooks

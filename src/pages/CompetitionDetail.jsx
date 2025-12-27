@@ -153,121 +153,64 @@ const CompetitionDetail = () => {
     }));
   };
 
-  const handleAddPhotoFile = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setUploadingPhoto(true);
-
-    try {
-      const result = await uploadCompetitionPhoto(file, formData.name);
-
-      if (!result.success) {
-        throw new Error(result.error);
-      }
-
-      setFormData(prev => ({
-        ...prev,
-        photo_gallery: [...prev.photo_gallery, result.url]
-      }));
-
-      toast({
-        title: "Succès",
-        description: `Photo "${file.name}" ajoutée à la galerie !`,
-        variant: "default"
-      });
-
-      e.target.value = '';
-    } catch (error) {
-      console.error('Erreur lors de l\'upload:', error);
-      toast({
-        title: "Erreur",
-        description: `Impossible d'uploader la photo: ${error.message}`,
-        variant: "destructive"
-      });
-      e.target.value = '';
-    } finally {
-      setUploadingPhoto(false);
-    }
-  };
-
-  const handleAddMultiplePhotos = async (e) => {
-    const files = Array.from(e.target.files || []);
+  const handleAddMultiplePhotos = (e) => {
+    const inputFiles = e.target.files;
+    if (!inputFiles) return;
+    const files = Array.from(inputFiles);
     if (files.length === 0) return;
 
     setUploadingPhoto(true);
-    const newPhotos = [];
-    let successCount = 0;
 
-    toast({
-      title: "Upload en cours",
-      description: `Préparation de l'upload de ${files.length} photo(s)...`,
-    });
+    const processUploads = async (filesToUpload) => {
+      const newPhotos = [];
+      let successCount = 0;
 
-    for (const file of files) {
-      try {
-        const result = await uploadCompetitionPhoto(file, formData?.name || competition?.name);
-        if (result.success) {
-          newPhotos.push(result.url);
-          successCount++;
-        } else {
-          toast({
-            title: "Erreur",
-            description: `Erreur pour ${file.name}: ${result.error}`,
-            variant: "destructive"
-          });
-        }
-      } catch (error) {
-        console.error(`Erreur lors de l'upload de ${file.name}:`, error);
-      }
-    }
-
-    if (successCount > 0) {
-      const currentGallery = isEditMode ? (formData.photo_gallery || []) : (competition.photo_gallery || []);
-      const updatedGallery = [...currentGallery, ...newPhotos];
-
-      if (isEditMode) {
-        setFormData(prev => ({
-          ...prev,
-          photo_gallery: updatedGallery
-        }));
-      } else {
-        // Enregistrer directement en base si pas en mode édition
+      for (const file of filesToUpload) {
         try {
-          const { error } = await supabase
-            .from('competitions')
-            .update({ photo_gallery: updatedGallery })
-            .eq('id', id);
+          const result = await uploadCompetitionPhoto(file, formData?.name || competition?.name);
 
-          if (error) throw error;
-
-          setCompetition(prev => ({ ...prev, photo_gallery: updatedGallery }));
-          setFormData(prev => ({ ...prev, photo_gallery: updatedGallery }));
-
-          // Mettre à jour les URLs signées pour l'affichage immédiat
-          const newSignedUrls = await Promise.all(newPhotos.map(p => getCompetitionPhotoUrl(p)));
-          setSignedUrls(prev => ({
-            ...prev,
-            gallery: [...prev.gallery, ...newSignedUrls.filter(Boolean)]
-          }));
+          if (result.success) {
+            newPhotos.push(result.filePath);
+            successCount++;
+          } else {
+            toast({ title: "Erreur", description: `Erreur pour ${file.name}: ${result.error}`, variant: "destructive" });
+          }
         } catch (error) {
-          console.error("Erreur lors de la mise à jour de la galerie:", error);
-          toast({
-            title: "Erreur",
-            description: "Photos uploadées mais impossible de mettre à jour la base de données.",
-            variant: "destructive"
-          });
+          console.error(`Erreur upload ${file.name}:`, error);
         }
       }
 
-      toast({
-        title: "Succès",
-        description: `${successCount} photo(s) ajoutée(s) avec succès !`,
-        variant: "default"
-      });
-    }
+      if (successCount > 0) {
+        const currentGallery = isEditMode ? (formData?.photo_gallery || []) : (competition?.photo_gallery || []);
+        const updatedGallery = [...currentGallery, ...newPhotos];
 
-    setUploadingPhoto(false);
+        if (isEditMode) {
+          setFormData(prev => ({ ...prev, photo_gallery: updatedGallery }));
+        } else {
+          try {
+            await supabase.from('competitions').update({ photo_gallery: updatedGallery }).eq('id', id);
+            setCompetition(prev => ({ ...prev, photo_gallery: updatedGallery }));
+            setFormData(prev => ({ ...prev, photo_gallery: updatedGallery }));
+          } catch (dbError) {
+            console.error('Erreur BDD:', dbError);
+          }
+        }
+
+        const newUrls = await Promise.all(newPhotos.map(p => getCompetitionPhotoUrl(p)));
+        setSignedUrls(prev => ({
+          ...prev,
+          gallery: [...(prev.gallery || []), ...newUrls.filter(Boolean)]
+        }));
+      }
+
+      setUploadingPhoto(false);
+    };
+
+    // Utilisation de setTimeout pour détacher l'upload du cycle de rendu immédiat et éviter les freezes
+    setTimeout(() => {
+      processUploads(files);
+    }, 10);
+
     e.target.value = '';
   };
 
@@ -742,7 +685,6 @@ const CompetitionDetail = () => {
           </CardContent>
         </Card>
 
-        {/* Suite du composant dans le prochain message... */}
         {/* Informations détaillées */}
         <Card>
           <CardHeader>
@@ -1172,30 +1114,6 @@ const CompetitionDetail = () => {
                   <Plus className="w-4 h-4 mr-1" />
                   Ajouter URL
                 </Button>
-                <Label
-                  htmlFor="photo-upload"
-                  className={`flex items-center gap-1 px-3 py-2 text-sm font-medium rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground ${uploadingPhoto ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-                >
-                  {uploadingPhoto ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      Upload en cours...
-                    </>
-                  ) : (
-                    <>
-                      <Upload className="w-4 h-4" />
-                      Choisir un fichier
-                    </>
-                  )}
-                  <Input
-                    id="photo-upload"
-                    type="file"
-                    className="sr-only"
-                    onChange={handleAddPhotoFile}
-                    accept="image/*"
-                    disabled={uploadingPhoto}
-                  />
-                </Label>
               </div>
             )}
 

@@ -206,14 +206,15 @@ const CompetitionResultsImport = () => {
     setMissingCompetitors([]);
     try {
       // Use Supabase Edge Function to fetch HTML (no CORS issues)
-      const { data: json, error: functionError } = await supabase.functions.invoke('fetch-html', {
-        method: 'POST',
-        body: { url }
-      });
-
-      if (functionError) throw functionError;
-      if (!json || !json.data) throw new Error('Pas de données HTML reçues');
-
+      const supabaseUrl = process.env.REACT_APP_SUPABASE_URL || '';
+      const edgeFunctionUrl = `${supabaseUrl}/functions/v1/fetch-html?url=${encodeURIComponent(url)}`;
+      
+      const resp = await fetch(edgeFunctionUrl);
+      if (!resp.ok) throw new Error(`Impossible de récupérer la page (${resp.status})`);
+      
+      const json = await resp.json();
+      if (!json.data) throw new Error('Pas de données HTML reçues');
+      
       const text = json.data;
       const parsed = parseHtml(text, clubName || '');
       setResults(parsed);
@@ -224,7 +225,7 @@ const CompetitionResultsImport = () => {
           if (!p.members) return true;
           const pFirst = normalizeText(p.members.first_name || '');
           const pLast = normalizeText(p.members.last_name || '');
-
+          
           return !parsed.some(r => {
             const rFirst = normalizeText(r.prenom || '');
             const rLast = normalizeText(r.nom || '');
