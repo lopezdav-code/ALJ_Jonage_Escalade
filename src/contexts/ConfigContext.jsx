@@ -7,36 +7,55 @@ const ConfigContext = createContext();
 export const ConfigProvider = ({ children }) => {
   const [config, setConfig] = useState({});
   const [loading, setLoading] = useState(true);
-  const { isAdmin } = useAuth();
+  const { isAdmin, user } = useAuth(); // Added user to dependency list if needed, but mainly for logging
 
   const fetchConfig = useCallback(async () => {
+    const startTime = Date.now();
+    console.log("[ConfigContext] Starting fetchConfig...");
     setLoading(true);
-    const { data, error } = await supabase.from('site_config').select('config_key, config_value');
-    
-    if (error) {
-      console.error("Error fetching site config:", error);
-    } else {
-      const newConfig = data.reduce((acc, item) => {
-        acc[item.config_key] = item.config_value;
-        return acc;
-      }, {});
-      setConfig(newConfig);
+
+    // Timeout de sécurité pour éviter les chargements infinis (5 secondes max)
+    const timeoutId = setTimeout(() => {
+      console.warn("[ConfigContext] Fetch timeout reached (5s). Unblocking UI.");
+      setLoading(false);
+    }, 5000);
+
+    try {
+      const { data, error } = await supabase.from('site_config').select('config_key, config_value');
+
+      // Nettoyer le timeout si la réponse arrive à temps
+      clearTimeout(timeoutId);
+
+      if (error) {
+        console.error("[ConfigContext] Error fetching site config:", error);
+      } else {
+        const newConfig = data.reduce((acc, item) => {
+          acc[item.config_key] = item.config_value;
+          return acc;
+        }, {});
+        setConfig(newConfig);
+        console.log(`[ConfigContext] Fetch completed in ${Date.now() - startTime}ms`);
+      }
+    } catch (err) {
+      console.error("[ConfigContext] Unexpected error during fetchConfig:", err);
+      clearTimeout(timeoutId);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, []);
 
   useEffect(() => {
     fetchConfig();
-    
+
     const channel = supabase
       .channel('site_config_changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'site_config' }, (payload) => {
-          fetchConfig();
+        fetchConfig();
       })
       .subscribe();
 
     return () => {
-        supabase.removeChannel(channel);
+      supabase.removeChannel(channel);
     };
 
   }, [fetchConfig]);
@@ -46,7 +65,7 @@ export const ConfigProvider = ({ children }) => {
       console.error("User is not authorized to update config.");
       return { error: 'Not authorized' };
     }
-    
+
     const { data, error } = await supabase
       .from('site_config')
       .upsert({ config_key: key, config_value: value }, { onConflict: 'config_key' })
@@ -56,7 +75,7 @@ export const ConfigProvider = ({ children }) => {
     if (error) {
       console.error(`Error updating config key ${key}:`, error);
     } else if (data) {
-      setConfig(prev => ({...prev, [data.config_key]: data.config_value}));
+      setConfig(prev => ({ ...prev, [data.config_key]: data.config_value }));
     }
 
     return { data, error };
